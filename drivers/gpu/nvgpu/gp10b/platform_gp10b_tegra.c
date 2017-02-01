@@ -42,7 +42,7 @@
 #include <nvgpu/hw/gp10b/hw_ltc_gp10b.h>
 
 /* Select every GP10B_FREQ_SELECT_STEP'th frequency from h/w table */
-#define GP10B_FREQ_SELECT_STEP	8
+#define GP10B_FREQ_SELECT_STEP	CONFIG_GK20A_FREQ_SELECT_STEP
 /* Max number of freq supported in h/w */
 #define GP10B_MAX_SUPPORTED_FREQS 120
 static unsigned long
@@ -366,10 +366,17 @@ static int gp10b_clk_get_freqs(struct device *dev,
 {
 	struct gk20a_platform *platform = gk20a_get_platform(dev);
 	unsigned long max_rate;
-	unsigned long new_rate = 0, prev_rate = 0;
+	unsigned long prev_rate = 0, new_rate = CONFIG_GK20A_FREQ_SELECT_MIN;
 	int i = 0, freq_counter = 0;
 
 	max_rate = clk_round_rate(platform->clk[0], (UINT_MAX - 1));
+
+	/* If the CONFIG_GK20A_FREQ_SELECT_MIN is provided
+	 * make sure it gets selected as the min_freq from the
+	 * output of clk_round_rate below.
+	 */
+	if (new_rate)
+		new_rate--;
 
 	/*
 	 * Walk the h/w frequency table and only select
