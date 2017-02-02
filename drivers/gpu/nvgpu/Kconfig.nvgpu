@@ -109,4 +109,20 @@ config GK20A_VIDMEM
 	  memory aperture (in contrast to general system memory), available on
 	  GPUs that have their own banks. PCIe GPUs have this, for example.
 
+config GK20A_FREQ_SELECT_MIN
+	int "Minimum frequency to use for generating devfreq freq_table"
+	depends on GK20A_DEVFREQ
+	default 0
+	help
+	  Choose the minimum frequency to use for generating devfreq
+	  freq_table.
+
+config GK20A_FREQ_SELECT_STEP
+	int "Stepping to use for generating devfreq freq_table"
+	depends on GK20A_DEVFREQ
+	default 8
+	help
+	  Stepping to use for generating freq_table. nvgpu will choose
+	  every nth entry, where n is controlled by this config.
+
 trysource "../nvgpu-t19x/drivers/gpu/nvgpu/Kconfig"
