@@ -1496,8 +1496,6 @@ static int gk20a_pm_suspend(struct device *dev)
 	if (!g->power_on)
 		return 0;
 
-	gk20a_scale_notify_idle(dev);
-
 	ret = gk20a_pm_runtime_suspend(dev);
 	if (ret)
 		goto fail;
@@ -1510,8 +1508,6 @@ static int gk20a_pm_suspend(struct device *dev)
 	return 0;
 
 fail:
-	gk20a_scale_notify_busy(dev);
-
 	if (platform->user_railgate_disabled)
 		gk20a_busy_noresume(dev);
 
@@ -1531,8 +1527,6 @@ static int gk20a_pm_resume(struct device *dev)
 		return 0;
 
 	ret = gk20a_pm_runtime_resume(dev);
-
-	gk20a_scale_notify_busy(dev);
 
 	g->suspended = false;
 
@@ -1896,8 +1890,6 @@ int gk20a_busy(struct gk20a *g)
 		}
 	}
 
-	gk20a_scale_notify_busy(dev);
-
 fail:
 	up_read(&g->busy_lock);
 
@@ -1921,16 +1913,8 @@ void gk20a_idle(struct gk20a *g)
 		return;
 
 	if (pm_runtime_enabled(dev)) {
-#ifdef CONFIG_PM
-		if (atomic_read(&g->dev->power.usage_count) == 1)
-			gk20a_scale_notify_idle(dev);
-#endif
-
 		pm_runtime_mark_last_busy(dev);
 		pm_runtime_put_sync_autosuspend(dev);
-
-	} else {
-		gk20a_scale_notify_idle(dev);
 	}
 }
 
