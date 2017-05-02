@@ -979,10 +979,10 @@ struct gk20a_channel_sync *gk20a_channel_sync_create(struct channel_gk20a *c)
 	return gk20a_channel_semaphore_create(c);
 }
 
-bool gk20a_channel_sync_needs_sync_framework(struct channel_gk20a *c)
+bool gk20a_channel_sync_needs_sync_framework(struct gk20a *g)
 {
 #ifdef CONFIG_TEGRA_GK20A
-	if (gk20a_platform_has_syncpoints(c->g->dev))
+	if (gk20a_platform_has_syncpoints(g->dev))
 		return false;
 #endif
 	return true;
