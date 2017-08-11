@@ -240,4 +240,5 @@ void gp10b_init_fifo(struct gpu_ops *gops)
 	gops->fifo.device_info_data_parse = gp10b_device_info_data_parse;
 	gops->fifo.eng_runlist_base_size = fifo_eng_runlist_base__size_1_v;
 	gops->fifo.device_info_fault_id = top_device_info_data_fault_id_enum_v;
+	gops->fifo.reschedule_runlist = gk20a_fifo_reschedule_runlist;
 }

@@ -3225,6 +3225,10 @@ int gk20a_submit_channel_gpfifo(struct channel_gk20a *c,
 
 	g->ops.fifo.userd_gp_put(g, c);
 
+	if ((NVGPU_SUBMIT_GPFIFO_FLAGS_RESCHEDULE_RUNLIST & flags) &&
+		g->ops.fifo.reschedule_runlist)
+		g->ops.fifo.reschedule_runlist(g, c->runlist_id);
+
 	trace_gk20a_channel_submitted_gpfifo(dev_name(c->g->dev),
 				c->hw_chid,
 				num_entries,

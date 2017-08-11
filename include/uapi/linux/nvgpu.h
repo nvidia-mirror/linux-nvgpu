@@ -137,6 +137,8 @@ struct nvgpu_gpu_zbc_query_table_args {
 #define NVGPU_GPU_FLAGS_SUPPORT_FECS_CTXSW_TRACE	(1ULL << 16)
 /* NVGPU_AS_IOCTL_MAP_BUFFER_COMPBITS is available */
 #define NVGPU_GPU_FLAGS_SUPPORT_MAP_COMPBITS		(1ULL << 17)
+/* NVGPU_SUBMIT_GPFIFO_FLAGS_RESCHEDULE_RUNLIST is available */
+#define NVGPU_GPU_FLAGS_SUPPORT_RESCHEDULE_RUNLIST	(1ULL << 21)
 
 struct nvgpu_gpu_characteristics {
 	__u32 arch;
@@ -1376,6 +1378,8 @@ struct nvgpu_fence {
 #define NVGPU_SUBMIT_GPFIFO_FLAGS_SUPPRESS_WFI	(1 << 4)
 /* skip buffer refcounting during submit */
 #define NVGPU_SUBMIT_GPFIFO_FLAGS_SKIP_BUFFER_REFCOUNTING	(1 << 5)
+/* expire current timeslice and reschedule runlist from front */
+#define NVGPU_SUBMIT_GPFIFO_FLAGS_RESCHEDULE_RUNLIST	(1 << 6)
 
 struct nvgpu_submit_gpfifo_args {
 	__u64 gpfifo;
