@@ -106,6 +106,56 @@ static ssize_t pd_max_batches_read(struct device *dev,
 
 static DEVICE_ATTR(pd_max_batches, ROOTRW, pd_max_batches_read, pd_max_batches_store);
 
+static int write_gfxp_wfi_timeout_count(struct gk20a *g, u32 val)
+{
+	gk20a_writel(g, gr_fe_gfxp_wfi_timeout_r(),
+		gr_fe_gfxp_wfi_timeout_count_f(val));
+
+	return 0;
+}
+
+static ssize_t gfxp_wfi_timeout_count_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct gk20a *g = get_gk20a(dev);
+	struct gr_gk20a *gr = &g->gr;
+	unsigned long val = 0;
+	int err = -1;
+
+	if (kstrtoul(buf, 10, &val) < 0)
+		return -EINVAL;
+
+	if (val >= 100*1000*1000) /* 100ms @ 1Ghz */
+		return -EINVAL;
+
+	gr->gfxp_wfi_timeout_count = val;
+
+	if (!g->power_on)
+		return count;
+
+	err = gk20a_busy(g);
+	if (err)
+		return err;
+	gr_gk20a_elpg_protected_call(g,
+		write_gfxp_wfi_timeout_count(g, val));
+	gk20a_idle(g);
+
+	return count;
+}
+
+static ssize_t gfxp_wfi_timeout_count_read(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct gk20a *g = get_gk20a(dev);
+	struct gr_gk20a *gr = &g->gr;
+	u32 val = gr->gfxp_wfi_timeout_count;
+
+	return snprintf(buf, PAGE_SIZE, "%d\n", val);
+}
+
+static DEVICE_ATTR(gfxp_wfi_timeout_count, ROOTRW,
+		gfxp_wfi_timeout_count_read, gfxp_wfi_timeout_count_store);
+
 void gp10b_create_sysfs(struct device *dev)
 {
 	struct gk20a *g = get_gk20a(dev);
@@ -116,6 +166,7 @@ void gp10b_create_sysfs(struct device *dev)
 	error |= device_create_file(dev, &dev_attr_ecc_enable);
 	error |= device_create_file(dev, &dev_attr_czf_bypass);
 	error |= device_create_file(dev, &dev_attr_pd_max_batches);
+	error |= device_create_file(dev, &dev_attr_gfxp_wfi_timeout_count);
 	if (error)
 		dev_err(dev, "Failed to create sysfs attributes!\n");
 }
@@ -125,4 +176,5 @@ void gp10b_remove_sysfs(struct device *dev)
 	device_remove_file(dev, &dev_attr_ecc_enable);
 	device_remove_file(dev, &dev_attr_czf_bypass);
 	device_remove_file(dev, &dev_attr_pd_max_batches);
+	device_remove_file(dev, &dev_attr_gfxp_wfi_timeout_count);
 }

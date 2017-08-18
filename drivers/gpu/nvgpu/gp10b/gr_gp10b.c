@@ -38,8 +38,6 @@
 #include <nvgpu/hw/gp10b/hw_ctxsw_prog_gp10b.h>
 #include <nvgpu/hw/gp10b/hw_mc_gp10b.h>
 
-#define NVGPU_GFXP_WFI_TIMEOUT_US	100LL
-
 static bool gr_gp10b_is_valid_class(struct gk20a *g, u32 class_num)
 {
 	bool valid = false;
@@ -2295,13 +2293,9 @@ static int gp10b_gr_fuse_override(struct gk20a *g)
 
 static int gr_gp10b_init_preemption_state(struct gk20a *g)
 {
-	struct gk20a_platform *platform = gk20a_get_platform(g->dev);
 	u32 debug_2;
-	u64 sysclk_rate;
-	u32 sysclk_cycles;
-
-	sysclk_rate = platform->clk_get_rate(g->dev);
-	sysclk_cycles = (u32)((sysclk_rate * NVGPU_GFXP_WFI_TIMEOUT_US) / 1000000ULL);
+	struct gr_gk20a *gr = &g->gr;
+	u32 sysclk_cycles = gr->gfxp_wfi_timeout_count;
 	gk20a_writel(g, gr_fe_gfxp_wfi_timeout_r(),
 			gr_fe_gfxp_wfi_timeout_count_f(sysclk_cycles));
 
