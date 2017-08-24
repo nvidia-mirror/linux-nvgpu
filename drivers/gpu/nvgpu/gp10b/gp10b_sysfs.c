@@ -79,6 +79,33 @@ static ssize_t czf_bypass_read(struct device *dev,
 
 static DEVICE_ATTR(czf_bypass, ROOTRW, czf_bypass_read, czf_bypass_store);
 
+static ssize_t pd_max_batches_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct gk20a *g = get_gk20a(dev);
+	unsigned long val;
+
+	if (kstrtoul(buf, 10, &val) < 0)
+		return -EINVAL;
+
+	if (val >= 64)
+		return -EINVAL;
+
+	g->gr.pd_max_batches = val;
+
+	return count;
+}
+
+static ssize_t pd_max_batches_read(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct gk20a *g = get_gk20a(dev);
+
+	return sprintf(buf, "%d\n", g->gr.pd_max_batches);
+}
+
+static DEVICE_ATTR(pd_max_batches, ROOTRW, pd_max_batches_read, pd_max_batches_store);
+
 void gp10b_create_sysfs(struct device *dev)
 {
 	struct gk20a *g = get_gk20a(dev);
@@ -88,6 +115,7 @@ void gp10b_create_sysfs(struct device *dev)
 
 	error |= device_create_file(dev, &dev_attr_ecc_enable);
 	error |= device_create_file(dev, &dev_attr_czf_bypass);
+	error |= device_create_file(dev, &dev_attr_pd_max_batches);
 	if (error)
 		dev_err(dev, "Failed to create sysfs attributes!\n");
 }
@@ -96,4 +124,5 @@ void gp10b_remove_sysfs(struct device *dev)
 {
 	device_remove_file(dev, &dev_attr_ecc_enable);
 	device_remove_file(dev, &dev_attr_czf_bypass);
+	device_remove_file(dev, &dev_attr_pd_max_batches);
 }
