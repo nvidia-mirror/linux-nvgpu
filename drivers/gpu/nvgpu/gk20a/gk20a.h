@@ -351,6 +351,7 @@ struct gpu_ops {
 		void (*load_tpc_mask)(struct gk20a *g);
 		int (*set_czf_bypass)(struct gk20a *g,
 				      struct channel_gk20a *ch);
+		void (*disable_rd_coalesce)(struct gk20a *g);
 	} gr;
 	const char *name;
 	struct {

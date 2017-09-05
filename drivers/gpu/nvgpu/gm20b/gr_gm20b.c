@@ -1517,6 +1517,23 @@ static void gr_gm20b_split_ltc_broadcast_addr(struct gk20a *g, u32 addr,
 					priv_addr_table, priv_addr_table_index);
 }
 
+/*
+ *  * Disable both surface and LG coalesce.
+ *   */
+void gm20a_gr_disable_rd_coalesce(struct gk20a *g)
+{
+	u32 dbg2_reg;
+
+	dbg2_reg = gk20a_readl(g, gr_gpcs_tpcs_tex_m_dbg2_r());
+	dbg2_reg = set_field(dbg2_reg,
+			             gr_gpcs_tpcs_tex_m_dbg2_lg_rd_coalesce_en_m(),
+						 gr_gpcs_tpcs_tex_m_dbg2_lg_rd_coalesce_en_f(0));
+	dbg2_reg = set_field(dbg2_reg,
+					     gr_gpcs_tpcs_tex_m_dbg2_su_rd_coalesce_en_m(),
+					     gr_gpcs_tpcs_tex_m_dbg2_su_rd_coalesce_en_f(0));
+	gk20a_writel(g, gr_gpcs_tpcs_tex_m_dbg2_r(), dbg2_reg);
+}
+
 void gm20b_init_gr(struct gpu_ops *gops)
 {
 	gops->gr.init_gpc_mmu = gr_gm20b_init_gpc_mmu;
