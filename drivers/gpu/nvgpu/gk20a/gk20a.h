@@ -65,6 +65,8 @@ struct nvgpu_ctxsw_trace_filter;
 #include <nvgpu/nvlink.h>
 #include <nvgpu/sim.h>
 
+#include <linux/pm_qos.h>
+
 #include "clk_gk20a.h"
 #include "ce2_gk20a.h"
 #include "fifo_gk20a.h"
@@ -1366,6 +1368,12 @@ struct gk20a {
 	bool has_cde;
 
 	u32 emc3d_ratio;
+
+	u32 submit_boost_freq;
+
+	u32 submit_boost_time;
+
+	struct pm_qos_request gpu_pm_qos_req;
 
 	struct nvgpu_spinlock ltc_enabled_lock;
 

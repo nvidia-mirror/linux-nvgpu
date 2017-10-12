@@ -998,6 +998,11 @@ int gk20a_submit_channel_gpfifo(struct channel_gk20a *c,
 				post_fence ? post_fence->syncpt_id : 0,
 				post_fence ? post_fence->syncpt_value : 0);
 
+	if (g->submit_boost_freq) {
+		pm_qos_update_request_timeout(&g->gpu_pm_qos_req,
+				g->submit_boost_freq, g->submit_boost_time);
+	}
+
 	nvgpu_log_info(g, "post-submit put %d, get %d, size %d",
 		c->gpfifo.put, c->gpfifo.get, c->gpfifo.entry_num);
 

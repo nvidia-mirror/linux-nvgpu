@@ -954,6 +954,62 @@ static ssize_t max_timeslice_us_store(struct device *dev,
 static DEVICE_ATTR(max_timeslice_us, ROOTRW, max_timeslice_us_read,
 		   max_timeslice_us_store);
 
+static ssize_t submit_boost_time_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct gk20a *g = get_gk20a(dev);
+	unsigned long val = 0;
+
+	if (kstrtoul(buf, 10, &val) < 0)
+		return -EINVAL;
+
+	g->submit_boost_time = val;
+
+	return count;
+}
+
+static ssize_t submit_boost_time_read(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct gk20a *g = get_gk20a(dev);
+
+	return sprintf(buf, "%d\n", g->submit_boost_time);
+}
+
+static DEVICE_ATTR(submit_boost_time, ROOTRW, submit_boost_time_read,
+		submit_boost_time_store);
+
+static ssize_t submit_boost_freq_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct gk20a *g = get_gk20a(dev);
+	unsigned long val = 0;
+
+	if (kstrtoul(buf, 10, &val) < 0)
+		return -EINVAL;
+
+	g->submit_boost_freq = val;
+
+	if (val)
+		pm_qos_add_request(&g->gpu_pm_qos_req, PM_QOS_GPU_FREQ_MIN,
+				PM_QOS_DEFAULT_VALUE);
+	else
+		pm_qos_remove_request(&g->gpu_pm_qos_req);
+
+	return count;
+}
+
+static ssize_t submit_boost_freq_read(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct gk20a *g = get_gk20a(dev);
+
+	return sprintf(buf, "%d\n", g->submit_boost_freq);
+}
+
+static DEVICE_ATTR(submit_boost_freq, ROOTRW, submit_boost_freq_read,
+		submit_boost_freq_store);
+
 static ssize_t czf_bypass_store(struct device *dev,
 		struct device_attribute *attr, const char *buf, size_t count)
 {
@@ -1164,6 +1220,8 @@ void nvgpu_remove_sysfs(struct device *dev)
 	device_remove_file(dev, &dev_attr_tpc_fs_mask);
 	device_remove_file(dev, &dev_attr_min_timeslice_us);
 	device_remove_file(dev, &dev_attr_max_timeslice_us);
+	device_remove_file(dev, &dev_attr_submit_boost_freq);
+	device_remove_file(dev, &dev_attr_submit_boost_time);
 
 #ifdef CONFIG_TEGRA_GK20A_NVHOST
 	nvgpu_nvhost_remove_symlink(get_gk20a(dev));
@@ -1217,6 +1275,8 @@ int nvgpu_create_sysfs(struct device *dev)
 	error |= device_create_file(dev, &dev_attr_tpc_fs_mask);
 	error |= device_create_file(dev, &dev_attr_min_timeslice_us);
 	error |= device_create_file(dev, &dev_attr_max_timeslice_us);
+	error |= device_create_file(dev, &dev_attr_submit_boost_freq);
+	error |= device_create_file(dev, &dev_attr_submit_boost_time);
 
 #ifdef CONFIG_TEGRA_GK20A_NVHOST
 	error |= nvgpu_nvhost_create_symlink(g);
