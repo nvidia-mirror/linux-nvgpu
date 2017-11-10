@@ -405,6 +405,7 @@ struct gpu_ops {
 		int (*preempt_channel)(struct gk20a *g, u32 hw_chid);
 		int (*preempt_tsg)(struct gk20a *g, u32 tsgid);
 		int (*reschedule_runlist)(struct gk20a *g, u32 runlist_id);
+		int (*reschedule_preempt_next)(struct channel_gk20a *ch);
 		int (*update_runlist)(struct gk20a *g, u32 runlist_id,
 				u32 hw_chid, bool add,
 				bool wait_for_finish);

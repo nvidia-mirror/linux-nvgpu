@@ -41,11 +41,13 @@
 #include <nvgpu/hw/gk20a/hw_gr_gk20a.h>
 
 #define FECS_METHOD_WFI_RESTORE 0x80000
+#define FECS_MAILBOX_0_ACK_RESTORE 0x4
 
 static int gk20a_fifo_update_runlist_locked(struct gk20a *g, u32 runlist_id,
 					    u32 hw_chid, bool add,
 					    bool wait_for_finish);
 static u32 gk20a_fifo_engines_on_id(struct gk20a *g, u32 id, bool is_tsg);
+static int gk20a_fifo_is_preempt_pending(struct gk20a *g);
 
 #ifdef CONFIG_DEBUG_FS
 static void __gk20a_fifo_profile_free(struct kref *ref);
@@ -2405,10 +2407,30 @@ void gk20a_fifo_issue_preempt(struct gk20a *g, u32 id, bool is_tsg)
 			fifo_preempt_type_channel_f());
 }
 
-static int __locked_fifo_preempt(struct gk20a *g, u32 id, bool is_tsg)
+static int gk20a_fifo_is_preempt_pending(struct gk20a *g)
 {
 	struct nvgpu_timeout timeout;
 	u32 delay = GR_IDLE_CHECK_DEFAULT;
+	int ret = -EBUSY;
+
+	nvgpu_timeout_init(g, &timeout, gk20a_get_gr_idle_timeout(g),
+				NVGPU_TIMER_CPU_TIMER);
+	do {
+		if (!(gk20a_readl(g, fifo_preempt_r()) &
+				fifo_preempt_pending_true_f())) {
+			ret = 0;
+			break;
+		}
+
+		usleep_range(delay, delay * 2);
+		delay = min_t(u32, delay << 1, GR_IDLE_CHECK_MAX);
+	} while (!nvgpu_timeout_expired_msg(&timeout, "preempt timeout"));
+
+	return ret;
+}
+
+static int __locked_fifo_preempt(struct gk20a *g, u32 id, bool is_tsg)
+{
 	u32 ret = 0;
 
 	gk20a_dbg_fn("%d", id);
@@ -2418,19 +2440,7 @@ static int __locked_fifo_preempt(struct gk20a *g, u32 id, bool is_tsg)
 
 	gk20a_dbg_fn("%d", id);
 	/* wait for preempt */
-	ret = -EBUSY;
-	nvgpu_timeout_init(g, &timeout, gk20a_get_gr_idle_timeout(g),
-			   NVGPU_TIMER_CPU_TIMER);
-	do {
-		if (!(gk20a_readl(g, fifo_preempt_r()) &
-			fifo_preempt_pending_true_f())) {
-			ret = 0;
-			break;
-		}
-
-		usleep_range(delay, delay * 2);
-		delay = min_t(u32, delay << 1, GR_IDLE_CHECK_MAX);
-	} while (!nvgpu_timeout_expired(&timeout));
+	ret = gk20a_fifo_is_preempt_pending(g);
 
 	gk20a_dbg_fn("%d", id);
 	if (ret) {
@@ -3011,16 +3021,18 @@ static int gk20a_fifo_update_runlist_locked(struct gk20a *g, u32 runlist_id,
 		count = 0;
 
 	if (count != 0) {
-		gk20a_writel(g, fifo_runlist_base_r(),
+		runlist->runlist_base_r =
 			fifo_runlist_base_ptr_f(u64_lo32(runlist_iova >> 12)) |
 			gk20a_aperture_mask(g, &runlist->mem[new_buf],
 			  fifo_runlist_base_target_sys_mem_ncoh_f(),
-			  fifo_runlist_base_target_vid_mem_f()));
+			  fifo_runlist_base_target_vid_mem_f());
+		gk20a_writel(g, fifo_runlist_base_r(), runlist->runlist_base_r);
 	}
 
-	gk20a_writel(g, fifo_runlist_r(),
+	runlist->runlist_r =
 		fifo_runlist_engine_f(runlist_id) |
-		fifo_eng_runlist_length_f(count));
+		fifo_eng_runlist_length_f(count);
+	gk20a_writel(g, fifo_runlist_r(), runlist->runlist_r);
 
 	if (wait_for_finish) {
 		ret = gk20a_fifo_runlist_wait_pending(g, runlist_id);
@@ -3089,8 +3101,8 @@ int gk20a_fifo_reschedule_runlist(struct gk20a *g, u32 runlist_id)
 		mutex_ret = pmu_mutex_acquire(
 			&g->pmu, PMU_MUTEX_ID_FIFO, &token);
 
-		gk20a_writel(g, fifo_runlist_r(),
-			gk20a_readl(g, fifo_runlist_r()));
+		gk20a_writel(g, fifo_runlist_base_r(), runlist->runlist_base_r);
+		gk20a_writel(g, fifo_runlist_r(), runlist->runlist_r);
 		gk20a_fifo_runlist_wait_pending(g, runlist_id);
 
 		if (!mutex_ret)
@@ -3101,6 +3113,79 @@ int gk20a_fifo_reschedule_runlist(struct gk20a *g, u32 runlist_id)
 		/* someone else is writing fifo_runlist_r so not needed here */
 		ret = -EBUSY;
 	}
+	return ret;
+}
+
+/* trigger host preempt of gr engine pending load context if that ctx is not for ch */
+int gk20a_fifo_reschedule_preempt_next(struct channel_gk20a *ch)
+{
+	struct gk20a *g = ch->g;
+	struct fifo_runlist_info_gk20a *runlist;
+	u32 token = PMU_INVALID_MUTEX_OWNER_ID;
+	u32 mutex_ret;
+	int ret = 0;
+	u32 gr_eng_id = 0;
+
+	runlist = &g->fifo.runlist_info[ch->runlist_id];
+	if (1 != gk20a_fifo_get_engine_ids(
+		g, &gr_eng_id, 1, ENGINE_GR_GK20A))
+		return 0;
+	if (!(runlist->eng_bitmask & (1 << gr_eng_id)))
+		return 0;
+
+	if (!nvgpu_mutex_tryacquire(&runlist->mutex))
+		return -EBUSY; /* someone else is writing fifo_runlist_r so not needed here */
+	mutex_ret = pmu_mutex_acquire(
+		&g->pmu, PMU_MUTEX_ID_FIFO, &token);
+
+	do {
+		u32 engstat, ctxstat, fecsstat0, fecsstat1;
+		s32 preempt_id = -1;
+		u32 preempt_type = 0;
+		bool same_ctx;
+
+		if (gk20a_readl(g, fifo_preempt_r()) &
+			fifo_preempt_pending_true_f())
+			break;
+
+		fecsstat0 = gk20a_readl(g, gr_fecs_ctxsw_mailbox_r(0));
+		engstat = gk20a_readl(g, fifo_engine_status_r(gr_eng_id));
+		ctxstat = fifo_engine_status_ctx_status_v(engstat);
+		if (ctxstat == fifo_engine_status_ctx_status_ctxsw_switch_v()) {
+			/* host switching to new context, preempt next context if needed */
+			preempt_id = fifo_engine_status_next_id_v(engstat);
+			preempt_type = fifo_engine_status_next_id_type_v(engstat);
+		} else {
+			break;
+		}
+		if (gk20a_is_channel_marked_as_tsg(ch))
+			same_ctx = (preempt_id == ch->tsgid && preempt_type);
+		else
+			same_ctx = (preempt_id == ch->hw_chid && !preempt_type);
+		if (same_ctx)
+			break;
+		fecsstat1 = gk20a_readl(g, gr_fecs_ctxsw_mailbox_r(0));
+		if (fecsstat0 != FECS_MAILBOX_0_ACK_RESTORE ||
+			fecsstat1 != FECS_MAILBOX_0_ACK_RESTORE)
+			break; /* preempt is useless if FECS acked save and started restore */
+
+		gk20a_fifo_issue_preempt(g, preempt_id, preempt_type);
+
+		trace_gk20a_reschedule_preempt_next(ch->hw_chid, fecsstat0, engstat,
+			fecsstat1, gk20a_readl(g, gr_fecs_ctxsw_mailbox_r(0)),
+			gk20a_readl(g, fifo_preempt_r()));
+
+		gk20a_fifo_is_preempt_pending(g);
+
+		trace_gk20a_reschedule_preempted_next(ch->hw_chid);
+
+	} while (false);
+
+	if (!mutex_ret)
+		pmu_mutex_release(
+			&g->pmu, PMU_MUTEX_ID_FIFO, &token);
+	nvgpu_mutex_release(&runlist->mutex);
+
 	return ret;
 }
 

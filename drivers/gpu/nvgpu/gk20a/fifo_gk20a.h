@@ -52,6 +52,8 @@ struct fifo_runlist_info_gk20a {
 	u32  pbdma_bitmask;      /* pbdmas supported for this runlist*/
 	u32  eng_bitmask;        /* engines using this runlist */
 	u32  reset_eng_bitmask;  /* engines to be reset during recovery */
+	u32  runlist_base_r;     /* cached runlist_base_r */
+	u32  runlist_r;          /* cached runlist_r */
 	bool stopped;
 	bool support_tsg;
 	struct nvgpu_mutex mutex; /* protect channel preempt and runlist update */
@@ -219,6 +221,7 @@ int gk20a_fifo_nonstall_isr(struct gk20a *g);
 int gk20a_fifo_preempt_channel(struct gk20a *g, u32 hw_chid);
 int gk20a_fifo_preempt_tsg(struct gk20a *g, u32 tsgid);
 int gk20a_fifo_preempt(struct gk20a *g, struct channel_gk20a *ch);
+int gk20a_fifo_preempt_next(struct gk20a *g, struct channel_gk20a *ch);
 
 int gk20a_fifo_enable_engine_activity(struct gk20a *g,
 			struct fifo_engine_info_gk20a *eng_info);
@@ -231,6 +234,7 @@ int gk20a_fifo_disable_all_engine_activity(struct gk20a *g,
 u32 gk20a_fifo_engines_on_ch(struct gk20a *g, u32 hw_chid);
 
 int gk20a_fifo_reschedule_runlist(struct gk20a *g, u32 runlist_id);
+int gk20a_fifo_reschedule_preempt_next(struct channel_gk20a *ch);
 
 int gk20a_fifo_update_runlist(struct gk20a *g, u32 engine_id, u32 hw_chid,
 			      bool add, bool wait_for_finish);

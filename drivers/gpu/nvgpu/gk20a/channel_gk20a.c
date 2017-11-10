@@ -4160,6 +4160,21 @@ long gk20a_channel_ioctl(struct file *filp,
 		err = gk20a_fifo_preempt(ch->g, ch);
 		gk20a_idle(g);
 		break;
+	case NVGPU_IOCTL_CHANNEL_PREEMPT_NEXT:
+		if (!capable(CAP_SYS_NICE))
+			return -EPERM;
+		if (!ch->g->ops.fifo.reschedule_preempt_next)
+			return -ENOSYS;
+		err = gk20a_busy(ch->g);
+		if (err) {
+			dev_err(dev,
+				"%s: failed to host gk20a for ioctl cmd: 0x%x",
+				__func__, cmd);
+			break;
+		}
+		err = ch->g->ops.fifo.reschedule_preempt_next(ch);
+		gk20a_idle(ch->g);
+		break;
 	case NVGPU_IOCTL_CHANNEL_FORCE_RESET:
 		err = gk20a_busy(g);
 		if (err) {

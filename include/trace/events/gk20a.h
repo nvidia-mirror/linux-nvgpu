@@ -354,6 +354,51 @@ TRACE_EVENT(gk20a_channel_submitted_gpfifo,
 		__entry->flags, __entry->incr_id, __entry->incr_value)
 );
 
+TRACE_EVENT(gk20a_reschedule_preempt_next,
+		TP_PROTO(u32 chid, u32 fecs0, u32 engstat, u32 fecs1, u32 fecs2,
+			u32 preempt),
+
+		TP_ARGS(chid, fecs0, engstat, fecs1, fecs2, preempt),
+
+	TP_STRUCT__entry(
+		__field(u32, chid)
+		__field(u32, fecs0)
+		__field(u32, engstat)
+		__field(u32, fecs1)
+		__field(u32, fecs2)
+		__field(u32, preempt)
+	),
+
+	TP_fast_assign(
+		__entry->chid = chid;
+		__entry->fecs0 = fecs0;
+		__entry->engstat = engstat;
+		__entry->fecs1 = fecs1;
+		__entry->fecs2 = fecs2;
+		__entry->preempt = preempt;
+	),
+
+	TP_printk("chid=%d, fecs0=%#x, engstat=%#x, fecs1=%#x, fecs2=%#x,"
+		" preempt=%#x", __entry->chid, __entry->fecs0, __entry->engstat,
+		__entry->fecs1,	__entry->fecs2, __entry->preempt)
+);
+
+TRACE_EVENT(gk20a_reschedule_preempted_next,
+		TP_PROTO(u32 chid),
+
+		TP_ARGS(chid),
+
+	TP_STRUCT__entry(
+		__field(u32, chid)
+	),
+
+	TP_fast_assign(
+		__entry->chid = chid;
+	),
+
+	TP_printk("chid=%d", __entry->chid)
+);
+
 TRACE_EVENT(gk20a_channel_reset,
 		TP_PROTO(u32 hw_chid, u32 tsgid),
 

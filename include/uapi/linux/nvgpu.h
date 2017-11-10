@@ -1637,9 +1637,11 @@ struct nvgpu_boosted_ctx_args {
 	_IOW(NVGPU_IOCTL_MAGIC, 123, struct nvgpu_alloc_gpfifo_ex_args)
 #define NVGPU_IOCTL_CHANNEL_SET_BOOSTED_CTX	\
 	_IOW(NVGPU_IOCTL_MAGIC, 124, struct nvgpu_boosted_ctx_args)
+#define NVGPU_IOCTL_CHANNEL_PREEMPT_NEXT	\
+	_IO(NVGPU_IOCTL_MAGIC,  126)
 
 #define NVGPU_IOCTL_CHANNEL_LAST	\
-	_IOC_NR(NVGPU_IOCTL_CHANNEL_SET_BOOSTED_CTX)
+	_IOC_NR(NVGPU_IOCTL_CHANNEL_PREEMPT_NEXT)
 #define NVGPU_IOCTL_CHANNEL_MAX_ARG_SIZE sizeof(struct nvgpu_alloc_gpfifo_ex_args)
 
 /*

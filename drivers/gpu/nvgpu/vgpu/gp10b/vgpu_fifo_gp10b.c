@@ -46,4 +46,5 @@ void vgpu_gp10b_init_fifo_ops(struct gpu_ops *gops)
 	gops->fifo.init_engine_info = vgpu_gp10b_fifo_init_engine_info;
 	gops->fifo.resetup_ramfc = NULL;
 	gops->fifo.reschedule_runlist = NULL;
+	gops->fifo.reschedule_preempt_next = NULL;
 }
