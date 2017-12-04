@@ -235,6 +235,16 @@ static int __gk20a_channel_syncpt_incr(struct gk20a_channel_sync *s,
 
 	thresh = nvhost_syncpt_incr_max_ext(sp->host1x_pdev, sp->id, 2);
 
+	err = gk20a_fence_from_syncpt(fence, sp->host1x_pdev, sp->id, thresh,
+					 wfi_cmd, need_sync_fence);
+	if (err) {
+		thresh = nvhost_syncpt_decr_max_ext(sp->host1x_pdev, sp->id, 2);
+		gk20a_err(dev_from_gk20a(c->g),
+			"failed to get fence, fallback syncpt id %d to %d!",
+				sp->id, thresh);
+		goto clean_up_priv_cmd;
+	}
+
 	if (register_irq) {
 		struct channel_gk20a *referenced = gk20a_channel_get(c);
 
@@ -260,11 +270,6 @@ static int __gk20a_channel_syncpt_incr(struct gk20a_channel_sync *s,
 			     "failed to set submit complete interrupt");
 		}
 	}
-
-	err = gk20a_fence_from_syncpt(fence, sp->host1x_pdev, sp->id, thresh,
-					 wfi_cmd, need_sync_fence);
-	if (err)
-		goto clean_up_priv_cmd;
 
 	return 0;
 
