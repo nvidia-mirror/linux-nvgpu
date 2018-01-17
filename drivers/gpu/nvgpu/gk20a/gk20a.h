@@ -891,6 +891,7 @@ struct gk20a {
 	bool gpu_reset_done;
 	bool power_on;
 	bool suspended;
+	bool sw_ready;
 
 	struct rw_semaphore busy_lock;
 

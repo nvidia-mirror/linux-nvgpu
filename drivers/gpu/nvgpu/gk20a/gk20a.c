@@ -1109,6 +1109,8 @@ int gk20a_pm_finalize_poweron(struct device *dev)
 		}
 	}
 
+	g->sw_ready = true;
+
 done:
 	if (err)
 		g->power_on = false;
