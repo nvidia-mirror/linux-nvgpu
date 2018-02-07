@@ -107,6 +107,9 @@ static void gp10b_tegra_scale_init(struct device *dev)
 	if (!profile)
 		return;
 
+	if ((struct tegra_bwmgr_client *)profile->private_data)
+		return;
+
 	bwmgr_handle = tegra_bwmgr_register(TEGRA_BWMGR_CLIENT_GPU);
 	if (!bwmgr_handle)
 		return;
@@ -186,8 +189,6 @@ static int gp10b_tegra_late_probe(struct device *dev)
 	/*Create GP10B specific sysfs*/
 	gp10b_create_sysfs(dev);
 
-	/* Initialise tegra specific scaling quirks */
-	gp10b_tegra_scale_init(dev);
 	return 0;
 }
 
@@ -457,6 +458,7 @@ struct gk20a_platform gp10b_tegra_platform = {
 	.get_clk_freqs = gp10b_clk_get_freqs,
 
 	/* frequency scaling configuration */
+	.initscale = gp10b_tegra_scale_init,
 	.prescale = gp10b_tegra_prescale,
 	.postscale = gp10b_tegra_postscale,
 	.devfreq_governor = "nvhost_podgov",

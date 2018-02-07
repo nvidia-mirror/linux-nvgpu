@@ -1,7 +1,7 @@
 /*
  * GK20A Tegra Platform Interface
  *
- * Copyright (c) 2014-2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -800,6 +800,9 @@ static void gk20a_tegra_scale_init(struct device *dev)
 	if (!profile)
 		return;
 
+	if (profile->private_data)
+		return;
+
 	emc_params = kzalloc(sizeof(*emc_params), GFP_KERNEL);
 	if (!emc_params)
 		return;
@@ -951,9 +954,6 @@ static int gk20a_tegra_probe(struct device *dev)
 
 static int gk20a_tegra_late_probe(struct device *dev)
 {
-	/* Initialise tegra specific scaling quirks */
-	gk20a_tegra_scale_init(dev);
-
 	return 0;
 }
 
@@ -1060,6 +1060,7 @@ struct gk20a_platform gk20a_tegra_platform = {
 #endif
 
 	/* frequency scaling configuration */
+	.initscale = gk20a_tegra_scale_init,
 	.prescale = gk20a_tegra_prescale,
 	.postscale = gk20a_tegra_postscale,
 	.devfreq_governor = "nvhost_podgov",
@@ -1130,6 +1131,7 @@ struct gk20a_platform gm20b_tegra_platform = {
 #endif
 
 	/* frequency scaling configuration */
+	.initscale = gk20a_tegra_scale_init,
 	.prescale = gk20a_tegra_prescale,
 #ifdef CONFIG_TEGRA_BWMGR
 	.postscale = gm20b_tegra_postscale,

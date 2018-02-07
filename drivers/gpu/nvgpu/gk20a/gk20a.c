@@ -1109,6 +1109,13 @@ int gk20a_pm_finalize_poweron(struct device *dev)
 		}
 	}
 
+	/* Initialise scaling: it will initialize scaling drive only once */
+	if (IS_ENABLED(CONFIG_GK20A_DEVFREQ)) {
+		gk20a_scale_init(dev);
+		if (platform->initscale)
+			platform->initscale(dev);
+	}
+
 	g->sw_ready = true;
 
 done:
