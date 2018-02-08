@@ -827,7 +827,7 @@ static void gk20a_tegra_scale_exit(struct device *dev)
 	struct gk20a_scale_profile *profile = platform->g->scale_profile;
 	struct gk20a_emc_params *emc_params;
 
-	if (!profile)
+	if (!profile || !profile->private_data)
 		return;
 
 	emc_params = profile->private_data;
