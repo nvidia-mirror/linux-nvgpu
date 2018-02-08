@@ -221,7 +221,7 @@ static int gp10b_tegra_railgate(struct device *dev)
 	struct gk20a_scale_profile *profile = platform->g->scale_profile;
 
 	/* remove emc frequency floor */
-	if (profile)
+	if (profile && ((struct tegra_bwmgr_client *)profile->private_data))
 		tegra_bwmgr_set_emc(
 			(struct tegra_bwmgr_client *)profile->private_data,
 			0, TEGRA_BWMGR_SET_EMC_FLOOR);
@@ -254,7 +254,7 @@ static int gp10b_tegra_unrailgate(struct device *dev)
 	}
 
 	/* to start with set emc frequency floor to max rate*/
-	if (profile)
+	if (profile && ((struct tegra_bwmgr_client *)profile->private_data))
 		tegra_bwmgr_set_emc(
 			(struct tegra_bwmgr_client *)profile->private_data,
 			tegra_bwmgr_get_max_emc_rate(),

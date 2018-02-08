@@ -1333,7 +1333,13 @@ static int gk20a_pm_railgate(struct device *dev)
 	int ret = 0;
 #ifdef CONFIG_DEBUG_FS
 	struct gk20a *g = get_gk20a(dev);
+#endif
 
+	/* if platform is already railgated, then just return */
+	if (platform->is_railgated && platform->is_railgated(dev))
+		return ret;
+
+#ifdef CONFIG_DEBUG_FS
 	g->pstats.last_rail_gate_start = jiffies;
 
 	if (g->pstats.railgating_cycle_count >= 1)
