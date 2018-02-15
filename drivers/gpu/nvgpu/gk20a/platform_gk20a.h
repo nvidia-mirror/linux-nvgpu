@@ -55,6 +55,8 @@ struct gk20a_platform {
 	/* Should be populated at probe. */
 	bool can_elpg;
 
+	unsigned long cached_rate;
+
 	/* Should be populated at probe. */
 	bool has_syncpoints;
 	/* Debugfs knob for forcing syncpt support off in runtime. */

@@ -53,11 +53,13 @@ gp10b_freq_table[GP10B_MAX_SUPPORTED_FREQS / GP10B_FREQ_SELECT_STEP];
 
 #define EMC_BW_RATIO  (TEGRA_GP10B_BW_PER_FREQ / TEGRA_DDR4_BW_PER_FREQ)
 
+#define GPCCLK_INIT_RATE 1000000000
+
 static struct {
 	char *name;
 	unsigned long default_rate;
 } tegra_gp10b_clocks[] = {
-	{"gpu", 1000000000},
+	{"gpu", GPCCLK_INIT_RATE},
 	{"gpu_sys", 204000000} };
 
 static void gr_gp10b_remove_sysfs(struct device *dev);
@@ -335,7 +337,7 @@ static unsigned long gp10b_get_clk_rate(struct device *dev)
 {
 	struct gk20a_platform *platform = gk20a_get_platform(dev);
 
-	return clk_get_rate(platform->clk[0]);
+	return platform->cached_rate;
 
 }
 
@@ -357,8 +359,14 @@ static long gp10b_round_clk_rate(struct device *dev, unsigned long rate)
 static int gp10b_set_clk_rate(struct device *dev, unsigned long rate)
 {
 	struct gk20a_platform *platform = gk20a_get_platform(dev);
+	int ret;
 
-	return clk_set_rate(platform->clk[0], rate);
+	ret = clk_set_rate(platform->clk[0], rate);
+
+	if (!ret)
+		platform->cached_rate = rate;
+
+	return ret;
 }
 
 static int gp10b_clk_get_freqs(struct device *dev,
@@ -415,6 +423,8 @@ struct gk20a_platform gp10b_tegra_platform = {
 	.enable_slcg		= true,
 	.enable_elcg		= true,
 	.enable_aelpg       = true,
+
+	.cached_rate = GPCCLK_INIT_RATE,
 
 	/* ptimer src frequency in hz*/
 	.ptimer_src_freq	= 31250000,
