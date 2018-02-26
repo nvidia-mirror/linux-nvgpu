@@ -1,7 +1,7 @@
 /*
  * GK20A Graphics FIFO (gr host)
  *
- * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -1552,20 +1552,25 @@ static bool gk20a_fifo_handle_mmu_fault(
 		 * syncpoints */
 
 		if (tsg) {
-			if (!g->fifo.deferred_reset_pending)
+			if (g->fifo.deferred_reset_pending) {
+				gk20a_disable_tsg(tsg);
+			} else {
 				verbose =
 				       gk20a_fifo_set_ctx_mmu_error_tsg(g, tsg);
-
-			gk20a_fifo_abort_tsg(g, tsg->tsgid, false);
+				gk20a_fifo_abort_tsg(g, tsg->tsgid, false);
+			}
 
 			/* put back the ref taken early above */
 			if (referenced_channel)
 				gk20a_channel_put(ch);
 		} else if (ch) {
 			if (referenced_channel) {
-				if (!g->fifo.deferred_reset_pending)
+				if (g->fifo.deferred_reset_pending) {
+					g->ops.fifo.disable_channel(ch);
+				} else {
 					verbose = gk20a_fifo_set_ctx_mmu_error_ch(g, ch);
-				gk20a_channel_abort(ch, false);
+					gk20a_channel_abort(ch, false);
+				}
 				gk20a_channel_put(ch);
 			} else {
 				gk20a_err(dev_from_gk20a(g),
