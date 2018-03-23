@@ -1,7 +1,7 @@
 /*
  * GK20A Platform (SoC) Interface
  *
- * Copyright (c) 2014-2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -94,6 +94,9 @@ struct gk20a_platform {
 
 	/* Delay before rail gated */
 	int railgate_delay;
+
+	/* LDIV slowdown factor */
+	u8 ldiv_slowdown_factor;
 
 	/* Second Level Clock Gating: true = enable false = disable */
 	bool enable_slcg;

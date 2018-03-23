@@ -1,7 +1,7 @@
 /*
  * GP10B Tegra Platform Interface
  *
- * Copyright (c) 2014-2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -426,6 +426,7 @@ struct gk20a_platform gp10b_tegra_platform = {
 
 	.cached_rate = GPCCLK_INIT_RATE,
 
+	.ldiv_slowdown_factor = SLOWDOWN_FACTOR_FPDIV_BY16,
 	/* ptimer src frequency in hz*/
 	.ptimer_src_freq	= 31250000,
 

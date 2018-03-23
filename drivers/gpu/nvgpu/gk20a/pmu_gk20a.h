@@ -3,7 +3,7 @@
  *
  * GK20A PMU (aka. gPMU outside gk20a context)
  *
- * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -33,7 +33,7 @@
 #define ZBC_MASK(i)			(~(~(0) << ((i)+1)) & 0xfffe)
 
 #define APP_VERSION_NC_3	21548462
-#define APP_VERSION_NC_2	20429989
+#define APP_VERSION_NC_2	23782727
 #define APP_VERSION_NC_1	20313802
 #define APP_VERSION_NC_0	20360931
 #define APP_VERSION_GM206	20652057

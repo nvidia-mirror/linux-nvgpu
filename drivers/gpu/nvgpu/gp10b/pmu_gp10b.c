@@ -1,7 +1,7 @@
 /*
  * GP10B PMU
  *
- * Copyright (c) 2015-2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2015-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -227,6 +227,7 @@ static void pmu_handle_gr_param_msg(struct gk20a *g, struct pmu_msg *msg,
 int gp10b_pg_gr_init(struct gk20a *g, u32 pg_engine_id)
 {
 	struct pmu_gk20a *pmu = &g->pmu;
+	struct gk20a_platform *platform = dev_get_drvdata(g->dev);
 	struct pmu_cmd cmd;
 	u32 seq;
 
@@ -235,12 +236,15 @@ int gp10b_pg_gr_init(struct gk20a *g, u32 pg_engine_id)
 		cmd.hdr.unit_id = PMU_UNIT_PG;
 		cmd.hdr.size = PMU_CMD_HDR_SIZE +
 				sizeof(struct pmu_pg_cmd_gr_init_param);
-		cmd.cmd.pg.gr_init_param.cmd_type =
+		cmd.cmd.pg.gr_init_param_v1.cmd_type =
 				PMU_PG_CMD_ID_PG_PARAM;
-		cmd.cmd.pg.gr_init_param.sub_cmd_id =
+		cmd.cmd.pg.gr_init_param_v1.sub_cmd_id =
 				PMU_PG_PARAM_CMD_GR_INIT_PARAM;
-		cmd.cmd.pg.gr_init_param.featuremask =
+		cmd.cmd.pg.gr_init_param_v1.featuremask =
 				PMU_PG_FEATURE_GR_POWER_GATING_ENABLED;
+
+		cmd.cmd.pg.gr_init_param_v1.ldiv_slowdown_factor =
+				platform->ldiv_slowdown_factor;
 
 		gp10b_dbg_pmu("cmd post PMU_PG_CMD_ID_PG_PARAM ");
 		gk20a_pmu_cmd_post(g, &cmd, NULL, NULL, PMU_COMMAND_QUEUE_HPQ,

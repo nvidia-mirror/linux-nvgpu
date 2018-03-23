@@ -1,7 +1,7 @@
 /*
  * GP10B specific sysfs files
  *
- * Copyright (c) 2016-2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -16,6 +16,7 @@
 #include <linux/platform_device.h>
 
 #include "gk20a/gk20a.h"
+#include "gk20a/pmu_gk20a.h"
 #include "gp10b_sysfs.h"
 
 #include <nvgpu/hw/gp10b/hw_gr_gp10b.h>
@@ -156,6 +157,58 @@ static ssize_t gfxp_wfi_timeout_count_read(struct device *dev,
 static DEVICE_ATTR(gfxp_wfi_timeout_count, ROOTRW,
 		gfxp_wfi_timeout_count_read, gfxp_wfi_timeout_count_store);
 
+static ssize_t ldiv_slowdown_factor_store(struct device *dev,
+	struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct gk20a *g = get_gk20a(dev);
+	struct gk20a_platform *platform = dev_get_drvdata(dev);
+	unsigned long val = 0;
+	int err;
+
+	if (kstrtoul(buf, 10, &val) < 0) {
+		dev_err(dev, "parse error for input SLOWDOWN factor\n");
+		return -EINVAL;
+	}
+
+	if ((val >= SLOWDOWN_FACTOR_FPDIV_BYMAX)) {
+		dev_err(dev, "Invalid SLOWDOWN factor\n");
+		return -EINVAL;
+	}
+
+	if (val == platform->ldiv_slowdown_factor)
+		return count;
+
+	if (!g->power_on) {
+		platform->ldiv_slowdown_factor = val;
+	} else {
+		err = gk20a_busy(g);
+		if (err)
+			return -EAGAIN;
+
+		platform->ldiv_slowdown_factor = val;
+
+		if (g->ops.pmu.pmu_pg_init_param)
+			g->ops.pmu.pmu_pg_init_param(g,
+						PMU_PG_ELPG_ENGINE_ID_GRAPHICS);
+
+		gk20a_idle(g);
+	}
+
+	return count;
+}
+
+static ssize_t ldiv_slowdown_factor_read(struct device *dev,
+	struct device_attribute *attr, char *buf)
+{
+	struct gk20a_platform *platform = dev_get_drvdata(dev);
+
+	return snprintf(buf, PAGE_SIZE, "%d\n", platform->ldiv_slowdown_factor);
+}
+
+static DEVICE_ATTR(ldiv_slowdown_factor, ROOTRW,
+			ldiv_slowdown_factor_read, ldiv_slowdown_factor_store);
+
+
 void gp10b_create_sysfs(struct device *dev)
 {
 	struct gk20a *g = get_gk20a(dev);
@@ -167,6 +220,7 @@ void gp10b_create_sysfs(struct device *dev)
 	error |= device_create_file(dev, &dev_attr_czf_bypass);
 	error |= device_create_file(dev, &dev_attr_pd_max_batches);
 	error |= device_create_file(dev, &dev_attr_gfxp_wfi_timeout_count);
+	error |= device_create_file(dev, &dev_attr_ldiv_slowdown_factor);
 	if (error)
 		dev_err(dev, "Failed to create sysfs attributes!\n");
 }
@@ -177,4 +231,5 @@ void gp10b_remove_sysfs(struct device *dev)
 	device_remove_file(dev, &dev_attr_czf_bypass);
 	device_remove_file(dev, &dev_attr_pd_max_batches);
 	device_remove_file(dev, &dev_attr_gfxp_wfi_timeout_count);
+	device_remove_file(dev, &dev_attr_ldiv_slowdown_factor);
 }
