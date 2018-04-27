@@ -144,11 +144,6 @@ int nvgpu_probe(struct gk20a *g,
 	if (err)
 		return err;
 
-
-	/* Initialise scaling */
-	if (IS_ENABLED(CONFIG_GK20A_DEVFREQ))
-		gk20a_scale_init(g->dev);
-
 	err = gk20a_secure_page_alloc(g->dev);
 	if (err)
 		dev_info(g->dev,

@@ -122,7 +122,7 @@ static void gp10b_tegra_scale_exit(struct device *dev)
 	struct gk20a_platform *platform = gk20a_get_platform(dev);
 	struct gk20a_scale_profile *profile = platform->g->scale_profile;
 
-	if (profile)
+	if (profile && profile->private_data)
 		tegra_bwmgr_unregister(
 			(struct tegra_bwmgr_client *)profile->private_data);
 }
@@ -314,7 +314,8 @@ static void gp10b_tegra_postscale(struct device *pdev,
 	unsigned long emc_rate;
 
 	gk20a_dbg_fn("");
-	if (profile && !gp10b_tegra_is_railgated(pdev)) {
+	if (profile && profile->private_data &&
+			!gp10b_tegra_is_railgated(pdev)) {
 		unsigned long emc_scale;
 
 		if (freq <= gp10b_freq_table[0])

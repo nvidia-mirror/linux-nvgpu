@@ -1053,6 +1053,13 @@ int gk20a_pm_finalize_poweron(struct device *dev)
 		goto done;
 	}
 
+	/* Initialise scaling: it will initialize scaling drive only once */
+	if (IS_ENABLED(CONFIG_GK20A_DEVFREQ)) {
+		gk20a_scale_init(dev);
+		if (platform->initscale)
+			platform->initscale(dev);
+	}
+
 	err = g->ops.chip_init_gpu_characteristics(g);
 	if (err) {
 		gk20a_err(dev, "failed to init gk20a gpu characteristics");
@@ -1107,13 +1114,6 @@ int gk20a_pm_finalize_poweron(struct device *dev)
 			gk20a_err(dev, "Failed to set PCIe bus speed!\n");
 			goto done;
 		}
-	}
-
-	/* Initialise scaling: it will initialize scaling drive only once */
-	if (IS_ENABLED(CONFIG_GK20A_DEVFREQ)) {
-		gk20a_scale_init(dev);
-		if (platform->initscale)
-			platform->initscale(dev);
 	}
 
 	g->sw_ready = true;
