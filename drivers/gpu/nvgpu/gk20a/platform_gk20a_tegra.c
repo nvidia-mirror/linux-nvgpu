@@ -48,6 +48,7 @@
 #include "platform_gk20a.h"
 #include "gk20a_scale.h"
 #include "gm20b/clk_gm20b.h"
+#include <soc/tegra/pmc.h>
 
 #define TEGRA_GK20A_BW_PER_FREQ 32
 #define TEGRA_GM20B_BW_PER_FREQ 64
@@ -77,16 +78,6 @@ struct gk20a_emc_params {
 };
 #endif
 
-static void __iomem *pmc = IO_ADDRESS(TEGRA_PMC_BASE);
-static inline u32 __maybe_unused pmc_read(unsigned long reg)
-{
-	return readl(pmc + reg);
-}
-
-static inline void __maybe_unused pmc_write(u32 val, unsigned long reg)
-{
-	writel_relaxed(val, pmc + reg);
-}
 #define MHZ_TO_HZ(x) ((x) * 1000000)
 #define HZ_TO_MHZ(x) ((x) / 1000000)
 
@@ -533,8 +524,8 @@ static int gm20b_tegra_railgate(struct device *dev)
 	udelay(10);
 
 	/* enable clamp */
-	pmc_write(0x1, PMC_GPU_RG_CNTRL_0);
-	pmc_read(PMC_GPU_RG_CNTRL_0);
+	tegra_pmc_writel_relaxed(0x1, PMC_GPU_RG_CNTRL_0);
+	tegra_pmc_readl(PMC_GPU_RG_CNTRL_0);
 
 	udelay(10);
 
@@ -652,8 +643,8 @@ static int gm20b_tegra_unrailgate(struct device *dev)
 
 	udelay(10);
 
-	pmc_write(0, PMC_GPU_RG_CNTRL_0);
-	pmc_read(PMC_GPU_RG_CNTRL_0);
+	tegra_pmc_writel_relaxed(0, PMC_GPU_RG_CNTRL_0);
+	tegra_pmc_readl(PMC_GPU_RG_CNTRL_0);
 
 	udelay(10);
 
@@ -944,10 +935,6 @@ static int gk20a_tegra_probe(struct device *dev)
 		if (ret)
 			return ret;
 	}
-
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0))
-	pmc = ioremap(TEGRA_PMC_BASE, 4096);
-#endif
 
 	return 0;
 }
