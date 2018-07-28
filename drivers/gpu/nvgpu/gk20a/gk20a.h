@@ -1427,6 +1427,7 @@ struct gk20a {
 
 	struct gk20a_worker {
 		struct nvgpu_thread poll_task;
+		nvgpu_atomic_t get;
 		nvgpu_atomic_t put;
 		struct nvgpu_cond wq;
 		struct nvgpu_list_node items;
