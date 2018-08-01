@@ -1564,7 +1564,7 @@ enum gk20a_nonstall_ops {
 
 /* register accessors */
 void __nvgpu_check_gpu_state(struct gk20a *g);
-void __gk20a_warn_on_no_regs(void);
+void nvgpu_report_no_regs(struct gk20a *g, const char *f, u32 r, u32 v);
 
 /* convenience */
 static inline struct gk20a *gk20a_from_as(struct gk20a_as *as)

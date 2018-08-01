@@ -64,9 +64,10 @@ void __nvgpu_check_gpu_state(struct gk20a *g)
 	}
 }
 
-void __gk20a_warn_on_no_regs(void)
+void nvgpu_report_no_regs(struct gk20a *g, const char *f, u32 r, u32 v)
 {
-	WARN_ONCE(1, "Attempted access to GPU regs after unmapping!");
+	nvgpu_err(g, "Attempted access to GPU regs after unmapping!");
+	nvgpu_err(g, "%s r=0x%08x v=0x%08x (failed)", f, r, v);
 }
 
 int gk20a_detect_chip(struct gk20a *g)
