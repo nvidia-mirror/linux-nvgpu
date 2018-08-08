@@ -22,7 +22,8 @@ void nvgpu_writel(struct gk20a *g, u32 r, u32 v)
 	struct nvgpu_os_linux *l = nvgpu_os_linux_from_gk20a(g);
 
 	if (unlikely(!l->regs)) {
-		nvgpu_report_no_regs(g, __func__, r, v);
+		__gk20a_warn_on_no_regs();
+		nvgpu_log(g, gpu_dbg_reg, "r=0x%x v=0x%x (failed)", r, v);
 	} else {
 		writel_relaxed(v, l->regs + r);
 		nvgpu_wmb();
@@ -46,7 +47,8 @@ u32 __nvgpu_readl(struct gk20a *g, u32 r)
 	u32 v = 0xffffffff;
 
 	if (unlikely(!l->regs)) {
-		nvgpu_report_no_regs(g, __func__, r, v);
+		__gk20a_warn_on_no_regs();
+		nvgpu_log(g, gpu_dbg_reg, "r=0x%x v=0x%x (failed)", r, v);
 	} else {
 		v = readl(l->regs + r);
 		nvgpu_log(g, gpu_dbg_reg, "r=0x%x v=0x%x", r, v);
@@ -60,7 +62,8 @@ void nvgpu_writel_check(struct gk20a *g, u32 r, u32 v)
 	struct nvgpu_os_linux *l = nvgpu_os_linux_from_gk20a(g);
 
 	if (unlikely(!l->regs)) {
-		nvgpu_report_no_regs(g, __func__, r, v);
+		__gk20a_warn_on_no_regs();
+		nvgpu_log(g, gpu_dbg_reg, "r=0x%x v=0x%x (failed)", r, v);
 	} else {
 		nvgpu_wmb();
 		do {
@@ -75,7 +78,8 @@ void nvgpu_bar1_writel(struct gk20a *g, u32 b, u32 v)
 	struct nvgpu_os_linux *l = nvgpu_os_linux_from_gk20a(g);
 
 	if (unlikely(!l->bar1)) {
-		nvgpu_report_no_regs(g, __func__, b, v);
+		__gk20a_warn_on_no_regs();
+		nvgpu_log(g, gpu_dbg_reg, "b=0x%x v=0x%x (failed)", b, v);
 	} else {
 		nvgpu_wmb();
 		writel_relaxed(v, l->bar1 + b);
@@ -89,7 +93,8 @@ u32 nvgpu_bar1_readl(struct gk20a *g, u32 b)
 	u32 v = 0xffffffff;
 
 	if (unlikely(!l->bar1)) {
-		nvgpu_report_no_regs(g, __func__, b, v);
+		__gk20a_warn_on_no_regs();
+		nvgpu_log(g, gpu_dbg_reg, "b=0x%x v=0x%x (failed)", b, v);
 	} else {
 		v = readl(l->bar1 + b);
 		nvgpu_log(g, gpu_dbg_reg, "b=0x%x v=0x%x", b, v);

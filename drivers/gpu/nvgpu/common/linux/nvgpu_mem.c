@@ -118,7 +118,7 @@ static void pramin_access_batch_rd_n(struct gk20a *g, u32 start, u32 words, u32 
 	u32 r = start, *dest_u32 = *arg;
 
 	if (!l->regs) {
-		nvgpu_report_no_regs(g, __func__, r, 0xffffffff);
+		__gk20a_warn_on_no_regs();
 		return;
 	}
 
@@ -196,7 +196,7 @@ static void pramin_access_batch_wr_n(struct gk20a *g, u32 start, u32 words, u32 
 	u32 r = start, *src_u32 = *arg;
 
 	if (!l->regs) {
-		nvgpu_report_no_regs(g, __func__, r, *src_u32);
+		__gk20a_warn_on_no_regs();
 		return;
 	}
 
@@ -271,7 +271,7 @@ static void pramin_access_batch_set(struct gk20a *g, u32 start, u32 words, u32 *
 	u32 r = start, repeat = **arg;
 
 	if (!l->regs) {
-		nvgpu_report_no_regs(g, __func__, r, repeat);
+		__gk20a_warn_on_no_regs();
 		return;
 	}
 
