@@ -1527,11 +1527,9 @@ static int __gk20a_channel_worker_wakeup(struct gk20a *g)
  * per finished work item. This is compared with the number of queued jobs,
  * which may be channels on the items list or any other types of work.
  */
-static bool __gk20a_channel_worker_pending(struct gk20a *g)
+static bool __gk20a_channel_worker_pending(struct gk20a *g, int get)
 {
-	bool pending =
-		nvgpu_atomic_read(&g->channel_worker.put) !=
-		nvgpu_atomic_read(&g->channel_worker.get);
+	bool pending = nvgpu_atomic_read(&g->channel_worker.put) != get;
 
 	/*
 	 * This would be the place for a nvgpu_smp_rmb() pairing
@@ -1548,10 +1546,10 @@ static bool __gk20a_channel_worker_pending(struct gk20a *g)
  * Flush all the work items in the queue one by one. This may block timeout
  * handling for a short while, as these are serialized.
  */
-static void gk20a_channel_worker_process(struct gk20a *g)
+static void gk20a_channel_worker_process(struct gk20a *g, int *get)
 {
 
-	while (__gk20a_channel_worker_pending(g)) {
+	while (__gk20a_channel_worker_pending(g, *get)) {
 		struct channel_gk20a *ch = NULL;
 
 		/*
@@ -1582,12 +1580,12 @@ static void gk20a_channel_worker_process(struct gk20a *g)
 			 * currently, so warn and ack the message.
 			 */
 			nvgpu_warn(g, "Spurious worker event!");
-			nvgpu_atomic_inc(&g->channel_worker.get);
+			++*get;
 			break;
 		}
 
 		gk20a_channel_worker_process_ch(ch);
-		nvgpu_atomic_inc(&g->channel_worker.get);
+		++*get;
 	}
 }
 
@@ -1601,6 +1599,7 @@ static int gk20a_channel_poll_worker(void *arg)
 	struct gk20a_worker *worker = &g->channel_worker;
 	unsigned long watchdog_interval = 100; /* milliseconds */
 	struct nvgpu_timeout timeout;
+	int get = 0;
 
 	nvgpu_log_fn(g, " ");
 
@@ -1611,11 +1610,11 @@ static int gk20a_channel_poll_worker(void *arg)
 
 		ret = NVGPU_COND_WAIT_INTERRUPTIBLE(
 				&worker->wq,
-				__gk20a_channel_worker_pending(g),
+				__gk20a_channel_worker_pending(g, get),
 				watchdog_interval);
 
 		if (ret == 0)
-			gk20a_channel_worker_process(g);
+			gk20a_channel_worker_process(g, &get);
 
 		if (nvgpu_timeout_peek_expired(&timeout)) {
 			gk20a_channel_poll_timeouts(g);
@@ -1668,7 +1667,6 @@ int nvgpu_channel_worker_init(struct gk20a *g)
 {
 	int err;
 
-	nvgpu_atomic_set(&g->channel_worker.get, 0);
 	nvgpu_atomic_set(&g->channel_worker.put, 0);
 	nvgpu_cond_init(&g->channel_worker.wq);
 	nvgpu_init_list_node(&g->channel_worker.items);
@@ -1686,27 +1684,11 @@ error_check:
 	return 0;
 }
 
-static int nvgpu_channel_worker_resume(struct gk20a *g)
-{
-	int err;
-
-	err = __nvgpu_channel_worker_start(g);
-	if (err) {
-		nvgpu_err(g, "failed to resume channel poller thread");
-	}
-	return err;
-}
-
 void nvgpu_channel_worker_deinit(struct gk20a *g)
 {
 	nvgpu_mutex_acquire(&g->channel_worker.start_lock);
 	nvgpu_thread_stop(&g->channel_worker.poll_task);
 	nvgpu_mutex_release(&g->channel_worker.start_lock);
-}
-
-static void nvgpu_channel_worker_suspend(struct gk20a *g)
-{
-	nvgpu_channel_worker_deinit(g);
 }
 
 /**
@@ -2198,8 +2180,6 @@ int gk20a_channel_suspend(struct gk20a *g)
 		}
 	}
 
-	nvgpu_channel_worker_suspend(g);
-
 	nvgpu_log_fn(g, "done");
 	return 0;
 }
@@ -2210,14 +2190,8 @@ int gk20a_channel_resume(struct gk20a *g)
 	u32 chid;
 	bool channels_in_use = false;
 	u32 active_runlist_ids = 0;
-	int err;
 
 	nvgpu_log_fn(g, " ");
-
-	err = nvgpu_channel_worker_resume(g);
-	if (err) {
-		return err;
-	}
 
 	for (chid = 0; chid < f->num_channels; chid++) {
 		if (gk20a_channel_get(&f->channel[chid])) {
