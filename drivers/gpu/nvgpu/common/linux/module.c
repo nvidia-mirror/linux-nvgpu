@@ -138,10 +138,10 @@ int gk20a_busy(struct gk20a *g)
 		nvgpu_mutex_release(&g->poweron_lock);
 	}
 
-	return 0;
 fail:
 	up_read(&l->busy_lock);
-	return ret;
+
+	return ret < 0 ? ret : 0;
 }
 
 void gk20a_idle_nosuspend(struct gk20a *g)
@@ -151,7 +151,6 @@ void gk20a_idle_nosuspend(struct gk20a *g)
 
 void gk20a_idle(struct gk20a *g)
 {
-	struct nvgpu_os_linux *l = nvgpu_os_linux_from_gk20a(g);
 	struct device *dev;
 
 	atomic_dec(&g->usage_count.atomic_var);
@@ -165,8 +164,6 @@ void gk20a_idle(struct gk20a *g)
 		pm_runtime_mark_last_busy(dev);
 		pm_runtime_put_sync_autosuspend(dev);
 	}
-
-	up_read(&l->busy_lock);
 }
 
 /*
@@ -432,7 +429,6 @@ int __gk20a_do_idle(struct gk20a *g, bool force_reset)
 	int target_ref_cnt = 0;
 	bool is_railgated;
 	int err = 0;
-	int locked;
 
 	/*
 	 * Hold back deterministic submits and changes to deterministic
@@ -441,16 +437,7 @@ int __gk20a_do_idle(struct gk20a *g, bool force_reset)
 	gk20a_channel_deterministic_idle(g);
 
 	/* acquire busy lock to block other busy() calls */
-	nvgpu_timeout_init(g, &timeout, GK20A_WAIT_FOR_IDLE_MS,
-			   NVGPU_TIMER_CPU_TIMER);
-	do {
-		locked = down_write_trylock(&l->busy_lock);
-		if (!locked)
-			nvgpu_msleep(2);
-	} while (!locked && !nvgpu_timeout_expired(&timeout));
-
-	if (!locked)
-		goto fail_write_lock;
+	down_write(&l->busy_lock);
 
 	/* acquire railgate lock to prevent unrailgate in midst of do_idle() */
 	nvgpu_mutex_acquire(&platform->railgate_lock);
@@ -554,7 +541,6 @@ fail_drop_usage_count:
 fail_timeout:
 	nvgpu_mutex_release(&platform->railgate_lock);
 	up_write(&l->busy_lock);
-fail_write_lock:
 	gk20a_channel_deterministic_unidle(g);
 	return -EBUSY;
 }
