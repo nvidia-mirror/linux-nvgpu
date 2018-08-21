@@ -81,6 +81,8 @@ static void nvgpu_init_vars(struct gk20a *g)
 
 	nvgpu_init_list_node(&g->boardobj_head);
 	nvgpu_init_list_node(&g->boardobjgrp_head);
+
+	__nvgpu_set_enabled(g, NVGPU_HAS_SYNCPOINTS, platform->has_syncpoints);
 }
 
 static void nvgpu_init_gr_vars(struct gk20a *g)
@@ -153,7 +155,6 @@ static void nvgpu_init_pm_vars(struct gk20a *g)
 	g->default_pri_timeout = platform->default_pri_timeout;
 	g->aggressive_sync_destroy = platform->aggressive_sync_destroy;
 	g->aggressive_sync_destroy_thresh = platform->aggressive_sync_destroy_thresh;
-	g->has_syncpoints = platform->has_syncpoints;
 #ifdef CONFIG_NVGPU_SUPPORT_CDE
 	g->has_cde = platform->has_cde;
 #endif

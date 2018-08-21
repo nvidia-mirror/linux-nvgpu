@@ -659,7 +659,7 @@ struct gk20a_channel_sync *gk20a_channel_sync_create(struct channel_gk20a *c,
 	bool user_managed)
 {
 #ifdef CONFIG_TEGRA_GK20A_NVHOST
-	if (gk20a_platform_has_syncpoints(c->g))
+	if (nvgpu_has_syncpoints(c->g))
 		return gk20a_channel_syncpt_create(c, user_managed);
 #endif
 	return gk20a_channel_semaphore_create(c, user_managed);
@@ -667,5 +667,15 @@ struct gk20a_channel_sync *gk20a_channel_sync_create(struct channel_gk20a *c,
 
 bool gk20a_channel_sync_needs_sync_framework(struct gk20a *g)
 {
-	return !gk20a_platform_has_syncpoints(g);
+	return !nvgpu_has_syncpoints(g);
+}
+
+bool nvgpu_has_syncpoints(struct gk20a *g)
+{
+#ifdef CONFIG_TEGRA_GK20A_NVHOST
+	return nvgpu_is_enabled(g, NVGPU_HAS_SYNCPOINTS) &&
+		!g->disable_syncpoints;
+#else
+	return false;
+#endif
 }
