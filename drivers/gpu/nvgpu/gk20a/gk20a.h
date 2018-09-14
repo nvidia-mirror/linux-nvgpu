@@ -145,6 +145,8 @@ enum gk20a_cbc_op {
 
 #define nvgpu_get_litter_value(g, v) (g)->ops.get_litter_value((g), v)
 
+#define MAX_TPC_PG_CONFIGS       3
+
 enum nvgpu_unit;
 
 enum nvgpu_flush_op;
@@ -1224,6 +1226,7 @@ struct gpu_ops {
 	} priv_ring;
 	struct {
 		int (*check_priv_security)(struct gk20a *g);
+		u32 (*fuse_status_opt_tpc_gpc)(struct gk20a *g, u32 gpc);
 	} fuse;
 	struct {
 		int (*init)(struct gk20a *g);
@@ -1516,7 +1519,7 @@ struct gk20a {
 	u32 tpc_pg_mask;
 	bool can_tpc_powergate;
 
-	u32 valid_tpc_mask;
+	u32 valid_tpc_mask[MAX_TPC_PG_CONFIGS];
 
 	struct nvgpu_bios bios;
 	bool bios_is_init;

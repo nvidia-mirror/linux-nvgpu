@@ -61,6 +61,7 @@
 #include "gp10b/pmu_gp10b.h"
 #include "gp10b/gr_gp10b.h"
 #include "gp10b/fuse_gp10b.h"
+#include "gm20b/fuse_gm20b.h"
 
 #include "gp106/pmu_gp106.h"
 #include "gp106/acr_gp106.h"
@@ -779,6 +780,7 @@ static const struct gpu_ops gv11b_ops = {
 	},
 	.fuse = {
 		.check_priv_security = gp10b_fuse_check_priv_security,
+		.fuse_status_opt_tpc_gpc = gm20b_fuse_status_opt_tpc_gpc,
 	},
 	.chip_init_gpu_characteristics = gv11b_init_gpu_characteristics,
 	.get_litter_value = gv11b_get_litter_value,

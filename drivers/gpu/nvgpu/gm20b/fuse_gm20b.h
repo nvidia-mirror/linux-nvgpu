@@ -33,5 +33,6 @@
 struct gk20a;
 
 int gm20b_fuse_check_priv_security(struct gk20a *g);
+u32 gm20b_fuse_status_opt_tpc_gpc(struct gk20a *g, u32 gpc);
 
 #endif

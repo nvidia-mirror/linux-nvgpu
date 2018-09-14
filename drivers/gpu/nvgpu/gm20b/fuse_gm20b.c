@@ -32,6 +32,11 @@
 
 #include <nvgpu/hw/gm20b/hw_fuse_gm20b.h>
 
+u32 gm20b_fuse_status_opt_tpc_gpc(struct gk20a *g, u32 gpc)
+{
+	return nvgpu_readl(g, fuse_status_opt_tpc_gpc_r(gpc));
+}
+
 int gm20b_fuse_check_priv_security(struct gk20a *g)
 {
 	u32 gcplex_config;
