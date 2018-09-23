@@ -16,6 +16,9 @@
 #ifndef NVGPU_SYSFS_H
 #define NVGPU_SYSFS_H
 
+/*  limit upper bound for MAX_SUBMIT_BOOST_TIME to 10 seconds */
+#define MAX_SUBMIT_BOOST_TIME	10000
+
 struct device;
 
 int nvgpu_create_sysfs(struct device *dev);

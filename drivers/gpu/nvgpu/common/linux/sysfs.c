@@ -963,7 +963,18 @@ static ssize_t submit_boost_time_store(struct device *dev,
 	if (kstrtoul(buf, 10, &val) < 0)
 		return -EINVAL;
 
-	g->submit_boost_time = val;
+	nvgpu_mutex_acquire(&g->submit_boost.boost_lock);
+
+	cancel_delayed_work_sync(&g->submit_boost.boost_work);
+
+	g->submit_boost.time = val < MAX_SUBMIT_BOOST_TIME ? val : 0;
+
+	if (g->submit_boost.time) {
+		schedule_delayed_work(&g->submit_boost.boost_work,
+			msecs_to_jiffies(g->submit_boost.time));
+	}
+
+	nvgpu_mutex_release(&g->submit_boost.boost_lock);
 
 	return count;
 }
@@ -973,7 +984,7 @@ static ssize_t submit_boost_time_read(struct device *dev,
 {
 	struct gk20a *g = get_gk20a(dev);
 
-	return sprintf(buf, "%d\n", g->submit_boost_time);
+	return sprintf(buf, "%d\n", g->submit_boost.time);
 }
 
 static DEVICE_ATTR(submit_boost_time, ROOTRW, submit_boost_time_read,
@@ -988,13 +999,11 @@ static ssize_t submit_boost_freq_store(struct device *dev,
 	if (kstrtoul(buf, 10, &val) < 0)
 		return -EINVAL;
 
-	g->submit_boost_freq = val;
+	nvgpu_mutex_acquire(&g->submit_boost.boost_lock);
 
-	if (val)
-		pm_qos_add_request(&g->gpu_pm_qos_req, PM_QOS_GPU_FREQ_MIN,
-				PM_QOS_DEFAULT_VALUE);
-	else
-		pm_qos_remove_request(&g->gpu_pm_qos_req);
+	g->submit_boost.freq = val;
+
+	nvgpu_mutex_release(&g->submit_boost.boost_lock);
 
 	return count;
 }
@@ -1004,7 +1013,7 @@ static ssize_t submit_boost_freq_read(struct device *dev,
 {
 	struct gk20a *g = get_gk20a(dev);
 
-	return sprintf(buf, "%d\n", g->submit_boost_freq);
+	return sprintf(buf, "%d\n", g->submit_boost.freq);
 }
 
 static DEVICE_ATTR(submit_boost_freq, ROOTRW, submit_boost_freq_read,

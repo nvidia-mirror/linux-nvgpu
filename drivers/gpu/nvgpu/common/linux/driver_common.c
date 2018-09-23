@@ -33,6 +33,7 @@
 #include "module.h"
 #include "os_linux.h"
 #include "sysfs.h"
+#include "channel.h"
 #include "ioctl.h"
 #include "gk20a/regops_gk20a.h"
 
@@ -63,6 +64,7 @@ static void nvgpu_init_vars(struct gk20a *g)
 	nvgpu_mutex_init(&g->poweron_lock);
 	nvgpu_mutex_init(&g->poweroff_lock);
 	nvgpu_mutex_init(&g->ctxsw_disable_lock);
+	nvgpu_mutex_init(&g->submit_boost.boost_lock);
 
 	l->regs_saved = l->regs;
 	l->bar1_saved = l->bar1;
@@ -83,6 +85,9 @@ static void nvgpu_init_vars(struct gk20a *g)
 	nvgpu_init_list_node(&g->boardobjgrp_head);
 
 	__nvgpu_set_enabled(g, NVGPU_HAS_SYNCPOINTS, platform->has_syncpoints);
+
+	INIT_DELAYED_WORK(&g->submit_boost.boost_work,
+		gk20a_channel_submit_boost_fn);
 }
 
 static void nvgpu_init_gr_vars(struct gk20a *g)

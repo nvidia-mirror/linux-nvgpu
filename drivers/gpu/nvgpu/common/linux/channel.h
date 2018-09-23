@@ -93,4 +93,6 @@ int gk20a_submit_channel_gpfifo(struct channel_gk20a *c,
 				struct gk20a_fence **fence_out,
 				struct fifo_profile_gk20a *profile);
 
+void gk20a_channel_submit_boost_fn(struct work_struct *work);
+
 #endif /* __NVGPU_CHANNEL_H__ */

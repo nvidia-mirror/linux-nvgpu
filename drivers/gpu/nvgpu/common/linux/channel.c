@@ -265,6 +265,44 @@ struct channel_gk20a *gk20a_open_new_channel_with_cb(struct gk20a *g,
 	return ch;
 }
 
+void gk20a_channel_submit_boost_fn(struct work_struct *work)
+{
+	struct delayed_work *delayed_work = to_delayed_work(work);
+	struct gk20a *g = container_of(delayed_work, struct gk20a,
+		submit_boost.boost_work);
+
+	nvgpu_mutex_acquire(&g->submit_boost.boost_lock);
+
+	if (g->submit_boost.freq && g->submit_boost.time) {
+		if (time_after(g->submit_boost.last_submit_complete,
+					g->submit_boost.last_boost_time)) {
+			if (!pm_qos_request_active(&g->submit_boost.qos_req)) {
+				pm_qos_add_request(&g->submit_boost.qos_req,
+					PM_QOS_GPU_FREQ_MIN,
+					g->submit_boost.freq);
+
+				g->submit_boost.last_boost_time = jiffies;
+			} else if (pm_qos_request(PM_QOS_GPU_FREQ_MIN) !=
+					g->submit_boost.freq) {
+				pm_qos_update_request(&g->submit_boost.qos_req,
+					g->submit_boost.freq);
+			}
+		}
+
+		schedule_delayed_work(&g->submit_boost.boost_work,
+			msecs_to_jiffies(g->submit_boost.time));
+	} else {
+		if (pm_qos_request_active(&g->submit_boost.qos_req))
+			pm_qos_remove_request(&g->submit_boost.qos_req);
+
+		/* bring both params to same state */
+		g->submit_boost.freq = 0;
+		g->submit_boost.time = 0;
+	}
+
+	nvgpu_mutex_release(&g->submit_boost.boost_lock);
+}
+
 static void nvgpu_channel_open_linux(struct channel_gk20a *ch)
 {
 }
@@ -403,6 +441,8 @@ int nvgpu_init_channel_support_linux(struct nvgpu_os_linux *l)
 	g->os_channel.destroy_os_fence_framework =
 		nvgpu_channel_destroy_os_fence_framework;
 
+	g->submit_boost.last_submit_complete = 0;
+
 	return 0;
 
 err_clean:
@@ -430,6 +470,11 @@ void nvgpu_remove_channel_support_linux(struct nvgpu_os_linux *l)
 	g->os_channel.init_os_fence_framework = NULL;
 	g->os_channel.signal_os_fence_framework = NULL;
 	g->os_channel.destroy_os_fence_framework = NULL;
+
+	g->submit_boost.freq = 0;
+	g->submit_boost.time = 0;
+
+	cancel_delayed_work_sync(&g->submit_boost.boost_work);
 }
 
 u32 nvgpu_get_gpfifo_entry_size(void)
@@ -998,10 +1043,7 @@ int gk20a_submit_channel_gpfifo(struct channel_gk20a *c,
 				post_fence ? post_fence->syncpt_id : 0,
 				post_fence ? post_fence->syncpt_value : 0);
 
-	if (g->submit_boost_freq) {
-		pm_qos_update_request_timeout(&g->gpu_pm_qos_req,
-				g->submit_boost_freq, g->submit_boost_time);
-	}
+	g->submit_boost.last_submit_complete = jiffies;
 
 	nvgpu_log_info(g, "post-submit put %d, get %d, size %d",
 		c->gpfifo.put, c->gpfifo.get, c->gpfifo.entry_num);

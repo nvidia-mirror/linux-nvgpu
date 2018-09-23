@@ -1368,11 +1368,15 @@ struct gk20a {
 
 	u32 emc3d_ratio;
 
-	u32 submit_boost_freq;
-
-	u32 submit_boost_time;
-
-	struct pm_qos_request gpu_pm_qos_req;
+	struct {
+		s32 freq;
+		u32 time;
+		unsigned long last_boost_time;
+		unsigned long last_submit_complete;
+		struct nvgpu_mutex boost_lock;
+		struct pm_qos_request qos_req;
+		struct delayed_work boost_work;
+	} submit_boost;
 
 	struct nvgpu_spinlock ltc_enabled_lock;
 
