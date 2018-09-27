@@ -1841,12 +1841,13 @@ int gr_gk20a_update_hwpm_ctxsw_mode(struct gk20a *g,
 
 	data |= pm_ctx->pm_mode;
 
-	nvgpu_mem_wr(g, gr_mem, ctxsw_prog_main_image_pm_o(), data);
-
-	if (ctxheader->gpu_va)
+	if (ctxheader->gpu_va) {
+		nvgpu_mem_wr(g, ctxheader, ctxsw_prog_main_image_pm_o(), data);
 		g->ops.gr.write_pm_ptr(g, ctxheader, virt_addr);
-	else
+	} else {
+		nvgpu_mem_wr(g, gr_mem, ctxsw_prog_main_image_pm_o(), data);
 		g->ops.gr.write_pm_ptr(g, gr_mem, virt_addr);
+	}
 
 	nvgpu_mem_end(g, ctxheader);
 	nvgpu_mem_end(g, gr_mem);
