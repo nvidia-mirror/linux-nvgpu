@@ -234,6 +234,27 @@ static int gv100_get_litter_value(struct gk20a *g, int value)
 	case GPU_LIT_GPC_PRIV_STRIDE:
 		ret = proj_gpc_priv_stride_v();
 		break;
+	case GPU_LIT_PERFMON_PMMGPCTPCA_DOMAIN_START:
+		ret = 2;
+		break;
+	case GPU_LIT_PERFMON_PMMGPCTPCB_DOMAIN_START:
+		ret = 9;
+		break;
+	case GPU_LIT_PERFMON_PMMGPCTPC_DOMAIN_COUNT:
+		ret = 7;
+		break;
+	case GPU_LIT_PERFMON_PMMFBP_LTC_DOMAIN_START:
+		ret = 2;
+		break;
+	case GPU_LIT_PERFMON_PMMFBP_LTC_DOMAIN_COUNT:
+		ret = 4;
+		break;
+	case GPU_LIT_PERFMON_PMMFBP_ROP_DOMAIN_START:
+		ret = 6;
+		break;
+	case GPU_LIT_PERFMON_PMMFBP_ROP_DOMAIN_COUNT:
+		ret = 2;
+		break;
 	default:
 		break;
 	}
