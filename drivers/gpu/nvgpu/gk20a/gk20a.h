@@ -46,6 +46,7 @@ struct nvgpu_warpstate;
 struct nvgpu_ctxsw_trace_filter;
 #endif
 
+#include <linux/notifier.h>
 #include <nvgpu/lock.h>
 #include <nvgpu/thread.h>
 #include <nvgpu/io.h>
@@ -1270,6 +1271,8 @@ struct gk20a {
 	 */
 	unsigned long *enabled_flags;
 
+	struct notifier_block nvgpu_reboot_nb;
+
 	nvgpu_atomic_t usage_count;
 
 	struct nvgpu_mutex ctxsw_disable_lock;
@@ -1640,7 +1643,6 @@ void gk20a_idle(struct gk20a *g);
 int __gk20a_do_idle(struct gk20a *g, bool force_reset);
 int __gk20a_do_unidle(struct gk20a *g);
 
-int gk20a_can_busy(struct gk20a *g);
 int gk20a_wait_for_idle(struct gk20a *g);
 
 #define NVGPU_GPU_ARCHITECTURE_SHIFT 4
