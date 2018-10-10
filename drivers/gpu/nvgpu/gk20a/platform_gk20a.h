@@ -43,6 +43,9 @@ struct gk20a_platform {
 	/* Populated by the gk20a driver before probing the platform. */
 	struct gk20a *g;
 
+	/* Make gpu be "can't be busy" during system shutdown. */
+	struct notifier_block reboot_notifier;
+
 	/* Should be populated at probe. */
 	bool is_fmodel;
 

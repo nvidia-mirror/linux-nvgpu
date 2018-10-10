@@ -1598,6 +1598,21 @@ int gk20a_secure_page_alloc(struct device *dev)
 	return err;
 }
 
+static int gk20a_reboot_cb(struct notifier_block *nb,
+			      unsigned long event, void *unused)
+{
+	struct gk20a_platform *platform = NULL;
+
+	platform = container_of(nb, struct gk20a_platform,
+			reboot_notifier);
+
+	down_write(&platform->g->busy_lock);
+	platform->g->driver_is_dying = 1;
+	up_write(&platform->g->busy_lock);
+
+	return NOTIFY_DONE;
+}
+
 static int gk20a_probe(struct platform_device *dev)
 {
 	struct gk20a *gk20a;
@@ -1635,6 +1650,15 @@ static int gk20a_probe(struct platform_device *dev)
 	}
 
 	set_gk20a(dev, gk20a);
+
+	platform->reboot_notifier.notifier_call = gk20a_reboot_cb;
+	err = register_reboot_notifier(&platform->reboot_notifier);
+	if (err) {
+		dev_err(&dev->dev,
+			"failed to register reboot notifier\n");
+		return err;
+	}
+
 	gk20a->dev = &dev->dev;
 
 	nvgpu_kmem_init(gk20a);
