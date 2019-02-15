@@ -614,6 +614,8 @@ static u32 clk_prog_construct_1x_master(struct gk20a *g,
 
 	pclkprog->p_vf_entries = (struct ctrl_clk_clk_prog_1x_master_vf_entry *)
 		kzalloc(vfsize, GFP_KERNEL);
+	if (!pclkprog->p_vf_entries)
+		return -ENOMEM;
 
 	memcpy(pclkprog->p_vf_entries, ptmpprog->p_vf_entries, vfsize);
 

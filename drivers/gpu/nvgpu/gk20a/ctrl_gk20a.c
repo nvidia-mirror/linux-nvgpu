@@ -459,6 +459,8 @@ static int nvgpu_gpu_ioctl_wait_for_pause(struct gk20a *g,
 	sm_count = g->gr.gpc_count * g->gr.tpc_count;
 	size = sm_count * sizeof(struct warpstate);
 	w_state = kzalloc(size, GFP_KERNEL);
+	if (w_state == NULL)
+		return -ENOMEM;
 
     /* Wait for the SMs to reach full stop. This condition is:
      * 1) All SMs with valid warps must be in the trap handler (SM_IN_TRAP_MODE)

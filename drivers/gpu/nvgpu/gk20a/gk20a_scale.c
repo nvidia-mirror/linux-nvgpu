@@ -334,6 +334,8 @@ void gk20a_scale_init(struct device *dev)
 		return;
 
 	profile = kzalloc(sizeof(*profile), GFP_KERNEL);
+	if (!profile)
+		return;
 
 	profile->dev = dev;
 	profile->dev_stat.busy = false;

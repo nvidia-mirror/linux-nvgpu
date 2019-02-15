@@ -571,8 +571,19 @@ static int ecc_stat_create(struct device *dev,
 	dev_attr_array = kzalloc(sizeof(struct device_attribute) * num_hw_units, GFP_KERNEL);
 	ecc_stat->counters = kzalloc(sizeof(u32) * num_hw_units, GFP_KERNEL);
 	ecc_stat->names = kzalloc(sizeof(char *) * num_hw_units, GFP_KERNEL);
+
+	if (!dev_attr_array || !ecc_stat->counters || !ecc_stat->names) {
+		error = -ENOMEM;
+		goto clean_up;
+	}
+
 	for (hw_unit = 0; hw_unit < num_hw_units; hw_unit++) {
 		ecc_stat->names[hw_unit] = kzalloc(sizeof(char) * ECC_STAT_NAME_MAX_SIZE, GFP_KERNEL);
+		if (!ecc_stat->names[hw_unit]) {
+			hw_unit--;
+			error = -ENOMEM;
+			goto clean_up;
+		}
 	}
 
 	for (hw_unit = 0; hw_unit < num_hw_units; hw_unit++) {
@@ -605,6 +616,15 @@ static int ecc_stat_create(struct device *dev,
 	hash_add(ecc_hash_table,
 		&ecc_stat->hash_node,
 		hash_key);
+	return 0;
+
+clean_up:
+	for (;hw_unit >= 0; hw_unit--) {
+		kfree(ecc_stat->names[hw_unit]);
+	}
+	kfree(ecc_stat->names);
+	kfree(ecc_stat->counters);
+	kfree(dev_attr_array);
 
 	return error;
 }

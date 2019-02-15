@@ -3593,6 +3593,9 @@ static int gr_gk20a_init_gr_config(struct gk20a *g, struct gr_gk20a *gr)
 
 	gr->sm_to_cluster = kzalloc(gr->gpc_count * gr->tpc_count *
 							sizeof(struct sm_info), GFP_KERNEL);
+	if (!gr->sm_to_cluster)
+		goto clean_up;
+
 	gr->no_of_sm = 0;
 
 	gk20a_dbg_info("fbps: %d", gr->num_fbps);
