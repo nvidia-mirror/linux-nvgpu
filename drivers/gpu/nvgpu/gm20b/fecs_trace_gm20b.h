@@ -13,11 +13,11 @@
  * more details.
  */
 
-#ifndef _NVGPU_FECS_TRACE_GP10B_H_
-#define _NVGPU_FECS_TRACE_GP10B_H_
+#ifndef _NVGPU_FECS_TRACE_GM20B_H_
+#define _NVGPU_FECS_TRACE_GM20B_H_
 
 struct gpu_ops;
 
-int gp10b_init_fecs_trace_ops(struct gpu_ops *);
+int gm20b_init_fecs_trace_ops(struct gpu_ops *);
 
 #endif

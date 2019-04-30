@@ -16,11 +16,11 @@
 #include "gk20a/gk20a.h"
 #include "gk20a/fecs_trace_gk20a.h"
 
-#include <nvgpu/hw/gp10b/hw_ctxsw_prog_gp10b.h>
-#include <nvgpu/hw/gp10b/hw_gr_gp10b.h>
+#include <nvgpu/hw/gm20b/hw_ctxsw_prog_gm20b.h>
+#include <nvgpu/hw/gm20b/hw_gr_gm20b.h>
 
 #ifdef CONFIG_GK20A_CTXSW_TRACE
-static int gp10b_fecs_trace_flush(struct gk20a *g)
+static int gm20b_fecs_trace_flush(struct gk20a *g)
 {
 	struct fecs_method_op_gk20a op = {
 		.mailbox = { .id = 0, .data = 0,
@@ -42,13 +42,13 @@ static int gp10b_fecs_trace_flush(struct gk20a *g)
 	return err;
 }
 
-void gp10b_init_fecs_trace_ops(struct gpu_ops *ops)
+void gm20b_init_fecs_trace_ops(struct gpu_ops *ops)
 {
 	gk20a_init_fecs_trace_ops(ops);
-	ops->fecs_trace.flush = gp10b_fecs_trace_flush;
+	ops->fecs_trace.flush = gm20b_fecs_trace_flush;
 }
 #else
-void gp10b_init_fecs_trace_ops(struct gpu_ops *ops)
+void gm20b_init_fecs_trace_ops(struct gpu_ops *ops)
 {
 }
 #endif /* CONFIG_GK20A_CTXSW_TRACE */

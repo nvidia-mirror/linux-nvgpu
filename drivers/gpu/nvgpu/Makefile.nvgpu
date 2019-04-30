@@ -84,6 +84,7 @@ nvgpu-y := \
 	gm20b/debug_gm20b.o \
 	gm20b/cde_gm20b.o \
 	gm20b/therm_gm20b.o \
+	gm20b/fecs_trace_gm20b.o \
 	gm206/bios_gm206.o \
 	boardobj/boardobj.o \
 	boardobj/boardobjgrp.o \
@@ -145,7 +146,6 @@ nvgpu-y += \
 	gp10b/regops_gp10b.o \
 	gp10b/cde_gp10b.o \
 	gp10b/therm_gp10b.o \
-	gp10b/fecs_trace_gp10b.o \
 	gp10b/gp10b_sysfs.o \
 	gp10b/gp10b.o \
 	gp106/hal_gp106.o \

@@ -24,7 +24,6 @@
 #include "gk20a/ctrl_gk20a.h"
 
 #include "gp10b/gr_gp10b.h"
-#include "gp10b/fecs_trace_gp10b.h"
 #include "gp10b/mc_gp10b.h"
 #include "gp10b/mm_gp10b.h"
 #include "gp10b/ce_gp10b.h"
@@ -37,6 +36,7 @@
 #include "gm20b/gr_gm20b.h"
 #include "gm20b/fifo_gm20b.h"
 #include "gm20b/pmu_gm20b.h"
+#include "gm20b/fecs_trace_gm20b.h"
 
 #include "gp106/clk_gp106.h"
 #include "gp106/clk_arb_gp106.h"
@@ -226,7 +226,7 @@ int gp106_init_hal(struct gk20a *g)
 	gops->pmupstate = true;
 	gp10b_init_mc(gops);
 	gp106_init_gr(gops);
-	gp10b_init_fecs_trace_ops(gops);
+	gm20b_init_fecs_trace_ops(gops);
 	gp106_init_ltc(gops);
 	gp106_init_fb(gops);
 	gp106_init_fifo(gops);

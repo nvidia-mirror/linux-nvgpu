@@ -39,6 +39,8 @@
 #include "cde_gm20b.h"
 #include "therm_gm20b.h"
 
+#include "fecs_trace_gm20b.h"
+
 #include <nvgpu/hw/gm20b/hw_proj_gm20b.h>
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 4, 0)
@@ -224,6 +226,7 @@ int gm20b_init_hal(struct gk20a *g)
 	gm20b_init_mc(gops);
 	gm20b_init_ltc(gops);
 	gm20b_init_gr(gops);
+	gm20b_init_fecs_trace_ops(gops);
 	gm20b_init_ltc(gops);
 	gm20b_init_fb(gops);
 	gm20b_init_fifo(gops);
