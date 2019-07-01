@@ -1,7 +1,7 @@
 /*
  * GM20B Clocks
  *
- * Copyright (c) 2014-2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -377,8 +377,7 @@ static void clk_config_dvfs(struct gk20a *g, struct pll *gpll)
 	struct na_dvfs *d = &gpll->dvfs;
 	struct clk* clk;
 
-	clk = g->clk.tegra_clk;
-	clk = clk_get_parent(clk);
+	clk = g->clk.tegra_clk_parent;
 
 	d->mv = tegra_dvfs_predict_mv_at_hz_cur_tfloor(clk,
 			rate_gpc2clk_to_gpu(gpll->freq));
@@ -1138,7 +1137,7 @@ static int gm20b_init_clk_setup_sw(struct gk20a *g)
 	 * GPCPLL bus (gbus). The latter can be accessed as GPU clock parent.
 	 * Respectively the grandparent is PLL reference clock.
 	 */
-	c = clk_get_parent(clk->tegra_clk);
+	c = g->clk.tegra_clk_parent;
 
 #ifdef CONFIG_TEGRA_CLK_FRAMEWORK
 	ref = clk_get_parent(clk_get_parent(c));
@@ -1268,7 +1267,7 @@ static long gm20b_round_rate(struct clk_hw *hw, unsigned long rate,
 	struct pll tmp_pll;
 	unsigned long maxrate;
 
-	maxrate = tegra_dvfs_get_maxrate(clk_get_parent(clk->tegra_clk));
+	maxrate = tegra_dvfs_get_maxrate(clk->tegra_clk_parent);
 	if (rate > maxrate)
 		rate = maxrate;
 
@@ -1504,17 +1503,18 @@ static struct tegra_clk_export_ops gm20b_clk_export_ops = {
 static int gm20b_clk_register_export_ops(struct gk20a *g)
 {
 	int ret;
-	struct clk *c;
+	struct clk *c, *cp;
 
 	if (gm20b_clk_export_ops.data)
 		return 0;
 
 	gm20b_clk_export_ops.data = (void *)g;
 	c = g->clk.tegra_clk;
-	if (!c || !clk_get_parent(c))
+	cp = g->clk.tegra_clk_parent;
+	if (!c || !cp)
 		return -ENOSYS;
 
-	ret = tegra_clk_register_export_ops(clk_get_parent(c),
+	ret = tegra_clk_register_export_ops(cp,
 					    &gm20b_clk_export_ops);
 
 	return ret;

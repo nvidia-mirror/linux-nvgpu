@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -21,7 +21,7 @@
 struct clk *gk20a_clk_get(struct gk20a *g)
 {
 	if (!g->clk.tegra_clk) {
-		struct clk *clk;
+		struct clk *clk, *clk_parent;
 		char clk_dev_id[32];
 		struct device *dev = dev_from_gk20a(g);
 
@@ -33,7 +33,16 @@ struct clk *gk20a_clk_get(struct gk20a *g)
 				  clk_dev_id);
 			return NULL;
 		}
+
+		clk_parent = clk_get_parent(clk);
+		if (IS_ERR_OR_NULL(clk_parent)) {
+			gk20a_err(dev, "fail to get tegra gpu parent clk %s/gpu\n",
+				  clk_dev_id);
+			return NULL;
+		}
+
 		g->clk.tegra_clk = clk;
+		g->clk.tegra_clk_parent = clk_parent;
 	}
 
 	return g->clk.tegra_clk;
