@@ -1,26 +1,32 @@
 /*
  * GK20A Graphics Context
  *
- * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2018, NVIDIA CORPORATION.  All rights reserved.
  *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms and conditions of the GNU General Public License,
- * version 2, as published by the Free Software Foundation.
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
  *
- * This program is distributed in the hope it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
- * more details.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
  */
-#ifndef __GR_CTX_GK20A_H__
-#define __GR_CTX_GK20A_H__
+#ifndef NVGPU_GK20A_GR_CTX_GK20A_H
+#define NVGPU_GK20A_GR_CTX_GK20A_H
 
-/* production netlist, one and only one from below */
-/*#undef GK20A_NETLIST_IMAGE_FW_NAME*/
-#define GK20A_NETLIST_IMAGE_FW_NAME GK20A_NETLIST_IMAGE_B
+#include <nvgpu/kmem.h>
+
+struct gr_gk20a;
 
 /* emulation netlists, match majorV with HW */
 #define GK20A_NETLIST_IMAGE_A	"NETA_img.bin"
@@ -98,6 +104,9 @@ union __max_name {
 #define NETLIST_REGIONID_NVPERF_PMA             30
 #define NETLIST_REGIONID_CTXREG_PMROP           31
 #define NETLIST_REGIONID_CTXREG_PMUCGPC         32
+#define NETLIST_REGIONID_CTXREG_ETPC            33
+#define NETLIST_REGIONID_SW_BUNDLE64_INIT	34
+#define NETLIST_REGIONID_NVPERF_PMCAU		35
 
 struct netlist_region {
 	u32 region_id;
@@ -119,6 +128,11 @@ struct av_gk20a {
 	u32 addr;
 	u32 value;
 };
+struct av64_gk20a {
+	u32 addr;
+	u32 value_lo;
+	u32 value_hi;
+};
 struct aiv_gk20a {
 	u32 addr;
 	u32 index;
@@ -132,6 +146,10 @@ struct av_list_gk20a {
 	struct av_gk20a *l;
 	u32 count;
 };
+struct av64_list_gk20a {
+	struct av64_gk20a *l;
+	u32 count;
+};
 struct u32_list_gk20a {
 	u32 *l;
 	u32 count;
@@ -143,23 +161,31 @@ struct ctxsw_buf_offset_map_entry {
 };
 
 static inline
-struct av_gk20a *alloc_av_list_gk20a(struct av_list_gk20a *avl)
+struct av_gk20a *alloc_av_list_gk20a(struct gk20a *g, struct av_list_gk20a *avl)
 {
-	avl->l = kzalloc(avl->count * sizeof(*avl->l), GFP_KERNEL);
+	avl->l = nvgpu_kzalloc(g, avl->count * sizeof(*avl->l));
 	return avl->l;
 }
 
 static inline
-struct aiv_gk20a *alloc_aiv_list_gk20a(struct aiv_list_gk20a *aivl)
+struct av64_gk20a *alloc_av64_list_gk20a(struct gk20a *g, struct av64_list_gk20a *avl)
 {
-	aivl->l = kzalloc(aivl->count * sizeof(*aivl->l), GFP_KERNEL);
+	avl->l = nvgpu_kzalloc(g, avl->count * sizeof(*avl->l));
+	return avl->l;
+}
+
+static inline
+struct aiv_gk20a *alloc_aiv_list_gk20a(struct gk20a *g,
+				       struct aiv_list_gk20a *aivl)
+{
+	aivl->l = nvgpu_kzalloc(g, aivl->count * sizeof(*aivl->l));
 	return aivl->l;
 }
 
 static inline
-u32 *alloc_u32_list_gk20a(struct u32_list_gk20a *u32l)
+u32 *alloc_u32_list_gk20a(struct gk20a *g, struct u32_list_gk20a *u32l)
 {
-	u32l->l = kzalloc(u32l->count * sizeof(*u32l->l), GFP_KERNEL);
+	u32l->l = nvgpu_kzalloc(g, u32l->count * sizeof(*u32l->l));
 	return u32l->l;
 }
 
@@ -177,4 +203,4 @@ int gr_gk20a_init_ctx_vars_sim(struct gk20a *g, struct gr_gk20a *gr);
 struct gpu_ops;
 void gk20a_init_gr_ctx(struct gpu_ops *gops);
 
-#endif /*__GR_CTX_GK20A_H__*/
+#endif /*NVGPU_GK20A_GR_CTX_GK20A_H*/
