@@ -1237,6 +1237,7 @@ static int alloc_gmmu_pages(struct vm_gk20a *vm, u32 order,
 	u32 num_pages = 1 << order;
 	u32 len = num_pages * PAGE_SIZE;
 	int err;
+	enum dma_attr attr = DMA_ATTR_FORCE_CONTIGUOUS;
 
 	gk20a_dbg_fn("");
 
@@ -1247,12 +1248,10 @@ static int alloc_gmmu_pages(struct vm_gk20a *vm, u32 order,
 	 * On arm32 we're limited by vmalloc space, so we do not map pages by
 	 * default.
 	 */
-	if (IS_ENABLED(CONFIG_ARM64))
-		err = gk20a_gmmu_alloc(g, len, &entry->mem);
-	else
-		err = gk20a_gmmu_alloc_attr(g, DMA_ATTR_NO_KERNEL_MAPPING,
-				len, &entry->mem);
+	if (!IS_ENABLED(CONFIG_ARM64))
+		attr |= DMA_ATTR_NO_KERNEL_MAPPING;
 
+	gk20a_gmmu_alloc_attr(g, attr, len, &entry->mem);
 
 	if (err) {
 		gk20a_err(d, "memory allocation failed");
@@ -1266,6 +1265,7 @@ void free_gmmu_pages(struct vm_gk20a *vm,
 		     struct gk20a_mm_entry *entry)
 {
 	struct gk20a *g = gk20a_from_vm(vm);
+	enum dma_attr attr = DMA_ATTR_FORCE_CONTIGUOUS;
 
 	gk20a_dbg_fn("");
 
@@ -1284,11 +1284,10 @@ void free_gmmu_pages(struct vm_gk20a *vm,
 	 * On arm32 we're limited by vmalloc space, so we do not map pages by
 	 * default.
 	 */
-	if (IS_ENABLED(CONFIG_ARM64))
-		gk20a_gmmu_free(g, &entry->mem);
-	else
-		gk20a_gmmu_free_attr(g, DMA_ATTR_NO_KERNEL_MAPPING,
-				&entry->mem);
+	if (!IS_ENABLED(CONFIG_ARM64))
+		attr |= DMA_ATTR_NO_KERNEL_MAPPING;
+
+	gk20a_gmmu_free_attr(g, attr, &entry->mem);
 }
 
 int map_gmmu_pages(struct gk20a *g, struct gk20a_mm_entry *entry)
@@ -3987,7 +3986,7 @@ static int update_gmmu_ptes_locked(struct vm_gk20a *vm,
 
 	unmap_gmmu_pages(g, &vm->pdb);
 
-	smp_mb();
+	mb();
 
 	gk20a_dbg_fn("done");
 
