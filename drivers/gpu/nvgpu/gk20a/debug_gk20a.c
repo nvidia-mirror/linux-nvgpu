@@ -293,7 +293,7 @@ void gk20a_debug_init(struct device *dev, const char *debugfs_symlink)
 			debugfs_create_bool("bypass_smmu",
 					S_IRUGO|S_IWUSR,
 					platform->debugfs,
-					&g->mm.bypass_smmu);
+					&g->force_bypass_smmu);
 	g->debugfs_disable_bigpage =
 			debugfs_create_bool("disable_bigpage",
 					S_IRUGO|S_IWUSR,

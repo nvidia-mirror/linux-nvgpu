@@ -998,6 +998,11 @@ int gk20a_init_mm_setup_sw(struct gk20a *g)
 	mm->g = g;
 	nvgpu_mutex_init(&mm->l2_op_lock);
 
+	if (device_is_iommuable(dev_from_gk20a(g)) && g->force_bypass_smmu) {
+		g->mm.bypass_smmu = true;
+		g->mm.disable_bigpage = true;
+	}
+
 	/*TBD: make channel vm size configurable */
 	mm->channel.user_size = NV_MM_DEFAULT_USER_SIZE -
 		NV_MM_DEFAULT_KERNEL_SIZE;
@@ -1237,12 +1242,16 @@ static int alloc_gmmu_pages(struct vm_gk20a *vm, u32 order,
 	u32 num_pages = 1 << order;
 	u32 len = num_pages * PAGE_SIZE;
 	int err;
-	enum dma_attr attr = DMA_ATTR_FORCE_CONTIGUOUS;
+	enum dma_attr attr = 0;
 
 	gk20a_dbg_fn("");
 
 	if (g->is_fmodel)
 		return alloc_gmmu_phys_pages(vm, order, entry);
+
+	if (g->mm.has_physical_mode && g->mm.bypass_smmu) {
+		attr |= DMA_ATTR_FORCE_CONTIGUOUS;
+	}
 
 	/*
 	 * On arm32 we're limited by vmalloc space, so we do not map pages by
@@ -1265,7 +1274,7 @@ void free_gmmu_pages(struct vm_gk20a *vm,
 		     struct gk20a_mm_entry *entry)
 {
 	struct gk20a *g = gk20a_from_vm(vm);
-	enum dma_attr attr = DMA_ATTR_FORCE_CONTIGUOUS;
+	enum dma_attr attr = 0;
 
 	gk20a_dbg_fn("");
 
@@ -1278,6 +1287,10 @@ void free_gmmu_pages(struct vm_gk20a *vm,
 	if (g->is_fmodel) {
 		free_gmmu_phys_pages(vm, entry);
 		return;
+	}
+
+	if (g->mm.has_physical_mode && g->mm.bypass_smmu) {
+		attr |= DMA_ATTR_FORCE_CONTIGUOUS;
 	}
 
 	/*
@@ -3557,7 +3570,7 @@ u64 gk20a_pde_addr(struct gk20a *g, struct gk20a_mm_entry *entry)
 {
 	u64 base;
 
-	if (g->mm.has_physical_mode)
+	if (g->mm.has_physical_mode && g->mm.bypass_smmu)
 		base = sg_phys(entry->mem.sgt->sgl);
 	else
 		base = gk20a_mem_get_base_addr(g, &entry->mem, 0);
@@ -4980,7 +4993,7 @@ void gk20a_free_inst_block(struct gk20a *g, struct mem_desc *inst_block)
 u64 gk20a_mm_inst_block_addr(struct gk20a *g, struct mem_desc *inst_block)
 {
 	u64 addr;
-	if (g->mm.has_physical_mode)
+	if (g->mm.has_physical_mode && g->mm.bypass_smmu)
 		addr = gk20a_mem_phys(inst_block);
 	else
 		addr = gk20a_mem_get_base_addr(g, inst_block, 0);

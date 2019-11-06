@@ -943,6 +943,7 @@ struct gk20a {
 	bool forced_idle;
 	bool forced_reset;
 	bool allow_all;
+	bool force_bypass_smmu;
 
 	u32 emc3d_ratio;
 
