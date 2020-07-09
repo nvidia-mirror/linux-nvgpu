@@ -490,9 +490,6 @@ static int gk20a_ctxsw_debugfs_ring_open(struct inode *inode,
 {
 	struct gk20a **p;
 
-	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
-
 	p = __seq_open_private(file, &gk20a_fecs_trace_debugfs_ring_seq_ops,
 		sizeof(struct gk20a *));
 	if (!p)
