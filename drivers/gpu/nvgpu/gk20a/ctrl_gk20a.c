@@ -111,6 +111,7 @@ gk20a_ctrl_ioctl_gpu_characteristics(
 	struct nvgpu_gpu_get_characteristics *request)
 {
 	struct nvgpu_gpu_characteristics *pgpu = &g->gpu_characteristics;
+	struct nvgpu_gpu_characteristics gpu_chars;
 	long err = 0;
 
 	if (request->gpu_characteristics_buf_size > 0) {
@@ -119,9 +120,15 @@ gk20a_ctrl_ioctl_gpu_characteristics(
 		if (write_size > request->gpu_characteristics_buf_size)
 			write_size = request->gpu_characteristics_buf_size;
 
+		memcpy(&gpu_chars, pgpu, sizeof(*pgpu));
+
+		if (!capable(CAP_SYS_NICE)) {
+			gpu_chars.flags &= ~NVGPU_GPU_FLAGS_SUPPORT_RESCHEDULE_RUNLIST;
+		}
+
 		err = copy_to_user((void __user *)(uintptr_t)
 				   request->gpu_characteristics_buf_addr,
-				   pgpu, write_size);
+				   &gpu_chars, write_size);
 	}
 
 	if (err == 0)
