@@ -1,19 +1,25 @@
 /*
  * GK20A Graphics Context Pri Register Addressing
  *
- * Copyright (c) 2014-2016, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2018, NVIDIA CORPORATION.  All rights reserved.
  *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms and conditions of the GNU General Public License,
- * version 2, as published by the Free Software Foundation.
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
  *
- * This program is distributed in the hope it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
- * more details.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
  */
 #ifndef GR_PRI_GK20A_H
 #define GR_PRI_GK20A_H
@@ -53,7 +59,7 @@ static inline bool pri_is_gpc_addr(struct gk20a *g, u32 addr)
 	u32 gpc_stride = nvgpu_get_litter_value(g, GPU_LIT_GPC_STRIDE);
 	u32 num_gpcs = nvgpu_get_litter_value(g, GPU_LIT_NUM_GPCS);
 	return	((addr >= gpc_base) &&
-		 (addr < gpc_base) + num_gpcs * gpc_stride) ||
+		 (addr < gpc_base + num_gpcs * gpc_stride)) ||
 		pri_is_gpc_addr_shared(g, addr);
 }
 static inline u32 pri_get_gpc_num(struct gk20a *g, u32 addr)
@@ -109,6 +115,10 @@ static inline u32 pri_tpccs_addr_mask(u32 addr)
 {
 	return addr & ((1 << pri_tpccs_addr_width()) - 1);
 }
+static inline u32 pri_fbpa_addr_mask(struct gk20a *g, u32 addr)
+{
+	return addr & (nvgpu_get_litter_value(g, GPU_LIT_FBPA_STRIDE) - 1);
+}
 static inline u32 pri_tpc_addr(struct gk20a *g, u32 addr, u32 gpc, u32 tpc)
 {
 	u32 gpc_base = nvgpu_get_litter_value(g, GPU_LIT_GPC_BASE);
@@ -127,7 +137,27 @@ static inline bool pri_is_tpc_addr_shared(struct gk20a *g, u32 addr)
 		(addr < (tpc_in_gpc_shared_base +
 			 tpc_in_gpc_stride));
 }
-
+static inline u32 pri_fbpa_addr(struct gk20a *g, u32 addr, u32 fbpa)
+{
+	return (nvgpu_get_litter_value(g, GPU_LIT_FBPA_BASE) + addr +
+			(fbpa * nvgpu_get_litter_value(g, GPU_LIT_FBPA_STRIDE)));
+}
+static inline bool pri_is_fbpa_addr_shared(struct gk20a *g, u32 addr)
+{
+	u32 fbpa_shared_base = nvgpu_get_litter_value(g, GPU_LIT_FBPA_SHARED_BASE);
+	u32 fbpa_stride = nvgpu_get_litter_value(g, GPU_LIT_FBPA_STRIDE);
+	return ((addr >= fbpa_shared_base) &&
+		(addr < (fbpa_shared_base + fbpa_stride)));
+}
+static inline bool pri_is_fbpa_addr(struct gk20a *g, u32 addr)
+{
+	u32 fbpa_base = nvgpu_get_litter_value(g, GPU_LIT_FBPA_BASE);
+	u32 fbpa_stride = nvgpu_get_litter_value(g, GPU_LIT_FBPA_STRIDE);
+	u32 num_fbpas = nvgpu_get_litter_value(g, GPU_LIT_NUM_FBPAS);
+	return (((addr >= fbpa_base) &&
+		(addr < (fbpa_base + num_fbpas * fbpa_stride)))
+		|| pri_is_fbpa_addr_shared(g, addr));
+}
 /*
  * BE pri addressing
  */
@@ -195,29 +225,37 @@ static inline u32 pri_ppc_addr(struct gk20a *g, u32 addr, u32 gpc, u32 ppc)
 		ppc_in_gpc_base + (ppc * ppc_in_gpc_stride) + addr;
 }
 
-/*
- * LTC pri addressing
- */
-static inline bool pri_is_ltc_addr(u32 addr)
-{
-	return ((addr >= ltc_pltcg_base_v()) && (addr < ltc_pltcg_extent_v()));
-}
-
 enum ctxsw_addr_type {
 	CTXSW_ADDR_TYPE_SYS  = 0,
 	CTXSW_ADDR_TYPE_GPC  = 1,
 	CTXSW_ADDR_TYPE_TPC  = 2,
 	CTXSW_ADDR_TYPE_BE   = 3,
 	CTXSW_ADDR_TYPE_PPC  = 4,
-	CTXSW_ADDR_TYPE_LTCS = 5
+	CTXSW_ADDR_TYPE_LTCS = 5,
+	CTXSW_ADDR_TYPE_FBPA = 6,
+	CTXSW_ADDR_TYPE_EGPC = 7,
+	CTXSW_ADDR_TYPE_ETPC = 8,
+	CTXSW_ADDR_TYPE_ROP  = 9,
+	CTXSW_ADDR_TYPE_FBP  = 10,
 };
 
-#define PRI_BROADCAST_FLAGS_NONE  0
-#define PRI_BROADCAST_FLAGS_GPC   BIT(0)
-#define PRI_BROADCAST_FLAGS_TPC   BIT(1)
-#define PRI_BROADCAST_FLAGS_BE    BIT(2)
-#define PRI_BROADCAST_FLAGS_PPC   BIT(3)
-#define PRI_BROADCAST_FLAGS_LTCS  BIT(4)
-#define PRI_BROADCAST_FLAGS_LTSS  BIT(5)
+#define PRI_BROADCAST_FLAGS_NONE		0U
+#define PRI_BROADCAST_FLAGS_GPC			BIT32(0)
+#define PRI_BROADCAST_FLAGS_TPC			BIT32(1)
+#define PRI_BROADCAST_FLAGS_BE			BIT32(2)
+#define PRI_BROADCAST_FLAGS_PPC			BIT32(3)
+#define PRI_BROADCAST_FLAGS_LTCS		BIT32(4)
+#define PRI_BROADCAST_FLAGS_LTSS		BIT32(5)
+#define PRI_BROADCAST_FLAGS_FBPA		BIT32(6)
+#define PRI_BROADCAST_FLAGS_EGPC		BIT32(7)
+#define PRI_BROADCAST_FLAGS_ETPC		BIT32(8)
+#define PRI_BROADCAST_FLAGS_PMMGPC		BIT32(9)
+#define PRI_BROADCAST_FLAGS_PMM_GPCS		BIT32(10)
+#define PRI_BROADCAST_FLAGS_PMM_GPCGS_GPCTPCA	BIT32(11)
+#define PRI_BROADCAST_FLAGS_PMM_GPCGS_GPCTPCB	BIT32(12)
+#define PRI_BROADCAST_FLAGS_PMMFBP		BIT32(13)
+#define PRI_BROADCAST_FLAGS_PMM_FBPS		BIT32(14)
+#define PRI_BROADCAST_FLAGS_PMM_FBPGS_LTC	BIT32(15)
+#define PRI_BROADCAST_FLAGS_PMM_FBPGS_ROP	BIT32(16)
 
 #endif /* GR_PRI_GK20A_H */

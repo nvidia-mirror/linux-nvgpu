@@ -3,40 +3,41 @@
  *
  * GK20A graphics copy engine (gr host)
  *
- * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2018, NVIDIA CORPORATION.  All rights reserved.
  *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms and conditions of the GNU General Public License,
- * version 2, as published by the Free Software Foundation.
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
  *
- * This program is distributed in the hope it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
- * more details.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin St - Fifth Floor, Boston, MA 02110-1301 USA.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
  */
-#ifndef __CE2_GK20A_H__
-#define __CE2_GK20A_H__
+#ifndef NVGPU_GK20A_CE2_GK20A_H
+#define NVGPU_GK20A_CE2_GK20A_H
 
-#include "channel_gk20a.h"
-#include "tsg_gk20a.h"
+struct channel_gk20a;
+struct tsg_gk20a;
 
-void gk20a_init_ce2(struct gpu_ops *gops);
 void gk20a_ce2_isr(struct gk20a *g, u32 inst_id, u32 pri_base);
-void gk20a_ce2_nonstall_isr(struct gk20a *g, u32 inst_id, u32 pri_base);
+u32 gk20a_ce2_nonstall_isr(struct gk20a *g, u32 inst_id, u32 pri_base);
 
 /* CE command utility macros */
 #define NVGPU_CE_LOWER_ADDRESS_OFFSET_MASK 0xffffffff
 #define NVGPU_CE_UPPER_ADDRESS_OFFSET_MASK 0xff
 
-#define NVGPU_CE_COMMAND_BUF_SIZE     4096
-#define NVGPU_CE_MAX_COMMAND_BUFF_SIZE_PER_KICKOFF 128
-#define NVGPU_CE_MAX_COMMAND_BUFF_SIZE_FOR_TRACING 8
-
-typedef void (*ce_event_callback)(u32 ce_ctx_id, u32 ce_event_flag);
+#define NVGPU_CE_MAX_INFLIGHT_JOBS 32
+#define NVGPU_CE_MAX_COMMAND_BUFF_BYTES_PER_KICKOFF 256
 
 /* dma launch_flags */
 enum {
@@ -65,14 +66,6 @@ enum {
 	NVGPU_CE_MEMSET                    = (1 << 1),
 };
 
-/* CE event flags */
-enum {
-	NVGPU_CE_CONTEXT_JOB_COMPLETED               = (1 << 0),
-	NVGPU_CE_CONTEXT_JOB_TIMEDOUT                = (1 << 1),
-	NVGPU_CE_CONTEXT_SUSPEND                     = (1 << 2),
-	NVGPU_CE_CONTEXT_RESUME                      = (1 << 3),
-};
-
 /* CE app state machine flags */
 enum {
 	NVGPU_CE_ACTIVE                    = (1 << 0),
@@ -88,10 +81,10 @@ enum {
 /* global ce app db */
 struct gk20a_ce_app {
 	bool initialised;
-	struct mutex app_mutex;
+	struct nvgpu_mutex app_mutex;
 	int app_state;
 
-	struct list_head allocated_contexts;
+	struct nvgpu_list_node allocated_contexts;
 	u32 ctx_count;
 	u32 next_ctx_id;
 };
@@ -99,26 +92,31 @@ struct gk20a_ce_app {
 /* ce context db */
 struct gk20a_gpu_ctx {
 	struct gk20a *g;
-	struct device *dev;
 	u32 ctx_id;
-	struct mutex gpu_ctx_mutex;
+	struct nvgpu_mutex gpu_ctx_mutex;
 	int gpu_ctx_state;
-	ce_event_callback user_event_callback;
+
+	/* tsg related data */
+	struct tsg_gk20a *tsg;
 
 	/* channel related data */
 	struct channel_gk20a *ch;
 	struct vm_gk20a *vm;
 
 	/* cmd buf mem_desc */
-	struct mem_desc cmd_buf_mem;
+	struct nvgpu_mem cmd_buf_mem;
+	struct gk20a_fence *postfences[NVGPU_CE_MAX_INFLIGHT_JOBS];
 
-	struct list_head list;
-
-	u64 submitted_seq_number;
-	u64 completed_seq_number;
+	struct nvgpu_list_node list;
 
 	u32 cmd_buf_read_queue_offset;
-	u32 cmd_buf_end_queue_offset;
+};
+
+static inline struct gk20a_gpu_ctx *
+gk20a_gpu_ctx_from_list(struct nvgpu_list_node *node)
+{
+	return (struct gk20a_gpu_ctx *)
+		((uintptr_t)node - offsetof(struct gk20a_gpu_ctx, list));
 };
 
 /* global CE app related apis */
@@ -127,13 +125,11 @@ void gk20a_ce_suspend(struct gk20a *g);
 void gk20a_ce_destroy(struct gk20a *g);
 
 /* CE app utility functions */
-u32 gk20a_ce_create_context_with_cb(struct device *dev,
+u32 gk20a_ce_create_context(struct gk20a *g,
 		int runlist_id,
-		int priority,
 		int timeslice,
-		int runlist_level,
-		ce_event_callback user_event_callback);
-int gk20a_ce_execute_ops(struct device *dev,
+		int runlist_level);
+int gk20a_ce_execute_ops(struct gk20a *g,
 		u32 ce_ctx_id,
 		u64 src_buf,
 		u64 dst_buf,
@@ -141,15 +137,20 @@ int gk20a_ce_execute_ops(struct device *dev,
 		unsigned int payload,
 		int launch_flags,
 		int request_operation,
-		struct gk20a_fence *gk20a_fence_in,
 		u32 submit_flags,
 		struct gk20a_fence **gk20a_fence_out);
-void gk20a_ce_delete_context(struct device *dev,
+void gk20a_ce_delete_context_priv(struct gk20a *g,
 		u32 ce_ctx_id);
+void gk20a_ce_delete_context(struct gk20a *g,
+		u32 ce_ctx_id);
+int gk20a_ce_prepare_submit(u64 src_buf,
+		u64 dst_buf,
+		u64 size,
+		u32 *cmd_buf_cpu_va,
+		u32 max_cmd_buf_size,
+		unsigned int payload,
+		int launch_flags,
+		int request_operation,
+		u32 dma_copy_class);
 
-#ifdef CONFIG_DEBUG_FS
-/* CE app debugfs api */
-void gk20a_ce_debugfs_init(struct device *dev);
-#endif
-
-#endif /*__CE2_GK20A_H__*/
+#endif /*NVGPU_GK20A_CE2_GK20A_H*/
