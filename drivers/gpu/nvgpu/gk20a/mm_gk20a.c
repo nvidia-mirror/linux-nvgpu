@@ -1,7 +1,7 @@
 /*
  * GK20A memory management
  *
- * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2020, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -5435,7 +5435,8 @@ int gk20a_mm_suspend(struct gk20a *g)
 {
 	gk20a_dbg_fn("");
 
-	cancel_work_sync(&g->mm.vidmem.clear_mem_worker);
+	if (g->mm.vidmem.clear_mem_worker.func)
+		cancel_work_sync(&g->mm.vidmem.clear_mem_worker);
 
 	g->ops.mm.cbc_clean(g);
 	g->ops.mm.l2_flush(g, false);
