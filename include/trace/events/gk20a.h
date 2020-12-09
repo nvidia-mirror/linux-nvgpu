@@ -1,7 +1,7 @@
 /*
  * gk20a event logging to ftrace.
  *
- * Copyright (c) 2014-2016, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -12,6 +12,8 @@
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  */
+
+#ifdef __KERNEL__
 
 #undef TRACE_SYSTEM
 #define TRACE_SYSTEM gk20a
@@ -51,16 +53,6 @@ DEFINE_EVENT(gk20a, gk20a_finalize_poweron,
 );
 
 DEFINE_EVENT(gk20a, gk20a_finalize_poweron_done,
-	TP_PROTO(const char *name),
-	TP_ARGS(name)
-);
-
-DEFINE_EVENT(gk20a, gk20a_gpfifo_submit_wait_for_space,
-	TP_PROTO(const char *name),
-	TP_ARGS(name)
-);
-
-DEFINE_EVENT(gk20a, gk20a_gpfifo_submit_wait_for_space_done,
 	TP_PROTO(const char *name),
 	TP_ARGS(name)
 );
@@ -126,16 +118,6 @@ DEFINE_EVENT(gk20a, mc_gk20a_intr_stall_done,
 );
 
 DEFINE_EVENT(gk20a, gr_gk20a_handle_sw_method,
-	TP_PROTO(const char *name),
-	TP_ARGS(name)
-);
-
-DEFINE_EVENT(gk20a, gk20a_mm_g_elpg_flush_locked,
-	TP_PROTO(const char *name),
-	TP_ARGS(name)
-);
-
-DEFINE_EVENT(gk20a, gk20a_mm_g_elpg_flush_locked_done,
 	TP_PROTO(const char *name),
 	TP_ARGS(name)
 );
@@ -304,14 +286,14 @@ TRACE_EVENT(gk20a_push_cmdbuf,
 );
 
 TRACE_EVENT(gk20a_channel_submit_gpfifo,
-		TP_PROTO(const char *name, u32 hw_chid, u32 num_entries,
+		TP_PROTO(const char *name, u32 chid, u32 num_entries,
 		u32 flags, u32 wait_id, u32 wait_value),
 
-		TP_ARGS(name, hw_chid, num_entries, flags, wait_id, wait_value),
+		TP_ARGS(name, chid, num_entries, flags, wait_id, wait_value),
 
 	TP_STRUCT__entry(
 		__field(const char *, name)
-		__field(u32, hw_chid)
+		__field(u32, chid)
 		__field(u32, num_entries)
 		__field(u32, flags)
 		__field(u32, wait_id)
@@ -320,29 +302,29 @@ TRACE_EVENT(gk20a_channel_submit_gpfifo,
 
 	TP_fast_assign(
 		__entry->name = name;
-		__entry->hw_chid = hw_chid;
+		__entry->chid = chid;
 		__entry->num_entries = num_entries;
 		__entry->flags = flags;
 		__entry->wait_id = wait_id;
 		__entry->wait_value = wait_value;
 	),
 
-	TP_printk("name=%s, hw_chid=%d, num_entries=%u, flags=%u, wait_id=%d,"
+	TP_printk("name=%s, chid=%d, num_entries=%u, flags=%u, wait_id=%d,"
 		" wait_value=%u",
-		__entry->name, __entry->hw_chid, __entry->num_entries,
+		__entry->name, __entry->chid, __entry->num_entries,
 		__entry->flags, __entry->wait_id, __entry->wait_value)
 );
 
 TRACE_EVENT(gk20a_channel_submitted_gpfifo,
-		TP_PROTO(const char *name, u32 hw_chid, u32 num_entries,
+		TP_PROTO(const char *name, u32 chid, u32 num_entries,
 		u32 flags, u32 incr_id, u32 incr_value),
 
-		TP_ARGS(name, hw_chid, num_entries, flags,
+		TP_ARGS(name, chid, num_entries, flags,
 			incr_id, incr_value),
 
 	TP_STRUCT__entry(
 		__field(const char *, name)
-		__field(u32, hw_chid)
+		__field(u32, chid)
 		__field(u32, num_entries)
 		__field(u32, flags)
 		__field(u32, incr_id)
@@ -351,36 +333,81 @@ TRACE_EVENT(gk20a_channel_submitted_gpfifo,
 
 	TP_fast_assign(
 		__entry->name = name;
-		__entry->hw_chid = hw_chid;
+		__entry->chid = chid;
 		__entry->num_entries = num_entries;
 		__entry->flags = flags;
 		__entry->incr_id = incr_id;
 		__entry->incr_value = incr_value;
 	),
 
-	TP_printk("name=%s, hw_chid=%d, num_entries=%u, flags=%u,"
+	TP_printk("name=%s, chid=%d, num_entries=%u, flags=%u,"
 		" incr_id=%u, incr_value=%u",
-		__entry->name, __entry->hw_chid, __entry->num_entries,
+		__entry->name, __entry->chid, __entry->num_entries,
 		__entry->flags, __entry->incr_id, __entry->incr_value)
 );
 
-TRACE_EVENT(gk20a_channel_reset,
-		TP_PROTO(u32 hw_chid, u32 tsgid),
+TRACE_EVENT(gk20a_reschedule_preempt_next,
+		TP_PROTO(u32 chid, u32 fecs0, u32 engstat, u32 fecs1, u32 fecs2,
+			u32 preempt),
 
-		TP_ARGS(hw_chid, tsgid),
+		TP_ARGS(chid, fecs0, engstat, fecs1, fecs2, preempt),
 
 	TP_STRUCT__entry(
-		__field(u32, hw_chid)
+		__field(u32, chid)
+		__field(u32, fecs0)
+		__field(u32, engstat)
+		__field(u32, fecs1)
+		__field(u32, fecs2)
+		__field(u32, preempt)
+	),
+
+	TP_fast_assign(
+		__entry->chid = chid;
+		__entry->fecs0 = fecs0;
+		__entry->engstat = engstat;
+		__entry->fecs1 = fecs1;
+		__entry->fecs2 = fecs2;
+		__entry->preempt = preempt;
+	),
+
+	TP_printk("chid=%d, fecs0=%#x, engstat=%#x, fecs1=%#x, fecs2=%#x,"
+		" preempt=%#x", __entry->chid, __entry->fecs0, __entry->engstat,
+		__entry->fecs1,	__entry->fecs2, __entry->preempt)
+);
+
+TRACE_EVENT(gk20a_reschedule_preempted_next,
+		TP_PROTO(u32 chid),
+
+		TP_ARGS(chid),
+
+	TP_STRUCT__entry(
+		__field(u32, chid)
+	),
+
+	TP_fast_assign(
+		__entry->chid = chid;
+	),
+
+	TP_printk("chid=%d", __entry->chid)
+);
+
+TRACE_EVENT(gk20a_channel_reset,
+		TP_PROTO(u32 chid, u32 tsgid),
+
+		TP_ARGS(chid, tsgid),
+
+	TP_STRUCT__entry(
+		__field(u32, chid)
 		__field(u32, tsgid)
 	),
 
 	TP_fast_assign(
-		__entry->hw_chid = hw_chid;
+		__entry->chid = chid;
 		__entry->tsgid = tsgid;
 	),
 
-	TP_printk("hw_chid=%d, tsgid=%d",
-		__entry->hw_chid, __entry->tsgid)
+	TP_printk("chid=%d, tsgid=%d",
+		__entry->chid, __entry->tsgid)
 );
 
 
@@ -483,39 +510,44 @@ TRACE_EVENT(gk20a_as_ioctl_get_va_regions,
 );
 
 TRACE_EVENT(gk20a_mmu_fault,
-	    TP_PROTO(u32 fault_hi, u32 fault_lo,
-		     u32 fault_info,
-		     u64 instance,
+	    TP_PROTO(u64 fault_addr,
+		     u32 fault_type,
+		     u32 access_type,
+		     u64 inst_ptr,
 		     u32 engine_id,
-		     const char *engine,
-		     const char *client,
-		     const char *fault_type),
-	    TP_ARGS(fault_hi, fault_lo, fault_info,
-		    instance, engine_id, engine, client, fault_type),
+		     const char *client_type_desc,
+		     const char *client_id_desc,
+		     const char *fault_type_desc),
+	    TP_ARGS(fault_addr, fault_type, access_type,
+		    inst_ptr, engine_id, client_type_desc,
+		    client_id_desc, fault_type_desc),
 	    TP_STRUCT__entry(
-			 __field(u32, fault_hi)
-			 __field(u32, fault_lo)
-			 __field(u32, fault_info)
-			 __field(u64, instance)
+			 __field(u64, fault_addr)
+			 __field(u32, fault_type)
+			 __field(u32, access_type)
+			 __field(u64, inst_ptr)
 			 __field(u32, engine_id)
-			 __field(const char *, engine)
-			 __field(const char *, client)
-			 __field(const char *, fault_type)
+			 __field(const char *, client_type_desc)
+			 __field(const char *, client_id_desc)
+			 __field(const char *, fault_type_desc)
 			 ),
 	    TP_fast_assign(
-		       __entry->fault_hi = fault_hi;
-		       __entry->fault_lo = fault_lo;
-		       __entry->fault_info = fault_info;
-		       __entry->instance = instance;
-		       __entry->engine_id = engine_id;
-		       __entry->engine = engine;
-		       __entry->client = client;
+		       __entry->fault_addr = fault_addr;
 		       __entry->fault_type = fault_type;
+		       __entry->access_type = access_type;
+		       __entry->inst_ptr = inst_ptr;
+		       __entry->engine_id = engine_id;
+		       __entry->client_type_desc = client_type_desc;
+		       __entry->client_id_desc = client_id_desc;
+		       __entry->fault_type_desc = fault_type_desc;
 		       ),
-	    TP_printk("fault=0x%x,%08x info=0x%x instance=0x%llx engine_id=%d engine=%s client=%s type=%s",
-		      __entry->fault_hi, __entry->fault_lo,
-		      __entry->fault_info, __entry->instance, __entry->engine_id,
-		      __entry->engine, __entry->client, __entry->fault_type)
+	    TP_printk("fault addr=0x%llx type=0x%x access_type=0x%x "
+			"instance=0x%llx engine_id=%d client_type=%s "
+			"client_id=%s fault type=%s",
+		      __entry->fault_addr, __entry->fault_type,
+			 __entry->access_type, __entry->inst_ptr,
+			 __entry->engine_id, __entry->client_type_desc,
+		      __entry->client_id_desc, __entry->fault_type_desc)
 );
 
 TRACE_EVENT(gk20a_ltc_cbc_ctrl_start,
@@ -592,3 +624,30 @@ DEFINE_EVENT(gk20a_cde, gk20a_cde_finished_ctx_cb,
 
 /* This part must be outside protection */
 #include <trace/define_trace.h>
+
+#else /* Not __KERNEL__ */
+
+#define trace_gk20a_mmu_fault(arg...)			((void)(NULL))
+#define trace_gk20a_release_used_channel(arg...)	((void)(NULL))
+#define trace_gk20a_free_channel(arg...)		((void)(NULL))
+#define trace_gk20a_channel_get(arg...)			((void)(NULL))
+#define trace_gk20a_channel_put(arg...)			((void)(NULL))
+#define trace_gk20a_open_new_channel(arg...)		((void)(NULL))
+#define trace_gk20a_channel_update(arg...)		((void)(NULL))
+
+#define trace_gk20a_mm_fb_flush(arg...)			((void)(NULL))
+#define trace_gk20a_mm_fb_flush_done(arg...)		((void)(NULL))
+#define trace_gk20a_mm_l2_invalidate(arg...)		((void)(NULL))
+#define trace_gk20a_mm_l2_invalidate_done(arg...)	((void)(NULL))
+#define trace_gk20a_mm_l2_flush(arg...)			((void)(NULL))
+#define trace_gk20a_mm_l2_flush_done(arg...)		((void)(NULL))
+#define trace_gk20a_mm_tlb_invalidate(arg...)		((void)(NULL))
+#define trace_gk20a_mm_tlb_invalidate_done(arg...)	((void)(NULL))
+#define trace_gk20a_ltc_cbc_ctrl_start(arg...)		((void)(NULL))
+#define trace_gk20a_ltc_cbc_ctrl_done(arg...)		((void)(NULL))
+
+#define trace_gk20a_channel_submit_gpfifo(arg...)	((void)(NULL))
+#define trace_gk20a_channel_submitted_gpfifo(arg...)	((void)(NULL))
+#define trace_gk20a_push_cmdbuf(arg...)			((void)(NULL))
+
+#endif
