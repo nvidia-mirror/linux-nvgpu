@@ -130,6 +130,69 @@ struct nvgpu_tsg_set_l2_sector_promotion_args {
 	__u32 reserved;
 };
 
+/*
+ * NVGPU_TSG_IOCTL_CREATE_SUBCONTEXT - create a subcontext within a TSG.
+ *
+ * This IOCTL creates a subcontext of specified type within TSG if available
+ * and returns VEID for it. Subcontext is associated with the user supplied
+ * address space.
+ *
+ * return 0 on success, -1 on error.
+ * retval EINVAL if invalid parameters are specified.
+ * retval ENOSPC if subcontext of specified type can't be allocated.
+ */
+
+/* Subcontext types */
+
+/*
+ * Synchronous subcontext. Subcontext of this type may hold the
+ * graphics channel, and multiple copy engine and compute channels.
+ */
+#define NVGPU_TSG_SUBCONTEXT_TYPE_SYNC               (0x0U)
+
+/*
+ * Asynchronous subcontext. Asynchronous subcontext is for compute
+ * and copy engine channels only.
+ */
+#define NVGPU_TSG_SUBCONTEXT_TYPE_ASYNC              (0x1U)
+
+/* Arguments for NVGPU_TSG_IOCTL_CREATE_SUBCONTEXT */
+struct nvgpu_tsg_create_subcontext_args {
+	/* in: subcontext type */
+	__u32 type;
+
+	/* in: address space fd */
+	__s32 as_fd;
+
+	/*
+	 * out: VEID for the subcontext
+	 *      This is HW specific constant. For Volta+ chips (up to T234
+	 *      Legacy mode), the HW-specific range is [0..63]. Of these,
+	 *      0th subcontext is SYNC subcontext and remaining are
+	 *      ASYNC subcontexts.
+	 *      For SMC case, less number of VEIDs are supported per GPU
+	 *      instance. This value is SMC engine relative VEID.
+	 */
+	__u32 veid;
+	__u32 reserved;
+};
+
+/*
+ * NVGPU_TSG_IOCTL_DELETE_SUBCONTEXT - delete a subcontext within a TSG.
+ *
+ * This IOCTL deletes a subcontext with specified subcontext id.
+ *
+ * return 0 on success, -1 on error.
+ * retval EINVAL if invalid parameters are specified.
+ */
+
+/* Arguments for NVGPU_TSG_IOCTL_DELETE_SUBCONTEXT */
+struct nvgpu_tsg_delete_subcontext_args {
+	/* in: VEID for the subcontext */
+	__u32 veid;
+	__u32 reserved;
+};
+
 #define NVGPU_TSG_IOCTL_BIND_CHANNEL \
 	_IOW(NVGPU_TSG_IOCTL_MAGIC, 1, int)
 #define NVGPU_TSG_IOCTL_UNBIND_CHANNEL \
@@ -168,11 +231,17 @@ struct nvgpu_tsg_set_l2_sector_promotion_args {
 #define NVGPU_TSG_IOCTL_READ_ALL_SM_ERROR_STATES \
 	_IOWR(NVGPU_TSG_IOCTL_MAGIC, 17, \
 			struct nvgpu_tsg_read_all_sm_error_state_args)
+#define NVGPU_TSG_IOCTL_CREATE_SUBCONTEXT \
+	_IOWR(NVGPU_TSG_IOCTL_MAGIC, 18, \
+			struct nvgpu_tsg_create_subcontext_args)
+#define NVGPU_TSG_IOCTL_DELETE_SUBCONTEXT \
+	_IOW(NVGPU_TSG_IOCTL_MAGIC, 19, \
+			struct nvgpu_tsg_delete_subcontext_args)
 #define NVGPU_TSG_IOCTL_MAX_ARG_SIZE	\
 		sizeof(struct nvgpu_tsg_bind_scheduling_domain_args)
 
 #define NVGPU_TSG_IOCTL_LAST		\
-	_IOC_NR(NVGPU_TSG_IOCTL_READ_ALL_SM_ERROR_STATES)
+	_IOC_NR(NVGPU_TSG_IOCTL_DELETE_SUBCONTEXT)
 
 /*
  * /dev/nvhost-dbg-gpu device
