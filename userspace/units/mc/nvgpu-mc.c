@@ -213,9 +213,11 @@ static int mock_gr_stall_isr(struct gk20a *g)
 	return u.gr_isr_return;
 }
 
-static void mock_ltc_isr(struct gk20a *g, u32 ltc)
+static int mock_ltc_isr(struct gk20a *g, u32 ltc)
 {
 	u.ltc_isr = true;
+
+	return 0;
 }
 
 static void mock_pmu_isr(struct gk20a *g)

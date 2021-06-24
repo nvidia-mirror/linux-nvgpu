@@ -1,7 +1,7 @@
 /*
  * GM20B L2 INTR
  *
- * Copyright (c) 2014-2020 NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2022 NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -61,12 +61,18 @@ static void gm20b_ltc_intr_handle_lts_interrupts(struct gk20a *g,
 			   nvgpu_safe_mult_u32(lts_stride, slice))), ltc_intr);
 }
 
-void gm20b_ltc_intr_isr(struct gk20a *g, u32 ltc)
+int gm20b_ltc_intr_isr(struct gk20a *g, u32 ltc)
 {
 	u32 slice;
+
+	if (ltc >= nvgpu_ltc_get_ltc_count(g)) {
+		return -ENODEV;
+	}
 
 	for (slice = 0U; slice < g->ltc->slices_per_ltc; slice =
 					nvgpu_safe_add_u32(slice, 1U)) {
 		gm20b_ltc_intr_handle_lts_interrupts(g, ltc, slice);
 	}
+
+	return 0;
 }

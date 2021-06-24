@@ -30,7 +30,7 @@
 struct gk20a;
 
 void ga10b_ltc_intr_configure(struct gk20a *g);
-void ga10b_ltc_intr_isr(struct gk20a *g, u32 ltc);
+int ga10b_ltc_intr_isr(struct gk20a *g, u32 ltc);
 void ga10b_ltc_intr3_configure_extra(struct gk20a *g, u32 *reg);
 void ga10b_ltc_intr3_interrupts(struct gk20a *g, u32 ltc, u32 slice,
 				u32 ltc_intr3);

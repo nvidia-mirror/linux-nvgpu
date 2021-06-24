@@ -196,7 +196,7 @@ struct gops_ltc_intr {
 	 * @return 0 in case of success, < 0 in case of failure.
 	 * @retval -ENODEV if invalid LTC number specified.
 	 */
-	void (*isr)(struct gk20a *g, u32 ltc);
+	int (*isr)(struct gk20a *g, u32 ltc);
 
 	/** @cond DOXYGEN_SHOULD_SKIP_THIS */
 	void (*configure)(struct gk20a *g);

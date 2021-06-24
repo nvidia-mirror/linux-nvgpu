@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -609,6 +609,80 @@ done:
 	return err;
 }
 
+int test_ltc_intr_bvec(struct unit_module *m, struct gk20a *g, void *args)
+{
+	u32 ltc_stride = nvgpu_get_litter_value(g, GPU_LIT_LTC_STRIDE);
+	u32 invalid_ltc[] = { NUM_LTC, U32_MAX };
+	u32 valid_ltc[] = { 0, NUM_LTC - 1 };
+	int err = UNIT_SUCCESS;
+	u32 ecc_status;
+	u32 ltc_intr3;
+	u32 offset;
+	u32 i;
+
+	/* Init counter space */
+	nvgpu_init_list_node(&g->ecc.stats_list);
+
+	g->ltc->ltc_count = NUM_LTC;
+	err = NVGPU_ECC_COUNTER_INIT_PER_LTS(dstg_be_ecc_parity_count);
+	if (err != 0) {
+		unit_err(m, "failed to init dstg_be_ecc_parity_count\n");
+		err = UNIT_FAIL;
+		goto done;
+	}
+
+	/* Verify that isr for valid ltc (lts 0) is handled correctly. */
+	for (i = 0; i < ARRAY_SIZE(valid_ltc); i++) {
+		offset = nvgpu_safe_mult_u32(ltc_stride, valid_ltc[i]);
+		ltc_intr3 = nvgpu_safe_add_u32(ltc_ltc0_lts0_intr3_r(), offset);
+		ecc_status = nvgpu_safe_add_u32(
+				ltc_ltc0_lts0_l2_cache_ecc_status_r(), offset);
+
+		nvgpu_posix_io_writel_reg_space(g, nvgpu_safe_add_u32(
+			ltc_ltc0_lts0_l2_cache_ecc_uncorrected_err_count_r(),
+			offset),
+			ltc_ltc0_lts0_l2_cache_ecc_uncorrected_err_count_total_m());
+
+		nvgpu_posix_io_writel_reg_space(g, ltc_intr3,
+				ltc_ltcs_ltss_intr3_ecc_uncorrected_m());
+
+		nvgpu_posix_io_writel_reg_space(g, ecc_status,
+				ltc_ltc0_lts0_l2_cache_ecc_status_uncorrected_err_dstg_m());
+
+		g->ecc.ltc.dstg_be_ecc_parity_count[valid_ltc[i]][0].counter = 0;
+
+		err = g->ops.ltc.intr.isr(g, valid_ltc[i]);
+		if ((err != 0) ||
+		    (g->ecc.ltc.dstg_be_ecc_parity_count[valid_ltc[i]][0].counter !=
+		     ltc_ltc0_lts0_l2_cache_ecc_uncorrected_err_count_total_m())) {
+			unit_err(m, "failed to process valid corrected ltc intr %u\n", i);
+			err = UNIT_FAIL;
+			goto done;
+		}
+	}
+
+	/* Verify that isr for invalid ltc fails. */
+	for (i = 0; i < ARRAY_SIZE(invalid_ltc); i++) {
+		err = g->ops.ltc.intr.isr(g, invalid_ltc[i]);
+		if (err == 0) {
+			unit_err(m, "processed invalid corrected ltc intr %u\n", i);
+			err = UNIT_FAIL;
+			goto done;
+		}
+	}
+
+	err = UNIT_SUCCESS;
+
+done:
+	for (i = 0; i < nvgpu_ltc_get_ltc_count(g); i++) {
+		if (g->ecc.ltc.ecc_sec_count != NULL) {
+			nvgpu_kfree(g, g->ecc.ltc.ecc_sec_count[i]);
+		}
+	}
+
+	return err;
+}
+
 int test_ltc_intr_configure(struct unit_module *m,
 				struct gk20a *g, void *args)
 {
@@ -765,6 +839,7 @@ struct unit_module_test nvgpu_ltc_tests[] = {
 	UNIT_TEST(ltc_functionality_tests, test_ltc_functionality_tests,
 								NULL, 0),
 	UNIT_TEST(ltc_intr, test_ltc_intr, NULL, 0),
+	UNIT_TEST(ltc_intr_bvec, test_ltc_intr_bvec, NULL, 0),
 	UNIT_TEST(ltc_intr_configure, test_ltc_intr_configure, NULL, 0),
 	UNIT_TEST(ltc_determine_L2_size, test_determine_L2_size_bytes, NULL, 0),
 #ifdef CONFIG_NVGPU_NON_FUSA

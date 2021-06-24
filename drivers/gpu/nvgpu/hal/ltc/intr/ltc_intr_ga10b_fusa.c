@@ -1078,13 +1078,19 @@ void ga10b_ltc_intr_handle_lts_intr(struct gk20a *g, u32 ltc, u32 slice)
 			reg_value);
 }
 
-void ga10b_ltc_intr_isr(struct gk20a *g, u32 ltc)
+int ga10b_ltc_intr_isr(struct gk20a *g, u32 ltc)
 {
 	u32 slice;
+
+	if (ltc >= nvgpu_ltc_get_ltc_count(g)) {
+		return -ENODEV;
+	}
 
 	for (slice = 0U; slice < g->ltc->slices_per_ltc; slice++) {
 		ga10b_ltc_intr_handle_lts_intr(g, ltc, slice);
 		ga10b_ltc_intr_handle_lts_intr2(g, ltc, slice);
 		ga10b_ltc_intr_handle_lts_intr3(g, ltc, slice);
 	}
+
+	return 0;
 }

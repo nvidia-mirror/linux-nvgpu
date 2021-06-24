@@ -1,7 +1,7 @@
 /*
  * GM20B L2 INTR
  *
- * Copyright (c) 2014-2019, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,6 +30,6 @@
 struct gk20a;
 
 void gm20b_ltc_intr_configure(struct gk20a *g);
-void gm20b_ltc_intr_isr(struct gk20a *g, u32 ltc);
+int gm20b_ltc_intr_isr(struct gk20a *g, u32 ltc);
 
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -229,6 +229,43 @@ int test_ltc_remove_support(struct unit_module *m,
 int test_ltc_intr(struct unit_module *m, struct gk20a *g, void *args);
 
 /**
+ * Test specification for: test_ltc_intr_bvec
+ *
+ * Description: Validate ltc interrupt handler (isr) for valid and invalid LTC values.
+ *
+ * Test Type: Boundary Value
+ *
+ * Targets: gops_ltc_intr.isr, gv11b_ltc_intr_isr
+ *
+ * Input: test_ltc_init_support must have completed successfully.
+ *
+ * Equivalence classes:
+ * Variable: ltc
+ * - Valid: {0, NUM_LTC - 1}
+ * - Invalid: {NUM_LTC, U32_MAX}
+ *
+ * Steps:
+ * - Allocate ECC stat counter objects used by handler
+ *   (dstg_be_ecc_parity_count).
+ * - Verify that isr for valid ltc (lts 0) is handled correctly.
+ *   - Set the corrected counter in the ecc_uncorrected_err_count_r
+ *     register for valid LTCs for LTS0.
+ *   - Set the ecc_uncorrected_m in ltc_intr3 for valid LTCs.
+ *   - Clear the dstg_be_ecc_parity_count for the valid LTC and LTS0.
+ *   - Call the LTC isr through LTC unit gops.ltc.isr.
+ *   - Verify that LTC isr is passing.
+ *   - Verify that the dstg_be_ecc_parity_count is updated by the LTC isr.
+ * - Verify that isr for invalid ltc (lts 0) fails.
+ *   - Call the LTC isr through LTC unit gops.ltc.isr.
+ *   - Verify that LTC isr is failed.
+ *
+ * Output: Returns PASS if interrupt handler updates the counters correctly
+ *	   for valid LTCs and fails for invalid LTCs.
+ *	   Returns FAIL otherwise.
+ */
+int test_ltc_intr_bvec(struct unit_module *m, struct gk20a *g, void *args);
+
+/*
  * Test specification for: test_ltc_intr_configure
  *
  * Description: Validate the ltc interrupt configure API.

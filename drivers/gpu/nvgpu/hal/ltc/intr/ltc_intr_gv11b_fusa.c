@@ -341,11 +341,17 @@ static void gv11b_ltc_intr_handle_lts_interrupts(struct gk20a *g,
 	gv11b_ltc_intr_handle_ecc_sec_ded_interrupts(g, ltc, slice);
 }
 
-void gv11b_ltc_intr_isr(struct gk20a *g, u32 ltc)
+int gv11b_ltc_intr_isr(struct gk20a *g, u32 ltc)
 {
 	u32 slice;
+
+	if (ltc >= nvgpu_ltc_get_ltc_count(g)) {
+		return -ENODEV;
+	}
 
 	for (slice = 0U; slice < g->ltc->slices_per_ltc; slice++) {
 		gv11b_ltc_intr_handle_lts_interrupts(g, ltc, slice);
 	}
+
+	return 0;
 }
