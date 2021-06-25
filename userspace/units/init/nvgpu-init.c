@@ -113,6 +113,11 @@ int init_test_free_env(struct unit_module *m,
 int test_get_litter_value(struct unit_module *m,
 			 struct gk20a *g, void *args)
 {
+	int invalid_litter_types[] = {
+		GPU_LIT_PERFMON_PMMGPC_ROP_DOMAIN_COUNT + 1,
+		GPU_LIT_PERFMON_PMMGPC_ROP_DOMAIN_COUNT + 2, INT_MAX};
+	u32 i;
+
 	assert(gv11b_get_litter_value(g, GPU_LIT_NUM_GPCS) ==
 					proj_scal_litter_num_gpcs_v());
 	assert(gv11b_get_litter_value(g, GPU_LIT_NUM_PES_PER_GPC) ==
@@ -202,10 +207,12 @@ int test_get_litter_value(struct unit_module *m,
 					2);
 #endif
 
-	if (!EXPECT_BUG(gv11b_get_litter_value(g, U32_MAX))) {
-		unit_err(m, "%s: failed to detect INVALID value\n",
-			 __func__);
-		goto fail;
+	for (i = 0; i < ARRAY_SIZE(invalid_litter_types); i++) {
+		if (!EXPECT_BUG(gv11b_get_litter_value(g, invalid_litter_types[i]))) {
+			unit_err(m, "%s: failed to detect invalid value %d\n",
+				 __func__, invalid_litter_types[i]);
+			goto fail;
+		}
 	}
 
 	return UNIT_SUCCESS;

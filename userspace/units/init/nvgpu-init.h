@@ -74,11 +74,16 @@ int init_test_free_env(struct unit_module *m,
  *
  * Description: Validate gv11b_get_litter_value()
  *
- * Test Type: Feature
+ * Test Type: Feature, Boundary Value
  *
  * Targets: gv11b_get_litter_value
  *
  * Input: None
+ *
+ * Equivalence classes:
+ * Variable: value
+ * - Valid: {0 - 57}
+ * - Invalid: {58 - INT_MAX}
  *
  * Steps:
  *   - Call gv11b_get_litter_value() with all valid values and verify correct
