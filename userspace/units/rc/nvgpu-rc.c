@@ -298,6 +298,61 @@ int test_rc_mmu_fault(struct unit_module *m, struct gk20a *g, void *args)
 	return UNIT_SUCCESS;
 }
 
+int test_rc_mmu_fault_bvec(struct unit_module *m, struct gk20a *g, void *args)
+{
+	u32 valid_id[] = {0, 1 + get_random_u32(2, g->fifo.num_channels), g->fifo.num_channels - 1};
+	u32 invalid_id[] = {g->fifo.num_channels, g->fifo.num_channels + 1 + get_random_u32(g->fifo.num_channels, INVAL_ID), INVAL_ID};
+	u32 valid_id_type[] = {ID_TYPE_CHANNEL, ID_TYPE_TSG};
+	u32 invalid_id_type[] = {ID_TYPE_TSG + 1, ID_TYPE_TSG + 2 + get_random_u32(ID_TYPE_TSG + 1, U32_MAX), ID_TYPE_UNKNOWN};
+	int err = UNIT_SUCCESS;
+	u32 i;
+
+	g->sw_quiesce_pending = true;
+	clear_error_notifier(ch);
+
+	for (i = 0U; i < ARRAY_SIZE(valid_id); i++) {
+		err = nvgpu_rc_mmu_fault(g, 0U, valid_id[i], ID_TYPE_TSG, RC_TYPE_MMU_FAULT, NULL);
+		if (err != 0) {
+			unit_err(m, "mmu fault with valid id not handled");
+			err = UNIT_FAIL;
+			goto out;
+		}
+	}
+
+	for (i = 0U; i < ARRAY_SIZE(invalid_id); i++) {
+		err = nvgpu_rc_mmu_fault(g, 0U, invalid_id[i], ID_TYPE_TSG, RC_TYPE_MMU_FAULT, NULL);
+		if (err != -EINVAL) {
+			unit_err(m, "mmu fault with invalid id handled");
+			err = UNIT_FAIL;
+			goto out;
+		}
+	}
+
+	for (i = 0U; i < ARRAY_SIZE(valid_id_type); i++) {
+		err = nvgpu_rc_mmu_fault(g, 0U, 0U, valid_id_type[i], RC_TYPE_MMU_FAULT, NULL);
+		if (err != 0) {
+			unit_err(m, "mmu fault with valid id type not handled");
+			err = UNIT_FAIL;
+			goto out;
+		}
+	}
+
+	for (i = 0U; i < ARRAY_SIZE(invalid_id_type); i++) {
+		err = nvgpu_rc_mmu_fault(g, 0U, 0U, invalid_id_type[i], RC_TYPE_MMU_FAULT, NULL);
+		if (err != -EINVAL) {
+			unit_err(m, "mmu fault with invalid id type handled");
+			err = UNIT_FAIL;
+			goto out;
+		}
+	}
+
+	err = UNIT_SUCCESS;
+
+out:
+	g->sw_quiesce_pending = false;
+	return err;
+}
+
 #define F_RC_IS_CHSW_VALID_OR_SAVE                0U
 #define F_RC_IS_CHSW_LOAD_OR_SWITCH               1U
 #define F_RC_IS_CHSW_INVALID                      2U
@@ -539,6 +594,7 @@ struct unit_module_test nvgpu_rc_tests[] = {
 	UNIT_TEST(rc_sched_error_bad_tsg, test_rc_sched_error_bad_tsg, NULL, 0),
 	UNIT_TEST(rc_tsg_and_related_engines, test_rc_tsg_and_related_engines, NULL, 0),
 	UNIT_TEST(rc_mmu_fault, test_rc_mmu_fault, NULL, 0),
+	UNIT_TEST(rc_mmu_fault_bvec, test_rc_mmu_fault_bvec, NULL, 0),
 	UNIT_TEST(rc_pbdma_fault, test_rc_pbdma_fault, NULL, 0),
 	UNIT_TEST(rc_deinit, test_rc_deinit, NULL, 0),
 };

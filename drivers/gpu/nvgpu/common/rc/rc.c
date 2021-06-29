@@ -367,17 +367,63 @@ void nvgpu_rc_tsg_and_related_engines(struct gk20a *g, struct nvgpu_tsg *tsg,
 #endif
 }
 
-void nvgpu_rc_mmu_fault(struct gk20a *g, u32 act_eng_bitmask,
-			u32 id, unsigned int id_type, unsigned int rc_type,
-			 struct mmu_fault_info *mmufault)
+#ifdef CONFIG_NVGPU_RECOVERY
+static int nvgpu_rc_mmu_fault_recovery(struct gk20a *g, u32 act_eng_bitmask,
+				       u32 id, unsigned int id_type,
+				       unsigned int rc_type,
+				       struct mmu_fault_info *mmufault)
 {
+	int err = 0;
+
+	if (id >= g->fifo.num_channels && id != INVAL_ID) {
+		nvgpu_err(g, "invalid id %u", id);
+		err = -EINVAL;
+		goto out;
+	}
+
+	if (id_type > ID_TYPE_TSG && id_type != ID_TYPE_UNKNOWN) {
+		nvgpu_err(g, "invalid id type %u", id_type);
+		err = -EINVAL;
+		goto out;
+	}
+
 	nvgpu_err(g, "mmu fault id=%u id_type=%u act_eng_bitmask=%08x",
 		id, id_type, act_eng_bitmask);
 
-#ifdef CONFIG_NVGPU_RECOVERY
 	g->ops.fifo.recover(g, act_eng_bitmask,
 		id, id_type, rc_type, mmufault);
-#else
+
+out:
+	if (err != 0) {
+		nvgpu_sw_quiesce(g);
+	}
+
+	return err;
+}
+#endif
+
+int nvgpu_rc_mmu_fault(struct gk20a *g, u32 act_eng_bitmask,
+		       u32 id, unsigned int id_type, unsigned int rc_type,
+		       struct mmu_fault_info *mmufault)
+{
+#ifndef CONFIG_NVGPU_RECOVERY
+	int err = 0;
+
+	if (id >= g->fifo.num_channels) {
+		nvgpu_err(g, "invalid id %u", id);
+		err = -EINVAL;
+		goto out;
+	}
+
+	if (id_type > ID_TYPE_TSG) {
+		nvgpu_err(g, "invalid id type %u", id_type);
+		err = -EINVAL;
+		goto out;
+	}
+
+	nvgpu_err(g, "mmu fault id=%u id_type=%u act_eng_bitmask=%08x",
+		id, id_type, act_eng_bitmask);
+
 	if ((id != INVAL_ID) && (id_type == ID_TYPE_TSG)) {
 		struct nvgpu_tsg *tsg = &g->fifo.tsg[id];
 		nvgpu_tsg_set_ctx_mmu_error(g, tsg);
@@ -387,5 +433,15 @@ void nvgpu_rc_mmu_fault(struct gk20a *g, u32 act_eng_bitmask,
 	WARN_ON(!g->sw_quiesce_pending);
 	(void)rc_type;
 	(void)mmufault;
+
+out:
+	if (err != 0) {
+		nvgpu_sw_quiesce(g);
+	}
+
+	return err;
+#else
+	return nvgpu_rc_mmu_fault_recovery(g, act_eng_bitmask, id, id_type,
+					   rc_type, mmufault);
 #endif
 }

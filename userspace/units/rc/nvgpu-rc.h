@@ -245,6 +245,42 @@ int test_rc_tsg_and_related_engines(struct unit_module *m, struct gk20a *g, void
 int test_rc_mmu_fault(struct unit_module *m, struct gk20a *g, void *args);
 
 /**
+ * Test specification for: test_rc_mmu_fault_bvec
+ *
+ * Description: Validate id and id_type parameters for nvgpu_rc_mmu_fault
+ *
+ * Test Type: Boundary Value
+ *
+ * Targets: nvgpu_rc_mmu_fault
+ *
+ * Input: test_rc_init run for this GPU
+ *
+ * Equivalence classes:
+ * Variable: id
+ * - Valid: [0, g->fifo.num_channels - 1]
+ * - Invalid: [g->fifo.num_channels, INVAL_ID]
+ * Variable: id_type
+ * - Valid: [ID_TYPE_CHANNEL, ID_TYPE_TSG]
+ * - Invalid: [ID_TYPE_TSG + 1, ID_TYPE_UNKNOWN]
+ *
+ * Steps:
+ * - initialize Channel error_notifier
+ * - set g->sw_quiesce_pending = true
+ * - for all valid ids with ID_TYPE_TSG
+ *	- invoke nvgpu_rc_mmu_fault and verify it succeeds with return value 0.
+ * - for all invalid ids with ID_TYPE_TSG
+ *	- invoke nvgpu_rc_mmu_fault and verify it fails with -EINVAL.
+ * - for all valid id types with id ID_TYPE_CHANNEL
+ *	- invoke nvgpu_rc_mmu_fault and verify it succeeds with return value 0.
+ * - for all invalid id types with id ID_TYPE_CHANNEL
+ *	- invoke nvgpu_rc_mmu_fault and verify it fails with -EINVAL.
+ *
+ * Output: Returns PASS if nvgpu_rc_mmu_fault succeeds for valid id and id_type
+ *         and fails for invalid id and id_type. Returns FAIL otherwise.
+ */
+int test_rc_mmu_fault_bvec(struct unit_module *m, struct gk20a *g, void *args);
+
+/**
  * Test specification for: test_rc_pbdma_fault
  *
  * Description: Coverage test for nvgpu_rc_pbdma_fault

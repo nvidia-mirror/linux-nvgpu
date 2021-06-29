@@ -403,6 +403,7 @@ static bool gv11b_mm_mmu_fault_handle_non_replayable(struct gk20a *g,
 	u32 id = NVGPU_INVALID_TSG_ID;
 	unsigned int rc_type = RC_TYPE_NO_RC;
 	bool ret = false;
+	int err;
 
 	if (mmufault->fault_type ==
 			gmmu_fault_type_unbound_inst_block_v()) {
@@ -439,8 +440,11 @@ static bool gv11b_mm_mmu_fault_handle_non_replayable(struct gk20a *g,
 	}
 
 	if (rc_type != RC_TYPE_NO_RC) {
-		nvgpu_rc_mmu_fault(g, act_eng_bitmask,
-			id, id_type, rc_type, mmufault);
+		err = nvgpu_rc_mmu_fault(g, act_eng_bitmask,
+				id, id_type, rc_type, mmufault);
+		if (err != 0) {
+			nvgpu_err(g, "recovery failed");
+		}
 	}
 	return ret;
 }

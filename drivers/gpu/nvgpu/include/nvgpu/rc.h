@@ -255,6 +255,8 @@ void nvgpu_rc_tsg_and_related_engines(struct gk20a *g, struct nvgpu_tsg *tsg,
  * @param rc_type [in]		Recovery type.
  * @param mmufault [in]		Mmu fault info
  *
+ * Validate the id. Valid range is [0, g->fifo.num_channels).
+ * Validate the id type parameter. Valid range is [ID_TYPE_CHANNEL, ID_TYPE_TSG].
  * Do mmu fault recovery dependending on the \a rc_type, \a act_eng_bitmask,
  * \a hw_id and \a id_type.
  * For safety,
@@ -262,8 +264,11 @@ void nvgpu_rc_tsg_and_related_engines(struct gk20a *g, struct nvgpu_tsg *tsg,
  *   when \a id_type is TSG.
  * - Mark the channels of that TSG as unserviceable when \a id_type is TSG
  * - print warning if quiesce is not triggered already.
+ *
+ * @return 0 in case of success, < 0 in case of failure.
+ * @retval -EINVAL in case ID and ID type are invalid.
  */
-void nvgpu_rc_mmu_fault(struct gk20a *g, u32 act_eng_bitmask,
+int nvgpu_rc_mmu_fault(struct gk20a *g, u32 act_eng_bitmask,
 			u32 id, unsigned int id_type, unsigned int rc_type,
 			 struct mmu_fault_info *mmufault);
 
