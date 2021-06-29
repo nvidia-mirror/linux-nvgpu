@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -41,6 +41,11 @@ bool nvgpu_pbdma_status_is_chsw_valid(struct nvgpu_pbdma_status_info
 		*pbdma_status)
 {
 	return pbdma_status->chsw_status == NVGPU_PBDMA_CHSW_STATUS_VALID;
+}
+bool nvgpu_pbdma_status_ch_not_loaded(struct nvgpu_pbdma_status_info
+		*pbdma_status)
+{
+	return pbdma_status->chsw_status == NVGPU_PBDMA_CHSW_STATUS_INVALID;
 }
 bool nvgpu_pbdma_status_is_id_type_tsg(struct nvgpu_pbdma_status_info
 		*pbdma_status)

@@ -32,6 +32,7 @@
 #include <nvgpu/nvgpu_err.h>
 #include <nvgpu/cic_mon.h>
 #include <nvgpu/engines.h>
+#include <nvgpu/nvgpu_init.h>
 
 #include <hal/fifo/fifo_intr_gk20a.h>
 #include <hal/fifo/mmu_fault_gk20a.h>
@@ -92,12 +93,25 @@ u32 gk20a_fifo_pbdma_isr(struct gk20a *g)
 	u32 pbdma_id;
 	u32 num_pbdma = nvgpu_get_litter_value(g, GPU_LIT_HOST_NUM_PBDMA);
 	u32 pbdma_pending_bitmask = nvgpu_readl(g, fifo_intr_pbdma_id_r());
+	int err;
 
 	for (pbdma_id = 0; pbdma_id < num_pbdma; pbdma_id++) {
 		if (fifo_intr_pbdma_id_status_v(pbdma_pending_bitmask, pbdma_id) != 0U) {
 			nvgpu_log(g, gpu_dbg_intr, "pbdma id %d intr pending",
 				pbdma_id);
-			g->ops.pbdma.handle_intr(g, pbdma_id, true);
+			/**
+			 * Quiesce is triggered as part of nvgpu_rc_pbdma_fault
+			 * failure case, so -
+			 * 1. Avoid looping through the rest of the PBDMAs by
+			 *    adding a return statement here.
+			 * 2. Avoid re-triggering the PBDMA ISR by returning
+			 *    pbdma_intr field value here.
+			 */
+			err = g->ops.pbdma.handle_intr(g, pbdma_id, true);
+			if (err != 0) {
+				nvgpu_err(g, "pbdma intr failed id: %u", pbdma_id);
+				break;
+			}
 		}
 	}
 	return fifo_intr_0_pbdma_intr_pending_f();

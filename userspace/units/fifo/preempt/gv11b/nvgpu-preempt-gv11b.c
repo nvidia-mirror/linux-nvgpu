@@ -144,8 +144,9 @@ done:
 	return ret;
 }
 
-static void stub_pbdma_handle_intr(struct gk20a *g, u32 pbdma_id, bool recover)
+static int stub_pbdma_handle_intr(struct gk20a *g, u32 pbdma_id, bool recover)
 {
+	return 0;
 }
 
 static int stub_fifo_preempt_tsg(struct gk20a *g, struct nvgpu_tsg *tsg)

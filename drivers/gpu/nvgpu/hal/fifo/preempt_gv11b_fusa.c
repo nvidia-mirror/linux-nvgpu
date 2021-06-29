@@ -131,7 +131,11 @@ int gv11b_fifo_preempt_poll_pbdma(struct gk20a *g, u32 tsgid,
 		 * reported to SW.
 		 */
 
-		g->ops.pbdma.handle_intr(g, pbdma_id, false);
+		ret = g->ops.pbdma.handle_intr(g, pbdma_id, false);
+		if (ret != 0) {
+			nvgpu_err(g, "pbdma intr failed id: %u %d", pbdma_id, ret);
+			break;
+		}
 
 		g->ops.pbdma_status.read_pbdma_status_info(g,
 			pbdma_id, &pbdma_status);

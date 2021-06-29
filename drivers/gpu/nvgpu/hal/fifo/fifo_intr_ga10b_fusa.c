@@ -317,6 +317,36 @@ static void ga10b_fifo_runlist_intr_clear(struct gk20a *g)
 	}
 }
 
+static int ga10b_fifo_pbdma_isr(struct gk20a *g, struct nvgpu_runlist *runlist,
+				u32 pbdma_idx)
+{
+	u32 pbdma_id;
+	const struct nvgpu_pbdma_info *pbdma_info;
+	int err;
+
+	if (pbdma_idx >= PBDMA_PER_RUNLIST_SIZE) {
+		nvgpu_err(g, "pbdma_idx(%d) >= max_pbdmas_per_runlist(%d)",
+				pbdma_idx, PBDMA_PER_RUNLIST_SIZE);
+		return -EINVAL;
+	}
+	pbdma_info = runlist->pbdma_info;
+	pbdma_id = pbdma_info->pbdma_id[pbdma_idx];
+	if (pbdma_id == PBDMA_ID_INVALID) {
+		nvgpu_err(g, "runlist_id(%d), pbdma_idx(%d): invalid PBDMA",
+				runlist->id, pbdma_idx);
+		return -EINVAL;
+	}
+
+	err = g->ops.pbdma.handle_intr(g, pbdma_id, true);
+	if (err != 0) {
+		nvgpu_err(g, "pbdma intr failed id: %u", pbdma_idx);
+		return err;
+	}
+
+	return err;
+}
+
+
 void ga10b_fifo_intr_0_isr(struct gk20a *g)
 {
 	u32 i, intr_0, handled_intr_0 = 0U;
@@ -324,6 +354,7 @@ void ga10b_fifo_intr_0_isr(struct gk20a *g)
 	u32 pbdma_idx = 0U;
 	u32 intr_tree_0 = 0U, intr_tree_1 = 1U;
 	struct nvgpu_runlist *runlist;
+	int err = 0;
 
 	/* TODO: sw_ready is needed only for recovery part */
 	if (!g->fifo.sw_ready) {
@@ -349,7 +380,17 @@ void ga10b_fifo_intr_0_isr(struct gk20a *g)
 			pbdma_idx++) {
 			if (intr_0 &
 				runlist_intr_0_pbdmai_intr_tree_j_pending_f(pbdma_idx, intr_tree_0)) {
-				ga10b_fifo_pbdma_isr(g, runlist, pbdma_idx);
+				/**
+				 * Quiesce is triggered as part of nvgpu_rc_pbdma_fault
+				 * failure case, so -
+				 * 1. Avoid looping through the rest of the PBDMAs by
+				 *    adding a return statement here.
+				 * 2. Avoid re-triggering the PBDMA ISR by returning
+				 *    pbdma_intr field value here in handled_intr_0.
+				 */
+				if (err == 0) {
+					err = ga10b_fifo_pbdma_isr(g, runlist, pbdma_idx);
+				}
 				handled_intr_0 |= runlist_intr_0_pbdmai_intr_tree_j_pending_f(pbdma_idx, intr_tree_0);
 			}
 		}
@@ -454,27 +495,6 @@ void ga10b_fifo_intr_unset_recover_mask(struct gk20a *g)
 			runlist_intr_0_recover_unmask());
 	}
 
-}
-
-
-void ga10b_fifo_pbdma_isr(struct gk20a *g, struct nvgpu_runlist *runlist, u32 pbdma_idx)
-{
-	u32 pbdma_id;
-	const struct nvgpu_pbdma_info *pbdma_info;
-
-	if (pbdma_idx >= PBDMA_PER_RUNLIST_SIZE) {
-		nvgpu_err(g, "pbdma_idx(%d) >= max_pbdmas_per_runlist(%d)",
-				pbdma_idx, PBDMA_PER_RUNLIST_SIZE);
-		return;
-	}
-	pbdma_info = runlist->pbdma_info;
-	pbdma_id = pbdma_info->pbdma_id[pbdma_idx];
-	if (pbdma_id == PBDMA_ID_INVALID) {
-		nvgpu_err(g, "runlist_id(%d), pbdma_idx(%d): invalid PBDMA",
-				runlist->id, pbdma_idx);
-		return;
-	}
-	g->ops.pbdma.handle_intr(g, pbdma_id, true);
 }
 
 void ga10b_fifo_runlist_intr_retrigger(struct gk20a *g, u32 intr_tree)

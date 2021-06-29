@@ -614,6 +614,7 @@ nvgpu_pbdma_status_is_chsw_switch
 nvgpu_pbdma_status_is_chsw_valid
 nvgpu_pbdma_status_is_id_type_tsg
 nvgpu_pbdma_status_is_next_id_type_tsg
+nvgpu_pbdma_status_ch_not_loaded
 nvgpu_pbdma_setup_sw
 nvgpu_pd_alloc
 nvgpu_pd_cache_fini

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -172,13 +172,15 @@ done:
 	return ret;
 }
 
-static void stub_pbdma_handle_intr(struct gk20a *g, u32 pbdma_id, bool recover)
+static int stub_pbdma_handle_intr(struct gk20a *g, u32 pbdma_id, bool recover)
 {
 	if (nvgpu_readl(g, fifo_intr_pbdma_id_r()) != BIT(pbdma_id)) {
 		u.fail = true;
 	}
 
 	u.count++;
+
+	return 0;
 }
 
 int test_gk20a_fifo_pbdma_isr(struct unit_module *m,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -36,7 +36,6 @@ void ga10b_fifo_intr_0_isr(struct gk20a *g);
 void ga10b_fifo_intr_set_recover_mask(struct gk20a *g);
 void ga10b_fifo_intr_unset_recover_mask(struct gk20a *g);
 
-void ga10b_fifo_pbdma_isr(struct gk20a *g, struct nvgpu_runlist *runlist, u32 pbdma_idx);
 void ga10b_fifo_runlist_intr_retrigger(struct gk20a *g, u32 intr_tree);
 
 #endif /* NVGPU_FIFO_INTR_GA10B_H */

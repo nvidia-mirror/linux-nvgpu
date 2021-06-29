@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -34,7 +34,7 @@ struct nvgpu_device;
 
 bool gm20b_pbdma_handle_intr_0(struct gk20a *g, u32 pbdma_id,
 			u32 pbdma_intr_0, u32 *error_notifier);
-void gm20b_pbdma_handle_intr(struct gk20a *g, u32 pbdma_id, bool recover);
+int gm20b_pbdma_handle_intr(struct gk20a *g, u32 pbdma_id, bool recover);
 
 u32 gm20b_pbdma_read_data(struct gk20a *g, u32 pbdma_id);
 void gm20b_pbdma_reset_header(struct gk20a *g, u32 pbdma_id);

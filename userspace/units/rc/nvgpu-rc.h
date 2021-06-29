@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -249,33 +249,49 @@ int test_rc_mmu_fault(struct unit_module *m, struct gk20a *g, void *args);
  *
  * Description: Coverage test for nvgpu_rc_pbdma_fault
  *
- * Test Type: Feature
+ * Test Type: Feature, Boundary Value
  *
  * Targets: nvgpu_rc_pbdma_fault
  *
  * Input: test_rc_init run for this GPU
  *
+ * Equivalence classes:
+ * Variable: error_notifier
+ * - Valid: [NVGPU_ERR_NOTIFIER_FIFO_ERROR_IDLE_TIMEOUT, NVGPU_ERR_NOTIFIER_PBDMA_PUSHBUFFER_CRC_MISMATCH]
+ * - Invalid: [NVGPU_ERR_NOTIFIER_INVAL, INT_MAX]
+ * Variable: chsw state
+ * - Valid: [NVGPU_PBDMA_CHSW_STATUS_INVALID, NVGPU_PBDMA_CHSW_STATUS_SWITCH]
+ * - Invalid: [NVGPU_PBDMA_CHSW_STATUS_SWITCH + 1, INT_MAX]
+ * Variable: id_type
+ * - Valid: [PBDMA_STATUS_ID_TYPE_CHID, PBDMA_STATUS_ID_TYPE_TSGID]
+ * - Invalid: [PBDMA_STATUS_ID_TYPE_TSGID + 1, PBDMA_STATUS_ID_TYPE_INVALID]
+ *
  * Steps:
  * - initialize Channel error_notifier
+ * - test with valid and invalid error notifier values types
  * - set g->sw_quiesce_pending = true
  * - For each branch check with the following pbdma_status values
  * - set chsw_status to chsw_valid_or_save
  *   - set id_type to TSG
  *   - set id_type to Channel
  *     - set Channel Id to Invalid
- *	   - set Channel Id to a channel without TSG
- *	   - set Channel Id to a channel with a valid TSG
- *	 - set id_type to Invalid
+ *     - set Channel Id to a channel without TSG
+ *     - set Channel Id to a channel with a valid TSG
+ *     - set id_type to chid, tsgid, tsgid + 1, tsgid + 1 + random, invalid_id
+ *   - verify that nvgpu_rc_pbdma_fault fails for invalid id_types and invalid channel ids and succeeds otherwise.
  * - set chsw_status to is_chsw_load_or_switch
  *   - set id_type to TSG
  *   - set id_type to Channel
  *     - set Channel Id to Invalid
- *	   - set Channel Id to a channel without TSG
- *	   - set Channel Id to a channel with a valid TSG
- *	 - set id_type to Invalid
- * - set chsw_status to chsw_invalid
+ *     - set Channel Id to a channel without TSG
+ *     - set Channel Id to a channel with a valid TSG
+ *     - set id_type to chid, tsgid, tsgid + 1, tsgid + 1 + random, invalid_id
+ *   - verify that nvgpu_rc_pbdma_fault fails for invalid id_types and invalid channel ids and succeeds otherwise.
+ * - set chsw_status to chsw_invalid and verify that nvgpu_rc_pbdma_fault succeeds.
+ * - set chsw_status to invalid states and verify that nvgpu_rc_pbdma_fault fails.
  *
- * Output: Cover all branch in safety build.
+ * Output: Returns PASS if nvgpu_rc_pbdma_fault succeeds for valid inputs
+ *         and fails for invalid inputs. Returns FAIL otherwise.
  */
 int test_rc_pbdma_fault(struct unit_module *m, struct gk20a *g, void *args);
 

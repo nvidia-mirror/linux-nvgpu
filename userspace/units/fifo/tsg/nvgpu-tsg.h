@@ -448,7 +448,7 @@ int test_tsg_mark_error(struct unit_module *m,
  * Input: None
  * Equivalence classes:
  * error_notifier
- * - Invalid : { NVGPU_ERR_NOTIFIER_PBDMA_PUSHBUFFER_CRC_MISMATCH + 1, U32_MAX }
+ * - Invalid : { NVGPU_ERR_NOTIFIER_INVAL, U32_MAX }
  * - Valid :   { NVGPU_ERR_NOTIFIER_FIFO_ERROR_IDLE_TIMEOUT, NVGPU_ERR_NOTIFIER_PBDMA_PUSHBUFFER_CRC_MISMATCH }
  *
  * Steps:

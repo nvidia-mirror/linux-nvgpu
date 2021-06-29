@@ -23,6 +23,7 @@
 #include <unistd.h>
 #include <unit/unit.h>
 #include <unit/io.h>
+#include <unit/utils.h>
 #include <nvgpu/types.h>
 #include <nvgpu/gk20a.h>
 #include <nvgpu/hal_init.h>
@@ -145,6 +146,9 @@ int test_rc_init(struct unit_module *m, struct gk20a *g, void *args)
 		unit_err(m, "failed to bind channel");
 		goto clear_posix_channel;
 	}
+
+	/* initialize the seed for random number generation needed in bvec tests */
+	srand(time(0));
 
 	return UNIT_SUCCESS;
 
@@ -294,13 +298,18 @@ int test_rc_mmu_fault(struct unit_module *m, struct gk20a *g, void *args)
 	return UNIT_SUCCESS;
 }
 
-#define F_RC_IS_CHSW_VALID_OR_SAVE  0U
-#define F_RC_IS_CHSW_LOAD_OR_SWITCH 1U
-#define F_RC_IS_CHSW_INVALID        2U
+#define F_RC_IS_CHSW_VALID_OR_SAVE                0U
+#define F_RC_IS_CHSW_LOAD_OR_SWITCH               1U
+#define F_RC_IS_CHSW_INVALID                      2U
+#define F_RC_IS_CHSW_INVALID_STATE_MIN            3U
+#define F_RC_IS_CHSW_INVALID_STATE_RANDOM         4U
+#define F_RC_IS_CHSW_INVALID_STATE_MAX            5U
 
 #define F_RC_ID_TYPE_TSG     	    0U
 #define F_RC_ID_TYPE_CH             1U
-#define F_RC_ID_TYPE_INVALID        2U
+#define F_RC_ID_TYPE_INVALID_MIN    2U
+#define F_RC_ID_TYPE_INVALID_RANDOM 3U
+#define F_RC_ID_TYPE_INVALID_MAX    4U
 
 #define F_RC_ID_TYPE_CH_NULL_CHANNEL  0U
 #define F_RC_ID_TYPE_CH_NULL_TSG      1U
@@ -309,13 +318,18 @@ int test_rc_mmu_fault(struct unit_module *m, struct gk20a *g, void *args)
 static const char *f_rc_chsw[] = {
 	"is_chsw_valid_or_save",
 	"is_chsw_load_or_switch",
-	"is_chsw_invalid",
+	"is_chsw_invalid channel not loaded on engine",
+	"is_chsw_inval_min",
+	"is_chsw_inval_random",
+	"is_chsw_inval_max",
 };
 
 static const char *f_rc_id_type[] = {
 	"id_type_tsg",
 	"id_type_ch",
-	"id_type_invalid",
+	"id_type_invalid_min",
+	"id_type_invalid_random",
+	"id_type_invalid_max",
 };
 
 static const char *f_rc_id_ch_subbranch[] = {
@@ -366,7 +380,13 @@ static void set_pbdma_info_id_type(u32 chsw_branches,
 			info->next_id_type = (chsw_branches == F_RC_IS_CHSW_LOAD_OR_SWITCH) ?
 				PBDMA_STATUS_NEXT_ID_TYPE_CHID : PBDMA_STATUS_NEXT_ID_TYPE_INVALID;
 		}
-	} else {
+	} else if (id_type_branches == F_RC_ID_TYPE_INVALID_MIN) {
+		info->id_type = PBDMA_STATUS_ID_TYPE_TSGID + 1;
+		info->next_id_type = PBDMA_STATUS_ID_TYPE_TSGID + 1;
+	} else if (id_type_branches == F_RC_ID_TYPE_INVALID_RANDOM) {
+		info->id_type = PBDMA_STATUS_ID_TYPE_TSGID + 2 + get_random_u32(PBDMA_STATUS_ID_TYPE_TSGID + 1, U32_MAX);
+		info->next_id_type = PBDMA_STATUS_ID_TYPE_TSGID + 2 + get_random_u32(PBDMA_STATUS_ID_TYPE_TSGID + 1, U32_MAX);
+	} else if (id_type_branches == F_RC_ID_TYPE_INVALID_MAX) {
 		info->id_type = PBDMA_STATUS_ID_INVALID;
 		info->next_id_type = PBDMA_STATUS_ID_INVALID;
 	}
@@ -374,7 +394,13 @@ static void set_pbdma_info_id_type(u32 chsw_branches,
 
 int test_rc_pbdma_fault(struct unit_module *m, struct gk20a *g, void *args)
 {
+	int notifiers[] = {NVGPU_ERR_NOTIFIER_FIFO_ERROR_IDLE_TIMEOUT, NVGPU_ERR_NOTIFIER_PBDMA_PUSHBUFFER_CRC_MISMATCH,
+			   NVGPU_ERR_NOTIFIER_INVAL,
+			   NVGPU_ERR_NOTIFIER_INVAL + 1 + get_random_u32(NVGPU_ERR_NOTIFIER_INVAL, INT_MAX), INT_MAX};
+	struct nvgpu_pbdma_status_info info = {0};
 	u32 chsw_branches, id_type_branches;
+	int err = UNIT_SUCCESS;
+	u32 i;
 	u32 chsw_subbranch;
 
 	struct nvgpu_channel *ch_without_tsg = NULL;
@@ -388,18 +414,19 @@ int test_rc_pbdma_fault(struct unit_module *m, struct gk20a *g, void *args)
 
 	g->sw_quiesce_pending = true;
 
-	for (chsw_branches = F_RC_IS_CHSW_VALID_OR_SAVE;
-		chsw_branches <= F_RC_IS_CHSW_INVALID; chsw_branches++) {
-		struct nvgpu_pbdma_status_info info = {0};
-
-		if (chsw_branches == F_RC_IS_CHSW_INVALID) {
-			info.chsw_status = NVGPU_PBDMA_CHSW_STATUS_INVALID;
-			unit_info(m, "%s branch: %s\n", __func__, f_rc_chsw[chsw_branches]);
-			nvgpu_rc_pbdma_fault(g, 0U, NVGPU_ERR_NOTIFIER_PBDMA_ERROR, &info);
-			continue;
+	for (i = 0; i < ARRAY_SIZE(notifiers); i++) {
+		err = nvgpu_rc_pbdma_fault(g, 0U, notifiers[i], &info);
+		if (err != (i < 2 ? 0 : -EINVAL)) {
+			unit_err(m, "fault processing error with notifier %d", notifiers[i]);
+			err = UNIT_FAIL;
+			goto out;
 		}
+	}
 
-		for (chsw_subbranch = 0U; chsw_subbranch < 2U; chsw_subbranch++) {
+	for (chsw_branches = F_RC_IS_CHSW_VALID_OR_SAVE;
+		chsw_branches <= F_RC_IS_CHSW_LOAD_OR_SWITCH; chsw_branches++) {
+
+		for (chsw_subbranch = 0U; chsw_subbranch <= chsw_branches; chsw_subbranch++) {
 			if (chsw_branches == F_RC_IS_CHSW_VALID_OR_SAVE) {
 				info.chsw_status =
 					(chsw_subbranch * NVGPU_PBDMA_CHSW_STATUS_VALID) +
@@ -411,7 +438,7 @@ int test_rc_pbdma_fault(struct unit_module *m, struct gk20a *g, void *args)
 			}
 		}
 
-		for (id_type_branches = F_RC_ID_TYPE_TSG; id_type_branches <= F_RC_ID_TYPE_INVALID;
+		for (id_type_branches = F_RC_ID_TYPE_TSG; id_type_branches <= F_RC_ID_TYPE_INVALID_MAX;
 				id_type_branches++) {
 			u32 id_type_ch_sub_branches = 0U;
 			if (id_type_branches == F_RC_ID_TYPE_CH) {
@@ -425,27 +452,81 @@ int test_rc_pbdma_fault(struct unit_module *m, struct gk20a *g, void *args)
 						f_rc_id_type[id_type_branches],
 						f_rc_id_ch_subbranch[id_type_ch_sub_branches]);
 
-					nvgpu_rc_pbdma_fault(g, 0U, NVGPU_ERR_NOTIFIER_PBDMA_ERROR, &info);
+					err = nvgpu_rc_pbdma_fault(g, 0U, NVGPU_ERR_NOTIFIER_PBDMA_ERROR, &info);
+					if ((id_type_branches >= F_RC_ID_TYPE_INVALID_MIN) ||
+					    (id_type_ch_sub_branches < F_RC_ID_TYPE_CH_FULL)) {
+						if (err != -EINVAL) {
+							unit_err(m, "invalid id type or null ch/tsg passed");
+							err = UNIT_FAIL;
+							goto out;
+						}
+					} else if (err != 0) {
+						unit_err(m, "valid id type with full ch failed");
+						err = UNIT_FAIL;
+						goto out;
+					}
 				}
 			} else {
 				set_pbdma_info_id_type(chsw_branches, &info, ch_without_tsg,
 					id_type_branches, id_type_ch_sub_branches);
 
-
 				unit_info(m, "%s branch: %s - %s\n", __func__,
 					f_rc_chsw[chsw_branches],
 					f_rc_id_type[id_type_branches]);
 
-				nvgpu_rc_pbdma_fault(g, 0U, NVGPU_ERR_NOTIFIER_PBDMA_ERROR, &info);
+				err = nvgpu_rc_pbdma_fault(g, 0U, NVGPU_ERR_NOTIFIER_PBDMA_ERROR, &info);
+				if (id_type_branches >= F_RC_ID_TYPE_INVALID_MIN) {
+					if (err != -EINVAL) {
+						unit_err(m, "invalid id type passed");
+						err = UNIT_FAIL;
+						goto out;
+					}
+				} else if (err != 0) {
+					unit_err(m, "valid id type with tsg failed");
+					err = UNIT_FAIL;
+					goto out;
+				}
 			}
 		}
 	}
 
+	for (chsw_branches = F_RC_IS_CHSW_INVALID;
+		chsw_branches <= F_RC_IS_CHSW_INVALID_STATE_MAX; chsw_branches++) {
+
+		if (chsw_branches == F_RC_IS_CHSW_INVALID) {
+			info.chsw_status = NVGPU_PBDMA_CHSW_STATUS_INVALID;
+		}
+
+		if (chsw_branches == F_RC_IS_CHSW_INVALID_STATE_MIN) {
+			info.chsw_status = NVGPU_PBDMA_CHSW_STATUS_SWITCH + 1;
+		}
+
+		if (chsw_branches == F_RC_IS_CHSW_INVALID_STATE_RANDOM) {
+			info.chsw_status = NVGPU_PBDMA_CHSW_STATUS_SWITCH + 2 +
+						get_random_u32(NVGPU_PBDMA_CHSW_STATUS_SWITCH + 1, INT_MAX);
+		}
+
+		if (chsw_branches == F_RC_IS_CHSW_INVALID_STATE_MAX) {
+			info.chsw_status = INT_MAX;
+		}
+
+		unit_info(m, "%s branch: %s\n", __func__, f_rc_chsw[chsw_branches]);
+		err = nvgpu_rc_pbdma_fault(g, 0U, NVGPU_ERR_NOTIFIER_PBDMA_ERROR, &info);
+		if (err != ((chsw_branches == F_RC_IS_CHSW_INVALID) ? 0 : -EINVAL)) {
+			unit_err(m, "pbdma status check failed");
+			err = UNIT_FAIL;
+			goto out;
+		}
+	}
+
+	err = UNIT_SUCCESS;
+
+out:
 	g->sw_quiesce_pending = false;
 
 	nvgpu_channel_close(ch_without_tsg);
 
-	return UNIT_SUCCESS;
+	return err;
 }
 
 struct unit_module_test nvgpu_rc_tests[] = {

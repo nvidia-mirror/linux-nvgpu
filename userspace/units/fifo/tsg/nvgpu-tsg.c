@@ -1579,7 +1579,7 @@ int test_nvgpu_tsg_set_error_notifier_bvec(struct unit_module *m,
 	int ret = 0;
 
 	u32 valid_error_notifier_ids[][2] = {{NVGPU_ERR_NOTIFIER_FIFO_ERROR_IDLE_TIMEOUT, NVGPU_ERR_NOTIFIER_PBDMA_PUSHBUFFER_CRC_MISMATCH}};
-	u32 invalid_error_notifier_ids[][2] = {{NVGPU_ERR_NOTIFIER_PBDMA_PUSHBUFFER_CRC_MISMATCH + 1, U32_MAX}};
+	u32 invalid_error_notifier_ids[][2] = {{NVGPU_ERR_NOTIFIER_INVAL, U32_MAX}};
 	u32 (*working_list)[2];
 	u32 error_code, error_notifier_range_len;
 	/*

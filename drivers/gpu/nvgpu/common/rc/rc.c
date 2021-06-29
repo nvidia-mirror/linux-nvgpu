@@ -35,6 +35,7 @@
 #include <nvgpu/error_notifier.h>
 #include <nvgpu/pbdma_status.h>
 #include <nvgpu/rc.h>
+#include <nvgpu/nvgpu_init.h>
 
 void nvgpu_rc_fifo_recover(struct gk20a *g, u32 eng_bitmask,
 			u32 hw_id, bool id_is_tsg,
@@ -94,11 +95,18 @@ void nvgpu_rc_ctxsw_timeout(struct gk20a *g, u32 eng_bitmask,
 #endif
 }
 
-void nvgpu_rc_pbdma_fault(struct gk20a *g, u32 pbdma_id, u32 error_notifier,
+int nvgpu_rc_pbdma_fault(struct gk20a *g, u32 pbdma_id, enum nvgpu_err_notif error_notifier,
 			struct nvgpu_pbdma_status_info *pbdma_status)
 {
-	u32 id;
 	u32 id_type = PBDMA_STATUS_ID_TYPE_INVALID;
+	int err = 0;
+	u32 id;
+
+	if (error_notifier >= NVGPU_ERR_NOTIFIER_INVAL) {
+		nvgpu_err(g, "Invalid error notifier %u", error_notifier);
+		err = -EINVAL;
+		goto out;
+	}
 
 	nvgpu_log(g, gpu_dbg_info, "pbdma id %d error notifier %d",
 			pbdma_id, error_notifier);
@@ -111,10 +119,14 @@ void nvgpu_rc_pbdma_fault(struct gk20a *g, u32 pbdma_id, u32 error_notifier,
 			nvgpu_pbdma_status_is_chsw_switch(pbdma_status)) {
 		id = pbdma_status->next_id;
 		id_type = pbdma_status->next_id_type;
-	} else {
+	} else if (nvgpu_pbdma_status_ch_not_loaded(pbdma_status)) {
 		/* Nothing to do here */
-		nvgpu_err(g, "Invalid pbdma_status.id");
-		return;
+		nvgpu_log_info(g, "no channel loaded on pbdma.");
+		goto out;
+	} else {
+		nvgpu_err(g, "pbdma status not valid");
+		err = -EINVAL;
+		goto out;
 	}
 
 	if (id_type == PBDMA_STATUS_ID_TYPE_TSGID) {
@@ -128,7 +140,8 @@ void nvgpu_rc_pbdma_fault(struct gk20a *g, u32 pbdma_id, u32 error_notifier,
 		struct nvgpu_tsg *tsg;
 		if (ch == NULL) {
 			nvgpu_err(g, "channel is not referenceable");
-			return;
+			err = -EINVAL;
+			goto out;
 		}
 
 		tsg = nvgpu_tsg_from_ch(ch);
@@ -138,12 +151,21 @@ void nvgpu_rc_pbdma_fault(struct gk20a *g, u32 pbdma_id, u32 error_notifier,
 				RC_TYPE_PBDMA_FAULT);
 		} else {
 			nvgpu_err(g, "chid: %d is not bound to tsg", ch->chid);
+			err = -EINVAL;
 		}
 
 		nvgpu_channel_put(ch);
 	} else {
-		nvgpu_err(g, "Invalid pbdma_status.id_type");
+		nvgpu_err(g, "Invalid pbdma_status id_type or next_id_type");
+		err = -EINVAL;
 	}
+
+out:
+	if (err != 0) {
+		nvgpu_sw_quiesce(g);
+	}
+
+	return err;
 }
 
 void nvgpu_rc_runlist_update(struct gk20a *g, u32 runlist_id)

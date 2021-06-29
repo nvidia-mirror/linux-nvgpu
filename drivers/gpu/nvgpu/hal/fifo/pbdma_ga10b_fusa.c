@@ -358,11 +358,11 @@ void ga10b_pbdma_intr_enable(struct gk20a *g, bool enable)
 	}
 }
 
-
-void ga10b_pbdma_handle_intr(struct gk20a *g, u32 pbdma_id, bool recover)
+int ga10b_pbdma_handle_intr(struct gk20a *g, u32 pbdma_id, bool recover)
 {
 	struct nvgpu_pbdma_status_info pbdma_status;
 	u32 intr_error_notifier = NVGPU_ERR_NOTIFIER_PBDMA_ERROR;
+	int err = 0;
 
 	u32 pbdma_intr_0 = nvgpu_readl(g, pbdma_intr_0_r(pbdma_id));
 	u32 pbdma_intr_1 = nvgpu_readl(g, pbdma_intr_1_r(pbdma_id));
@@ -377,9 +377,12 @@ void ga10b_pbdma_handle_intr(struct gk20a *g, u32 pbdma_id, bool recover)
 			g->ops.pbdma_status.read_pbdma_status_info(g,
 				pbdma_id, &pbdma_status);
 			if (recover) {
-				nvgpu_rc_pbdma_fault(g, pbdma_id,
+				err = nvgpu_rc_pbdma_fault(g, pbdma_id,
 						intr_error_notifier,
 						&pbdma_status);
+				if (err != 0) {
+					nvgpu_err(g, "recovery failed");
+				}
 			}
 		}
 		nvgpu_writel(g, pbdma_intr_0_r(pbdma_id), pbdma_intr_0);
@@ -391,17 +394,22 @@ void ga10b_pbdma_handle_intr(struct gk20a *g, u32 pbdma_id, bool recover)
 			pbdma_id, pbdma_intr_1);
 
 		if (g->ops.pbdma.handle_intr_1(g, pbdma_id, pbdma_intr_1,
-			&intr_error_notifier)) {
+			&intr_error_notifier) && (err == 0)) {
 			g->ops.pbdma_status.read_pbdma_status_info(g,
 				pbdma_id, &pbdma_status);
 			if (recover) {
-				nvgpu_rc_pbdma_fault(g, pbdma_id,
+				err = nvgpu_rc_pbdma_fault(g, pbdma_id,
 						intr_error_notifier,
 						&pbdma_status);
+				if (err != 0) {
+					nvgpu_err(g, "recovery failed");
+				}
 			}
 		}
 		nvgpu_writel(g, pbdma_intr_1_r(pbdma_id), pbdma_intr_1);
 	}
+
+	return err;
 }
 
 static bool ga10b_pbdma_handle_intr_0_legacy(struct gk20a *g, u32 pbdma_id,

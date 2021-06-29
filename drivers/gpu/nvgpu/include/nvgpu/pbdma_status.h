@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -149,6 +149,17 @@ bool nvgpu_pbdma_status_is_chsw_save(struct nvgpu_pbdma_status_info
  *         status is set to #NVGPU_PBDMA_CHSW_STATUS_VALID else returns false.
  */
 bool nvgpu_pbdma_status_is_chsw_valid(struct nvgpu_pbdma_status_info
+		*pbdma_status);
+/**
+ * @brief Check if chsw_status is set to invalid.
+ *
+ * @param pbdma_status [in]	Pointer to struct containing pbdma_status h/w
+ *				reg/field value.
+ *
+ * @return Interprets #pbdma_status and returns true if channel
+ *         status is set to #NVGPU_PBDMA_CHSW_STATUS_INVALID else returns false.
+ */
+bool nvgpu_pbdma_status_ch_not_loaded(struct nvgpu_pbdma_status_info
 		*pbdma_status);
 /**
  * @brief Check if id_type is tsg.

@@ -621,9 +621,8 @@ void nvgpu_tsg_set_error_notifier(struct gk20a *g, struct nvgpu_tsg *tsg,
 		u32 error_notifier)
 {
 	struct nvgpu_channel *ch = NULL;
-	u32 max_error_notifier_id = NVGPU_ERR_NOTIFIER_PBDMA_PUSHBUFFER_CRC_MISMATCH;
 
-	if (error_notifier > max_error_notifier_id) {
+	if (error_notifier >= NVGPU_ERR_NOTIFIER_INVAL) {
 		return;
 	}
 

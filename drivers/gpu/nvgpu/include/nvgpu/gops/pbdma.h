@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -51,7 +51,7 @@ struct gops_pbdma {
 	bool (*handle_intr_1)(struct gk20a *g,
 			u32 pbdma_id, u32 pbdma_intr_1,
 			u32 *error_notifier);
-	void (*handle_intr)(struct gk20a *g, u32 pbdma_id, bool recover);
+	int (*handle_intr)(struct gk20a *g, u32 pbdma_id, bool recover);
 	u32 (*set_clear_intr_offsets) (struct gk20a *g,
 			u32 set_clear_size);
 	u32 (*get_signature)(struct gk20a *g);
