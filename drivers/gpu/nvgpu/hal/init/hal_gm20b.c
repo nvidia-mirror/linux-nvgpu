@@ -1032,7 +1032,6 @@ static const struct gops_falcon gm20b_ops_falcon = {
 static const struct gops_priv_ring gm20b_ops_priv_ring = {
 	.enable_priv_ring = gm20b_priv_ring_enable,
 	.isr = gm20b_priv_ring_isr,
-	.set_ppriv_timeout_settings = gm20b_priv_set_timeout_settings,
 	.enum_ltc = gm20b_priv_ring_enum_ltc,
 	.get_gpc_count = gm20b_priv_ring_get_gpc_count,
 	.get_fbp_count = gm20b_priv_ring_get_fbp_count,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -92,29 +92,6 @@ int test_priv_ring_free_reg_space(struct unit_module *m, struct gk20a *g, void *
  * - UNIT_SUCCESS otherwise.
  */
 int test_enable_priv_ring(struct unit_module *m, struct gk20a *g, void *args);
-
-/**
- * Test specification for: test_set_ppriv_timeout_settings
- *
- * Description: Verify the priv_ring.set_ppriv_timeout_settings HAL.
- *
- * Test Type: Feature
- *
- * Targets: gops_priv_ring.set_ppriv_timeout_settings,
- *          gm20b_priv_set_timeout_settings
- *
- * Input: test_priv_ring_setup() has been executed.
- *
- * Steps:
- * - Call set_ppriv_timeout_settings HAL to set the timeout values to 0x800.
- * - Read back the registers to make sure the timeouts are set to 0x800.
- *
- * Output:
- * - UNIT_FAIL if above HAL fails to set timeouts.
- * - UNIT_SUCCESS otherwise.
- */
-int test_set_ppriv_timeout_settings(struct unit_module *m, struct gk20a *g,
-								void *args);
 
 /**
  * Test specification for: test_enum_ltc

@@ -1639,7 +1639,6 @@ static const struct gops_priv_ring ga100_ops_priv_ring = {
 	.isr_handle_0 = ga10b_priv_ring_isr_handle_0,
 	.isr_handle_1 = ga10b_priv_ring_isr_handle_1,
 	.decode_error_code = ga10b_priv_ring_decode_error_code,
-	.set_ppriv_timeout_settings = NULL,
 	.enum_ltc = ga10b_priv_ring_enum_ltc,
 	.get_gpc_count = gm20b_priv_ring_get_gpc_count,
 	.get_fbp_count = gm20b_priv_ring_get_fbp_count,

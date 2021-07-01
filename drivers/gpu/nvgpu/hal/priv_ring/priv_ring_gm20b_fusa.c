@@ -1,7 +1,7 @@
 /*
  * GM20B priv ring
  *
- * Copyright (c) 2011-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -93,16 +93,6 @@ int gm20b_priv_ring_enable(struct gk20a *g)
 	}
 
 	return 0;
-}
-
-void gm20b_priv_set_timeout_settings(struct gk20a *g)
-{
-	/*
-	 * Bug 1340570: increase the clock timeout to avoid potential
-	 * operation failure at high gpcclk rate. Default values are 0x400.
-	 */
-	nvgpu_writel(g, pri_ringstation_sys_master_config_r(0x15), 0x800);
-	nvgpu_writel(g, pri_ringstation_gpc_master_config_r(0xa), 0x800);
 }
 
 u32 gm20b_priv_ring_enum_ltc(struct gk20a *g)

@@ -73,7 +73,6 @@ gm20b_top_get_max_lts_per_ltc
 gm20b_top_get_num_ltcs
 gm20b_fuse_status_opt_fbp
 gm20b_priv_ring_enable
-gm20b_priv_set_timeout_settings
 gm20b_priv_ring_enum_ltc
 gm20b_priv_ring_get_gpc_count
 gm20b_priv_ring_get_fbp_count

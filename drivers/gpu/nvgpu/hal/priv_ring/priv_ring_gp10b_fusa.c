@@ -37,6 +37,9 @@
 
 #include "priv_ring_gp10b.h"
 
+static const u32 poll_retries = 100;
+static const u32 poll_delay = 20;
+
 static const char *const error_type_badf1xyy[] = {
 	"client timeout",
 	"decode error",
@@ -204,9 +207,9 @@ void gp10b_priv_ring_isr_handle_1(struct gk20a *g, u32 status1)
 
 void gp10b_priv_ring_isr(struct gk20a *g)
 {
+	u32 retries = poll_retries;
 	u32 status0, status1;
 	u32 cmd;
-	s32 retry;
 
 	status0 = nvgpu_readl(g, pri_ringmaster_intr_status0_r());
 	status1 = nvgpu_readl(g, pri_ringmaster_intr_status1_r());
@@ -224,18 +227,17 @@ void gp10b_priv_ring_isr(struct gk20a *g)
 	nvgpu_writel(g, pri_ringmaster_command_r(), cmd);
 
 	/* poll for clear interrupt done */
-	retry = GP10B_PRIV_RING_POLL_CLEAR_INTR_RETRIES;
 
 	cmd = pri_ringmaster_command_cmd_v(
 		nvgpu_readl(g, pri_ringmaster_command_r()));
-	while ((cmd != pri_ringmaster_command_cmd_no_cmd_v()) && (retry != 0)) {
-		nvgpu_udelay(GP10B_PRIV_RING_POLL_CLEAR_INTR_UDELAY);
+	while ((cmd != pri_ringmaster_command_cmd_no_cmd_v()) && (retries != 0U)) {
+		nvgpu_udelay(poll_delay);
 		cmd = pri_ringmaster_command_cmd_v(
 			nvgpu_readl(g, pri_ringmaster_command_r()));
-		retry--;
+		retries--;
 	}
 
-	if (retry == 0) {
+	if (retries == 0U) {
 		nvgpu_err(g, "priv ringmaster intr ack failed");
 	}
 }

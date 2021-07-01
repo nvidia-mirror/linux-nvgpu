@@ -168,25 +168,6 @@ struct gops_priv_ring {
 	void (*isr_handle_1)(struct gk20a *g, u32 status1);
 
 	/**
-	 * @brief Sets Priv ring timeout value in cycles.
-	 * @brief Sets Priv ring timeout value in cycles when initializing GR H/W unit.
-	 *
-	 * @param g [in]		Pointer to GPU driver struct.
-	 * - The function does not perform validation of g parameter.
-	 *
-	 * This functions sets h/w specified timeout value in the number of
-	 * cycles after sending a priv request. If timeout is exceeded then
-	 * timeout error is reported back via \ref #isr_stall "g->ops.mc.isr_stall(g)".
-	 *
-	 * Steps:
-	 *       - Write \a 0x800 to register pri_ringstation_sys_master_config_r()
-	 *         at offset 0x15.
-	 *       - Write \a 0x800 to register pri_ringstation_gpc_master_config_r()
-	 *         at offset 0xa.
-	 */
-
-	void (*set_ppriv_timeout_settings)(struct gk20a *g);
-	/**
 	 * @brief Returns number of enumerated Level Two Cache (LTC) chiplets.
 	 *
 	 * @param g [in]		Pointer to GPU driver struct.

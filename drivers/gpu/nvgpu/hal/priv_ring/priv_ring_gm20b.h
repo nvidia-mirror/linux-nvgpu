@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -54,7 +54,6 @@ struct gk20a;
 void gm20b_priv_ring_isr(struct gk20a *g);
 #endif
 int gm20b_priv_ring_enable(struct gk20a *g);
-void gm20b_priv_set_timeout_settings(struct gk20a *g);
 u32 gm20b_priv_ring_enum_ltc(struct gk20a *g);
 
 u32 gm20b_priv_ring_get_gpc_count(struct gk20a *g);

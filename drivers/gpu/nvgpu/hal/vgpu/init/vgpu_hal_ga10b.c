@@ -1026,7 +1026,6 @@ static const struct gops_falcon vgpu_ga10b_ops_falcon = {
 static const struct gops_priv_ring vgpu_ga10b_ops_priv_ring = {
 	.enable_priv_ring = NULL,
 	.isr = NULL,
-	.set_ppriv_timeout_settings = NULL,
 	.enum_ltc = NULL,
 	.get_gpc_count = vgpu_gr_get_gpc_count,
 };

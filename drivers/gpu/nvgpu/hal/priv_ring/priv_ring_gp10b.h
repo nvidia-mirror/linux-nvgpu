@@ -1,7 +1,7 @@
 /*
  * GP10B PRIV ringmaster
  *
- * Copyright (c) 2011-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,9 +25,6 @@
 #define NVGPU_PRIV_RING_GP10B_H
 
 struct gk20a;
-
-#define GP10B_PRIV_RING_POLL_CLEAR_INTR_RETRIES	100
-#define GP10B_PRIV_RING_POLL_CLEAR_INTR_UDELAY	20
 
 void gp10b_priv_ring_isr(struct gk20a *g);
 void gp10b_priv_ring_decode_error_code(struct gk20a *g, u32 error_code);

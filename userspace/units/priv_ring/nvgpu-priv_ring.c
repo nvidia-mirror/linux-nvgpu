@@ -118,8 +118,6 @@ int test_priv_ring_setup(struct unit_module *m, struct gk20a *g, void *args)
 	g->ops.priv_ring.isr_handle_0 = gp10b_priv_ring_isr_handle_0;
 	g->ops.priv_ring.isr_handle_1 = gp10b_priv_ring_isr_handle_1;
 	g->ops.priv_ring.decode_error_code = gp10b_priv_ring_decode_error_code;
-	g->ops.priv_ring.set_ppriv_timeout_settings =
-					gm20b_priv_set_timeout_settings;
 	g->ops.priv_ring.enum_ltc = gm20b_priv_ring_enum_ltc;
 	g->ops.priv_ring.get_gpc_count = gm20b_priv_ring_get_gpc_count;
 	g->ops.priv_ring.get_fbp_count = gm20b_priv_ring_get_fbp_count;
@@ -251,31 +249,6 @@ int test_enable_priv_ring(struct unit_module *m, struct gk20a *g, void *args)
 
 end:
 	read_cmd_reg = 3U; // Restore to default
-
-	return ret;
-}
-
-int test_set_ppriv_timeout_settings(struct unit_module *m, struct gk20a *g,
-								void *args)
-{
-	int ret = UNIT_SUCCESS;
-	u32 val_sys;
-	u32 val_gpc;
-
-	/* Call set_ppriv_timeout_settings HAL to set the timeout values
-	 * to 0x800.
-	 */
-	g->ops.priv_ring.set_ppriv_timeout_settings(g);
-
-	/* Read back the registers to make sure the timeouts are set to 0x800 */
-	val_sys = nvgpu_posix_io_readl_reg_space(g,
-				pri_ringstation_sys_master_config_r(0x15));
-	val_gpc = nvgpu_posix_io_readl_reg_space(g,
-				pri_ringstation_gpc_master_config_r(0xa));
-	if ((val_sys != 0x800) || (val_gpc != 0x800)) {
-		unit_err(m, "Timeout setting failed.\n");
-		ret = UNIT_FAIL;
-	}
 
 	return ret;
 }
@@ -413,8 +386,6 @@ int test_decode_error_code(struct unit_module *m, struct gk20a *g, void *args)
 struct unit_module_test priv_ring_tests[] = {
 	UNIT_TEST(priv_ring_setup,	       test_priv_ring_setup,   NULL, 0),
 	UNIT_TEST(priv_ring_enable_priv_ring,  test_enable_priv_ring,  NULL, 0),
-	UNIT_TEST(priv_ring_set_ppriv_timeout_settings,
-				    test_set_ppriv_timeout_settings,   NULL, 0),
 	UNIT_TEST(priv_ring_enum_ltc,          test_enum_ltc,          NULL, 0),
 	UNIT_TEST(priv_ring_get_gpc_count,     test_get_gpc_count,     NULL, 0),
 	UNIT_TEST(priv_ring_get_fbp_count,     test_get_fbp_count,     NULL, 0),

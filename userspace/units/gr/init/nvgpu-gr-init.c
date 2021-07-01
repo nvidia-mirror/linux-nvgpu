@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -355,7 +355,6 @@ static int test_gr_init_setup_hw_error(struct gk20a *g)
 {
 	int err;
 
-	g->ops.priv_ring.set_ppriv_timeout_settings = NULL;
 	g->ops.gr.init.ecc_scrub_reg = NULL;
 	err = nvgpu_gr_init_support(g);
 	if (err != 0) {
@@ -369,8 +368,6 @@ static int test_gr_init_setup_hw_error(struct gk20a *g)
 	if (err == 0) {
 		return UNIT_FAIL;
 	}
-	g->ops.priv_ring.set_ppriv_timeout_settings =
-		gr_init_gops.priv_ring.set_ppriv_timeout_settings;
 	g->ops.gr.init.ecc_scrub_reg =
 		gr_init_gops.gr.init.ecc_scrub_reg;
 
