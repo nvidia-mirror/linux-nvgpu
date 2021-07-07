@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -56,8 +56,8 @@ struct sim_nvgpu {
 #ifdef __KERNEL__
 #include "linux/sim.h"
 #include "linux/sim_pci.h"
-#elif defined(__NVGPU_POSIX__)
-/* Nothing for POSIX-nvgpu. */
+#elif defined(__NVGPU_POSIX__) || defined(NVGPU_HVRTOS)
+/* Nothing for POSIX-nvgpu and nvgpu_hvrtos. */
 #else
 #include <nvgpu_rmos/include/sim.h>
 #include <nvgpu_rmos/include/sim_pci.h>

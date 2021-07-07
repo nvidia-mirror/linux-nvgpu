@@ -25,6 +25,8 @@
 
 #ifdef __KERNEL__
 #include <nvgpu/linux/periodic_timer.h>
+#elif defined(NVGPU_HVRTOS)
+#include <nvgpu_hvrtos/periodic_timer.h>
 #else
 #include <nvgpu/posix/periodic_timer.h>
 #endif

@@ -74,6 +74,7 @@ srcs += os/posix/posix-vidmem.c
 endif
 endif
 
+ifndef NVGPU_HVRTOS
 # POSIX sources shared between the POSIX and QNX builds.
 srcs += os/posix/bug.c \
 	os/posix/rwsem.c \
@@ -83,10 +84,12 @@ srcs += os/posix/bug.c \
 	os/posix/lock.c \
 	os/posix/thread.c \
 	os/posix/os_sched.c \
-	os/posix/bitmap.c \
 	os/posix/kmem.c \
 	os/posix/file_ops.c \
 	os/posix/queue.c
+endif
+
+srcs += os/posix/bitmap.c
 
 ifeq ($(NV_BUILD_CONFIGURATION_IS_SAFETY),0)
 srcs += os/posix/bsearch.c

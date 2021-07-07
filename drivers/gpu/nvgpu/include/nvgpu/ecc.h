@@ -101,7 +101,6 @@ struct nvgpu_ecc_stat {
 	struct nvgpu_list_node node;
 };
 
-#ifdef CONFIG_NVGPU_SYSFS
 /**
  * @brief	Helper function to get struct nvgpu_ecc_stat from list node.
  *
@@ -117,7 +116,6 @@ static inline struct nvgpu_ecc_stat *nvgpu_ecc_stat_from_node(
 			(uintptr_t)node - offsetof(struct nvgpu_ecc_stat, node)
 		);
 }
-#endif
 
 /**
  * The structure contains the error statistics assocaited with constituent

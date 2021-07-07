@@ -55,7 +55,7 @@ int nvgpu_aelpg_init_and_enable(struct gk20a *g, u32 ctrl_id)
 		nvgpu_err(g, "PG AELPG init and Enable function not assigned");
 		return -EINVAL;
 	}
-	status = g->pmu->pg->aelpg_init_and_enable(g, ctrl_id);
+	status = g->pmu->pg->aelpg_init_and_enable(g, (u8)ctrl_id);
 
 	if (status != 0) {
 		nvgpu_err(g, "aelpg_init_and_enable FAILED err=%d",
@@ -75,7 +75,7 @@ int nvgpu_aelpg_enable(struct gk20a *g, u32 ctrl_id)
 		nvgpu_err(g, "AELPG Enable function not assigned");
 		return -EINVAL;
 	}
-	status = g->pmu->pg->aelpg_enable(g, ctrl_id);
+	status = g->pmu->pg->aelpg_enable(g, (u8)ctrl_id);
 
 	if (status != 0) {
 		nvgpu_err(g, "aelpg_enable FAILED err=%d",
@@ -95,7 +95,7 @@ int nvgpu_aelpg_disable(struct gk20a *g, u32 ctrl_id)
 		nvgpu_err(g, "AELPG Disable function not assigned");
 		return -EINVAL;
 	}
-	status = g->pmu->pg->aelpg_disable(g, ctrl_id);
+	status = g->pmu->pg->aelpg_disable(g, (u8)ctrl_id);
 
 	if (status != 0) {
 		nvgpu_err(g, "aelpg_disable FAILED err=%d",

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,6 +32,8 @@
 #include <nvgpu/linux/barrier.h>
 #elif defined(__NVGPU_POSIX__)
 #include <nvgpu/posix/barrier.h>
+#elif defined(NVGPU_HVRTOS)
+#include <nvgpu_hvrtos/barrier.h>
 #else
 #include <nvgpu_rmos/include/barrier.h>
 #endif

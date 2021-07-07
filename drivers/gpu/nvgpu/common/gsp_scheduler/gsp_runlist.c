@@ -107,8 +107,8 @@ static int gsp_send_cmd_and_wait_for_ack(struct gk20a *g,
 
 	tmp_size = GSP_CMD_HDR_SIZE + size;
 	nvgpu_assert(tmp_size <= U64(U8_MAX));
-	cmd->hdr.size = tmp_size;
-	cmd->hdr.unit_id = unit_id;
+	cmd->hdr.size = (u8)tmp_size;
+	cmd->hdr.unit_id = (u8)unit_id;
 
 	err = nvgpu_gsp_cmd_post(g, cmd, GSP_NV_CMDQ_LOG_ID,
 			gsp_handle_cmd_ack, &command_ack, U32_MAX);
@@ -156,6 +156,8 @@ static void gsp_get_device_info(struct gk20a *g, u8 device_id,
 	dev_info->rl_engine_id = device->rleng_id;
 	dev_info->dev_pri_base = device->pri_base;
 	dev_info->runlist_pri_base = device->rl_pri_base;
+
+	(void)g;
 }
 
 static int gsp_sched_send_devices_info(struct gk20a *g,

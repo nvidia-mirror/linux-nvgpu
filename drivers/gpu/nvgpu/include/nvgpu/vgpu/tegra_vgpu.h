@@ -756,6 +756,9 @@ struct tegra_vgpu_cmd_msg {
 	} params;
 };
 
+_Static_assert(sizeof(struct tegra_vgpu_cmd_msg) <= 512U,
+	"size of tegra_vgpu_cmd_msg greater than ivc frame");
+
 enum {
 	TEGRA_VGPU_GR_INTR_NOTIFY = 0,
 	TEGRA_VGPU_GR_INTR_SEMAPHORE_TIMEOUT = 1,
@@ -869,6 +872,9 @@ struct tegra_vgpu_intr_msg {
 		char padding[32];
 	} info;
 };
+
+_Static_assert(sizeof(struct tegra_vgpu_intr_msg) <= 64U,
+	"size of tegra_vgpu_intr_msg greater than ivc frame");
 
 #define TEGRA_VGPU_QUEUE_SIZES	\
 	512,			\

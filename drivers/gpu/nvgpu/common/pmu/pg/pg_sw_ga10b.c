@@ -376,6 +376,8 @@ static void ga10b_pg_loading_rpc_handler(struct gk20a *g, struct nvgpu_pmu *pmu,
 			"unsupported PG_LOADING rpc function : 0x%x", rpc->function);
 		break;
 	}
+
+	(void)rpc_payload;
 }
 
 static int ga10b_pmu_elpg_statistics(struct gk20a *g, u32 pg_engine_id,
@@ -552,6 +554,7 @@ static int ga10b_pmu_pg_aelpg_disable(struct gk20a *g, u8 ctrl_id)
 
 	PMU_RPC_EXECUTE_CPB(status, pmu, PG, AP_CTRL_DISABLE, &rpc, 0);
 
+	(void)ctrl_id;
 	return status;
 }
 
@@ -568,6 +571,7 @@ static int ga10b_pmu_pg_aelpg_enable(struct gk20a *g, u8 ctrl_id)
 
 	PMU_RPC_EXECUTE_CPB(status, pmu, PG, AP_CTRL_ENABLE, &rpc, 0);
 
+	(void)ctrl_id;
 	return status;
 }
 

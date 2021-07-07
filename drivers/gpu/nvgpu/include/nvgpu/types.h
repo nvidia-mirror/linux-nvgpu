@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,6 +25,8 @@
 #ifdef __KERNEL__
 #include <linux/types.h>
 #include <linux/limits.h>
+#elif defined(NVGPU_HVRTOS)
+#include <nvgpu_hvrtos/types.h>
 #else
 #include <nvgpu/posix/types.h>
 #endif

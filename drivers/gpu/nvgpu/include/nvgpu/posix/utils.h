@@ -424,6 +424,7 @@
  */
 #define MHZ_TO_HZ_ULL(a) ((u64)(a) * MHZ)
 
+#ifndef NVGPU_HVRTOS
 /**
  * @brief Endian conversion.
  *
@@ -443,6 +444,7 @@ static inline u32 be32_to_cpu(u32 x)
 	 */
 	return ntohl(x);
 }
+#endif
 
 /*
  * Hamming weights.

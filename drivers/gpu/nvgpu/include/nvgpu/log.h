@@ -27,6 +27,8 @@
 #include <nvgpu/linux/log.h>
 #elif defined(__NVGPU_POSIX__)
 #include <nvgpu/posix/log.h>
+#elif defined(NVGPU_HVRTOS)
+#include <nvgpu_hvrtos/log.h>
 #else
 #include <nvgpu_rmos/include/log.h>
 #endif

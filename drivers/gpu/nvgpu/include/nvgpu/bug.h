@@ -24,6 +24,8 @@
 
 #ifdef __KERNEL__
 #include <linux/bug.h>
+#elif defined(NVGPU_HVRTOS)
+#include <nvgpu_hvrtos/bug.h>
 #else
 #include <nvgpu/posix/bug.h>
 #endif

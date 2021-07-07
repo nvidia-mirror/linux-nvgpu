@@ -92,6 +92,8 @@ struct nvgpu_os_buffer;
 #include <nvgpu/linux/vm.h>
 #elif defined(__NVGPU_POSIX__)
 #include <nvgpu/posix/vm.h>
+#elif defined(NVGPU_HVRTOS)
+#include <nvgpu_hvrtos/vm.h>
 #else
 /* QNX include goes here. */
 #include <nvgpu_rmos/include/vm.h>

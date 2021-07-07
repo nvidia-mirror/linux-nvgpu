@@ -32,6 +32,8 @@
 #include <nvgpu/linux/nvgpu_mem.h>
 #elif defined(__NVGPU_POSIX__)
 #include <nvgpu/posix/nvgpu_mem.h>
+#elif defined(NVGPU_HVRTOS)
+#include <nvgpu_hvrtos/nvgpu_mem.h>
 #else
 #include <nvgpu_rmos/include/nvgpu_mem.h>
 #endif

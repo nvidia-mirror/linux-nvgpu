@@ -397,6 +397,7 @@ int gm20b_pmu_pg_aelpg_enable(struct gk20a *g, u8 ctrl_id)
 	ap_cmd.enable_ctrl.ctrl_id = PMU_AP_CTRL_ID_GRAPHICS;
 	status = nvgpu_pmu_ap_send_command(g, &ap_cmd, false);
 
+	(void)ctrl_id;
 	return status;
 }
 
@@ -410,6 +411,7 @@ int gm20b_pmu_pg_aelpg_disable(struct gk20a *g, u8 ctrl_id)
 	ap_cmd.enable_ctrl.ctrl_id = PMU_AP_CTRL_ID_GRAPHICS;
 	status = nvgpu_pmu_ap_send_command(g, &ap_cmd, false);
 
+	(void)ctrl_id;
 	return status;
 }
 
