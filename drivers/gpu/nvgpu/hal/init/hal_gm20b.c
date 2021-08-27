@@ -750,9 +750,9 @@ static const struct gops_tsg gm20b_ops_tsg = {
 	.disable = nvgpu_tsg_disable,
 	.bind_channel = NULL,
 	.unbind_channel = NULL,
-	.unbind_channel_check_hw_state = nvgpu_tsg_unbind_channel_check_hw_state,
+	.unbind_channel_check_hw_state = nvgpu_tsg_unbind_channel_hw_state_check,
 	.unbind_channel_check_hw_next = gk20a_tsg_unbind_channel_check_hw_next,
-	.unbind_channel_check_ctx_reload = nvgpu_tsg_unbind_channel_check_ctx_reload,
+	.unbind_channel_check_ctx_reload = nvgpu_tsg_unbind_channel_ctx_reload_check,
 	.unbind_channel_check_eng_faulted = NULL,
 #ifdef CONFIG_NVGPU_KERNEL_MODE_SUBMIT
 	.check_ctxsw_timeout = nvgpu_tsg_check_ctxsw_timeout,

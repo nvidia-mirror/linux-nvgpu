@@ -396,7 +396,7 @@ fail:
 
 }
 
-int nvgpu_tsg_unbind_channel_check_hw_state(struct nvgpu_tsg *tsg,
+int nvgpu_tsg_unbind_channel_hw_state_check(struct nvgpu_tsg *tsg,
 		struct nvgpu_channel *ch)
 {
 	struct gk20a *g = ch->g;
@@ -423,7 +423,7 @@ int nvgpu_tsg_unbind_channel_check_hw_state(struct nvgpu_tsg *tsg,
 	return err;
 }
 
-void nvgpu_tsg_unbind_channel_check_ctx_reload(struct nvgpu_tsg *tsg,
+void nvgpu_tsg_unbind_channel_ctx_reload_check(struct nvgpu_tsg *tsg,
 	struct nvgpu_channel *ch,
 	struct nvgpu_channel_hw_state *hw_state)
 {

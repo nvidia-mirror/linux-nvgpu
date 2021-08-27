@@ -1032,9 +1032,9 @@ static const struct gops_tsg gv11b_ops_tsg = {
 	.bind_channel = NULL,
 	.bind_channel_eng_method_buffers = gv11b_tsg_bind_channel_eng_method_buffers,
 	.unbind_channel = NULL,
-	.unbind_channel_check_hw_state = nvgpu_tsg_unbind_channel_check_hw_state,
+	.unbind_channel_check_hw_state = nvgpu_tsg_unbind_channel_hw_state_check,
 	.unbind_channel_check_hw_next = gk20a_tsg_unbind_channel_check_hw_next,
-	.unbind_channel_check_ctx_reload = nvgpu_tsg_unbind_channel_check_ctx_reload,
+	.unbind_channel_check_ctx_reload = nvgpu_tsg_unbind_channel_ctx_reload_check,
 	.unbind_channel_check_eng_faulted = gv11b_tsg_unbind_channel_check_eng_faulted,
 #ifdef CONFIG_NVGPU_KERNEL_MODE_SUBMIT
 	.check_ctxsw_timeout = nvgpu_tsg_check_ctxsw_timeout,

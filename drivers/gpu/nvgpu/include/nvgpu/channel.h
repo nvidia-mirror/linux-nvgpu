@@ -158,7 +158,7 @@ struct gpfifo_desc {
 /**
  * Structure abstracting H/W state for channel.
  * Used when unbinding a channel from TSG.
- * See #nvgpu_tsg_unbind_channel_check_hw_state.
+ * See #nvgpu_tsg_unbind_channel_hw_state_check.
  */
 struct nvgpu_channel_hw_state {
 	/** Channel scheduling is enabled. */

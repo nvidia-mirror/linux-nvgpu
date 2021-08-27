@@ -840,7 +840,7 @@ int test_tsg_unbind_channel_check_hw_state(struct unit_module *m,
 			branches & F_TSG_UNBIND_CHANNEL_CHECK_HW_ENG_FAULTED ?
 			gops.tsg.unbind_channel_check_eng_faulted : NULL;
 
-		err = nvgpu_tsg_unbind_channel_check_hw_state(tsg, ch);
+		err = nvgpu_tsg_unbind_channel_hw_state_check(tsg, ch);
 
 		if (branches & F_TSG_UNBIND_CHANNEL_CHECK_HW_NEXT) {
 			unit_assert(err != 0, goto done);
@@ -1055,7 +1055,7 @@ int test_tsg_unbind_channel_check_ctx_reload(struct unit_module *m,
 				goto done);
 		}
 
-		nvgpu_tsg_unbind_channel_check_ctx_reload(tsg, chA, &hw_state);
+		nvgpu_tsg_unbind_channel_ctx_reload_check(tsg, chA, &hw_state);
 
 		if ((branches & F_UNBIND_CHANNEL_CHECK_CTX_RELOAD_SET) &&
 		    (branches & F_UNBIND_CHANNEL_CHECK_CTX_RELOAD_CHID_MATCH)) {

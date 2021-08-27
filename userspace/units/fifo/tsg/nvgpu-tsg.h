@@ -201,18 +201,18 @@ int test_tsg_release(struct unit_module *m,
  *
  * Test Type: Feature
  *
- * Targets: nvgpu_tsg_unbind_channel_check_hw_state, gk20a_tsg_unbind_channel_check_hw_next
+ * Targets: nvgpu_tsg_unbind_channel_hw_state_check, gk20a_tsg_unbind_channel_check_hw_next
  *
  * Input: test_fifo_init_support() run for this GPU
  *
  * Steps:
- * - Check valid cases for nvgpu_tsg_unbind_channel_check_hw_state:
+ * - Check valid cases for nvgpu_tsg_unbind_channel_hw_state_check:
  *   - hw_state.next is not set (as per g->ops.channel.read_state).
  *   - Check that g->ops.tsg.unbind_channel_check_ctx_reload is called
  *     when defined (using a stub).
  *   - Check that g->ops.tsg.unbind_channel_check_eng_faulted is called
  *     when defined (using a stub).
- * - Check failure cases in nvgpu_tsg_unbind_channel_check_hw_state:
+ * - Check failure cases in nvgpu_tsg_unbind_channel_hw_state_check:
  *   - Case where hw_state.next is set (by stubbing g->ops.channel.read_state).
  *
  * Output: Returns PASS if all branches gave expected results. FAIL otherwise.
@@ -261,12 +261,12 @@ int test_tsg_sm_error_state_set_get(struct unit_module *m,
  *
  * Test Type: Feature
  *
- * Targets: nvgpu_tsg_unbind_channel_check_ctx_reload
+ * Targets: nvgpu_tsg_unbind_channel_ctx_reload_check
  *
  * Input: test_fifo_init_support() run for this GPU
  *
  * Steps:
- * - Check valid cases for nvgpu_tsg_unbind_channel_check_ctx_reload:
+ * - Check valid cases for nvgpu_tsg_unbind_channel_ctx_reload_check:
  *   - hw_state.ctx_reload is not set (nothing to do).
  *   - hw_state.ctx_reload is set:
  *     - Check that what another is bound to TSG, g->ops.channel.force_ctx_reload

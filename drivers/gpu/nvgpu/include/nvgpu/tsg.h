@@ -488,7 +488,7 @@ int nvgpu_tsg_unbind_channel(struct nvgpu_tsg *tsg, struct nvgpu_channel *ch,
  * @return 0 in case of success and < 0 in case of failure.
  * @retval -EINVAL if next bit is set in hw_state.
  */
-int nvgpu_tsg_unbind_channel_check_hw_state(struct nvgpu_tsg *tsg,
+int nvgpu_tsg_unbind_channel_hw_state_check(struct nvgpu_tsg *tsg,
 		struct nvgpu_channel *ch);
 
 /**
@@ -504,7 +504,7 @@ int nvgpu_tsg_unbind_channel_check_hw_state(struct nvgpu_tsg *tsg,
  * @note If there is only one channel in this TSG then function will not find
  *       another channel to force ctx reload.
  */
-void nvgpu_tsg_unbind_channel_check_ctx_reload(struct nvgpu_tsg *tsg,
+void nvgpu_tsg_unbind_channel_ctx_reload_check(struct nvgpu_tsg *tsg,
 		struct nvgpu_channel *ch,
 		struct nvgpu_channel_hw_state *hw_state);
 
