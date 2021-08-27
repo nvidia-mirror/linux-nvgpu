@@ -103,7 +103,6 @@ struct nvgpu_tsg;
 struct nvgpu_channel;
 struct nvgpu_pbdma_status_info;
 struct mmu_fault_info;
-enum nvgpu_err_notif;
 
 static inline const char *nvgpu_rc_type_to_str(unsigned int rc_type)
 {
@@ -182,7 +181,7 @@ void nvgpu_rc_ctxsw_timeout(struct gk20a *g, u32 eng_bitmask,
  * 4. the channel is not bound to tsg.
  * 5. the id type or next_id type are not indicating channel id type or tsg id type.
  */
-int nvgpu_rc_pbdma_fault(struct gk20a *g, u32 pbdma_id, enum nvgpu_err_notif error_notifier,
+int nvgpu_rc_pbdma_fault(struct gk20a *g, u32 pbdma_id, u32 error_notifier,
 			struct nvgpu_pbdma_status_info *pbdma_status);
 
 /**

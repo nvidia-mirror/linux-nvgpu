@@ -95,7 +95,7 @@ void nvgpu_rc_ctxsw_timeout(struct gk20a *g, u32 eng_bitmask,
 #endif
 }
 
-int nvgpu_rc_pbdma_fault(struct gk20a *g, u32 pbdma_id, enum nvgpu_err_notif error_notifier,
+int nvgpu_rc_pbdma_fault(struct gk20a *g, u32 pbdma_id, u32 error_notifier,
 			struct nvgpu_pbdma_status_info *pbdma_status)
 {
 	u32 id_type = PBDMA_STATUS_ID_TYPE_INVALID;
