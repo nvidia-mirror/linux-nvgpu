@@ -1,7 +1,7 @@
 /*
  * GP10B L2 INTR
  *
- * Copyright (c) 2014-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -50,6 +50,7 @@ void gp10b_ltc_intr_handle_lts_interrupts(struct gk20a *g, u32 ltc, u32 slice)
 	if ((ltc_intr &
 	     ltc_ltcs_ltss_intr_ecc_sec_error_pending_f()) != 0U) {
 		u32 ecc_stats_reg_val;
+		u32 corrected_delta;
 
 		nvgpu_err(g,
 			"Single bit error detected in GPU L2!");
@@ -57,11 +58,14 @@ void gp10b_ltc_intr_handle_lts_interrupts(struct gk20a *g, u32 ltc, u32 slice)
 		ecc_stats_reg_val =
 			nvgpu_readl(g, nvgpu_safe_add_u32(
 				ltc_ltc0_lts0_dstg_ecc_report_r(), offset));
+		corrected_delta =
+			ltc_ltc0_lts0_dstg_ecc_report_sec_count_v(
+							ecc_stats_reg_val);
+
 		g->ecc.ltc.ecc_sec_count[ltc][slice].counter =
-			nvgpu_safe_add_u32(
+			nvgpu_wrapping_add_u32(
 				g->ecc.ltc.ecc_sec_count[ltc][slice].counter,
-				ltc_ltc0_lts0_dstg_ecc_report_sec_count_v(
-							ecc_stats_reg_val));
+				corrected_delta);
 		ecc_stats_reg_val &=
 			~(ltc_ltc0_lts0_dstg_ecc_report_sec_count_m());
 		nvgpu_writel(g,
@@ -84,7 +88,7 @@ void gp10b_ltc_intr_handle_lts_interrupts(struct gk20a *g, u32 ltc, u32 slice)
 			nvgpu_readl(g, nvgpu_safe_add_u32(
 				ltc_ltc0_lts0_dstg_ecc_report_r(), offset));
 		g->ecc.ltc.ecc_ded_count[ltc][slice].counter =
-			nvgpu_safe_add_u32(
+			nvgpu_wrapping_add_u32(
 				g->ecc.ltc.ecc_ded_count[ltc][slice].counter,
 				ltc_ltc0_lts0_dstg_ecc_report_ded_count_v(
 							ecc_stats_reg_val));

@@ -379,20 +379,22 @@ static void gv11b_pmu_handle_ecc_irq(struct gk20a *g)
 
 	/* update counters per slice */
 	if (corrected_overflow != 0U) {
-		corrected_delta +=
-			BIT32(pwr_pmu_falcon_ecc_corrected_err_count_total_s());
+		corrected_delta =
+			nvgpu_wrapping_add_u32(corrected_delta,
+				BIT32(pwr_pmu_falcon_ecc_corrected_err_count_total_s()));
 	}
 	if (uncorrected_overflow != 0U) {
-		uncorrected_delta +=
-		  BIT32(pwr_pmu_falcon_ecc_uncorrected_err_count_total_s());
+		uncorrected_delta =
+			nvgpu_wrapping_add_u32(uncorrected_delta,
+				BIT32(pwr_pmu_falcon_ecc_uncorrected_err_count_total_s()));
 	}
 
 	g->ecc.pmu.pmu_ecc_corrected_err_count[0].counter =
-		nvgpu_safe_add_u32(
+		nvgpu_wrapping_add_u32(
 			g->ecc.pmu.pmu_ecc_corrected_err_count[0].counter,
 			corrected_delta);
 	g->ecc.pmu.pmu_ecc_uncorrected_err_count[0].counter =
-		nvgpu_safe_add_u32(
+		nvgpu_wrapping_add_u32(
 			g->ecc.pmu.pmu_ecc_uncorrected_err_count[0].counter,
 			uncorrected_delta);
 

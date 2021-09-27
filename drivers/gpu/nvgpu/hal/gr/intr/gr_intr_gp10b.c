@@ -185,7 +185,7 @@ int gp10b_gr_intr_handle_sm_exception(struct gk20a *g,
 							lrf_double_count_delta);
 		}
 		g->ecc.gr.sm_lrf_ecc_single_err_count[gpc][tpc].counter =
-			   nvgpu_safe_add_u32(
+			   nvgpu_wrapping_add_u32(
 				g->ecc.gr.sm_lrf_ecc_single_err_count[gpc][tpc].counter,
 				lrf_single_count_delta);
 	}
@@ -202,7 +202,7 @@ int gp10b_gr_intr_handle_sm_exception(struct gk20a *g,
 							lrf_single_count_delta);
 		}
 		g->ecc.gr.sm_lrf_ecc_double_err_count[gpc][tpc].counter =
-			   nvgpu_safe_add_u32(
+			   nvgpu_wrapping_add_u32(
 				g->ecc.gr.sm_lrf_ecc_double_err_count[gpc][tpc].counter,
 				lrf_double_count_delta);
 	}
@@ -232,11 +232,11 @@ int gp10b_gr_intr_handle_sm_exception(struct gk20a *g,
 				    gr_pri_gpc0_tpc0_sm_shm_ecc_err_count_r(),
 				    offset));
 		g->ecc.gr.sm_shm_ecc_sec_count[gpc][tpc].counter =
-		   nvgpu_safe_add_u32(
+		   nvgpu_wrapping_add_u32(
 			g->ecc.gr.sm_shm_ecc_sec_count[gpc][tpc].counter,
 			gr_pri_gpc0_tpc0_sm_shm_ecc_err_count_single_corrected_v(ecc_stats_reg_val));
 		g->ecc.gr.sm_shm_ecc_sed_count[gpc][tpc].counter =
-		   nvgpu_safe_add_u32(
+		   nvgpu_wrapping_add_u32(
 			g->ecc.gr.sm_shm_ecc_sed_count[gpc][tpc].counter,
 			gr_pri_gpc0_tpc0_sm_shm_ecc_err_count_single_detected_v(ecc_stats_reg_val));
 		ecc_stats_reg_val &= ~(gr_pri_gpc0_tpc0_sm_shm_ecc_err_count_single_corrected_m() |
@@ -259,7 +259,7 @@ int gp10b_gr_intr_handle_sm_exception(struct gk20a *g,
 				    gr_pri_gpc0_tpc0_sm_shm_ecc_err_count_r(),
 				    offset));
 		g->ecc.gr.sm_shm_ecc_ded_count[gpc][tpc].counter =
-		   nvgpu_safe_add_u32(
+		   nvgpu_wrapping_add_u32(
 			g->ecc.gr.sm_shm_ecc_ded_count[gpc][tpc].counter,
 			gr_pri_gpc0_tpc0_sm_shm_ecc_err_count_double_detected_v(ecc_stats_reg_val));
 		ecc_stats_reg_val &= ~(gr_pri_gpc0_tpc0_sm_shm_ecc_err_count_double_detected_m());
@@ -299,7 +299,7 @@ void gp10b_gr_intr_handle_tex_exception(struct gk20a *g, u32 gpc, u32 tpc)
 		ecc_stats_reg_val = nvgpu_readl(g, nvgpu_safe_add_u32(
 			gr_pri_gpc0_tpc0_tex_m_ecc_cnt_total_r(), offset));
 		g->ecc.gr.tex_ecc_total_sec_pipe0_count[gpc][tpc].counter =
-		   nvgpu_safe_add_u32(
+		   nvgpu_wrapping_add_u32(
 			g->ecc.gr.tex_ecc_total_sec_pipe0_count[gpc][tpc].counter,
 			gr_pri_gpc0_tpc0_tex_m_ecc_cnt_total_sec_v(
 							ecc_stats_reg_val));
@@ -312,7 +312,7 @@ void gp10b_gr_intr_handle_tex_exception(struct gk20a *g, u32 gpc, u32 tpc)
 		ecc_stats_reg_val = nvgpu_readl(g, nvgpu_safe_add_u32(
 			gr_pri_gpc0_tpc0_tex_m_ecc_cnt_unique_r(), offset));
 		g->ecc.gr.tex_unique_ecc_sec_pipe0_count[gpc][tpc].counter =
-		   nvgpu_safe_add_u32(
+		   nvgpu_wrapping_add_u32(
 			g->ecc.gr.tex_unique_ecc_sec_pipe0_count[gpc][tpc].counter,
 			gr_pri_gpc0_tpc0_tex_m_ecc_cnt_unique_sec_v(
 							ecc_stats_reg_val));
@@ -330,7 +330,7 @@ void gp10b_gr_intr_handle_tex_exception(struct gk20a *g, u32 gpc, u32 tpc)
 		ecc_stats_reg_val = nvgpu_readl(g, nvgpu_safe_add_u32(
 			gr_pri_gpc0_tpc0_tex_m_ecc_cnt_total_r(), offset));
 		g->ecc.gr.tex_ecc_total_sec_pipe1_count[gpc][tpc].counter =
-		   nvgpu_safe_add_u32(
+		   nvgpu_wrapping_add_u32(
 			g->ecc.gr.tex_ecc_total_sec_pipe1_count[gpc][tpc].counter,
 			gr_pri_gpc0_tpc0_tex_m_ecc_cnt_total_sec_v(
 							ecc_stats_reg_val));
@@ -343,7 +343,7 @@ void gp10b_gr_intr_handle_tex_exception(struct gk20a *g, u32 gpc, u32 tpc)
 		ecc_stats_reg_val = nvgpu_readl(g, nvgpu_safe_add_u32(
 			gr_pri_gpc0_tpc0_tex_m_ecc_cnt_unique_r(), offset));
 		g->ecc.gr.tex_unique_ecc_sec_pipe1_count[gpc][tpc].counter =
-		   nvgpu_safe_add_u32(
+		   nvgpu_wrapping_add_u32(
 			g->ecc.gr.tex_unique_ecc_sec_pipe1_count[gpc][tpc].counter,
 			gr_pri_gpc0_tpc0_tex_m_ecc_cnt_unique_sec_v(
 							ecc_stats_reg_val));
@@ -370,7 +370,7 @@ void gp10b_gr_intr_handle_tex_exception(struct gk20a *g, u32 gpc, u32 tpc)
 		ecc_stats_reg_val = nvgpu_readl(g, nvgpu_safe_add_u32(
 			gr_pri_gpc0_tpc0_tex_m_ecc_cnt_total_r(), offset));
 		g->ecc.gr.tex_ecc_total_ded_pipe0_count[gpc][tpc].counter =
-		   nvgpu_safe_add_u32(
+		   nvgpu_wrapping_add_u32(
 			g->ecc.gr.tex_ecc_total_ded_pipe0_count[gpc][tpc].counter,
 			gr_pri_gpc0_tpc0_tex_m_ecc_cnt_total_ded_v(
 							ecc_stats_reg_val));
@@ -383,7 +383,7 @@ void gp10b_gr_intr_handle_tex_exception(struct gk20a *g, u32 gpc, u32 tpc)
 		ecc_stats_reg_val = nvgpu_readl(g, nvgpu_safe_add_u32(
 			gr_pri_gpc0_tpc0_tex_m_ecc_cnt_unique_r(), offset));
 		g->ecc.gr.tex_unique_ecc_ded_pipe0_count[gpc][tpc].counter =
-		   nvgpu_safe_add_u32(
+		   nvgpu_wrapping_add_u32(
 			g->ecc.gr.tex_unique_ecc_ded_pipe0_count[gpc][tpc].counter,
 			gr_pri_gpc0_tpc0_tex_m_ecc_cnt_unique_ded_v(
 							ecc_stats_reg_val));
@@ -401,7 +401,7 @@ void gp10b_gr_intr_handle_tex_exception(struct gk20a *g, u32 gpc, u32 tpc)
 		ecc_stats_reg_val = nvgpu_readl(g, nvgpu_safe_add_u32(
 			gr_pri_gpc0_tpc0_tex_m_ecc_cnt_total_r(), offset));
 		g->ecc.gr.tex_ecc_total_ded_pipe1_count[gpc][tpc].counter =
-		   nvgpu_safe_add_u32(
+		   nvgpu_wrapping_add_u32(
 			g->ecc.gr.tex_ecc_total_ded_pipe1_count[gpc][tpc].counter,
 			gr_pri_gpc0_tpc0_tex_m_ecc_cnt_total_ded_v(
 							ecc_stats_reg_val));
@@ -414,7 +414,7 @@ void gp10b_gr_intr_handle_tex_exception(struct gk20a *g, u32 gpc, u32 tpc)
 		ecc_stats_reg_val = nvgpu_readl(g, nvgpu_safe_add_u32(
 			gr_pri_gpc0_tpc0_tex_m_ecc_cnt_unique_r(), offset));
 		g->ecc.gr.tex_unique_ecc_ded_pipe1_count[gpc][tpc].counter =
-		   nvgpu_safe_add_u32(
+		   nvgpu_wrapping_add_u32(
 			g->ecc.gr.tex_unique_ecc_ded_pipe1_count[gpc][tpc].counter,
 			gr_pri_gpc0_tpc0_tex_m_ecc_cnt_unique_ded_v(
 							ecc_stats_reg_val));

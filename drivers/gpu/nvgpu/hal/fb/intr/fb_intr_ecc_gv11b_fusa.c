@@ -91,20 +91,22 @@ void gv11b_fb_intr_handle_ecc_l2tlb(struct gk20a *g, u32 ecc_status)
 
 	/* Handle overflow */
 	if (corrected_overflow != 0U) {
-		corrected_delta +=
-			BIT32(fb_mmu_l2tlb_ecc_corrected_err_count_total_s());
+		corrected_delta =
+			nvgpu_wrapping_add_u32(corrected_delta,
+				BIT32(fb_mmu_l2tlb_ecc_corrected_err_count_total_s()));
 	}
 	if (uncorrected_overflow != 0U) {
-		uncorrected_delta +=
-			BIT32(fb_mmu_l2tlb_ecc_uncorrected_err_count_total_s());
+		uncorrected_delta =
+			nvgpu_wrapping_add_u32(uncorrected_delta,
+				BIT32(fb_mmu_l2tlb_ecc_uncorrected_err_count_total_s()));
 	}
 
 	g->ecc.fb.mmu_l2tlb_ecc_corrected_err_count[0].counter =
-		nvgpu_safe_add_u32(
+		nvgpu_wrapping_add_u32(
 			g->ecc.fb.mmu_l2tlb_ecc_corrected_err_count[0].counter,
 			corrected_delta);
 	g->ecc.fb.mmu_l2tlb_ecc_uncorrected_err_count[0].counter =
-		nvgpu_safe_add_u32(
+		nvgpu_wrapping_add_u32(
 		       g->ecc.fb.mmu_l2tlb_ecc_uncorrected_err_count[0].counter,
 		       uncorrected_delta);
 
@@ -179,20 +181,22 @@ void gv11b_fb_intr_handle_ecc_hubtlb(struct gk20a *g, u32 ecc_status)
 
 	/* Handle overflow */
 	if (corrected_overflow != 0U) {
-		corrected_delta +=
-			BIT32(fb_mmu_hubtlb_ecc_corrected_err_count_total_s());
+		corrected_delta =
+			nvgpu_wrapping_add_u32(corrected_delta,
+				BIT32(fb_mmu_hubtlb_ecc_corrected_err_count_total_s()));
 	}
 	if (uncorrected_overflow != 0U) {
-		uncorrected_delta +=
-			BIT32(fb_mmu_hubtlb_ecc_uncorrected_err_count_total_s());
+		uncorrected_delta =
+			nvgpu_wrapping_add_u32(uncorrected_delta,
+				BIT32(fb_mmu_hubtlb_ecc_uncorrected_err_count_total_s()));
 	}
 
 	g->ecc.fb.mmu_hubtlb_ecc_corrected_err_count[0].counter =
-		nvgpu_safe_add_u32(
+		nvgpu_wrapping_add_u32(
 			g->ecc.fb.mmu_hubtlb_ecc_corrected_err_count[0].counter,
 			corrected_delta);
 	g->ecc.fb.mmu_hubtlb_ecc_uncorrected_err_count[0].counter =
-		nvgpu_safe_add_u32(
+		nvgpu_wrapping_add_u32(
 		      g->ecc.fb.mmu_hubtlb_ecc_uncorrected_err_count[0].counter,
 		      uncorrected_delta);
 
@@ -287,20 +291,22 @@ void gv11b_fb_intr_handle_ecc_fillunit(struct gk20a *g, u32 ecc_status)
 
 	/* Handle overflow */
 	if (corrected_overflow != 0U) {
-		corrected_delta +=
-			BIT32(fb_mmu_fillunit_ecc_corrected_err_count_total_s());
+		corrected_delta =
+			nvgpu_wrapping_add_u32(corrected_delta,
+				BIT32(fb_mmu_fillunit_ecc_corrected_err_count_total_s()));
 	}
 	if (uncorrected_overflow != 0U) {
-		uncorrected_delta +=
-			BIT32(fb_mmu_fillunit_ecc_uncorrected_err_count_total_s());
+		uncorrected_delta =
+			nvgpu_wrapping_add_u32(uncorrected_delta,
+				BIT32(fb_mmu_fillunit_ecc_uncorrected_err_count_total_s()));
 	}
 
 	g->ecc.fb.mmu_fillunit_ecc_corrected_err_count[0].counter =
-		nvgpu_safe_add_u32(
+		nvgpu_wrapping_add_u32(
 		      g->ecc.fb.mmu_fillunit_ecc_corrected_err_count[0].counter,
 		      corrected_delta);
 	g->ecc.fb.mmu_fillunit_ecc_uncorrected_err_count[0].counter =
-		nvgpu_safe_add_u32(
+		nvgpu_wrapping_add_u32(
 		    g->ecc.fb.mmu_fillunit_ecc_uncorrected_err_count[0].counter,
 		    uncorrected_delta);
 

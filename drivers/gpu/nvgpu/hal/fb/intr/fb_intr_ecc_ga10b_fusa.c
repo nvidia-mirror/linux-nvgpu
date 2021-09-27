@@ -1,7 +1,7 @@
 /*
  * GA10B FB INTR ECC
  *
- * Copyright (c) 2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -67,11 +67,11 @@ void ga10b_fb_intr_handle_ecc_l2tlb(struct gk20a *g, u32 ecc_status)
 	}
 
 	g->ecc.fb.mmu_l2tlb_ecc_corrected_unique_err_count[0].counter =
-	nvgpu_safe_add_u32(
+	nvgpu_wrapping_add_u32(
 		g->ecc.fb.mmu_l2tlb_ecc_corrected_unique_err_count[0].counter,
 		unique_corrected_delta);
 	g->ecc.fb.mmu_l2tlb_ecc_uncorrected_unique_err_count[0].counter =
-	nvgpu_safe_add_u32(
+	nvgpu_wrapping_add_u32(
 	       g->ecc.fb.mmu_l2tlb_ecc_uncorrected_unique_err_count[0].counter,
 	       unique_uncorrected_delta);
 
@@ -121,11 +121,11 @@ void ga10b_fb_intr_handle_ecc_hubtlb(struct gk20a *g, u32 ecc_status)
 	}
 
 	g->ecc.fb.mmu_hubtlb_ecc_corrected_unique_err_count[0].counter =
-	nvgpu_safe_add_u32(
+	nvgpu_wrapping_add_u32(
 		g->ecc.fb.mmu_hubtlb_ecc_corrected_unique_err_count[0].counter,
 		unique_corrected_delta);
 	g->ecc.fb.mmu_hubtlb_ecc_uncorrected_unique_err_count[0].counter =
-	nvgpu_safe_add_u32(
+	nvgpu_wrapping_add_u32(
 	       g->ecc.fb.mmu_hubtlb_ecc_uncorrected_unique_err_count[0].counter,
 	       unique_uncorrected_delta);
 
@@ -175,11 +175,11 @@ void ga10b_fb_intr_handle_ecc_fillunit(struct gk20a *g, u32 ecc_status)
 	}
 
 	g->ecc.fb.mmu_fillunit_ecc_corrected_unique_err_count[0].counter =
-	nvgpu_safe_add_u32(
+	nvgpu_wrapping_add_u32(
 		g->ecc.fb.mmu_fillunit_ecc_corrected_unique_err_count[0].counter,
 		unique_corrected_delta);
 	g->ecc.fb.mmu_fillunit_ecc_uncorrected_unique_err_count[0].counter =
-	nvgpu_safe_add_u32(
+	nvgpu_wrapping_add_u32(
 	       g->ecc.fb.mmu_fillunit_ecc_uncorrected_unique_err_count[0].counter,
 	       unique_uncorrected_delta);
 

@@ -1,7 +1,7 @@
 /*
  * TU104 FBPA
  *
- * Copyright (c) 2018-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -73,14 +73,20 @@ static void tu104_fbpa_handle_ecc_intr(struct gk20a *g,
 		sec_cnt = nvgpu_readl(g,
 				offset + fbpa_0_ecc_sec_count_r(subp_id));
 		nvgpu_writel(g, offset + fbpa_0_ecc_sec_count_r(subp_id), 0u);
-		g->ecc.fbpa.fbpa_ecc_sec_err_count[cnt_idx].counter += sec_cnt;
+		g->ecc.fbpa.fbpa_ecc_sec_err_count[cnt_idx].counter =
+			nvgpu_wrapping_add_u32(
+				g->ecc.fbpa.fbpa_ecc_sec_err_count[cnt_idx].counter,
+				sec_cnt);
 	}
 
 	if ((status & fbpa_0_ecc_status_ded_intr_pending_f()) != 0U) {
 		ded_cnt = nvgpu_readl(g,
 				offset + fbpa_0_ecc_ded_count_r(subp_id));
 		nvgpu_writel(g, offset + fbpa_0_ecc_ded_count_r(subp_id), 0u);
-		g->ecc.fbpa.fbpa_ecc_ded_err_count[cnt_idx].counter += ded_cnt;
+		g->ecc.fbpa.fbpa_ecc_ded_err_count[cnt_idx].counter =
+			nvgpu_wrapping_add_u32(
+				g->ecc.fbpa.fbpa_ecc_ded_err_count[cnt_idx].counter,
+				ded_cnt);
 	}
 
 	nvgpu_writel(g, offset + fbpa_0_ecc_status_r(subp_id), status);
