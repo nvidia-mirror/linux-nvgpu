@@ -190,7 +190,8 @@ void nvgpu_rc_ctxsw_timeout(struct gk20a *g, u32 eng_bitmask,
  * Do PBDMA fault recovery. Set error notifier as per \a error_notifier and call
  * \ref nvgpu_rc_tsg_and_related_engines to do the recovery. Steps involved are
  * - If \a error_notifier is >= \ref NVGPU_ERR_NOTIFIER_INVAL, set error variable to
- *   -EINVAL and jump to label \a out.
+ *   -EINVAL, trigger quiesce \ref nvgpu_sw_quiesce "nvgpu_sw_quiesce(g)" and
+ *   jump to label \a out.
  * - If \ref nvgpu_pbdma_status_is_chsw_valid
  *   "nvgpu_pbdma_status_is_chsw_valid(pbdma_status)" or
  *   \ref nvgpu_pbdma_status_is_chsw_save
@@ -207,7 +208,7 @@ void nvgpu_rc_ctxsw_timeout(struct gk20a *g, u32 eng_bitmask,
  *   "nvgpu_pbdma_status_ch_not_loaded(pbdma_status)" returns true, log message
  *   but don't set error variable.
  * - Else log error message and set error variable to -EINVAL and trigger
- *   quiesce.
+ *   quiesce \ref nvgpu_sw_quiesce "nvgpu_sw_quiesce(g)".
  * - If id_type set in above steps matches with \ref PBDMA_STATUS_ID_TYPE_TSGID,
  *   call \ref nvgpu_tsg_get_from_id to get
  *   pointer to struct \ref nvgpu_tsg and store in variable tsg, then call
@@ -220,20 +221,22 @@ void nvgpu_rc_ctxsw_timeout(struct gk20a *g, u32 eng_bitmask,
  * - If id_type set in above steps matches with \ref PBDMA_STATUS_ID_TYPE_CHID,
  *   call \ref nvgpu_channel_from_id to get
  *   pointer to struct \ref nvgpu_channel and store in variable ch. If ch is NULL
- *   log error, set error variable to -EINVAL and jump to label \a out else get
+ *   log error, set error variable to -EINVAL, trigger quiesce
+ *   \ref nvgpu_sw_quiesce "nvgpu_sw_quiesce(g)" and jump to label \a out else get
  *   pointer to struct \ref nvgpu_tsg using API \ref nvgpu_tsg_from_ch
  *   "nvgpu_tsg_from_ch(ch)" and store in variable tsg. If tsg is NULL log
- *   error, set error variable to -EINVAL and jump to label \a out else set
- *   error notifier buffer by calling \ref nvgpu_tsg_set_error_notifier
+ *   error, put the channel reference by calling \ref nvgpu_channel_put
+ *   "nvgpu_channel_put(ch)", set error variable to -EINVAL, trigger quiesce
+ *   \ref nvgpu_sw_quiesce "nvgpu_sw_quiesce(g)" and jump to label \a out else
+ *   set error notifier buffer by calling \ref nvgpu_tsg_set_error_notifier
  *   "nvgpu_tsg_set_error_notifier(g, tsg, error_notifier)" followed by doing
  *   recovery by calling \ref nvgpu_rc_tsg_and_related_engines
  *   "nvgpu_rc_tsg_and_related_engines(g, tsg, true, RC_TYPE_PBDMA_FAULT)".
- *   Finally put the channel reference by calling \ref nvgpu_channel_put
+ *   Put the channel reference by calling \ref nvgpu_channel_put
  *   "nvgpu_channel_put(ch)".
  * - If id_type is not set to any of \ref PBMDA_STATUS_ID_TYPE_TSGID or
- *   \ref PBMDA_STATUS_ID_TYPE_CHID, log error and set error variable to -EINVAL.
- * - At \a out label, if error variable is set, call
- *   \ref nvgpu_sw_quiesce "nvgpu_sw_quiesce(g)".
+ *   \ref PBMDA_STATUS_ID_TYPE_CHID, log error and set error variable to -EINVAL,
+ *   trigger quiesce \ref nvgpu_sw_quiesce "nvgpu_sw_quiesce(g)"
  * - Return error variable.
  *
  * @return 0 in case of success, < 0 in case of failure.

@@ -101,10 +101,13 @@ int nvgpu_rc_pbdma_fault(struct gk20a *g, u32 pbdma_id, u32 error_notifier,
 	u32 id_type = PBDMA_STATUS_ID_TYPE_INVALID;
 	int err = 0;
 	u32 id;
+	struct nvgpu_tsg *tsg = NULL;
+	struct nvgpu_channel *ch = NULL;
 
 	if (error_notifier >= NVGPU_ERR_NOTIFIER_INVAL) {
 		nvgpu_err(g, "Invalid error notifier %u", error_notifier);
 		err = -EINVAL;
+		nvgpu_sw_quiesce(g);
 		goto out;
 	}
 
@@ -126,45 +129,51 @@ int nvgpu_rc_pbdma_fault(struct gk20a *g, u32 pbdma_id, u32 error_notifier,
 	} else {
 		nvgpu_err(g, "pbdma status not valid");
 		err = -EINVAL;
+		nvgpu_sw_quiesce(g);
 		goto out;
 	}
 
-	if (id_type == PBDMA_STATUS_ID_TYPE_TSGID) {
-		struct nvgpu_tsg *tsg = nvgpu_tsg_get_from_id(g, id);
+	switch (id_type) {
+	case PBDMA_STATUS_ID_TYPE_TSGID:
+	{
+		tsg = nvgpu_tsg_get_from_id(g, id);
 
 		nvgpu_tsg_set_error_notifier(g, tsg, error_notifier);
-		nvgpu_rc_tsg_and_related_engines(g, tsg, true,
-			RC_TYPE_PBDMA_FAULT);
-	} else if(id_type == PBDMA_STATUS_ID_TYPE_CHID) {
-		struct nvgpu_channel *ch = nvgpu_channel_from_id(g, id);
-		struct nvgpu_tsg *tsg;
+		nvgpu_rc_tsg_and_related_engines(g, tsg, true, RC_TYPE_PBDMA_FAULT);
+		break;
+	}
+	case PBDMA_STATUS_ID_TYPE_CHID:
+	{
+		ch = nvgpu_channel_from_id(g, id);
 		if (ch == NULL) {
 			nvgpu_err(g, "channel is not referenceable");
 			err = -EINVAL;
-			goto out;
+			nvgpu_sw_quiesce(g);
+			break;
 		}
 
 		tsg = nvgpu_tsg_from_ch(ch);
-		if (tsg != NULL) {
-			nvgpu_tsg_set_error_notifier(g, tsg, error_notifier);
-			nvgpu_rc_tsg_and_related_engines(g, tsg, true,
-				RC_TYPE_PBDMA_FAULT);
-		} else {
+		if (tsg == NULL) {
 			nvgpu_err(g, "chid: %d is not bound to tsg", ch->chid);
+			nvgpu_channel_put(ch);
 			err = -EINVAL;
+			nvgpu_sw_quiesce(g);
+			break;
 		}
+		nvgpu_tsg_set_error_notifier(g, tsg, error_notifier);
+		nvgpu_rc_tsg_and_related_engines(g, tsg, true, RC_TYPE_PBDMA_FAULT);
 
 		nvgpu_channel_put(ch);
-	} else {
+		break;
+	}
+	default:
 		nvgpu_err(g, "Invalid pbdma_status id_type or next_id_type");
 		err = -EINVAL;
+		nvgpu_sw_quiesce(g);
+		break;
 	}
 
 out:
-	if (err != 0) {
-		nvgpu_sw_quiesce(g);
-	}
-
 	return err;
 }
 
