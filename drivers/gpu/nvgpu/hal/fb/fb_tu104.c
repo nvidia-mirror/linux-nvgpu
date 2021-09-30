@@ -92,6 +92,10 @@ int fb_tu104_tlb_invalidate(struct gk20a *g, struct nvgpu_mem *pdb)
 	} while (nvgpu_timeout_expired_msg(&timeout,
 					 "wait mmu invalidate") == 0);
 
+	if (nvgpu_timeout_peek_expired(&timeout)) {
+		err = -ETIMEDOUT;
+	}
+
 #ifdef CONFIG_NVGPU_TRACE
 	trace_gk20a_mm_tlb_invalidate_done(g->name);
 #endif

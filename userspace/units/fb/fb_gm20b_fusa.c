@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -73,13 +73,12 @@ int fb_gm20b_tlb_invalidate_test(struct unit_module *m, struct gk20a *g,
 	nvgpu_writel(g, fb_mmu_ctrl_r(), 1 << 16U);
 
 	/*
-	 * Timeout on fb_mmu_ctrl_r read after MMU invalidate (does not return
-	 * a failure)
+	 * Timeout on fb_mmu_ctrl_r read after MMU invalidate.
 	 */
 	helper_intercept_mmu_write(0);
 	err = g->ops.fb.tlb_invalidate(g, &pdb);
-	if (err != 0) {
-		unit_return_fail(m, "tlb_invalidate failed (2)\n");
+	if (err == 0) {
+		unit_return_fail(m, "tlb_invalidate did not fail as expected (2)\n");
 	}
 
 	/* Success */
