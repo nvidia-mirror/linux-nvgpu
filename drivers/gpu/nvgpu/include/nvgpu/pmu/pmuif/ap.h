@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -38,6 +38,24 @@
 #define PMU_AP_IDLE_MASK_HIST_IDX_2		(5)
 #define PMU_AP_IDLE_MASK_HIST_IDX_3		(6)
 
+/*
+ * Default values for AP parameters
+ *
+ * IDLE_FILTER_MIN_DEFAULT_US         : Default minimum idle threshold value in usec
+ * IDLE_FILTER_MIN_DI_US              : Minimum idle threshold for DI in usec
+ * IDLE_FILTER_MAX_DEFAULT_US         : Default maximum idle threshold value in usec
+ * IDLE_FILTER_MAX_DI_US              : Maximum idle threshold for DI in usec
+ * MIN_RESIDENCY_DEFAULT              : Default minimum residency per AP sample
+ * BREAKEVEN_RESIDENT_TIME_DEFAULT_US : Default breakeven resident time per cycle
+ * BREAKEVEN_RESIDENT_TIME_DI_US      : Breakeven resident time per cycle for DI
+ * CYCLES_PER_SAMPLE_MAX_DEFAULT      : Maximum power feature cycles per AP sample
+ */
+#define NV_PMU_PG_AP_BASE_MULTIPLIER_DEFAULT				(1)
+#define NV_PMU_PG_AP_IDLE_FILTER_MIN_DEFAULT_US                     (100)
+#define NV_PMU_PG_AP_IDLE_FILTER_MAX_DEFAULT_US                     (70000)
+#define NV_PMU_PG_AP_MIN_RESIDENCY_DEFAULT                          (1)
+#define NV_PMU_PG_AP_BREAK_EVEN_RESIDENT_TIME_DEFAULT_US            (1300)
+#define NV_PMU_PG_AP_CYCLES_PER_SAMPLE_MAX_DEFAULT                  (100)
 
 /* Mapping between AP_CTRLs and Histograms */
 #define PMU_AP_HISTOGRAM_IDX_GRAPHICS	(PMU_AP_HISTOGRAM(1))

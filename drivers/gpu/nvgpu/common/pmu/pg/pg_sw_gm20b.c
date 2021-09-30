@@ -345,6 +345,74 @@ int gm20b_pmu_pg_init_send(struct gk20a *g, struct nvgpu_pmu *pmu,
 	return err;
 }
 
+int gm20b_pmu_pg_aelpg_init(struct gk20a *g)
+{
+	/* Remove reliance on app_ctrl field. */
+	union pmu_ap_cmd ap_cmd;
+	int status;
+
+	ap_cmd.init.cmd_id = PMU_AP_CMD_ID_INIT;
+	ap_cmd.init.pg_sampling_period_us = g->pmu->pg->aelpg_param[0];
+
+	status = nvgpu_pmu_ap_send_command(g, &ap_cmd, false);
+	return status;
+}
+
+int gm20b_pmu_pg_aelpg_init_and_enable(struct gk20a *g, u8 ctrl_id)
+{
+	struct nvgpu_pmu *pmu = g->pmu;
+	int status = 0;
+	union pmu_ap_cmd ap_cmd;
+
+	ap_cmd.init_and_enable_ctrl.cmd_id = PMU_AP_CMD_ID_INIT_AND_ENABLE_CTRL;
+	ap_cmd.init_and_enable_ctrl.ctrl_id = ctrl_id;
+	ap_cmd.init_and_enable_ctrl.params.min_idle_filter_us =
+		pmu->pg->aelpg_param[1];
+	ap_cmd.init_and_enable_ctrl.params.min_target_saving_us =
+		pmu->pg->aelpg_param[2];
+	ap_cmd.init_and_enable_ctrl.params.power_break_even_us =
+		pmu->pg->aelpg_param[3];
+	ap_cmd.init_and_enable_ctrl.params.cycles_per_sample_max =
+		pmu->pg->aelpg_param[4];
+
+	switch (ctrl_id) {
+	case PMU_AP_CTRL_ID_GRAPHICS:
+		break;
+	default:
+		nvgpu_err(g, "Invalid ctrl_id:%u for %s", ctrl_id, __func__);
+		break;
+	}
+
+	status = nvgpu_pmu_ap_send_command(g, &ap_cmd, true);
+	return status;
+}
+
+int gm20b_pmu_pg_aelpg_enable(struct gk20a *g, u8 ctrl_id)
+{
+	int status = 0;
+	union pmu_ap_cmd ap_cmd;
+
+	/* Enable AELPG */
+	ap_cmd.enable_ctrl.cmd_id = PMU_AP_CMD_ID_ENABLE_CTRL;
+	ap_cmd.enable_ctrl.ctrl_id = PMU_AP_CTRL_ID_GRAPHICS;
+	status = nvgpu_pmu_ap_send_command(g, &ap_cmd, false);
+
+	return status;
+}
+
+int gm20b_pmu_pg_aelpg_disable(struct gk20a *g, u8 ctrl_id)
+{
+	int status = 0;
+	union pmu_ap_cmd ap_cmd;
+
+	/* Enable AELPG */
+	ap_cmd.enable_ctrl.cmd_id = PMU_AP_CMD_ID_DISABLE_CTRL;
+	ap_cmd.enable_ctrl.ctrl_id = PMU_AP_CTRL_ID_GRAPHICS;
+	status = nvgpu_pmu_ap_send_command(g, &ap_cmd, false);
+
+	return status;
+}
+
 void nvgpu_gm20b_pg_sw_init(struct gk20a *g,
 		struct nvgpu_pmu_pg *pg)
 {
@@ -365,6 +433,11 @@ void nvgpu_gm20b_pg_sw_init(struct gk20a *g,
 	pg->alloc_dmem = gm20b_pmu_pg_elpg_alloc_dmem;
 	pg->load_buff = gm20b_pmu_pg_elpg_load_buff;
 	pg->hw_load_zbc = gm20b_pmu_pg_elpg_hw_load_zbc;
-	pg->rpc_handler = NULL;
+	pg->pg_loading_rpc_handler = NULL;
+	pg->pg_rpc_handler = NULL;
 	pg->init_send = gm20b_pmu_pg_init_send;
+	pg->aelpg_init = gm20b_pmu_pg_aelpg_init;
+	pg->aelpg_init_and_enable = gm20b_pmu_pg_aelpg_init_and_enable;
+	pg->aelpg_enable = gm20b_pmu_pg_aelpg_enable;
+	pg->aelpg_disable = gm20b_pmu_pg_aelpg_disable;
 }

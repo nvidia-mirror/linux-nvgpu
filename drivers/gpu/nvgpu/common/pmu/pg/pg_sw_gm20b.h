@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -49,5 +49,8 @@ int gm20b_pmu_pg_elpg_load_buff(struct gk20a *g, struct nvgpu_pmu *pmu);
 int gm20b_pmu_pg_elpg_hw_load_zbc(struct gk20a *g, struct nvgpu_pmu *pmu);
 int gm20b_pmu_pg_init_send(struct gk20a *g, struct nvgpu_pmu *pmu,
 		u8 pg_engine_id);
-
+int gm20b_pmu_pg_aelpg_init(struct gk20a *g);
+int gm20b_pmu_pg_aelpg_init_and_enable(struct gk20a *g, u8 ctrl_id);
+int gm20b_pmu_pg_aelpg_enable(struct gk20a *g, u8 ctrl_id);
+int gm20b_pmu_pg_aelpg_disable(struct gk20a *g, u8 ctrl_id);
 #endif /* NVGPU_PMU_PG_SW_GM20B_H */

@@ -122,6 +122,11 @@ void nvgpu_gp10b_pg_sw_init(struct gk20a *g,
 	pg->alloc_dmem = gm20b_pmu_pg_elpg_alloc_dmem;
 	pg->load_buff = gm20b_pmu_pg_elpg_load_buff;
 	pg->hw_load_zbc = gm20b_pmu_pg_elpg_hw_load_zbc;
-	pg->rpc_handler = NULL;
+	pg->pg_loading_rpc_handler = NULL;
+	pg->pg_rpc_handler = NULL;
 	pg->init_send = gm20b_pmu_pg_init_send;
+	pg->aelpg_init = gm20b_pmu_pg_aelpg_init;
+	pg->aelpg_init_and_enable = gm20b_pmu_pg_aelpg_init_and_enable;
+	pg->aelpg_enable = gm20b_pmu_pg_aelpg_enable;
+	pg->aelpg_disable = gm20b_pmu_pg_aelpg_disable;
 }

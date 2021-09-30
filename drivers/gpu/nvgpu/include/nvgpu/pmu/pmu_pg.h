@@ -126,8 +126,16 @@ struct nvgpu_pmu_pg {
 			u8 pg_engine_id);
 	int (*load_buff)(struct gk20a *g, struct nvgpu_pmu *pmu);
 	int (*hw_load_zbc)(struct gk20a *g, struct nvgpu_pmu *pmu);
-	void (*rpc_handler)(struct gk20a *g, struct nvgpu_pmu *pmu,
-			struct nv_pmu_rpc_header *rpc, struct rpc_handler_payload *rpc_payload);
+	int (*aelpg_init)(struct gk20a *g);
+	int (*aelpg_init_and_enable)(struct gk20a *g, u8 ctrl_id);
+	int (*aelpg_enable)(struct gk20a *g, u8 ctrl_id);
+	int (*aelpg_disable)(struct gk20a *g, u8 ctrl_id);
+	void (*pg_loading_rpc_handler)(struct gk20a *g, struct nvgpu_pmu *pmu,
+			struct nv_pmu_rpc_header *rpc,
+			struct rpc_handler_payload *rpc_payload);
+	void (*pg_rpc_handler)(struct gk20a *g, struct nvgpu_pmu *pmu,
+		struct nv_pmu_rpc_header *rpc,
+		struct rpc_handler_payload *rpc_payload);
 	int (*init_send)(struct gk20a *g, struct nvgpu_pmu *pmu, u8 pg_engine_id);
 	int (*process_pg_event)(struct gk20a *g, void *pmumsg);
 };
@@ -166,7 +174,9 @@ int nvgpu_pmu_get_pg_stats(struct gk20a *g, u32 pg_engine_id,
 
 /* AELPG */
 int nvgpu_aelpg_init(struct gk20a *g);
-int nvgpu_aelpg_init_and_enable(struct gk20a *g, u8 ctrl_id);
+int nvgpu_aelpg_init_and_enable(struct gk20a *g, u32 ctrl_id);
+int nvgpu_aelpg_enable(struct gk20a *g, u32 ctrl_id);
+int nvgpu_aelpg_disable(struct gk20a *g, u32 ctrl_id);
 int nvgpu_pmu_ap_send_command(struct gk20a *g,
 		union pmu_ap_cmd *p_ap_cmd, bool b_block);
 

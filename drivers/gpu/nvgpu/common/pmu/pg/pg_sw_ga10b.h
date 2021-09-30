@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -315,8 +315,8 @@ struct pmu_nv_rpc_struct_lpwr_pg_idle_snap {
 };
 
 /*
-* Brief Statistics structure for PG features
-*/
+ * Brief Statistics structure for PG features
+ */
 struct pmu_pg_stats_v3
 {
 	/* Number of time PMU successfully engaged sleep state */
@@ -378,6 +378,116 @@ struct pmu_rpc_struct_lpwr_pg_ctrl_stats_get {
 	u32 scratch[1];
 };
 
+
+/*
+ * Defines the structure that holds data used to execute AP_INIT RPC.
+ */
+struct pmu_rpc_struct_lpwr_loading_ap_init {
+	/*
+	 * [IN/OUT] Must be first field in RPC structure
+	 */
+	struct nv_pmu_rpc_header hdr;
+	/*
+	 * [NONE] Must be last field in RPC structure.
+	 * Used as variable size scrach space on RM managed DMEM heap
+	 * for this RPC.
+	 */
+	u32 scratch[1];
+};
+
+/*
+ * Defines the structure that holds data used to execute
+ * AP_CTRL_INIT_AND_ENABLE RPC.
+ */
+struct pmu_rpc_struct_lpwr_loading_ap_ctrl_init_and_enable {
+	/*
+	 * [IN/OUT] Must be first field in RPC structure.
+	 */
+	struct nv_pmu_rpc_header hdr;
+	/*
+	 * [OUT] Address of the dmem for stats data
+	 */
+	u32 stats_dmem_offset;
+	/*
+	 * [IN] Minimum idle threshold in Us
+	 */
+	u32 min_idle_threshold_us;
+	/*
+	 * [IN] Maximum idle threshold in Us
+	 */
+	u32 max_idle_threshold_us;
+	/*
+	 * [IN] Break-even resident time for one cycle of parent feature
+	 */
+	u16 breakeven_resident_time_us;
+	/*
+	 * [IN] Maximum number of allowed power feature cycles per sample
+	 */
+	u16 max_cycles_per_sample;
+	/*
+	 * [IN] Minimum targeted residency
+	 */
+	u8 min_residency;
+	/*
+	 * [IN] AP_CTRL index
+	 */
+	u8 ctrl_id;
+	/*
+	 * [IN] Base multipler for centralised LPWR callback
+	 */
+	u8 base_multiplier;
+	/*
+	 * [IN] NV_TRUE if ApCtrl requires SW Histograms
+	 */
+	bool sw_hist_enabled;
+	/*
+	 * [NONE] Must be last field in RPC structure.
+	 * Used as variable size scrach space on RM managed DMEM heap
+	 * for this RPC.
+	 */
+	u32 scratch[1];
+};
+
+/*
+ * Defines the structure that holds data used to execute AP_CTRL_ENABLE RPC.
+ */
+struct pmu_rpc_struct_lpwr_ap_ctrl_enable {
+	/*
+	 * [IN/OUT] Must be first field in RPC structure.
+	 */
+	struct nv_pmu_rpc_header hdr;
+	/*
+	 * [IN] AP_CTRL index
+	 */
+	u8 ctrl_id;
+	/*
+	 * [NONE] Must be last field in RPC structure.
+	 * Used as variable size scrach space on RM managed DMEM heap
+	 * for this RPC.
+	 */
+	u32 scratch[1];
+};
+
+/*
+ * Defines the structure that holds data used to execute
+ * AP_CTRL_ENABLE RPC.
+ */
+struct pmu_rpc_struct_lpwr_ap_ctrl_disable {
+	/*
+	 * [IN/OUT] Must be first field in RPC structure.
+	 */
+	struct nv_pmu_rpc_header hdr;
+	/*
+	 * [IN] AP_CTRL index
+	 */
+	u8 ctrl_id;
+	/*
+	 * [NONE] Must be last field in RPC structure.
+	 * Used as variable size scrach space on RM managed DMEM heap
+	 * for this RPC.
+	 */
+	u32 scratch[1];
+};
 
 void nvgpu_ga10b_pg_sw_init(struct gk20a *g, struct nvgpu_pmu_pg *pg);
 u32 ga10b_pmu_pg_engines_list(struct gk20a *g);

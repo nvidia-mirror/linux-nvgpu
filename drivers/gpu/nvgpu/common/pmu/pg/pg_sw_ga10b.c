@@ -300,26 +300,12 @@ static void ga10b_pg_rpc_handler(struct gk20a *g, struct nvgpu_pmu *pmu,
 
 	nvgpu_log_fn(g, " ");
 	switch (rpc->function) {
-	case NV_PMU_RPC_ID_PG_LOADING_PRE_INIT:
-		nvgpu_pmu_dbg(g, "Reply to PG_PRE_INIT");
-		break;
-	case NV_PMU_RPC_ID_PG_LOADING_POST_INIT:
-		nvgpu_pmu_dbg(g, "Reply to PG_POST_INIT");
-		break;
-	case NV_PMU_RPC_ID_PG_LOADING_INIT:
-		nvgpu_pmu_dbg(g, "Reply to PG_INIT");
-		break;
 	case NV_PMU_RPC_ID_PG_THRESHOLD_UPDATE:
 		nvgpu_pmu_dbg(g, "Reply to PG_THRESHOLD_UPDATE");
 		break;
 	case NV_PMU_RPC_ID_PG_SFM_UPDATE:
 		nvgpu_pmu_dbg(g, "Reply to PG_SFM_UPDATE");
 		nvgpu_pmu_fw_state_change(g, pmu, PMU_FW_STATE_ELPG_BOOTED, true);
-		break;
-	case NV_PMU_RPC_ID_PG_LOADING_BUF_LOAD:
-		nvgpu_pmu_dbg(g, "Reply to PG_LOADING_BUF_LOAD");
-		pmu->pg->buf_loaded = true;
-		nvgpu_pmu_fw_state_change(g, pmu, PMU_FW_STATE_LOADING_ZBC, true);
 		break;
 	case NV_PMU_RPC_ID_PG_ALLOW:
 		nvgpu_pmu_dbg(g, "Reply to PG_ALLOW");
@@ -346,9 +332,48 @@ static void ga10b_pg_rpc_handler(struct gk20a *g, struct nvgpu_pmu *pmu,
 	case NV_PMU_RPC_ID_PG_PG_CTRL_STATS_GET:
 		nvgpu_pmu_dbg(g, "Reply to PG_STATS_GET");
 		break;
+	case NV_PMU_RPC_ID_PG_AP_CTRL_ENABLE:
+		nvgpu_pmu_dbg(g, "Reply to AP_CTRL_ENABLE");
+		break;
+	case NV_PMU_RPC_ID_PG_AP_CTRL_DISABLE:
+		nvgpu_pmu_dbg(g, "Reply to AP_CTRL_DISABLE");
+		break;
 	default:
 		nvgpu_err(g,
 			"unsupported PG rpc function : 0x%x", rpc->function);
+		break;
+
+	}
+}
+
+static void ga10b_pg_loading_rpc_handler(struct gk20a *g, struct nvgpu_pmu *pmu,
+	struct nv_pmu_rpc_header *rpc, struct rpc_handler_payload *rpc_payload)
+{
+	nvgpu_log_fn(g, " ");
+	switch (rpc->function) {
+	case NV_PMU_RPC_ID_PG_LOADING_PRE_INIT:
+		nvgpu_pmu_dbg(g, "Reply to PG_PRE_INIT");
+		break;
+	case NV_PMU_RPC_ID_PG_LOADING_POST_INIT:
+		nvgpu_pmu_dbg(g, "Reply to PG_POST_INIT");
+		break;
+	case NV_PMU_RPC_ID_PG_LOADING_INIT:
+		nvgpu_pmu_dbg(g, "Reply to PG_INIT");
+		break;
+	case NV_PMU_RPC_ID_PG_LOADING_BUF_LOAD:
+		nvgpu_pmu_dbg(g, "Reply to PG_LOADING_BUF_LOAD");
+		pmu->pg->buf_loaded = true;
+		nvgpu_pmu_fw_state_change(g, pmu, PMU_FW_STATE_LOADING_ZBC, true);
+		break;
+	case NV_PMU_RPC_ID_PG_LOADING_AP_INIT:
+		nvgpu_pmu_dbg(g, "Reply to AP_INIT");
+		break;
+	case NV_PMU_RPC_ID_PG_LOADING_AP_CTRL_INIT_AND_ENABLE:
+		nvgpu_pmu_dbg(g, "Reply to AP_CTRL_INIT_AND_ENABLE");
+		break;
+	default:
+		nvgpu_err(g,
+			"unsupported PG_LOADING rpc function : 0x%x", rpc->function);
 		break;
 	}
 }
@@ -465,6 +490,87 @@ static int ga10b_pmu_pg_process_pg_event(struct gk20a *g, void *pmumsg)
 	return err;
 }
 
+static int ga10b_pmu_pg_aelpg_init(struct gk20a *g)
+{
+	struct pmu_rpc_struct_lpwr_loading_ap_init rpc;
+	struct nvgpu_pmu *pmu = g->pmu;
+	int status;
+
+	nvgpu_log_fn(g, " ");
+
+	(void) memset(&rpc, 0,
+			sizeof(struct pmu_rpc_struct_lpwr_loading_ap_init));
+
+	PMU_RPC_EXECUTE_CPB(status, pmu, PG_LOADING, AP_INIT, &rpc, 0);
+
+	return status;
+}
+
+static int ga10b_pmu_pg_aelpg_init_and_enable(struct gk20a *g, u8 ctrl_id)
+{
+	struct pmu_rpc_struct_lpwr_loading_ap_ctrl_init_and_enable rpc;
+	struct nvgpu_pmu *pmu = g->pmu;
+	int status;
+
+	nvgpu_log_fn(g, " ");
+
+	(void) memset(&rpc, 0,
+		sizeof(struct pmu_rpc_struct_lpwr_loading_ap_ctrl_init_and_enable));
+
+	rpc.ctrl_id = ctrl_id;
+	rpc.min_idle_threshold_us = NV_PMU_PG_AP_IDLE_FILTER_MIN_DEFAULT_US;
+	rpc.max_idle_threshold_us = NV_PMU_PG_AP_IDLE_FILTER_MAX_DEFAULT_US;
+	rpc.breakeven_resident_time_us =
+		NV_PMU_PG_AP_BREAK_EVEN_RESIDENT_TIME_DEFAULT_US;
+	rpc.max_cycles_per_sample = NV_PMU_PG_AP_CYCLES_PER_SAMPLE_MAX_DEFAULT;
+	rpc.min_residency = NV_PMU_PG_AP_MIN_RESIDENCY_DEFAULT;
+
+	switch (ctrl_id) {
+	case PMU_AP_CTRL_ID_GRAPHICS:
+		rpc.base_multiplier = NV_PMU_PG_AP_BASE_MULTIPLIER_DEFAULT;
+		break;
+	default:
+		nvgpu_err(g, "Invalid ctrl_id:%u for %s", ctrl_id, __func__);
+		break;
+	}
+
+	PMU_RPC_EXECUTE_CPB(status, pmu, PG_LOADING,
+				AP_CTRL_INIT_AND_ENABLE, &rpc, 0);
+	return status;
+}
+
+static int ga10b_pmu_pg_aelpg_disable(struct gk20a *g, u8 ctrl_id)
+{
+	struct pmu_rpc_struct_lpwr_ap_ctrl_disable rpc;
+	struct nvgpu_pmu *pmu = g->pmu;
+	int status;
+
+	nvgpu_log_fn(g, " ");
+
+	(void) memset(&rpc, 0,
+		sizeof(struct pmu_rpc_struct_lpwr_ap_ctrl_disable));
+
+	PMU_RPC_EXECUTE_CPB(status, pmu, PG, AP_CTRL_DISABLE, &rpc, 0);
+
+	return status;
+}
+
+static int ga10b_pmu_pg_aelpg_enable(struct gk20a *g, u8 ctrl_id)
+{
+	struct pmu_rpc_struct_lpwr_ap_ctrl_enable rpc;
+	struct nvgpu_pmu *pmu = g->pmu;
+	int status;
+
+	nvgpu_log_fn(g, " ");
+
+	(void) memset(&rpc, 0,
+		sizeof(struct pmu_rpc_struct_lpwr_ap_ctrl_enable));
+
+	PMU_RPC_EXECUTE_CPB(status, pmu, PG, AP_CTRL_ENABLE, &rpc, 0);
+
+	return status;
+}
+
 void nvgpu_ga10b_pg_sw_init(struct gk20a *g,
 		struct nvgpu_pmu_pg *pg)
 {
@@ -482,7 +588,12 @@ void nvgpu_ga10b_pg_sw_init(struct gk20a *g,
 	pg->alloc_dmem = NULL;
 	pg->load_buff = ga10b_pmu_pg_load_buff;
 	pg->hw_load_zbc = NULL;
-	pg->rpc_handler = ga10b_pg_rpc_handler;
+	pg->aelpg_init = ga10b_pmu_pg_aelpg_init;
+	pg->aelpg_init_and_enable = ga10b_pmu_pg_aelpg_init_and_enable;
+	pg->aelpg_enable = ga10b_pmu_pg_aelpg_enable;
+	pg->aelpg_disable = ga10b_pmu_pg_aelpg_disable;
+	pg->pg_loading_rpc_handler = ga10b_pg_loading_rpc_handler;
+	pg->pg_rpc_handler = ga10b_pg_rpc_handler;
 	pg->init_send = ga10b_pmu_pg_init_send;
 	pg->process_pg_event = ga10b_pmu_pg_process_pg_event;
 }

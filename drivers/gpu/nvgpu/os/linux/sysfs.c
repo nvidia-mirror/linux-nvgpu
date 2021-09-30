@@ -668,7 +668,6 @@ static ssize_t aelpg_param_store(struct device *dev,
 {
 	struct gk20a *g = get_gk20a(dev);
 	int status = 0;
-	union pmu_ap_cmd ap_cmd;
 	int *paramlist = NULL;
 	int ret = 0;
 	u32 defaultparam[5] = {
@@ -702,9 +701,11 @@ static ssize_t aelpg_param_store(struct device *dev,
 	 */
 	if (g->aelpg_enabled && nvgpu_pmu_get_fw_ready(g, g->pmu)) {
 		/* Disable AELPG */
-		ap_cmd.disable_ctrl.cmd_id = PMU_AP_CMD_ID_DISABLE_CTRL;
-		ap_cmd.disable_ctrl.ctrl_id = PMU_AP_CTRL_ID_GRAPHICS;
-		status = nvgpu_pmu_ap_send_command(g, &ap_cmd, false);
+		status = nvgpu_aelpg_disable(g, PMU_AP_CTRL_ID_GRAPHICS);
+		if (status != 0) {
+			nvgpu_err(g, "AELPG disable failed");
+			return count;
+		}
 
 		/* Enable AELPG */
 		nvgpu_aelpg_init(g);
@@ -739,7 +740,6 @@ static ssize_t aelpg_enable_store(struct device *dev,
 	struct gk20a *g = get_gk20a(dev);
 	unsigned long val = 0;
 	int status = 0;
-	union pmu_ap_cmd ap_cmd;
 	int err;
 
 	if (kstrtoul(buf, 10, &val) < 0)
@@ -759,15 +759,12 @@ static ssize_t aelpg_enable_store(struct device *dev,
 		if (val && !g->aelpg_enabled) {
 			g->aelpg_enabled = true;
 			/* Enable AELPG */
-			ap_cmd.enable_ctrl.cmd_id = PMU_AP_CMD_ID_ENABLE_CTRL;
-			ap_cmd.enable_ctrl.ctrl_id = PMU_AP_CTRL_ID_GRAPHICS;
-			status = nvgpu_pmu_ap_send_command(g, &ap_cmd, false);
+			status = nvgpu_aelpg_enable(g, PMU_AP_CTRL_ID_GRAPHICS);
+
 		} else if (!val && g->aelpg_enabled) {
 			g->aelpg_enabled = false;
 			/* Disable AELPG */
-			ap_cmd.disable_ctrl.cmd_id = PMU_AP_CMD_ID_DISABLE_CTRL;
-			ap_cmd.disable_ctrl.ctrl_id = PMU_AP_CTRL_ID_GRAPHICS;
-			status = nvgpu_pmu_ap_send_command(g, &ap_cmd, false);
+			status = nvgpu_aelpg_disable(g, PMU_AP_CTRL_ID_GRAPHICS);
 		}
 	} else {
 		nvgpu_info(g, "PMU is not ready, AELPG request failed");
