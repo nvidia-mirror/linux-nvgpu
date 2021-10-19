@@ -1039,7 +1039,7 @@ int test_channel_alloc_inst(struct unit_module *m, struct gk20a *g, void *vargs)
 			branches & F_CHANNEL_ALLOC_INST_ENOMEM ?
 				true : false, 0);
 
-		err = nvgpu_channel_alloc_inst(g, ch);
+		err = g->ops.channel.alloc_inst(g, ch);
 
 		if (branches & fail) {
 			unit_assert(err != 0, goto done);
@@ -1051,7 +1051,7 @@ int test_channel_alloc_inst(struct unit_module *m, struct gk20a *g, void *vargs)
 					APERTURE_INVALID, goto done);
 		}
 
-		nvgpu_channel_free_inst(g, ch);
+		g->ops.channel.free_inst(g, ch);
 		unit_assert(ch->inst_block.aperture == APERTURE_INVALID,
 			goto done);
 	}

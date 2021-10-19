@@ -1,7 +1,7 @@
 /*
  * GV11B Tegra HAL interface
  *
- * Copyright (c) 2016-2019, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,5 +26,7 @@
 #define NVGPU_HAL_GV11B_H
 struct gk20a;
 
+/** @cond DOXYGEN_SHOULD_SKIP_THIS */
 int gv11b_init_hal(struct gk20a *g);
+/** @endcond DOXYGEN_SHOULD_SKIP_THIS */
 #endif /* NVGPU_HAL_GV11B_H */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -70,7 +70,7 @@ int test_pbdma_setup_sw(struct unit_module *m,
  *
  * Targets: nvgpu_pbdma_status_is_chsw_switch, nvgpu_pbdma_status_is_chsw_load,
  *          nvgpu_pbdma_status_is_chsw_save, nvgpu_pbdma_status_is_chsw_valid,
- *          nvgpu_pbdma_status_is_id_type_tsg,
+ *          nvgpu_pbdma_status_ch_not_loaded, nvgpu_pbdma_status_is_id_type_tsg,
  *          nvgpu_pbdma_status_is_next_id_type_tsg
  *
  * Input: test_fifo_init_support() run for this GPU.

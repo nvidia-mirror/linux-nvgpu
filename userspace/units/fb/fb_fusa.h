@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -162,7 +162,8 @@ int fb_mmu_fault_gv11b_init_test(struct unit_module *m, struct gk20a *g,
  * Description: Ensure all HAL functions work without causing an ABORT.
  *
  * Targets: gv11b_fb_is_fault_buf_enabled, gv11b_fb_fault_buffer_get_ptr_update,
- * gv11b_fb_write_mmu_fault_buffer_size, gv11b_fb_fault_buf_set_state_hw,
+ * gv11b_fb_write_mmu_fault_buffer_size,
+ * fb_gv11b_write_mmu_fault_buffer_get, gv11b_fb_fault_buf_set_state_hw,
  * gv11b_fb_read_mmu_fault_status, gv11b_fb_fault_buf_configure_hw,
  * gv11b_fb_is_fault_buffer_empty, gv11b_fb_read_mmu_fault_addr_lo_hi,
  * gops_fb.fault_buf_configure_hw, gops_fb.fault_buf_set_state_hw,
@@ -234,7 +235,9 @@ int fb_mmu_fault_gv11b_snap_reg(struct unit_module *m, struct gk20a *g,
  * Description: Test the gv11b_fb_handle_mmu_fault HAL for all supported
  * interrupt statuses.
  *
- * Targets: gv11b_fb_handle_mmu_fault, gv11b_fb_fault_buf_set_state_hw
+ * Targets: gv11b_fb_handle_mmu_fault, gv11b_fb_fault_buf_set_state_hw,
+ *	    gv11b_fb_handle_nonreplay_fault_overflow,
+ *	    gv11b_fb_handle_dropped_mmu_fault
  *
  * Test Type: Feature
  *

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -45,7 +45,7 @@ struct unit_module;
  * nvgpu_vm_find_mapped_buf_less_than, nvgpu_get_pte, nvgpu_vm_put_buffers,
  * nvgpu_vm_unmap, nvgpu_vm_area_free, nvgpu_vm_put, nvgpu_vm_find_mapped_buf,
  * nvgpu_vm_area_find, nvgpu_vm_unmap_ref_internal, nvgpu_vm_unmap_system,
- * nvgpu_os_buf_get_size
+ * nvgpu_os_buf_get_size, nvgpu_vm_area_from_vm_area_list
  *
  * Input: None
  *
@@ -215,7 +215,8 @@ int test_init_error_paths(struct unit_module *m, struct gk20a *g, void *__args);
  *
  * Test Type: Error injection
  *
- * Targets: nvgpu_vm_init, nvgpu_vm_map, nvgpu_vm_put
+ * Targets: nvgpu_vm_init, nvgpu_vm_map, nvgpu_vm_put, nvgpu_vm_area_from_vm_area_list,
+ *	    nvgpu_mapped_buf_from_buffer_list
  *
  * Input: None
  *

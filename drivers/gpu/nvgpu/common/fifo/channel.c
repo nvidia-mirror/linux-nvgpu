@@ -2204,7 +2204,9 @@ void nvgpu_channel_debug_dump_all(struct gk20a *g,
 		info->tsgid = ch->tsgid;
 		info->pid = ch->pid;
 		info->refs = nvgpu_atomic_read(&ch->ref_count);
+#ifdef CONFIG_NVGPU_KERNEL_MODE_SUBMIT
 		info->deterministic = nvgpu_channel_is_deterministic(ch);
+#endif
 		if (tsg) {
 			if (tsg->nvs_domain) {
 				domain_name = nvgpu_nvs_domain_get_name(tsg->nvs_domain);

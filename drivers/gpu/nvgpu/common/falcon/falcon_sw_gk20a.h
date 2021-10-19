@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,7 +22,9 @@
 #ifndef NVGPU_FALCON_SW_GK20A_H
 #define NVGPU_FALCON_SW_GK20A_H
 
+/** @cond DOXYGEN_SHOULD_SKIP_THIS */
 void gk20a_falcon_engine_dependency_ops(struct nvgpu_falcon *flcn);
 void gk20a_falcon_sw_init(struct nvgpu_falcon *flcn);
+/** @endcond DOXYGEN_SHOULD_SKIP_THIS */
 
 #endif /* NVGPU_FALCON_SW_GK20A_H */

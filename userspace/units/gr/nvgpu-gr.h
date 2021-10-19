@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -123,6 +123,7 @@ int test_gr_init_prepare(struct unit_module *m, struct gk20a *g, void *args);
  *          gv11b_gr_init_get_alpha_cb_default_size,
  *          gv11b_gr_init_tpc_mask,
  *          gops_gr_init.get_no_of_sm,
+ *          gops_gr_falcon.fecs_ctxsw_clear_mailbox,
  *          nvgpu_gr_get_no_of_sm,
  *          gm20b_gr_init_pd_tpc_per_gpc,
  *          gm20b_gr_init_cwd_gpcs_tpcs_num,
@@ -131,7 +132,9 @@ int test_gr_init_prepare(struct unit_module *m, struct gk20a *g, void *args);
  *          gp10b_gr_init_pagepool_default_size,
  *          gv11b_gr_falcon_fecs_host_int_enable,
  *          nvgpu_gr_falcon_get_golden_image_size,
- *          gm20b_gr_falcon_start_fecs
+ *          gm20b_gr_falcon_start_fecs,
+ *	    gm20b_gr_falcon_fecs_ctxsw_clear_mailbox,
+ *          gr_intr_report_ctxsw_error
  *
  * Input: test_gr_init_setup and test_gr_init_prepare
  *        must have been executed successfully.

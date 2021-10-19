@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -38,7 +38,7 @@
  * Test Type: Feature
  *
  * Targets: nvgpu_posix_bug, dump_stack,
- *          BUG, BUG_ON, nvgpu_assert
+ *          bug_on_internal, nvgpu_assert
  *
  * Inputs: None
  *

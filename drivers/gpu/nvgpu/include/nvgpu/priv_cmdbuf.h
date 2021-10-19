@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,6 +30,7 @@ struct vm_gk20a;
 struct priv_cmd_entry;
 struct priv_cmd_queue;
 
+#ifdef CONFIG_NVGPU_NON_FUSA
 int nvgpu_priv_cmdbuf_queue_alloc(struct vm_gk20a *vm,
 		u32 job_count, struct priv_cmd_queue **queue);
 void nvgpu_priv_cmdbuf_queue_free(struct priv_cmd_queue *q);
@@ -48,5 +49,5 @@ void nvgpu_priv_cmdbuf_append_zeros(struct gk20a *g, struct priv_cmd_entry *e,
 
 void nvgpu_priv_cmdbuf_finish(struct gk20a *g, struct priv_cmd_entry *e,
 		u64 *gva, u32 *size);
-
+#endif /* CONFIG_NVGPU_NON_FUSA */
 #endif

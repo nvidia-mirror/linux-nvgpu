@@ -1,7 +1,7 @@
 /*
  * Nvgpu Channel Synchronization Abstraction
  *
- * Copyright (c) 2014-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -95,7 +95,6 @@ void nvgpu_channel_sync_get_ref(struct nvgpu_channel_sync *s);
  * Decrement the usage_counter for this instance and return if equals 0.
  */
 bool nvgpu_channel_sync_put_ref_and_check(struct nvgpu_channel_sync *s);
-#endif /* CONFIG_NVGPU_KERNEL_MODE_SUBMIT */
 
 /**
  * @brief Free channel syncpoint/semaphore
@@ -132,5 +131,7 @@ struct nvgpu_channel_sync *nvgpu_channel_sync_create(struct nvgpu_channel *c);
  * @return True is OS fence framework is needed.
  */
 bool nvgpu_channel_sync_needs_os_fence_framework(struct gk20a *g);
+
+#endif /* CONFIG_NVGPU_KERNEL_MODE_SUBMIT */
 
 #endif /* NVGPU_CHANNEL_SYNC_H */

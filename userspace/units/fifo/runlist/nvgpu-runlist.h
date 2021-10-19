@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -187,25 +187,6 @@ int test_runlist_reload_ids(struct unit_module *m, struct gk20a *g, void *args);
  */
 int test_runlist_update_locked(struct unit_module *m, struct gk20a *g,
 								void *args);
-
-/**
- * Test specification for: test_runlist_update_for_channel
- *
- * Description: Add/remove channel to/from runlist.
- *
- * Test Type: Feature
- *
- * Targets: nvgpu_runlist_update_for_channel
- *
- * Input: test_fifo_init_support
- *
- * Steps:
- * - Check that this API can be used to remove channels from runlist.
- *
- * Output: Returns PASS if all branches gave expected results. FAIL otherwise.
- */
-int test_runlist_update_for_channel(struct unit_module *m, struct gk20a *g,
-			void *args);
 
 /**
  * Test specification for: test_tsg_format_gen

@@ -159,6 +159,8 @@ typedef struct nvgpu_posix_atomic64 {
 #define NVGPU_POSIX_ATOMIC_XCHG(v, new) \
 	atomic_exchange(&((v)->v), (new))
 
+/** @cond DOXYGEN_SHOULD_SKIP_THIS */
+
 /**
  * @brief POSIX implementation of atomic set.
  *
@@ -645,4 +647,5 @@ static inline bool nvgpu_atomic64_sub_and_test_impl(long x, nvgpu_atomic64_t *v)
 	return NVGPU_POSIX_ATOMIC_SUB_RETURN(v, x) == 0;
 }
 
+/** @endcond DOXYGEN_SHOULD_SKIP_THIS */
 #endif /* NVGPU_POSIX_ATOMIC_H */

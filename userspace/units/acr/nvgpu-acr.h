@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -37,7 +37,7 @@ struct unit_module;
  *
  * Test Type: Feature, Error guessing
  *
- * Targets: nvgpu_acr_init
+ * Targets: gops_acr.acr_init, nvgpu_acr_init
  *
  * Input: None
  *
@@ -65,7 +65,9 @@ int test_acr_init(struct unit_module *m, struct gk20a *g, void *args);
  *
  * Test Type: Feature, Error guessing
  *
- * Targets: g->acr->prepare_ucode_blob
+ * Targets: nvgpu_acr_prepare_ucode_blob, flcn64_set_dma,
+ *	    nvgpu_acr_lsf_fecs_ucode_details, nvgpu_acr_lsf_gpccs_ucode_details,
+ *	    nvgpu_acr_alloc_blob_space_sys, nvgpu_acr_wpr_info_sys
  *
  * Input: None
  * Steps:
@@ -119,7 +121,7 @@ int test_acr_is_lsf_lazy_bootstrap(struct unit_module *m, struct gk20a *g,
  *
  * Test Type: Feature, Error guessing
  *
- * Targets: nvgpu_acr_construct_execute
+ * Targets: gops_acr.acr_construct_execute, nvgpu_acr_construct_execute
  *
  * Input: None
  *
@@ -149,7 +151,9 @@ int test_acr_construct_execute(struct unit_module *m,
  *
  * Test Type: Feature, Error guessing
  *
- * Targets: nvgpu_acr_bootstrap_hs_acr, nvgpu_pmu_report_bar0_pri_err_status,
+ * Targets: nvgpu_acr_bootstrap_hs_acr, nvgpu_acr_bootstrap_hs_ucode,
+ *	nvgpu_acr_lsf_fecs_ucode_details, nvgpu_acr_lsf_gpccs_ucode_details,
+ *      nvgpu_pmu_report_bar0_pri_err_status,
  *	gops_pmu.validate_mem_integrity, gv11b_pmu_validate_mem_integrity,
  *	gops_pmu.is_debug_mode_enabled, gv11b_pmu_is_debug_mode_en,
  *	gops_acr.pmu_clear_bar0_host_err_status,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -275,6 +275,7 @@ void nvgpu_kmem_cache_free(struct nvgpu_kmem_cache *cache, void *ptr);
  */
 int nvgpu_kmem_init(struct gk20a *g);
 
+/** @cond DOXYGEN_SHOULD_SKIP_THIS */
 /**
  * @brief Finalize the kmem tracking code
  *
@@ -285,6 +286,7 @@ int nvgpu_kmem_init(struct gk20a *g);
  * @param flags [in] Flags that control operation of this finalization.
  */
 void nvgpu_kmem_fini(struct gk20a *g, int flags);
+/** @endcond DOXYGEN_SHOULD_SKIP_THIS */
 
 /**
  * These will simply be ignored if CONFIG_NVGPU_TRACK_MEM_USAGE is not defined.
@@ -316,6 +318,7 @@ void nvgpu_kmem_fini(struct gk20a *g, int flags);
  */
 void *nvgpu_big_alloc_impl(struct gk20a *g, size_t size, bool clear);
 
+#ifdef CONFIG_NVGPU_DGPU
 /**
  * @brief Macro to allocate memory
  *
@@ -335,6 +338,7 @@ static inline void *nvgpu_big_malloc(struct gk20a *g, size_t size)
 {
 	return nvgpu_big_alloc_impl(g, size, false);
 }
+#endif
 
 /**
  * @brief Macro to allocate a zero initialised memory.

@@ -163,7 +163,7 @@ int test_get_put(struct unit_module *m,
  * - init_test_setup_env() must be called before.
  *
  * Targets: nvgpu_check_gpu_state, is_nvgpu_gpu_state_valid,
- *          gops_mc.get_chip_details
+ *          gops_mc.get_chip_details, gm20b_get_chip_details
  *
  * Steps:
  * - Test valid case.

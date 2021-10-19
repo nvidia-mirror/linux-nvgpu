@@ -16,7 +16,7 @@ bitops:
   sources: [ include/nvgpu/bitops.h ]
 
 bsearch:
-  safe: yes
+  safe: no
   sources: [ include/nvgpu/bsearch.h ]
 
 bug:

@@ -2,7 +2,7 @@
  *
  * Nvgpu Channel Synchronization Abstraction (Syncpoints)
  *
- * Copyright (c) 2018-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -35,6 +35,8 @@
 struct nvgpu_channel;
 struct nvgpu_channel_sync_syncpt;
 struct priv_cmd_entry;
+
+#ifdef CONFIG_NVGPU_NON_FUSA
 
 #ifdef CONFIG_TEGRA_GK20A_NVHOST
 
@@ -115,5 +117,7 @@ nvgpu_channel_sync_syncpt_create(struct nvgpu_channel *c)
 }
 
 #endif
+
+#endif /* CONFIG_NVGPU_NON_FUSA */
 
 #endif /* NVGPU_CHANNEL_SYNC_SYNCPT_H */

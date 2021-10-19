@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -218,7 +218,8 @@ int test_is_stall_and_eng_intr_pending(struct unit_module *m, struct gk20a *g,
  *
  * Test Type: Feature
  *
- * Targets: gops_mc.isr_stall, mc_gp10b_isr_stall
+ * Targets: gops_mc.isr_stall, mc_gp10b_isr_stall,
+ *          gops_mc.ltc_isr
  *
  * Input: test_mc_setup_env must have been run.
  *

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -44,11 +44,13 @@ struct unit_module;
  *          nvgpu_gr_falcon_load_secure_ctxsw_ucode,
  *          gops_gr_falcon.load_ctxsw_ucode,
  *          gops_gr_falcon.get_fecs_ctx_state_store_major_rev_id,
+ *          gops_gr_falcon.fecs_ctxsw_clear_mailbox,
  *          gm20b_gr_falcon_get_fecs_ctx_state_store_major_rev_id,
  *          gm20b_gr_falcon_get_gpccs_start_reg_offset,
  *          gm20b_gr_falcon_start_gpccs,
  *          gm20b_gr_falcon_fecs_base_addr,
- *          gm20b_gr_falcon_gpccs_base_addr
+ *          gm20b_gr_falcon_gpccs_base_addr,
+ *	    gm20b_gr_falcon_fecs_ctxsw_clear_mailbox
  *
  * Input: #test_gr_init_setup_ready must have been executed successfully.
  *

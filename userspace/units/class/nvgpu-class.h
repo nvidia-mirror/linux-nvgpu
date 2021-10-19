@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -39,13 +39,14 @@ struct unit_module;
  *
  * Test Type: Feature, Boundary Values
  *
- * Targets: gops_class.is_valid, gv11b_class_is_valid
- * Equivalence classes:
+ * Targets: gops_class.is_valid, gv11b_class_is_valid,
+ *          gops_class.is_valid_compute, gv11b_class_is_valid_compute,
+ *
+ * Equivalence classes for all class:
  * Variable: class_num
  * - Valid : { 0xC3C0U }, { 0xC3B5U }, { 0xC36FU }, { 0xC397U }
  *
- * Targets: gops_class.is_valid_compute, gv11b_class_is_valid_compute,
- * Equivalence classes:
+ * Equivalence classes for compute class:
  * Variable: class_num
  * - Valid : { 0xC3C0U }
  *

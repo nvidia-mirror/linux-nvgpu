@@ -77,7 +77,7 @@ int test_priv_ring_free_reg_space(struct unit_module *m, struct gk20a *g, void *
  *
  * Test Type: Feature
  *
- * Targets: gops_priv_ring.enable_priv_ring, gm20b_enable_priv_ring
+ * Targets: gops_priv_ring.enable_priv_ring, gm20b_priv_ring_enable
  *
  * Input: test_priv_ring_setup() has been executed.
  *
@@ -100,7 +100,7 @@ int test_enable_priv_ring(struct unit_module *m, struct gk20a *g, void *args);
  *
  * Test Type: Feature
  *
- * Targets: gops_priv_ring.enum_ltc, gm20b_priv_ring_enum_ltc.
+ * Targets: gops_priv_ring.enum_ltc, gm20b_priv_ring_enum_ltc
  *
  * Input: test_priv_ring_setup() has been executed.
  *
@@ -203,7 +203,7 @@ int test_priv_ring_isr(struct unit_module *m, struct gk20a *g, void *args);
  *
  * Test Type: Feature, Error injection, Boundary Value
  *
- * Targets: gops_priv_ring.decode_error_code, gp10b_decode_error_code
+ * Targets: gops_priv_ring.decode_error_code, gp10b_priv_ring_decode_error_code
  *
  * Input: test_priv_ring_setup() has been executed.
  * Equivalence classes:

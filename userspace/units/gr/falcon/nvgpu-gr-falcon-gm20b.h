@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -50,7 +50,8 @@ struct gk20a;
  *          gm20b_gr_falcon_init_ctx_state,
  *          gm20b_gr_falcon_submit_fecs_method_op,
  *          nvgpu_gr_get_falcon_ptr,
- *          gm20b_gr_falcon_ctrl_ctxsw
+ *          gm20b_gr_falcon_ctrl_ctxsw,
+ *          gv11b_gr_falcon_ctrl_ctxsw
  *
  * Steps:
  * -  Call gm20b_gr_falcon_ctrl_ctxsw with watchdog timeout Method.

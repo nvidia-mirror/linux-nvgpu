@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -189,7 +189,8 @@ int test_channel_setup_bind(struct unit_module *m,
  *
  * Test Type: Feature, Error injection
  *
- * Targets: nvgpu_channel_alloc_inst, nvgpu_channel_free_inst
+ * Targets: gops_channel.alloc_inst, nvgpu_channel_alloc_inst,
+ *          gops_channel.free_inst, nvgpu_channel_free_inst
  *
  * Input: test_fifo_init_support() run for this GPU
  *

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -113,9 +113,9 @@ int test_sync_create_destroy_sync(struct unit_module *m, struct gk20a *g, void *
  *
  * Test Type: Feature
  *
- * Targets: nvgpu_channel_user_syncpt_destroy,
+ * Targets: gops_sync_syncpt.free_buf, nvgpu_channel_user_syncpt_destroy,
  * 	    nvgpu_channel_user_syncpt_set_safe_state,
- * 	    nvgpu_channel_user_syncpt_create
+ * 	    gops_sync_syncpt.alloc_buf, nvgpu_channel_user_syncpt_create
  *
  * Input: test_sync_init run for this GPU
  *

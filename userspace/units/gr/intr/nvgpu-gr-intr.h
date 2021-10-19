@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -51,7 +51,8 @@ struct unit_module;
  *          gm20b_gr_falcon_read_status1_fecs_ctxsw,
  *          gm20b_gr_falcon_get_fecs_ctxsw_mailbox_size,
  *          gm20b_gr_falcon_fecs_host_clear_intr,
- *          nvgpu_gr_intr_remove_support
+ *          nvgpu_gr_intr_remove_support,
+ *          gp10b_gr_intr_handle_class_error
  *
  * Input: #test_gr_init_setup_ready must have been executed successfully.
  *
@@ -247,6 +248,7 @@ int test_gr_intr_fecs_exceptions(struct unit_module *m,
  *          gv11b_gr_intr_get_sm_hww_global_esr,
  *          gops_gr_intr.get_sm_no_lock_down_hww_global_esr_mask,
  *          gv11b_gr_intr_get_sm_no_lock_down_hww_global_esr_mask,
+ *          gv11b_gr_intr_get_warp_esr_pc_sm_hww,
  *          nvgpu_gr_intr_set_error_notifier,
  *          nvgpu_gr_intr_stall_isr,
  *          gops_gr_intr.read_pending_interrupts,

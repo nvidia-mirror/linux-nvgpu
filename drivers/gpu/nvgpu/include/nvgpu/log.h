@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,6 +31,7 @@
 #include <nvgpu_rmos/include/log.h>
 #endif
 
+#ifdef CONFIG_NVGPU_NON_FUSA
 /**
  * nvgpu_log_mask_enabled - Check if logging is enabled
  *
@@ -43,6 +44,7 @@
  * critical paths.
  */
 bool nvgpu_log_mask_enabled(struct gk20a *g, u64 log_mask);
+#endif
 
 /**
  * nvgpu_log - Print a debug message

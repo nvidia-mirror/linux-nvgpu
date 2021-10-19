@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -229,7 +229,7 @@ int test_kmem_virtual_alloc(struct unit_module *m,
  *
  * Test Type: Feature
  *
- * Targets: nvgpu_big_alloc_impl, nvgpu_big_free
+ * Targets: nvgpu_big_zalloc, nvgpu_big_alloc_impl, nvgpu_big_free
  *
  * Inputs:
  * 1) GPU driver struct g.

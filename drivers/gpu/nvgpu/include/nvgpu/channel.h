@@ -585,8 +585,6 @@ int nvgpu_channel_set_syncpt(struct nvgpu_channel *ch);
 bool nvgpu_channel_update_and_check_ctxsw_timeout(struct nvgpu_channel *ch,
 		u32 timeout_delta_ms, bool *progress);
 
-#endif /* CONFIG_NVGPU_KERNEL_MODE_SUBMIT */
-
 static inline bool nvgpu_channel_is_deterministic(struct nvgpu_channel *c)
 {
 #ifdef CONFIG_NVGPU_DETERMINISTIC_CHANNELS
@@ -596,6 +594,8 @@ static inline bool nvgpu_channel_is_deterministic(struct nvgpu_channel *c)
 	return false;
 #endif
 }
+
+#endif /* CONFIG_NVGPU_KERNEL_MODE_SUBMIT */
 
 /**
  * @brief Get channel pointer from its node in free channels list.

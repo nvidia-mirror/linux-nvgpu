@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,6 +31,8 @@ struct nvgpu_mapped_buf;
 struct priv_cmd_entry;
 struct nvgpu_channel;
 
+#ifdef CONFIG_NVGPU_KERNEL_MODE_SUBMIT
+
 struct nvgpu_channel_job {
 	struct nvgpu_mapped_buf **mapped_buffers;
 	u32 num_mapped_buffers;
@@ -55,5 +57,6 @@ void nvgpu_channel_joblist_delete(struct nvgpu_channel *c,
 
 int nvgpu_channel_joblist_init(struct nvgpu_channel *c, u32 num_jobs);
 void nvgpu_channel_joblist_deinit(struct nvgpu_channel *c);
+#endif /* CONFIG_NVGPU_KERNEL_MODE_SUBMIT */
 
 #endif
