@@ -52,7 +52,7 @@ struct gops_ltc_intr {
 	 * - For each ltc slice \a slice from 0 to g->ltc->slices_per_ltc - 1:
 	 *   -# The L2 has SEC-DED protection on its data RAM and parity protection on the
 	 *      byte enables RAM.
-	 *   -# See <a href="https:/p4viewer.nvidia.com/get//hw/doc/gpu/ampere/ampere/design/Functional_Descriptions/Resiliency/Ampere_gpu_resiliency_ECC.docx</a> for details.
+	 *   -# See <a href="https:/p4viewer.nvidia.com/get/hw/doc/gpu/ampere/ampere/design/Functional_Descriptions/Resiliency/Ampere_gpu_resiliency_ECC.doc">Ampere_gpu_resiliency_ECC.doc</a> for details.
 	 *   -# Following PRI registers are used for controlling parity ECC and
 	 *      getting the status and information of ECC.
 	 *      -# Control:
