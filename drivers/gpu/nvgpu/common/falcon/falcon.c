@@ -623,7 +623,6 @@ int nvgpu_falcon_get_mem_size(struct nvgpu_falcon *flcn,
 	return 0;
 }
 
-#ifdef CONFIG_NVGPU_DGPU
 int nvgpu_falcon_copy_from_emem(struct nvgpu_falcon *flcn,
 	u32 src, u8 *dst, u32 size, u8 port)
 {
@@ -679,7 +678,6 @@ int nvgpu_falcon_copy_to_emem(struct nvgpu_falcon *flcn,
 exit:
 	return status;
 }
-#endif
 
 #ifdef CONFIG_NVGPU_FALCON_DEBUG
 void nvgpu_falcon_dump_stats(struct nvgpu_falcon *flcn)

@@ -718,12 +718,10 @@ bool nvgpu_falcon_is_feature_supported(struct nvgpu_falcon *flcn,
 
 int nvgpu_falcon_wait_for_nvriscv_brom_completion(struct nvgpu_falcon *flcn);
 
-#ifdef CONFIG_NVGPU_DGPU
 int nvgpu_falcon_copy_from_emem(struct nvgpu_falcon *flcn,
 	u32 src, u8 *dst, u32 size, u8 port);
 int nvgpu_falcon_copy_to_emem(struct nvgpu_falcon *flcn,
 	u32 dst, u8 *src, u32 size, u8 port);
-#endif
 
 #ifdef CONFIG_NVGPU_FALCON_DEBUG
 void nvgpu_falcon_dump_stats(struct nvgpu_falcon *flcn);
