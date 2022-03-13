@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -51,7 +51,7 @@ int gp10b_mm_init_bar2_vm(struct gk20a *g)
 		goto clean_up_va;
 	}
 
-	g->ops.mm.init_inst_block(inst_block, mm->bar2.vm, big_page_size);
+	g->ops.mm.init_inst_block_core(inst_block, mm->bar2.vm, big_page_size);
 
 	return 0;
 

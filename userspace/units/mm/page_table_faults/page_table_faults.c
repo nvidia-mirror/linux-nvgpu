@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -345,7 +345,7 @@ int test_page_faults_inst_block(struct unit_module *m, struct gk20a *g,
 		unit_return_fail(m, "nvgpu_alloc_inst_block failed\n");
 	}
 
-	g->ops.mm.init_inst_block(&inst_blk_desc, g->mm.bar2.vm, big_page_size);
+	g->ops.mm.init_inst_block_core(&inst_blk_desc, g->mm.bar2.vm, big_page_size);
 
 	return UNIT_SUCCESS;
 }

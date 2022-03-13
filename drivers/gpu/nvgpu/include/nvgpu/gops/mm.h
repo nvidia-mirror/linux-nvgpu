@@ -539,35 +539,35 @@ struct gops_mm {
 	void (*remove_bar2_vm)(struct gk20a *g);
 
 	/**
-	 * @brief HAL to initialize the instance block memory.
+	 * @brief HAL to initialize the instance block memory for user channels.
 	 *
-	 * @param inst_block    [in]	Pointer to instance block memory.
+	 * @param inst_block    [in]	Pointer to channel instance block
+	 *                              memory.
 	 * @param vm            [in]	Pointer to virtual memory context.
 	 * @param big_page_size [in]	Big page size supported by GMMU.
 	 *
 	 * Initializes the instance block memory:
-	 * - Configures the pdb base, big page size and
-	 *   sub context's pdb base in context's instance block memory.
+	 * - Configures the pdb base, big page size in channel's instance block
+	 *   memory.
 	 */
 	void (*init_inst_block)(struct nvgpu_mem *inst_block,
 			struct vm_gk20a *vm, u32 big_page_size);
 
 	/**
-	 * @brief HAL to initialize the instance block memory.
-	 * (for more than one subctx)
+	 * @brief HAL to initialize the instance block memory for GPU contexts
+	 *        for h/w units (fecs, pmu, hwpm, bar1, bar2, sec2, gsp and
+	 *        perfbuf).
 	 *
 	 * @param inst_block    [in]	Pointer to instance block memory.
 	 * @param vm            [in]	Pointer to virtual memory context.
 	 * @param big_page_size [in]	Big page size supported by GMMU.
-	 * @param max_subctx_count [in] Max number of sub context.
 	 *
 	 * Initializes the instance block memory:
 	 * - Configures the pdb base, big page size and
-	 *   sub context's pdb base in context's instance block memory.
+	 *   0th sub context's pdb base in context's instance block memory.
 	 */
-	void (*init_inst_block_for_subctxs)(struct nvgpu_mem *inst_block,
-			struct vm_gk20a *vm, u32 big_page_size,
-			u32 max_subctx_count);
+	void (*init_inst_block_core)(struct nvgpu_mem *inst_block,
+			struct vm_gk20a *vm, u32 big_page_size);
 
 	/**
 	 * @brief HAL to get the maximum flush retry counts.

@@ -40,33 +40,16 @@ void gv11b_mm_init_inst_block(struct nvgpu_mem *inst_block,
 	if ((big_page_size != 0U) && (g->ops.ramin.set_big_page_size != NULL)) {
 		g->ops.ramin.set_big_page_size(g, inst_block, big_page_size);
 	}
-
-	if (g->ops.ramin.init_subctx_pdb != NULL) {
-		g->ops.ramin.init_subctx_pdb(g, inst_block, vm->pdb.mem, false,
-			1U);
-	}
 }
 
-void gv11b_mm_init_inst_block_for_subctxs(struct nvgpu_mem *inst_block,
-		struct vm_gk20a *vm, u32 big_page_size, u32 max_subctx_count)
+void gv11b_mm_init_inst_block_core(struct nvgpu_mem *inst_block,
+		struct vm_gk20a *vm, u32 big_page_size)
 {
 	struct gk20a *g = gk20a_from_vm(vm);
-	u64 pdb_addr = nvgpu_pd_gpu_addr(g, &vm->pdb);
 
-	nvgpu_log_info(g, "inst block phys = 0x%llx, kv = 0x%p",
-		nvgpu_inst_block_addr(g, inst_block), inst_block->cpu_va);
+	gv11b_mm_init_inst_block(inst_block, vm, big_page_size);
 
-	g->ops.ramin.init_pdb(g, inst_block, pdb_addr, vm->pdb.mem);
-
-	if ((big_page_size != 0U) &&
-			(g->ops.ramin.set_big_page_size != NULL)) {
-		g->ops.ramin.set_big_page_size(g, inst_block, big_page_size);
-	}
-
-	if (g->ops.ramin.init_subctx_pdb != NULL) {
-		g->ops.ramin.init_subctx_pdb(g, inst_block, vm->pdb.mem, false,
-			max_subctx_count);
-	}
+	g->ops.ramin.init_subctx_pdb(g, inst_block, vm->pdb.mem, false, 1U);
 }
 
 bool gv11b_mm_is_bar1_supported(struct gk20a *g)
