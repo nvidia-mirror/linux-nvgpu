@@ -95,7 +95,7 @@ void nvgpu_gr_subctx_load_ctx_header(struct gk20a *g,
 	/* set priv access map */
 	g->ops.gr.ctxsw_prog.set_priv_access_map_addr(g, ctxheader,
 		nvgpu_gr_ctx_get_global_ctx_va(gr_ctx,
-			NVGPU_GR_CTX_PRIV_ACCESS_MAP_VA));
+			NVGPU_GR_GLOBAL_CTX_PRIV_ACCESS_MAP_VA));
 #endif
 
 	g->ops.gr.ctxsw_prog.set_patch_addr(g, ctxheader,

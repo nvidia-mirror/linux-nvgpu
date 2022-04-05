@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -150,19 +150,13 @@ struct nvgpu_gr_ctx {
 	 * Array to store GPU virtual addresses of all global context
 	 * buffers.
 	 */
-	u64	global_ctx_buffer_va[NVGPU_GR_CTX_VA_COUNT];
+	u64	global_ctx_buffer_va[NVGPU_GR_GLOBAL_CTX_VA_COUNT];
 
 	/**
 	 * Array to store indexes of global context buffers
 	 * corresponding to GPU virtual addresses above.
 	 */
-	u32	global_ctx_buffer_index[NVGPU_GR_CTX_VA_COUNT];
-
-	/**
-	 * Flag to indicate if global context buffers are mapped and
-	 * #global_ctx_buffer_va array is populated.
-	 */
-	bool	global_ctx_buffer_mapped;
+	u32	global_ctx_buffer_index[NVGPU_GR_GLOBAL_CTX_VA_COUNT];
 
 	/**
 	 * TSG identifier corresponding to the graphics context.

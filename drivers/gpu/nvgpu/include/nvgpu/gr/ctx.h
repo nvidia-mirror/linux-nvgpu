@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -107,26 +107,6 @@ struct zcull_ctx_desc;
 /** Number of context buffers. */
 #define NVGPU_GR_CTX_COUNT		3U
 #endif
-
-/*
- * either ATTRIBUTE or ATTRIBUTE_VPR maps to NVGPU_GR_CTX_ATTRIBUTE_VA.
-*/
-/** S/W defined index for circular context buffer virtual address. */
-#define NVGPU_GR_CTX_CIRCULAR_VA		0U
-/** S/W defined index for pagepool context buffer virtual address. */
-#define NVGPU_GR_CTX_PAGEPOOL_VA		1U
-/** S/W defined index for attribute context buffer virtual address. */
-#define NVGPU_GR_CTX_ATTRIBUTE_VA		2U
-/** S/W defined index for access map buffer virtual address. */
-#define NVGPU_GR_CTX_PRIV_ACCESS_MAP_VA		3U
-/** S/W defined index for RTV circular context buffer virtual address. */
-#define NVGPU_GR_CTX_RTV_CIRCULAR_BUFFER_VA	4U
-#ifdef CONFIG_NVGPU_FECS_TRACE
-/** S/W defined index for fecs trace buffer virtual address. */
-#define NVGPU_GR_CTX_FECS_TRACE_BUFFER_VA	5U
-#endif
-/** Number of context buffer virtual addresses. */
-#define NVGPU_GR_CTX_VA_COUNT			6U
 
 #ifdef CONFIG_NVGPU_DEBUGGER
 /* PM Context Switch Modes */

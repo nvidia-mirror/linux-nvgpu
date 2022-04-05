@@ -352,7 +352,7 @@ void nvgpu_gr_obj_ctx_commit_global_ctx_buffers(struct gk20a *g,
 	if (!nvgpu_is_enabled(g, NVGPU_SUPPORT_MIG)) {
 		/* global pagepool buffer */
 		addr = nvgpu_gr_ctx_get_global_ctx_va(gr_ctx,
-			NVGPU_GR_CTX_PAGEPOOL_VA);
+			NVGPU_GR_GLOBAL_CTX_PAGEPOOL_VA);
 		size = nvgpu_safe_cast_u64_to_u32(nvgpu_gr_global_ctx_get_size(
 				global_ctx_buffer,
 				NVGPU_GR_GLOBAL_CTX_PAGEPOOL));
@@ -362,7 +362,7 @@ void nvgpu_gr_obj_ctx_commit_global_ctx_buffers(struct gk20a *g,
 
 		/* global bundle cb */
 		addr = nvgpu_gr_ctx_get_global_ctx_va(gr_ctx,
-			NVGPU_GR_CTX_CIRCULAR_VA);
+			NVGPU_GR_GLOBAL_CTX_CIRCULAR_VA);
 		size = nvgpu_safe_cast_u64_to_u32(
 				g->ops.gr.init.get_bundle_cb_default_size(g));
 
@@ -371,7 +371,7 @@ void nvgpu_gr_obj_ctx_commit_global_ctx_buffers(struct gk20a *g,
 
 		/* global attrib cb */
 		addr = nvgpu_gr_ctx_get_global_ctx_va(gr_ctx,
-				NVGPU_GR_CTX_ATTRIBUTE_VA);
+				NVGPU_GR_GLOBAL_CTX_ATTRIBUTE_VA);
 
 		g->ops.gr.init.commit_global_attrib_cb(g, gr_ctx,
 			nvgpu_gr_config_get_tpc_count(config),
@@ -384,7 +384,7 @@ void nvgpu_gr_obj_ctx_commit_global_ctx_buffers(struct gk20a *g,
 		if (g->ops.gr.init.commit_rtv_cb != NULL) {
 			/* RTV circular buffer */
 			addr = nvgpu_gr_ctx_get_global_ctx_va(gr_ctx,
-				NVGPU_GR_CTX_RTV_CIRCULAR_BUFFER_VA);
+				NVGPU_GR_GLOBAL_CTX_RTV_CIRCULAR_BUFFER_VA);
 
 			g->ops.gr.init.commit_rtv_cb(g, addr, gr_ctx, patch);
 		}
