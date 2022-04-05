@@ -29,7 +29,6 @@
 
 struct gk20a;
 struct nvgpu_channel;
-struct gr_ctx_buffer_desc;
 struct gk20a_scale_profile;
 
 struct secure_page_buffer {

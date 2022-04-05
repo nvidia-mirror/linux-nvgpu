@@ -23,6 +23,7 @@
 #include <nvgpu/gk20a.h>
 #include <nvgpu/gr/subctx.h>
 #include <nvgpu/gr/ctx.h>
+#include <nvgpu/gr/ctx_mappings.h>
 #include <nvgpu/gmmu.h>
 #include <nvgpu/dma.h>
 #include <nvgpu/power_features/pg.h>
@@ -81,23 +82,27 @@ void nvgpu_gr_subctx_free(struct gk20a *g,
 
 void nvgpu_gr_subctx_load_ctx_header(struct gk20a *g,
 	struct nvgpu_gr_subctx *subctx,
-	struct nvgpu_gr_ctx *gr_ctx, u64 gpu_va)
+	struct nvgpu_gr_ctx *gr_ctx,
+	struct nvgpu_gr_ctx_mappings *mappings)
 {
 	struct nvgpu_mem *ctxheader = &subctx->ctx_header;
+	u64 gpu_va;
+
+	gpu_va = nvgpu_gr_ctx_mappings_get_ctx_va(mappings, NVGPU_GR_CTX_CTX);
 
 #ifdef CONFIG_NVGPU_SET_FALCON_ACCESS_MAP
 	/* set priv access map */
 	g->ops.gr.ctxsw_prog.set_priv_access_map_addr(g, ctxheader,
-		nvgpu_gr_ctx_get_global_ctx_va(gr_ctx,
+		nvgpu_gr_ctx_mappings_get_global_ctx_va(mappings,
 			NVGPU_GR_GLOBAL_CTX_PRIV_ACCESS_MAP_VA));
 #endif
 
 	g->ops.gr.ctxsw_prog.set_patch_addr(g, ctxheader,
-		nvgpu_gr_ctx_get_patch_ctx_mem(gr_ctx)->gpu_va);
+		nvgpu_gr_ctx_mappings_get_ctx_va(mappings, NVGPU_GR_CTX_PATCH_CTX));
 
 #ifdef CONFIG_NVGPU_DEBUGGER
 	g->ops.gr.ctxsw_prog.set_pm_ptr(g, ctxheader,
-		nvgpu_gr_ctx_get_pm_ctx_mem(gr_ctx)->gpu_va);
+		nvgpu_gr_ctx_mappings_get_ctx_va(mappings, NVGPU_GR_CTX_PM_CTX));
 #endif
 
 #ifdef CONFIG_NVGPU_GRAPHICS
@@ -129,24 +134,26 @@ void nvgpu_gr_subctx_zcull_setup(struct gk20a *g, struct nvgpu_gr_subctx *subctx
 
 #ifdef CONFIG_NVGPU_GFXP
 void nvgpu_gr_subctx_set_preemption_buffer_va(struct gk20a *g,
-	struct nvgpu_gr_subctx *subctx, struct nvgpu_gr_ctx *gr_ctx)
+	struct nvgpu_gr_subctx *subctx, struct nvgpu_gr_ctx_mappings *mappings)
 {
+	u64 preempt_ctxsw_gpu_va = nvgpu_gr_ctx_mappings_get_ctx_va(mappings,
+						NVGPU_GR_CTX_PREEMPT_CTXSW);
+
 	g->ops.gr.ctxsw_prog.set_full_preemption_ptr(g, &subctx->ctx_header,
-		nvgpu_gr_ctx_get_preempt_ctxsw_buffer(gr_ctx)->gpu_va);
+				preempt_ctxsw_gpu_va);
 
 	if (g->ops.gr.ctxsw_prog.set_full_preemption_ptr_veid0 != NULL) {
 		g->ops.gr.ctxsw_prog.set_full_preemption_ptr_veid0(g,
-			&subctx->ctx_header,
-			nvgpu_gr_ctx_get_preempt_ctxsw_buffer(gr_ctx)->gpu_va);
+			&subctx->ctx_header, preempt_ctxsw_gpu_va);
 	}
 }
 #endif /* CONFIG_NVGPU_GFXP */
 
 #ifdef CONFIG_NVGPU_DEBUGGER
 void nvgpu_gr_subctx_set_hwpm_ptr(struct gk20a *g,
-	struct nvgpu_gr_subctx *subctx, struct nvgpu_gr_ctx *gr_ctx)
+	struct nvgpu_gr_subctx *subctx, u64 pm_ctx_gpu_va)
 {
 	g->ops.gr.ctxsw_prog.set_pm_ptr(g, &subctx->ctx_header,
-		nvgpu_gr_ctx_get_pm_ctx_mem(gr_ctx)->gpu_va);
+			pm_ctx_gpu_va);
 }
 #endif

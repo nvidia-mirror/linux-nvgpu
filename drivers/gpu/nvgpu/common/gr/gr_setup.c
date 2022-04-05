@@ -23,6 +23,7 @@
 #include <nvgpu/log.h>
 #include <nvgpu/gk20a.h>
 #include <nvgpu/gr/ctx.h>
+#include <nvgpu/gr/ctx_mappings.h>
 #include <nvgpu/gr/subctx.h>
 #include <nvgpu/gr/obj_ctx.h>
 #ifdef CONFIG_NVGPU_GRAPHICS
@@ -163,6 +164,7 @@ int nvgpu_gr_setup_alloc_obj_ctx(struct nvgpu_channel *c, u32 class_num,
 	struct nvgpu_tsg *tsg = NULL;
 	int err = 0;
 	struct nvgpu_gr *gr = nvgpu_gr_get_cur_instance_ptr(g);
+	struct nvgpu_gr_ctx_mappings *mappings = NULL;
 
 	nvgpu_log(g, gpu_dbg_fn | gpu_dbg_gr,
 		"GR%u: allocate object context for channel %u",
@@ -203,18 +205,27 @@ int nvgpu_gr_setup_alloc_obj_ctx(struct nvgpu_channel *c, u32 class_num,
 
 	gr_ctx = tsg->gr_ctx;
 
-	if (!nvgpu_mem_is_valid(nvgpu_gr_ctx_get_ctx_mem(gr_ctx))) {
+	mappings = nvgpu_gr_ctx_alloc_or_get_mappings(g, tsg, c->vm);
+	if (mappings == NULL) {
+		nvgpu_err(g, "fail to allocate/get ctx mappings struct");
+		nvgpu_mutex_release(&tsg->ctx_init_lock);
+		goto out;
+	}
+
+	if (!nvgpu_mem_is_valid(nvgpu_gr_ctx_get_ctx_mem(gr_ctx,
+							 NVGPU_GR_CTX_CTX))) {
 		tsg->vm = c->vm;
 		nvgpu_vm_get(tsg->vm);
 
 		err = nvgpu_gr_obj_ctx_alloc(g, gr->golden_image,
 				gr->global_ctx_buffer, gr->gr_ctx_desc,
 				gr->config, gr_ctx, c->subctx,
-				tsg->vm, &c->inst_block, class_num, flags,
+				mappings, &c->inst_block, class_num, flags,
 				c->cde, c->vpr);
 		if (err != 0) {
 			nvgpu_err(g,
 				"failed to allocate gr ctx buffer");
+			nvgpu_gr_ctx_free_mappings(g, gr_ctx);
 			nvgpu_mutex_release(&tsg->ctx_init_lock);
 			nvgpu_vm_put(tsg->vm);
 			tsg->vm = NULL;
@@ -225,13 +236,13 @@ int nvgpu_gr_setup_alloc_obj_ctx(struct nvgpu_channel *c, u32 class_num,
 	} else {
 		/* commit gr ctx buffer */
 		nvgpu_gr_obj_ctx_commit_inst(g, &c->inst_block, gr_ctx,
-			c->subctx, nvgpu_gr_ctx_get_ctx_mem(gr_ctx)->gpu_va);
+			c->subctx, mappings);
 	}
 
 #ifdef CONFIG_NVGPU_FECS_TRACE
 	if (g->ops.gr.fecs_trace.bind_channel && !c->vpr) {
 		err = g->ops.gr.fecs_trace.bind_channel(g, &c->inst_block,
-			c->subctx, gr_ctx, tsg->tgid, 0);
+			c->subctx, gr_ctx, mappings, tsg->tgid, 0);
 		if (err != 0) {
 			nvgpu_warn(g,
 				"fail to bind channel for ctxsw trace");
@@ -275,22 +286,27 @@ out:
 }
 
 void nvgpu_gr_setup_free_gr_ctx(struct gk20a *g,
-		struct vm_gk20a *vm, struct nvgpu_gr_ctx *gr_ctx)
+				struct nvgpu_gr_ctx *gr_ctx)
 {
+	struct nvgpu_mem *mem;
+
 	nvgpu_log_fn(g, " ");
 
-	if ((gr_ctx != NULL) &&
-		nvgpu_mem_is_valid(nvgpu_gr_ctx_get_ctx_mem(gr_ctx))) {
+	if (gr_ctx != NULL) {
+		mem = nvgpu_gr_ctx_get_ctx_mem(gr_ctx, NVGPU_GR_CTX_CTX);
+		if (!nvgpu_mem_is_valid(mem)) {
+			return;
+		}
+
 #ifdef CONFIG_DEBUG_FS
 		if ((g->ops.gr.ctxsw_prog.dump_ctxsw_stats != NULL) &&
 		     nvgpu_gr_ctx_desc_dump_ctxsw_stats_on_channel_close(
 					g->gr->gr_ctx_desc)) {
-			g->ops.gr.ctxsw_prog.dump_ctxsw_stats(g,
-				 nvgpu_gr_ctx_get_ctx_mem(gr_ctx));
+			g->ops.gr.ctxsw_prog.dump_ctxsw_stats(g, mem);
 		}
 #endif
 
-		nvgpu_gr_ctx_free(g, gr_ctx, g->gr->global_ctx_buffer, vm);
+		nvgpu_gr_ctx_free(g, gr_ctx, g->gr->global_ctx_buffer);
 	}
 }
 
@@ -334,16 +350,14 @@ static bool nvgpu_gr_setup_validate_preemption_mode(u32 *graphics_preempt_mode,
 	return true;
 }
 
-
-
 int nvgpu_gr_setup_set_preemption_mode(struct nvgpu_channel *ch,
 		u32 graphics_preempt_mode, u32 compute_preempt_mode,
 		u32 gr_instance_id)
 {
+	struct nvgpu_gr_ctx_mappings *mappings;
 	struct nvgpu_gr_ctx *gr_ctx;
 	struct gk20a *g = ch->g;
 	struct nvgpu_tsg *tsg;
-	struct vm_gk20a *vm;
 	struct nvgpu_gr *gr;
 	u32 class_num;
 	int err = 0;
@@ -365,7 +379,6 @@ int nvgpu_gr_setup_set_preemption_mode(struct nvgpu_channel *ch,
 		return -EINVAL;
 	}
 
-	vm = tsg->vm;
 	gr_ctx = tsg->gr_ctx;
 
 	if (nvgpu_gr_setup_validate_preemption_mode(&graphics_preempt_mode,
@@ -379,12 +392,34 @@ int nvgpu_gr_setup_set_preemption_mode(struct nvgpu_channel *ch,
 			graphics_preempt_mode, compute_preempt_mode);
 
 	err = nvgpu_gr_obj_ctx_set_ctxsw_preemption_mode(g, gr->config,
-			gr->gr_ctx_desc, gr_ctx, vm, class_num,
+			gr->gr_ctx_desc, gr_ctx, class_num,
 			graphics_preempt_mode, compute_preempt_mode);
 	if (err != 0) {
 		nvgpu_err(g, "set_ctxsw_preemption_mode failed");
 		return err;
 	}
+
+	mappings = nvgpu_gr_ctx_get_mappings(tsg);
+	if (mappings == NULL) {
+		nvgpu_err(g, "failed to get gr_ctx mappings");
+		return -EINVAL;
+	}
+
+#ifdef CONFIG_NVGPU_GFXP
+	err = nvgpu_gr_ctx_alloc_ctx_preemption_buffers(g,
+			gr->gr_ctx_desc, gr_ctx);
+	if (err != 0) {
+		nvgpu_err(g, "fail to allocate ctx preemption buffers");
+		return err;
+	}
+
+	err = nvgpu_gr_ctx_mappings_map_ctx_preemption_buffers(g,
+			gr_ctx, mappings);
+	if (err != 0) {
+		nvgpu_err(g, "fail to map ctx preemption buffers");
+		return err;
+	}
+ #endif
 
 	g->ops.tsg.disable(tsg);
 
@@ -395,7 +430,7 @@ int nvgpu_gr_setup_set_preemption_mode(struct nvgpu_channel *ch,
 	}
 
 	nvgpu_gr_obj_ctx_update_ctxsw_preemption_mode(g, gr->config, gr_ctx,
-		ch->subctx);
+		ch->subctx, mappings);
 
 	if (!nvgpu_is_enabled(g, NVGPU_SUPPORT_MIG)) {
 		nvgpu_gr_ctx_patch_write_begin(g, gr_ctx, true);

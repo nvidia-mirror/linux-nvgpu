@@ -622,10 +622,9 @@ done:
 #define F_TSG_RELEASE_NO_RELEASE_HAL	BIT(0)
 #define F_TSG_RELEASE_GR_CTX		BIT(1)
 #define F_TSG_RELEASE_MEM		BIT(2)
-#define F_TSG_RELEASE_VM		BIT(3)
-#define F_TSG_RELEASE_ENG_BUFS		BIT(4)
-#define F_TSG_RELEASE_SM_ERR_STATES	BIT(5)
-#define F_TSG_RELEASE_LAST		BIT(6)
+#define F_TSG_RELEASE_ENG_BUFS		BIT(3)
+#define F_TSG_RELEASE_SM_ERR_STATES	BIT(4)
+#define F_TSG_RELEASE_LAST		BIT(5)
 
 
 static void stub_tsg_release(struct nvgpu_tsg *tsg)
@@ -640,7 +639,7 @@ static void stub_tsg_deinit_eng_method_buffers(struct gk20a *g,
 }
 
 static void stub_gr_setup_free_gr_ctx(struct gk20a *g,
-		struct vm_gk20a *vm, struct nvgpu_gr_ctx *gr_ctx)
+		struct nvgpu_gr_ctx *gr_ctx)
 {
 	stub[1].name = __func__;
 	stub[1].count++;
@@ -650,23 +649,31 @@ static void stub_gr_setup_free_gr_ctx(struct gk20a *g,
 int test_tsg_release(struct unit_module *m,
 		struct gk20a *g, void *args)
 {
+	struct nvgpu_gr_ctx_desc *gr_ctx_desc;
+	struct nvgpu_mem *gr_ctx_mem;
 	struct nvgpu_fifo *f = &g->fifo;
 	struct gpu_ops gops = g->ops;
 	struct nvgpu_tsg *tsg = NULL;
 	struct vm_gk20a vm;
 	u32 branches = 0U;
 	int ret = UNIT_FAIL;
-	struct nvgpu_mem mem;
 	u32 free_gr_ctx_mask =
-		F_TSG_RELEASE_GR_CTX|F_TSG_RELEASE_MEM|F_TSG_RELEASE_VM;
+		F_TSG_RELEASE_GR_CTX|F_TSG_RELEASE_MEM;
 	const char *labels[] = {
 		"no_release_hal",
 		"gr_ctx",
 		"mem",
-		"vm",
 		"eng_bufs",
 		"sm_err_states"
 	};
+
+	gr_ctx_desc = nvgpu_gr_ctx_desc_alloc(g);
+	if (!gr_ctx_desc) {
+		unit_return_fail(m, "failed to allocate memory");
+	}
+
+	nvgpu_gr_ctx_set_size(gr_ctx_desc, NVGPU_GR_CTX_CTX,
+		NVGPU_CPU_PAGE_SIZE);
 
 	for (branches = 0U; branches < F_TSG_RELEASE_LAST; branches++) {
 
@@ -683,8 +690,9 @@ int test_tsg_release(struct unit_module *m,
 		tsg = nvgpu_tsg_open(g, getpid());
 		unit_assert(tsg != NULL, goto done);
 		unit_assert(tsg->gr_ctx != NULL, goto done);
-		unit_assert(tsg->gr_ctx->mem.aperture ==
-				APERTURE_INVALID, goto done);
+
+		gr_ctx_mem = nvgpu_gr_ctx_get_ctx_mem(tsg->gr_ctx, NVGPU_GR_CTX_CTX);
+		unit_assert(gr_ctx_mem->aperture == APERTURE_INVALID, goto done);
 
 		g->ops.tsg.release =
 			branches & F_TSG_RELEASE_NO_RELEASE_HAL ?
@@ -696,11 +704,8 @@ int test_tsg_release(struct unit_module *m,
 		}
 
 		if (branches & F_TSG_RELEASE_MEM) {
-			nvgpu_dma_alloc(g, NVGPU_CPU_PAGE_SIZE, &mem);
-			tsg->gr_ctx->mem = mem;
-		}
-
-		if (branches & F_TSG_RELEASE_VM) {
+			ret = nvgpu_gr_ctx_alloc_ctx_buffers(g, gr_ctx_desc, tsg->gr_ctx);
+			unit_assert(ret == UNIT_SUCCESS, goto done);
 			tsg->vm = &vm;
 			/* prevent nvgpu_vm_remove */
 			nvgpu_ref_init(&vm.ref);
@@ -734,7 +739,7 @@ int test_tsg_release(struct unit_module *m,
 				gops.gr.setup.free_gr_ctx;
 
 			if (branches & F_TSG_RELEASE_MEM) {
-				nvgpu_dma_free(g, &mem);
+				nvgpu_gr_ctx_free_ctx_buffers(g, tsg->gr_ctx);
 			}
 
 			if (tsg->gr_ctx != NULL) {

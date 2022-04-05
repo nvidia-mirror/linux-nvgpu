@@ -131,6 +131,9 @@ static int gr_alloc_global_ctx_buffers(struct gk20a *g, struct nvgpu_gr *gr)
 		return err;
 	}
 
+	nvgpu_gr_global_ctx_init_ctx_buffers_mapping_flags(g,
+		gr->global_ctx_buffer);
+
 	nvgpu_log(g, gpu_dbg_fn | gpu_dbg_gr, "done");
 	return 0;
 }

@@ -31,6 +31,7 @@
 #include <nvgpu/enabled.h>
 #include <nvgpu/gr/global_ctx.h>
 #include <nvgpu/gr/ctx.h>
+#include <nvgpu/gr/ctx_mappings.h>
 #include <nvgpu/gr/subctx.h>
 #include <nvgpu/gr/fecs_trace.h>
 #include <nvgpu/gr/gr_utils.h>
@@ -607,7 +608,8 @@ int nvgpu_gr_fecs_trace_reset(struct gk20a *g)
  */
 int nvgpu_gr_fecs_trace_bind_channel(struct gk20a *g,
 	struct nvgpu_mem *inst_block, struct nvgpu_gr_subctx *subctx,
-	struct nvgpu_gr_ctx *gr_ctx, pid_t pid, u32 vmid)
+	struct nvgpu_gr_ctx *gr_ctx, struct nvgpu_gr_ctx_mappings *mappings,
+	pid_t pid, u32 vmid)
 {
 	u64 addr = 0ULL;
 	struct nvgpu_gr_fecs_trace *trace = g->fecs_trace;
@@ -636,7 +638,7 @@ int nvgpu_gr_fecs_trace_bind_channel(struct gk20a *g,
 	}
 
 	if (nvgpu_is_enabled(g, NVGPU_FECS_TRACE_VA)) {
-		addr = nvgpu_gr_ctx_get_global_ctx_va(gr_ctx,
+		addr = nvgpu_gr_ctx_mappings_get_global_ctx_va(mappings,
 				NVGPU_GR_GLOBAL_CTX_FECS_TRACE_BUFFER_VA);
 		nvgpu_log(g, gpu_dbg_ctxsw, "gpu_va=%llx", addr);
 		aperture_mask = 0;
@@ -650,7 +652,7 @@ int nvgpu_gr_fecs_trace_bind_channel(struct gk20a *g,
 		return -ENOMEM;
 	}
 
-	mem = nvgpu_gr_ctx_get_ctx_mem(gr_ctx);
+	mem = nvgpu_gr_ctx_get_ctx_mem(gr_ctx, NVGPU_GR_CTX_CTX);
 
 	nvgpu_log(g, gpu_dbg_ctxsw, "addr=%llx count=%d", addr,
 		GK20A_FECS_TRACE_NUM_RECORDS);

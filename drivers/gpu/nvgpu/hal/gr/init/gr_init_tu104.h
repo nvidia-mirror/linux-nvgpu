@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,6 +28,7 @@
 struct gk20a;
 struct nvgpu_gr_ctx;
 struct netlist_av64_list;
+struct nvgpu_gr_ctx_mappings;
 
 u32 tu104_gr_init_get_bundle_cb_default_size(struct gk20a *g);
 u32 tu104_gr_init_get_min_gpm_fifo_depth(struct gk20a *g);
@@ -44,7 +45,8 @@ void tu104_gr_init_commit_rtv_cb(struct gk20a *g, u64 addr,
 	struct nvgpu_gr_ctx *gr_ctx, bool patch);
 
 void tu104_gr_init_commit_gfxp_rtv_cb(struct gk20a *g,
-	struct nvgpu_gr_ctx *gr_ctx, bool patch);
+	struct nvgpu_gr_ctx *gr_ctx, struct nvgpu_gr_ctx_mappings *mappings,
+	bool patch);
 
 u32 tu104_gr_init_get_attrib_cb_gfxp_default_size(struct gk20a *g);
 u32 tu104_gr_init_get_attrib_cb_gfxp_size(struct gk20a *g);

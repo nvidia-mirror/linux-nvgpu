@@ -182,6 +182,18 @@ int nvgpu_gr_global_ctx_buffer_alloc(struct gk20a *g,
 	struct nvgpu_gr_global_ctx_buffer_desc *desc);
 
 /**
+ * @brief Initialize mapping flags for GR global context buffers.
+ *
+ * @param g [in]		Pointer to GPU driver struct.
+ * @param desc [in]		Pointer to global ctx buffer desc.
+ *
+ * This function initializes cacheability attribute for GR global
+ * context buffers.
+ */
+void nvgpu_gr_global_ctx_init_ctx_buffers_mapping_flags(struct gk20a *g,
+	struct nvgpu_gr_global_ctx_buffer_desc *desc);
+
+/**
  * @brief Free all global context buffers.
  *
  * @param g [in]	Pointer to GPU driver struct.
@@ -199,7 +211,6 @@ void nvgpu_gr_global_ctx_buffer_free(struct gk20a *g,
  * @param desc [in]	Pointer to global context descriptor struct.
  * @param index [in]	Index of global context buffer.
  * @param vm [in]	Pointer to virtual memory.
- * @param flags [in]	Flags used to specify mapping attributes.
  * @param priv [in]	Boolean flag to allocate privileged PTE.
  *
  * This function maps given global contex buffer with index #index into
@@ -209,8 +220,7 @@ void nvgpu_gr_global_ctx_buffer_free(struct gk20a *g,
  *         0 in case of failure.
  */
 u64 nvgpu_gr_global_ctx_buffer_map(struct nvgpu_gr_global_ctx_buffer_desc *desc,
-	u32 index,
-	struct vm_gk20a *vm, u32 flags, bool priv);
+	u32 index, struct vm_gk20a *vm, bool priv);
 
 /**
  * @brief Unmap given global context buffer.

@@ -34,6 +34,7 @@
 struct gk20a;
 struct nvgpu_gr_config;
 struct nvgpu_gr_ctx;
+struct nvgpu_gr_ctx_mappings;
 struct netlist_av_list;
 struct nvgpu_gr_obj_ctx_gfx_regs;
 
@@ -69,8 +70,8 @@ u32 gv11b_gr_init_get_global_attr_cb_size(struct gk20a *g, u32 tpc_count,
 	u32 max_tpc);
 
 void gv11b_gr_init_commit_global_attrib_cb(struct gk20a *g,
-	struct nvgpu_gr_ctx *gr_ctx, u32 tpc_count, u32 max_tpc, u64 addr,
-	bool patch);
+	struct nvgpu_gr_ctx *gr_ctx, struct nvgpu_gr_ctx_mappings *mappings,
+	u32 tpc_count, u32 max_tpc, u64 addr, bool patch);
 void gv11b_gr_init_fe_go_idle_timeout(struct gk20a *g, bool enable);
 
 #ifdef CONFIG_NVGPU_SM_DIVERSITY

@@ -402,13 +402,14 @@ u32 gm20b_gr_init_get_global_ctx_pagepool_buffer_size(struct gk20a *g)
 }
 
 void gm20b_gr_init_commit_global_attrib_cb(struct gk20a *g,
-	struct nvgpu_gr_ctx *gr_ctx, u32 tpc_count, u32 max_tpc, u64 addr,
-	bool patch)
+	struct nvgpu_gr_ctx *gr_ctx, struct nvgpu_gr_ctx_mappings *mappings,
+	u32 tpc_count, u32 max_tpc, u64 addr, bool patch)
 {
 	u32 cb_addr;
 
 	(void)tpc_count;
 	(void)max_tpc;
+	(void)mappings;
 
 	addr = addr >> gr_gpcs_setup_attrib_cb_base_addr_39_12_align_bits_v();
 

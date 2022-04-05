@@ -34,6 +34,7 @@ struct vm_gk20a;
 struct nvgpu_mem;
 struct nvgpu_channel;
 struct nvgpu_gr_ctx;
+struct nvgpu_gr_ctx_mappings;
 struct nvgpu_gr_config;
 struct nvgpu_gr_isr_data;
 struct nvgpu_gr_intr_info;
@@ -188,7 +189,6 @@ struct gops_gr_setup {
 	 * @brief Free GR engine context image.
 	 *
 	 * @param g [in]	Pointer to GPU driver struct.
-	 * @param vm [in]	Pointer to virtual memory.
 	 * @param gr_ctx [in]	Pointer to GR engine context image.
 	 *
 	 * This function will free memory allocated for patch
@@ -199,7 +199,6 @@ struct gops_gr_setup {
 	 * @see nvgpu_gr_setup_free_gr_ctx
 	 */
 	void (*free_gr_ctx)(struct gk20a *g,
-			    struct vm_gk20a *vm,
 			    struct nvgpu_gr_ctx *gr_ctx);
 
 	/**
@@ -849,6 +848,7 @@ struct gops_gr_init {
 				       bool patch, bool global_ctx);
 	void (*commit_global_attrib_cb)(struct gk20a *g,
 					struct nvgpu_gr_ctx *ch_ctx,
+					struct nvgpu_gr_ctx_mappings *mappings,
 					u32 tpc_count, u32 max_tpc,
 					u64 addr, bool patch);
 	void (*commit_global_cb_manager)(struct gk20a *g,
@@ -899,6 +899,7 @@ struct gops_gr_init {
 				    bool patch);
 	void (*commit_gfxp_rtv_cb)(struct gk20a *g,
 				   struct nvgpu_gr_ctx *gr_ctx,
+				   struct nvgpu_gr_ctx_mappings *mappings,
 				   bool patch);
 	u32 (*get_attrib_cb_gfxp_default_size)(struct gk20a *g);
 	u32 (*get_attrib_cb_gfxp_size)(struct gk20a *g);
@@ -1109,6 +1110,7 @@ struct gops_gr_fecs_trace {
 			    struct nvgpu_mem *inst_block,
 			    struct nvgpu_gr_subctx *subctx,
 			    struct nvgpu_gr_ctx *gr_ctx,
+			    struct nvgpu_gr_ctx_mappings *mappings,
 			    pid_t pid, u32 vmid);
 	int (*unbind_channel)(struct gk20a *g,
 			      struct nvgpu_mem *inst_block);

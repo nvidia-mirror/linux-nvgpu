@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -53,7 +53,6 @@ struct unit_module;
  *          nvgpu_gr_subctx_free,
  *          nvgpu_gr_obj_ctx_commit_inst,
  *          nvgpu_gr_obj_ctx_commit_inst_gpu_va,
- *          nvgpu_gr_ctx_get_patch_ctx_mem,
  *          nvgpu_gr_subctx_get_ctx_header,
  *          nvgpu_gr_subctx_load_ctx_header,
  *          nvgpu_gr_global_ctx_get_size,

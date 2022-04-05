@@ -254,6 +254,7 @@ nvgpu-y += \
 	common/gr/gr_intr.o \
 	common/gr/global_ctx.o \
 	common/gr/ctx.o \
+	common/gr/ctx_mappings.o \
 	common/gr/gr_falcon.o \
 	common/gr/subctx.o \
 	common/gr/zcull.o \

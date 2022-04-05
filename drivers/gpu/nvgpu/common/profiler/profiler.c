@@ -506,8 +506,7 @@ static int nvgpu_profiler_quiesce_hwpm_streamout_non_resident(struct gk20a *g,
 		return -EINVAL;
 	}
 
-	pm_ctx_mem = nvgpu_gr_ctx_get_pm_ctx_mem(tsg->gr_ctx);
-
+	pm_ctx_mem = nvgpu_gr_ctx_get_ctx_mem(tsg->gr_ctx, NVGPU_GR_CTX_PM_CTX);
 	if (pm_ctx_mem == NULL) {
 		nvgpu_err(g, "No PM context");
 		return -EINVAL;

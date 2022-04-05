@@ -26,6 +26,7 @@
 #include <nvgpu/static_analysis.h>
 #include <nvgpu/netlist.h>
 #include <nvgpu/gr/ctx.h>
+#include <nvgpu/gr/ctx_mappings.h>
 
 #include "gr_init_gm20b.h"
 #include "gr_init_tu104.h"
@@ -194,12 +195,13 @@ void tu104_gr_init_commit_rtv_cb(struct gk20a *g, u64 addr,
 
 #ifdef CONFIG_NVGPU_GFXP
 void tu104_gr_init_commit_gfxp_rtv_cb(struct gk20a *g,
-	struct nvgpu_gr_ctx *gr_ctx, bool patch)
+	struct nvgpu_gr_ctx *gr_ctx, struct nvgpu_gr_ctx_mappings *mappings,
+	bool patch)
 {
 	u64 addr;
+	u64 gpu_va;
 	u32 rtv_cb_size;
 	u32 gfxp_addr_size;
-	struct nvgpu_mem *buf_mem;
 
 	nvgpu_log_fn(g, " ");
 
@@ -211,9 +213,8 @@ void tu104_gr_init_commit_gfxp_rtv_cb(struct gk20a *g,
 	gfxp_addr_size = gr_scc_rm_rtv_cb_size_div_256b_gfxp_adder_f();
 
 	/* GFXP RTV circular buffer */
-	buf_mem = nvgpu_gr_ctx_get_gfxp_rtvcb_ctxsw_buffer(gr_ctx);
-	addr = buf_mem->gpu_va >>
-			gr_scc_rm_rtv_cb_base_addr_39_8_align_bits_f();
+	gpu_va = nvgpu_gr_ctx_mappings_get_ctx_va(mappings, NVGPU_GR_CTX_GFXP_RTVCB_CTXSW);
+	addr = gpu_va >> gr_scc_rm_rtv_cb_base_addr_39_8_align_bits_f();
 
 	nvgpu_assert(u64_hi32(addr) == 0U);
 	tu104_gr_init_patch_rtv_cb(g, gr_ctx, (u32)addr,

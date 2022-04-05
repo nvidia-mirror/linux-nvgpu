@@ -554,6 +554,11 @@ gr:
       sources: [ common/gr/obj_ctx.c,
                  common/gr/obj_ctx_priv.h,
                  include/nvgpu/gr/obj_ctx.h ]
+    ctx_mappings:
+      safe: yes
+      sources: [ common/gr/ctx_mappings.c,
+                 common/gr/ctx_mappings_priv.h,
+                 include/nvgpu/gr/ctx_mappings.h ]
     subctx:
       safe: yes
       sources: [ common/gr/subctx.c,

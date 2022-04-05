@@ -265,7 +265,6 @@ fail:
 	return err;
 }
 
-
 int nvgpu_gr_global_ctx_buffer_alloc(struct gk20a *g,
 	struct nvgpu_gr_global_ctx_buffer_desc *desc)
 {
@@ -315,9 +314,32 @@ clean_up:
 	return err;
 }
 
+void nvgpu_gr_global_ctx_init_ctx_buffers_mapping_flags(struct gk20a *g,
+	struct nvgpu_gr_global_ctx_buffer_desc *desc)
+{
+	u32 i;
+
+	nvgpu_log(g, gpu_dbg_gr, " ");
+
+	/**
+	 * Map all ctx buffers as cacheable except PRIV_ACCESS_MAP,
+	 * RTV_CIRCULAR_BUFFER and FECS_TRACE buffers.
+	 */
+	for (i = 0; i < NVGPU_GR_GLOBAL_CTX_COUNT; i++) {
+		desc[i].mapping_flags = NVGPU_VM_MAP_CACHEABLE;
+	}
+
+	desc[NVGPU_GR_GLOBAL_CTX_PRIV_ACCESS_MAP].mapping_flags = 0U;
+	desc[NVGPU_GR_GLOBAL_CTX_RTV_CIRCULAR_BUFFER].mapping_flags = 0U;
+#ifdef CONFIG_NVGPU_FECS_TRACE
+	desc[NVGPU_GR_GLOBAL_CTX_FECS_TRACE_BUFFER].mapping_flags = 0U;
+#endif
+
+	nvgpu_log(g, gpu_dbg_gr, "done");
+}
+
 u64 nvgpu_gr_global_ctx_buffer_map(struct nvgpu_gr_global_ctx_buffer_desc *desc,
-	u32 index,
-	struct vm_gk20a *vm, u32 flags, bool priv)
+	u32 index, struct vm_gk20a *vm, bool priv)
 {
 	u64 gpu_va;
 
@@ -326,7 +348,7 @@ u64 nvgpu_gr_global_ctx_buffer_map(struct nvgpu_gr_global_ctx_buffer_desc *desc,
 	}
 
 	gpu_va = nvgpu_gmmu_map(vm, &desc[index].mem,
-			flags, gk20a_mem_flag_none, priv,
+			desc[index].mapping_flags, gk20a_mem_flag_none, priv,
 			desc[index].mem.aperture);
 	return gpu_va;
 }

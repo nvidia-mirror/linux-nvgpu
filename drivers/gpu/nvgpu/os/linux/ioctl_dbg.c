@@ -1872,7 +1872,7 @@ static int nvgpu_dbg_gpu_ioctl_get_gr_context_size(struct dbg_session_gk20a *dbg
 		return -EINVAL;
 	}
 
-	ctx_mem = nvgpu_gr_ctx_get_ctx_mem(tsg->gr_ctx);
+	ctx_mem = nvgpu_gr_ctx_get_ctx_mem(tsg->gr_ctx, NVGPU_GR_CTX_CTX);
 	if (ctx_mem == NULL || !nvgpu_mem_is_valid(ctx_mem)) {
 		nvgpu_err(g, "invalid context mem");
 		return -EINVAL;
@@ -1918,7 +1918,7 @@ static int nvgpu_dbg_gpu_ioctl_get_gr_context(struct dbg_session_gk20a *dbg_s,
 		return -EINVAL;
 	}
 
-	ctx_mem = nvgpu_gr_ctx_get_ctx_mem(tsg->gr_ctx);
+	ctx_mem = nvgpu_gr_ctx_get_ctx_mem(tsg->gr_ctx, NVGPU_GR_CTX_CTX);
 	if (ctx_mem == NULL || !nvgpu_mem_is_valid(ctx_mem)) {
 		nvgpu_err(g, "invalid context mem");
 		return -EINVAL;

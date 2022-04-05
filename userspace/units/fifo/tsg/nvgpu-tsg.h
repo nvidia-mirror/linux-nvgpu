@@ -177,17 +177,19 @@ int test_tsg_unbind_channel(struct unit_module *m,
  *   - Check that in_use is false.
  * - Check de-allocation of other resources:
  *   - Case where g->ops.gr.setup.free_gr_ctx is called.
- *     It requires dummy vm, gr_ctx and gr_ctx->mem to be allocated.
+ *     It requires dummy vm, gr_ctx and gr_ctx->mem[NVGPU_GR_CTX_CTX] to be
+ *     allocated.
  *     A stub is used to check that the HAL was actually invoked.
- *   - Other combinations of vm, gr_ctx and gr_ctx->mem allocations, to
- *     check that g->ops.gr.setup.free_gr_ctx is not called.
+ *   - Other combinations of vm, gr_ctx and gr_ctx->mem[NVGPU_GR_CTX_CTX]
+ *     allocations, to check that g->ops.gr.setup.free_gr_ctx is not called.
  *   - Unhook of event_ids (by adding 2 dummy events in event_id list, and
  *     checking that list is empty after TSG release).
  *   - Case where event_id is empty before TSG release is tested as well
  *   - Check that VM refcount is decremented (and VM deallocated in our
  *     case), when present.
  *   - Check that sm_error_states is deallocated.
- *   - Check any combination of VM, gr_ctx, gr_ctx->mem, and sm_error_state.
+ *   - Check any combination of VM, gr_ctx, gr_ctx->mem[NVGPU_GR_CTX_CTX], and
+ *     sm_error_state.
  *
  * Output: Returns PASS if all branches gave expected results. FAIL otherwise.
  */

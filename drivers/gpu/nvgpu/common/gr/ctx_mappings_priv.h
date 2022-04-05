@@ -1,7 +1,5 @@
 /*
- * Virtualized GPU Graphics
- *
- * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,38 +20,38 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include <nvgpu/kmem.h>
-#include <nvgpu/bug.h>
-#include <nvgpu/dma.h>
-#include <nvgpu/dma.h>
-#include <nvgpu/vgpu/vgpu_ivc.h>
-#include <nvgpu/vgpu/vgpu.h>
-#include <nvgpu/gk20a.h>
-#include <nvgpu/gr/global_ctx.h>
-#include <nvgpu/gr/ctx.h>
-#include <nvgpu/gr/obj_ctx.h>
-#include <nvgpu/gr/hwpm_map.h>
-#include <nvgpu/gr/gr_utils.h>
+#ifndef NVGPU_GR_CTX_MAPPINGS_PRIV_H
+#define NVGPU_GR_CTX_MAPPINGS_PRIV_H
 
-#include "common/gr/ctx_priv.h"
+#include <nvgpu/types.h>
 
-#include "ctx_vgpu.h"
-#include "common/vgpu/ivc/comm_vgpu.h"
+struct nvgpu_tsg;
+struct vm_gk20a;
 
-void vgpu_gr_free_gr_ctx(struct gk20a *g,
-			 struct nvgpu_gr_ctx *gr_ctx)
-{
-	struct tegra_vgpu_cmd_msg msg;
-	struct tegra_vgpu_gr_ctx_params *p = &msg.params.gr_ctx;
-	int err;
+struct nvgpu_gr_ctx_mappings {
 
-	nvgpu_log_fn(g, " ");
+	/** TSG whose gr ctx mappings are tracked in this object */
+	struct nvgpu_tsg *tsg;
 
-	msg.cmd = TEGRA_VGPU_CMD_GR_CTX_FREE;
-	msg.handle = vgpu_get_handle(g);
-	p->tsg_id = gr_ctx->tsgid;
-	err = vgpu_comm_sendrecv(&msg, sizeof(msg), sizeof(msg));
-	WARN_ON(err || msg.ret);
+	/** GPU virtual address space to which gr ctx buffers are mapped */
+	struct vm_gk20a *vm;
 
-	(void) memset(gr_ctx, 0, sizeof(*gr_ctx));
-}
+	/**
+	 * Array to store GPU virtual addresses of all TSG context
+	 * buffers.
+	 */
+	u64	ctx_buffer_va[NVGPU_GR_CTX_COUNT];
+
+	/**
+	 * Array to store GPU virtual addresses of all global context
+	 * buffers.
+	 */
+	u64	global_ctx_buffer_va[NVGPU_GR_GLOBAL_CTX_VA_COUNT];
+
+	/**
+	 * Array to store indexes of global context buffers
+	 * corresponding to GPU virtual addresses above.
+	 */
+	u32	global_ctx_buffer_index[NVGPU_GR_GLOBAL_CTX_VA_COUNT];
+};
+#endif /* NVGPU_GR_CTX_MAPPINGS_PRIV_H */

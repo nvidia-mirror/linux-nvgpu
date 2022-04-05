@@ -584,7 +584,7 @@ static void gr_setup_fake_free_obj_ctx(struct unit_module *m, struct gk20a *g)
 	g->ops.gr.setup.free_subctx(gr_setup_ch);
 	nvgpu_set_enabled(g, NVGPU_SUPPORT_TSG_SUBCONTEXTS, true);
 
-	g->ops.gr.setup.free_gr_ctx(g, 0, 0);
+	g->ops.gr.setup.free_gr_ctx(g, NULL);
 	gr_setup_ch->subctx = gr_subctx;
 }
 

@@ -978,7 +978,7 @@ void nvgpu_tsg_release(struct nvgpu_ref *ref)
 	}
 
 	if ((tsg->gr_ctx != NULL) && (tsg->vm != NULL)) {
-		g->ops.gr.setup.free_gr_ctx(g, tsg->vm, tsg->gr_ctx);
+		g->ops.gr.setup.free_gr_ctx(g, tsg->gr_ctx);
 	}
 
 #ifdef CONFIG_NVGPU_CHANNEL_TSG_CONTROL

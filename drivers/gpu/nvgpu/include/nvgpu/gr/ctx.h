@@ -26,6 +26,7 @@
 #include <nvgpu/types.h>
 #include <nvgpu/nvgpu_mem.h>
 #include <nvgpu/gr/global_ctx.h>
+#include <nvgpu/gr/hwpm_map.h>
 
 #define NVGPU_INVALID_SM_CONFIG_ID (U32_MAX)
 
@@ -39,7 +40,9 @@
  */
 struct gk20a;
 struct vm_gk20a;
+struct nvgpu_tsg;
 struct nvgpu_gr_ctx;
+struct nvgpu_gr_ctx_mappings;
 struct nvgpu_gr_global_ctx_buffer_desc;
 struct nvgpu_gr_global_ctx_local_golden_image;
 struct patch_desc;
@@ -156,25 +159,19 @@ void nvgpu_gr_ctx_set_size(struct nvgpu_gr_ctx_desc *gr_ctx_desc,
 	u32 index, u32 size);
 
 /**
- * @brief Allocate graphics context buffer.
+ * @brief Get size of GR context buffer with given index.
  *
- * @param g [in]		Pointer to GPU driver struct.
- * @param gr_ctx [in]		Pointer to graphics context struct.
- * @param gr_ctx_desc [in]	Pointer to context descriptor struct.
- * @param vm [in]		Pointer to virtual memory.
+ * @param desc [in]		Pointer to context descriptor struct.
+ * @param index [in]		Index of GR context buffer.
  *
- * This function allocates memory for graphics context buffer and also
- * maps it to given virtual memory.
+ * @return size of the buffer.
  *
- * @return 0 in case of success, < 0 in case of failure.
- * @retval -ENOMEM if context memory allocation fails.
- * @retval -EINVAL if context buffer size is not set in
- *         #nvgpu_gr_ctx_desc struct.
+ * This function returns the size of GR context buffer with given buffer
+ * index. \a index must be less than NVGPU_GR_CTX_COUNT otherwise
+ * an assert is raised.
  */
-int nvgpu_gr_ctx_alloc(struct gk20a *g,
-	struct nvgpu_gr_ctx *gr_ctx,
-	struct nvgpu_gr_ctx_desc *gr_ctx_desc,
-	struct vm_gk20a *vm);
+u32 nvgpu_gr_ctx_get_size(struct nvgpu_gr_ctx_desc *gr_ctx_desc,
+	u32 index);
 
 /**
  * @brief Free graphics context buffer.
@@ -182,93 +179,14 @@ int nvgpu_gr_ctx_alloc(struct gk20a *g,
  * @param g [in]		Pointer to GPU driver struct.
  * @param gr_ctx [in]		Pointer to graphics context struct.
  * @param global_ctx_buffer [in]Pointer to global context descriptor struct.
- * @param vm [in]		Pointer to virtual memory.
  *
  * This function will free memory allocated for graphics context buffer,
  * patch context buffer, and all the ctxsw buffers.
  */
 void nvgpu_gr_ctx_free(struct gk20a *g,
 	struct nvgpu_gr_ctx *gr_ctx,
-	struct nvgpu_gr_global_ctx_buffer_desc *global_ctx_buffer,
-	struct vm_gk20a *vm);
+	struct nvgpu_gr_global_ctx_buffer_desc *global_ctx_buffer);
 
-/**
- * @brief Allocate patch context buffer.
- *
- * @param g [in]		Pointer to GPU driver struct.
- * @param gr_ctx [in]		Pointer to graphics context struct.
- * @param gr_ctx_desc [in]	Pointer to context descriptor struct.
- * @param vm [in]		Pointer to virtual memory.
- *
- * This function allocates memory for patch context buffer and also
- * maps it to given virtual memory.
- *
- * @return 0 in case of success, < 0 in case of failure.
- * @retval -ENOMEM if context memory allocation fails.
- */
-int nvgpu_gr_ctx_alloc_patch_ctx(struct gk20a *g,
-	struct nvgpu_gr_ctx *gr_ctx,
-	struct nvgpu_gr_ctx_desc *gr_ctx_desc,
-	struct vm_gk20a *vm);
-
-/**
- * @brief Free patch context buffer.
- *
- * @param g [in]		Pointer to GPU driver struct.
- * @param vm [in]		Pointer to virtual memory.
- * @param gr_ctx [in]		Pointer to graphics context struct.
- *
- * This function will free memory allocated for patch context buffer.
- */
-void nvgpu_gr_ctx_free_patch_ctx(struct gk20a *g, struct vm_gk20a *vm,
-	struct nvgpu_gr_ctx *gr_ctx);
-
-/**
- * @brief Map global context buffers.
- *
- * @param g [in]		Pointer to GPU driver struct.
- * @param gr_ctx [in]		Pointer to graphics context struct.
- * @param global_ctx_buffer [in]Pointer to global context descriptor struct.
- * @param vm [in]		Pointer to virtual memory.
- * @param vpr [in]		Boolean flag to use buffers in VPR.
- *
- * This function maps all global context buffers into given
- * virtual memory and stores each virtual address into given
- * #nvgpu_gr_ctx struct.
- *
- * @return 0 in case of success, < 0 in case of failure.
- * @retval -ENOMEM if memory mapping fails for any context buffer.
- */
-int nvgpu_gr_ctx_map_global_ctx_buffers(struct gk20a *g,
-	struct nvgpu_gr_ctx *gr_ctx,
-	struct nvgpu_gr_global_ctx_buffer_desc *global_ctx_buffer,
-	struct vm_gk20a *vm, bool vpr);
-
-/**
- * @brief Get global context buffer virtual address.
- *
- * @param gr_ctx [in]		Pointer to graphics context struct.
- * @param index [in]		Index of global context buffer.
- *
- * This function returns virtual address of global context buffer
- * with given index stored in #nvgpu_gr_ctx struct.
- *
- * @return virtual address of global context buffer.
- */
-u64 nvgpu_gr_ctx_get_global_ctx_va(struct nvgpu_gr_ctx *gr_ctx,
-	u32 index);
-
-/**
- * @brief Get pointer of patch context buffer memory struct.
- *
- * @param gr_ctx [in]		Pointer to graphics context struct.
- *
- * This function returns #nvgpu_mem pointer of patch context buffer stored
- * in #nvgpu_gr_ctx struct.
- *
- * @return pointer to patch context buffer memory struct.
- */
-struct nvgpu_mem *nvgpu_gr_ctx_get_patch_ctx_mem(struct nvgpu_gr_ctx *gr_ctx);
 
 /**
  * @brief Set data count in patch context buffer.
@@ -283,15 +201,28 @@ void nvgpu_gr_ctx_set_patch_ctx_data_count(struct nvgpu_gr_ctx *gr_ctx,
 	u32 data_count);
 
 /**
- * @brief Get sm diversity config of the given graphics context.
+ * @brief Get context buffer mem struct of the given graphics context.
  *
  * @param gr_ctx [in]		Pointer to graphics context struct.
+ * @param index [in]		Value from (NVGPU_GR_CTX_CTX, NVGPU_GR_CTX_GFXP_RTVCB_CTXSW)
  *
- * This function returns #sm_diversity_config of graphics context struct.
+ * This function returns #mem of graphics context struct.
  *
- * @return sm diversity config of the given graphics context.
+ * @return context buffer mem of the given graphics context.
  */
-struct nvgpu_mem *nvgpu_gr_ctx_get_ctx_mem(struct nvgpu_gr_ctx *gr_ctx);
+struct nvgpu_mem *nvgpu_gr_ctx_get_ctx_mem(struct nvgpu_gr_ctx *gr_ctx, u32 index);
+
+/**
+ * @brief Get mapping flags of a context buffer of the given graphics context.
+ *
+ * @param gr_ctx [in]		Pointer to graphics context struct.
+ * @param index [in]		Value from (NVGPU_GR_CTX_CTX, NVGPU_GR_CTX_GFXP_RTVCB_CTXSW)
+ *
+ * This function returns #mapping_flags of graphics context struct.
+ *
+ * @return context buffer mapping flags of the given graphics context.
+ */
+u32 nvgpu_gr_ctx_get_ctx_mapping_flags(struct nvgpu_gr_ctx *gr_ctx, u32 index);
 
 #ifdef CONFIG_NVGPU_SM_DIVERSITY
 /**
@@ -320,6 +251,7 @@ u32 nvgpu_gr_ctx_get_sm_diversity_config(struct nvgpu_gr_ctx *gr_ctx);
  *
  * @param g [in]			Pointer to GPU driver struct.
  * @param gr_ctx [in]			Pointer to graphics context struct.
+ * @param mappings [in]			Pointer to mappings of GR context buffers.
  * @param local_golden_image [in]	Pointer to local golden image struct.
  * @param cde [in]			Boolean flag to enable/disable CDE.
  *
@@ -332,6 +264,7 @@ u32 nvgpu_gr_ctx_get_sm_diversity_config(struct nvgpu_gr_ctx *gr_ctx);
  */
 void nvgpu_gr_ctx_load_golden_ctx_image(struct gk20a *g,
 	struct nvgpu_gr_ctx *gr_ctx,
+	struct nvgpu_gr_ctx_mappings *mappings,
 	struct nvgpu_gr_global_ctx_local_golden_image *local_golden_image,
 	bool cde);
 
@@ -482,6 +415,99 @@ struct nvgpu_gr_ctx *nvgpu_alloc_gr_ctx_struct(struct gk20a *g);
 void nvgpu_free_gr_ctx_struct(struct gk20a *g, struct nvgpu_gr_ctx *gr_ctx);
 
 /**
+ * @brief Free TSG specific GR context buffers.
+ *
+ * @param g [in]		Pointer to GPU driver struct.
+ * @param ctx [in]		Pointer to graphics context struct.
+ *
+ * This function frees all TSG specific GR context buffers.
+ */
+void nvgpu_gr_ctx_free_ctx_buffers(struct gk20a *g,
+	struct nvgpu_gr_ctx *ctx);
+
+/**
+ * @brief Allocate TSG specific GR context buffers.
+ *
+ * @param g [in]		Pointer to GPU driver struct.
+ * @param desc [in]		Pointer to context descriptor struct.
+ * @param ctx [in]		Pointer to graphics context struct.
+ *
+ * This function allocates all TSG specific GR context buffers.
+ *
+ * @return 0 in case of success, < 0 in case of failure.
+ */
+int nvgpu_gr_ctx_alloc_ctx_buffers(struct gk20a *g,
+	struct nvgpu_gr_ctx_desc *desc,
+	struct nvgpu_gr_ctx *ctx);
+
+#ifdef CONFIG_NVGPU_GFXP
+/**
+ * @brief Allocate TSG specific GR preemption context buffers.
+ *
+ * @param g [in]		Pointer to GPU driver struct.
+ * @param desc [in]		Pointer to context descriptor struct.
+ * @param ctx [in]		Pointer to graphics context struct.
+ *
+ * This function allocates all TSG specific GR preemption context buffers.
+ *
+ * @return 0 in case of success, < 0 in case of failure.
+ */
+int nvgpu_gr_ctx_alloc_ctx_preemption_buffers(struct gk20a *g,
+	struct nvgpu_gr_ctx_desc *desc,
+	struct nvgpu_gr_ctx *ctx);
+#endif
+
+/**
+ * @brief Initialize mapping flags for GR context buffers.
+ *
+ * @param g [in]		Pointer to GPU driver struct.
+ * @param ctx [in]		Pointer to graphics context struct.
+ *
+ * This function initializes cacheability attribute for TSG specific
+ * GR context buffers.
+ */
+void nvgpu_gr_ctx_init_ctx_buffers_mapping_flags(struct gk20a *g,
+	struct nvgpu_gr_ctx *ctx);
+
+/**
+ * @brief Allocate or get GR ctx buffers mappings for a TSG.
+ *
+ * @param g [in]		Pointer to GPU driver struct.
+ * @param tsg [in]		Pointer to TSG struct.
+ * @param vm [in]		Pointer to vm struct.
+ *
+ * This function allocates the mappings struct for TSG corresponding to
+ * given vm if not available already else returns the same.
+ *
+ * @return mappings struct in case of success, null in case of failure.
+ */
+struct nvgpu_gr_ctx_mappings *nvgpu_gr_ctx_alloc_or_get_mappings(struct gk20a *g,
+				struct nvgpu_tsg *tsg, struct vm_gk20a *vm);
+
+/**
+ * @brief Get GR ctx buffers mappings for a TSG.
+ *
+ * @param tsg [in]		Pointer to TSG struct.
+ *
+ * This function returns the mappings struct for TSG.
+ *
+ * @return mappings struct.
+ */
+struct nvgpu_gr_ctx_mappings *nvgpu_gr_ctx_get_mappings(struct nvgpu_tsg *tsg);
+
+/**
+ * @brief Free the gr ctx mapping struct.
+ *
+ * @param g [in]		Pointer to GPU driver struct.
+ * @param ctx [in]		Pointer to graphics context struct.
+ *
+ * This function deletes the gr ctx mapping struct. This is to be
+ * called when freeing the gr context or in error cases.
+ */
+void nvgpu_gr_ctx_free_mappings(struct gk20a *g,
+				struct nvgpu_gr_ctx *gr_ctx);
+
+/**
  * @brief Set TSG id in graphics context structure.
  *
  * @param gr_ctx [in]		Pointer to graphics context struct.
@@ -515,28 +541,9 @@ bool nvgpu_gr_ctx_desc_force_preemption_cilp(
 #endif /* CONFIG_NVGPU_CILP */
 
 #ifdef CONFIG_NVGPU_GFXP
-int nvgpu_gr_ctx_alloc_ctxsw_buffers(struct gk20a *g,
-	struct nvgpu_gr_ctx *gr_ctx,
-	struct nvgpu_gr_ctx_desc *gr_ctx_desc,
-	struct vm_gk20a *vm);
-
-struct nvgpu_mem *nvgpu_gr_ctx_get_spill_ctxsw_buffer(
-	struct nvgpu_gr_ctx *gr_ctx);
-
-struct nvgpu_mem *nvgpu_gr_ctx_get_betacb_ctxsw_buffer(
-	struct nvgpu_gr_ctx *gr_ctx);
-
-struct nvgpu_mem *nvgpu_gr_ctx_get_pagepool_ctxsw_buffer(
-	struct nvgpu_gr_ctx *gr_ctx);
-
-struct nvgpu_mem *nvgpu_gr_ctx_get_preempt_ctxsw_buffer(
-	struct nvgpu_gr_ctx *gr_ctx);
-
-struct nvgpu_mem *nvgpu_gr_ctx_get_gfxp_rtvcb_ctxsw_buffer(
-	struct nvgpu_gr_ctx *gr_ctx);
-
 void nvgpu_gr_ctx_set_preemption_buffer_va(struct gk20a *g,
-	struct nvgpu_gr_ctx *gr_ctx);
+	struct nvgpu_gr_ctx *gr_ctx,
+	struct nvgpu_gr_ctx_mappings *mappings);
 
 bool nvgpu_gr_ctx_desc_force_preemption_gfxp(
 		struct nvgpu_gr_ctx_desc *gr_ctx_desc);
@@ -559,12 +566,10 @@ int nvgpu_gr_ctx_zcull_setup(struct gk20a *g, struct nvgpu_gr_ctx *gr_ctx,
 #endif /* CONFIG_NVGPU_GRAPHICS */
 
 #ifdef CONFIG_NVGPU_DEBUGGER
-int nvgpu_gr_ctx_alloc_pm_ctx(struct gk20a *g,
-	struct nvgpu_gr_ctx *gr_ctx,
+int nvgpu_gr_ctx_alloc_map_pm_ctx(struct gk20a *g,
+	struct nvgpu_tsg *tsg,
 	struct nvgpu_gr_ctx_desc *gr_ctx_desc,
-	struct vm_gk20a *vm);
-void nvgpu_gr_ctx_free_pm_ctx(struct gk20a *g, struct vm_gk20a *vm,
-	struct nvgpu_gr_ctx *gr_ctx);
+	struct nvgpu_gr_hwpm_map *hwpm_map);
 
 void nvgpu_gr_ctx_reset_patch_count(struct gk20a *g,
 	struct nvgpu_gr_ctx *gr_ctx);
@@ -573,18 +578,19 @@ void nvgpu_gr_ctx_set_patch_ctx(struct gk20a *g, struct nvgpu_gr_ctx *gr_ctx);
 u32 nvgpu_gr_ctx_get_ctx_id(struct gk20a *g, struct nvgpu_gr_ctx *gr_ctx);
 u32 nvgpu_gr_ctx_read_ctx_id(struct nvgpu_gr_ctx *gr_ctx);
 
-struct nvgpu_mem *nvgpu_gr_ctx_get_pm_ctx_mem(struct nvgpu_gr_ctx *gr_ctx);
-
 void nvgpu_gr_ctx_set_pm_ctx_pm_mode(struct nvgpu_gr_ctx *gr_ctx, u32 pm_mode);
 u32 nvgpu_gr_ctx_get_pm_ctx_pm_mode(struct nvgpu_gr_ctx *gr_ctx);
 
 int nvgpu_gr_ctx_set_smpc_mode(struct gk20a *g, struct nvgpu_gr_ctx *gr_ctx,
 	bool enable);
 
-int nvgpu_gr_ctx_prepare_hwpm_mode(struct gk20a *g, struct nvgpu_gr_ctx *gr_ctx,
-	u32 mode, bool *skip_update);
+int nvgpu_gr_ctx_prepare_hwpm_mode(struct gk20a *g,
+	struct nvgpu_gr_ctx *gr_ctx,
+	u32 mode, u64 *pm_ctx_gpu_va, bool *skip_update);
 void nvgpu_gr_ctx_set_hwpm_pm_mode(struct gk20a *g, struct nvgpu_gr_ctx *gr_ctx);
-void nvgpu_gr_ctx_set_hwpm_ptr(struct gk20a *g, struct nvgpu_gr_ctx *gr_ctx);
+void nvgpu_gr_ctx_set_hwpm_ptr(struct gk20a *g, struct nvgpu_gr_ctx *gr_ctx,
+			       u64 pm_ctx_gpu_va);
+void nvgpu_gr_ctx_set_pm_ctx_mapped(struct nvgpu_gr_ctx *ctx, bool mapped);
 
 #ifdef CONFIG_NVGPU_CHANNEL_TSG_SCHEDULING
 void nvgpu_gr_ctx_set_boosted_ctx(struct nvgpu_gr_ctx *gr_ctx, bool boost);

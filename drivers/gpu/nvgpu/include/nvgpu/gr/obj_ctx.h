@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -33,6 +33,7 @@
  */
 struct gk20a;
 struct nvgpu_gr_ctx;
+struct nvgpu_gr_ctx_mappings;
 struct nvgpu_gr_subctx;
 struct nvgpu_gr_config;
 struct nvgpu_gr_ctx_desc;
@@ -70,7 +71,7 @@ void nvgpu_gr_obj_ctx_commit_inst_gpu_va(struct gk20a *g,
  * @param inst_block [in]	Pointer to channel instance block.
  * @param gr_ctx [in]		Pointer to graphics context buffer.
  * @param subctx [in]		Pointer to graphics subcontext buffer.
- * @param gpu_va [in]		GPU virtual address of graphics context buffer.
+ * @param mappings [in]		Pointer to mappings of the GR context buffers.
  *
  * If graphics subcontexts are supported, subcontext buffer GPU virtual
  * address should be committed to channel instance block. Otherwise graphics
@@ -82,7 +83,7 @@ void nvgpu_gr_obj_ctx_commit_inst_gpu_va(struct gk20a *g,
  */
 void nvgpu_gr_obj_ctx_commit_inst(struct gk20a *g, struct nvgpu_mem *inst_block,
 	struct nvgpu_gr_ctx *gr_ctx, struct nvgpu_gr_subctx *subctx,
-	u64 gpu_va);
+	struct nvgpu_gr_ctx_mappings *mappings);
 
 /**
  * brief Initialize preemption mode in context struct.
@@ -91,7 +92,6 @@ void nvgpu_gr_obj_ctx_commit_inst(struct gk20a *g, struct nvgpu_mem *inst_block,
  * @param config [in]			Pointer to GR configuration struct.
  * @param gr_ctx_desc [in]		Pointer to GR context descriptor struct.
  * @param gr_ctx [in]			Pointer to graphics context.
- * @param vm [in]			Pointer to virtual memory.
  * @param class_num [in]		GR engine class.
  * @param graphics_preempt_mode		Graphics preemption mode to set.
  * @param compute_preempt_mode		Compute preemption mode to set.
@@ -111,7 +111,7 @@ void nvgpu_gr_obj_ctx_commit_inst(struct gk20a *g, struct nvgpu_mem *inst_block,
  */
 int nvgpu_gr_obj_ctx_set_ctxsw_preemption_mode(struct gk20a *g,
 	struct nvgpu_gr_config *config, struct nvgpu_gr_ctx_desc *gr_ctx_desc,
-	struct nvgpu_gr_ctx *gr_ctx, struct vm_gk20a *vm, u32 class_num,
+	struct nvgpu_gr_ctx *gr_ctx, u32 class_num,
 	u32 graphics_preempt_mode, u32 compute_preempt_mode);
 
 /**
@@ -121,6 +121,7 @@ int nvgpu_gr_obj_ctx_set_ctxsw_preemption_mode(struct gk20a *g,
  * @param config [in]		Pointer to GR configuration struct.
  * @param gr_ctx [in]		Pointer to graphics context.
  * @param subctx [in]		Pointer to graphics subcontext buffer.
+ * @param mappings [in]		Pointer to mappings of GR context buffers.
  *
  * This function will read preemption modes stored in #nvgpu_gr_ctx
  * struct and write them into graphics context image.
@@ -133,7 +134,8 @@ int nvgpu_gr_obj_ctx_set_ctxsw_preemption_mode(struct gk20a *g,
  */
 void nvgpu_gr_obj_ctx_update_ctxsw_preemption_mode(struct gk20a *g,
 	struct nvgpu_gr_config *config,
-	struct nvgpu_gr_ctx *gr_ctx, struct nvgpu_gr_subctx *subctx);
+	struct nvgpu_gr_ctx *gr_ctx, struct nvgpu_gr_subctx *subctx,
+	struct nvgpu_gr_ctx_mappings *mappings);
 
 /**
  * brief Update global context buffer addresses in graphics context.
@@ -142,6 +144,7 @@ void nvgpu_gr_obj_ctx_update_ctxsw_preemption_mode(struct gk20a *g,
  * @param global_ctx_buffer [in]	Pointer to global context descriptor struct.
  * @param config [in]			Pointer to GR configuration struct.
  * @param gr_ctx [in]			Pointer to graphics context.
+ * @param mappings [in]			Pointer to mappings of GR context buffers.
  * @param patch [in]			Boolean flag to use patch context buffer.
  *
  * This function will update GPU virtual addresses of global context
@@ -152,7 +155,8 @@ void nvgpu_gr_obj_ctx_update_ctxsw_preemption_mode(struct gk20a *g,
  */
 void nvgpu_gr_obj_ctx_commit_global_ctx_buffers(struct gk20a *g,
 	struct nvgpu_gr_global_ctx_buffer_desc *global_ctx_buffer,
-	struct nvgpu_gr_config *config,	struct nvgpu_gr_ctx *gr_ctx, bool patch);
+	struct nvgpu_gr_config *config,	struct nvgpu_gr_ctx *gr_ctx,
+	struct nvgpu_gr_ctx_mappings *mappings, bool patch);
 
 /**
  * @brief Allocate golden context image.
@@ -193,6 +197,7 @@ int nvgpu_gr_obj_ctx_alloc_golden_ctx_image(struct gk20a *g,
 	struct nvgpu_gr_global_ctx_buffer_desc *global_ctx_buffer,
 	struct nvgpu_gr_config *config,
 	struct nvgpu_gr_ctx *gr_ctx,
+	struct nvgpu_gr_ctx_mappings *mappings,
 	struct nvgpu_mem *inst_block);
 
 /**
@@ -205,7 +210,7 @@ int nvgpu_gr_obj_ctx_alloc_golden_ctx_image(struct gk20a *g,
  * @param config [in]			Pointer to GR configuration struct.
  * @param gr_ctx [in]			Pointer to graphics context.
  * @param subctx [in]			Pointer to graphics subcontext buffer.
- * @param vm [in]			Pointer to virtual memory.
+ * @param mappings [in]			Pointer to mappings of the GR context buffers.
  * @param inst_block [in]		Pointer to channel instance block.
  * @param class_num [in]		GR engine class.
  * @param flags [in]			Object context attribute flags.
@@ -216,8 +221,8 @@ int nvgpu_gr_obj_ctx_alloc_golden_ctx_image(struct gk20a *g,
  * This function allocates object context for the GPU channel.
  * Allocating object context includes:
  *
- * - Allocating graphics context buffer. See #nvgpu_gr_obj_ctx_gr_ctx_alloc().
- * - Allocating patch context buffer. See #nvgpu_gr_ctx_alloc_patch_ctx().
+ * - Allocating graphics context buffers.
+ * - Allocating patch context buffer.
  * - Allocating golden context image. See #nvgpu_gr_obj_ctx_alloc_golden_ctx_image().
  * - Committing global context buffers in graphics context image.
  *   See #nvgpu_gr_obj_ctx_commit_global_ctx_buffers().
@@ -245,7 +250,7 @@ int nvgpu_gr_obj_ctx_alloc(struct gk20a *g,
 	struct nvgpu_gr_config *config,
 	struct nvgpu_gr_ctx *gr_ctx,
 	struct nvgpu_gr_subctx *subctx,
-	struct vm_gk20a *vm,
+	struct nvgpu_gr_ctx_mappings *mappings,
 	struct nvgpu_mem *inst_block,
 	u32 class_num, u32 flags,
 	bool cde, bool vpr);

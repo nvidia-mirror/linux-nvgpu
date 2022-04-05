@@ -129,6 +129,7 @@ srcs +=	common/device.c \
 	common/gr/global_ctx.c \
 	common/gr/subctx.c \
 	common/gr/ctx.c \
+	common/gr/ctx_mappings.c \
 	common/gr/gr_falcon.c \
 	common/gr/gr_config.c \
 	common/gr/gr_setup.c \

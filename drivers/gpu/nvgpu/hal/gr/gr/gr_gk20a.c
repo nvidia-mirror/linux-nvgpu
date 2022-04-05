@@ -85,7 +85,7 @@ int gr_gk20a_update_hwpm_ctxsw_mode(struct gk20a *g,
 	struct nvgpu_channel *ch;
 	struct nvgpu_gr_ctx *gr_ctx;
 	bool skip_update = false;
-	int err;
+	u64 pm_ctx_gpu_va = 0ULL;
 	int ret;
 	struct nvgpu_gr *gr = nvgpu_gr_get_instance_ptr(g, gr_instance_id);
 
@@ -94,15 +94,11 @@ int gr_gk20a_update_hwpm_ctxsw_mode(struct gk20a *g,
 	gr_ctx = tsg->gr_ctx;
 
 	if (mode != NVGPU_GR_CTX_HWPM_CTXSW_MODE_NO_CTXSW) {
-		nvgpu_gr_ctx_set_size(gr->gr_ctx_desc,
-			NVGPU_GR_CTX_PM_CTX,
-			nvgpu_gr_hwpm_map_get_size(gr->hwpm_map));
-
-		ret = nvgpu_gr_ctx_alloc_pm_ctx(g, gr_ctx,
-			gr->gr_ctx_desc, tsg->vm);
+		ret = nvgpu_gr_ctx_alloc_map_pm_ctx(g, tsg,
+				gr->gr_ctx_desc, gr->hwpm_map);
 		if (ret != 0) {
 			nvgpu_err(g,
-				"failed to allocate pm ctxt buffer");
+				"failed to allocate and map pm ctxt buffer");
 			return ret;
 		}
 
@@ -112,7 +108,8 @@ int gr_gk20a_update_hwpm_ctxsw_mode(struct gk20a *g,
 		}
 	}
 
-	ret = nvgpu_gr_ctx_prepare_hwpm_mode(g, gr_ctx, mode, &skip_update);
+	ret = nvgpu_gr_ctx_prepare_hwpm_mode(g, gr_ctx, mode,
+					     &pm_ctx_gpu_va, &skip_update);
 	if (ret != 0) {
 		return ret;
 	}
@@ -134,11 +131,12 @@ int gr_gk20a_update_hwpm_ctxsw_mode(struct gk20a *g,
 		nvgpu_rwsem_down_read(&tsg->ch_list_lock);
 		nvgpu_list_for_each_entry(ch, &tsg->ch_list,
 					  nvgpu_channel, ch_entry) {
-			nvgpu_gr_subctx_set_hwpm_ptr(g, ch->subctx, gr_ctx);
+			nvgpu_gr_subctx_set_hwpm_ptr(g, ch->subctx,
+				pm_ctx_gpu_va);
 		}
 		nvgpu_rwsem_up_read(&tsg->ch_list_lock);
 	} else {
-		nvgpu_gr_ctx_set_hwpm_ptr(g, gr_ctx);
+		nvgpu_gr_ctx_set_hwpm_ptr(g, gr_ctx, pm_ctx_gpu_va);
 	}
 
 out:
@@ -1523,7 +1521,8 @@ static int gr_exec_ctx_ops(struct nvgpu_tsg *tsg,
 				if (!gr_ctx_ready) {
 					gr_ctx_ready = true;
 				}
-				current_mem = nvgpu_gr_ctx_get_ctx_mem(gr_ctx);
+				current_mem = nvgpu_gr_ctx_get_ctx_mem(gr_ctx,
+							NVGPU_GR_CTX_CTX);
 			} else {
 				err = gr_gk20a_get_pm_ctx_buffer_offsets(g,
 							ctx_ops[i].offset,
@@ -1539,7 +1538,9 @@ static int gr_exec_ctx_ops(struct nvgpu_tsg *tsg,
 				}
 				if (!pm_ctx_ready) {
 					/* Make sure ctx buffer was initialized */
-					if (!nvgpu_mem_is_valid(nvgpu_gr_ctx_get_pm_ctx_mem(gr_ctx))) {
+					if (!nvgpu_mem_is_valid(
+						nvgpu_gr_ctx_get_ctx_mem(gr_ctx,
+							NVGPU_GR_CTX_PM_CTX))) {
 						nvgpu_err(g,
 							"Invalid ctx buffer");
 						err = -EINVAL;
@@ -1547,14 +1548,16 @@ static int gr_exec_ctx_ops(struct nvgpu_tsg *tsg,
 					}
 					pm_ctx_ready = true;
 				}
-				current_mem = nvgpu_gr_ctx_get_pm_ctx_mem(gr_ctx);
+				current_mem = nvgpu_gr_ctx_get_ctx_mem(gr_ctx,
+						NVGPU_GR_CTX_PM_CTX);
 			}
 
 			for (j = 0; j < num_offsets; j++) {
 				/* sanity check gr ctxt offsets,
 				 * don't write outside, worst case
 				 */
-				if ((current_mem == nvgpu_gr_ctx_get_ctx_mem(gr_ctx)) &&
+				if ((current_mem == nvgpu_gr_ctx_get_ctx_mem(
+					gr_ctx, NVGPU_GR_CTX_CTX)) &&
 						(offsets[j] >=
 						 nvgpu_gr_obj_ctx_get_golden_image_size(
 							gr->golden_image))) {
@@ -1581,7 +1584,9 @@ static int gr_exec_ctx_ops(struct nvgpu_tsg *tsg,
 							   offsets[j] + 4U, v);
 					}
 
-					if (current_mem == nvgpu_gr_ctx_get_ctx_mem(gr_ctx) &&
+					if (current_mem ==
+						nvgpu_gr_ctx_get_ctx_mem(
+							gr_ctx, NVGPU_GR_CTX_CTX) &&
 							g->ops.gr.ctx_patch_smpc != NULL) {
 						/* check to see if we need to add a special fix
 						   for some of the SMPC perf regs */
@@ -1617,7 +1622,7 @@ static int gr_exec_ctx_ops(struct nvgpu_tsg *tsg,
 		nvgpu_kfree(g, offsets);
 	}
 
-	if (nvgpu_gr_ctx_get_patch_ctx_mem(gr_ctx)->cpu_va != NULL) {
+	if (nvgpu_gr_ctx_get_ctx_mem(gr_ctx, NVGPU_GR_CTX_PATCH_CTX)->cpu_va != NULL) {
 		nvgpu_gr_ctx_patch_write_end(g, gr_ctx, gr_ctx_ready);
 	}
 

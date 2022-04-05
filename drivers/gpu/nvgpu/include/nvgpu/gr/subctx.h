@@ -34,6 +34,7 @@ struct gk20a;
 struct vm_gk20a;
 struct nvgpu_gr_subctx;
 struct nvgpu_mem;
+struct nvgpu_gr_ctx_mappings;
 
 /**
  * @brief Allocate graphics subcontext buffer.
@@ -73,7 +74,8 @@ void nvgpu_gr_subctx_free(struct gk20a *g,
  * @param g [in]		Pointer to GPU driver struct.
  * @param subctx [in]		Pointer to graphics subcontext struct.
  * @param gr_ctx [in]		Pointer to graphics context struct.
- * @param gpu_va [in]		GPU virtual address of graphics context buffer.
+ * @param mappings [in]		GPU virtual address mappings of graphics
+ *                              context buffers.
  *
  * This function will initialize graphics subcontext buffer header
  * by reading appropriate values from #nvgpu_gr_ctx structure and
@@ -84,7 +86,8 @@ void nvgpu_gr_subctx_free(struct gk20a *g,
  */
 void nvgpu_gr_subctx_load_ctx_header(struct gk20a *g,
 	struct nvgpu_gr_subctx *subctx,
-	struct nvgpu_gr_ctx *gr_ctx, u64 gpu_va);
+	struct nvgpu_gr_ctx *gr_ctx,
+	struct nvgpu_gr_ctx_mappings *mappings);
 
 /**
  * @brief Get pointer of subcontext header memory struct.
@@ -103,11 +106,12 @@ void nvgpu_gr_subctx_zcull_setup(struct gk20a *g, struct nvgpu_gr_subctx *subctx
 		struct nvgpu_gr_ctx *gr_ctx);
 
 void nvgpu_gr_subctx_set_preemption_buffer_va(struct gk20a *g,
-	struct nvgpu_gr_subctx *subctx, struct nvgpu_gr_ctx *gr_ctx);
+	struct nvgpu_gr_subctx *subctx,
+	struct nvgpu_gr_ctx_mappings *mappings);
 #endif
 
 #ifdef CONFIG_NVGPU_DEBUGGER
 void nvgpu_gr_subctx_set_hwpm_ptr(struct gk20a *g,
-	struct nvgpu_gr_subctx *subctx, struct nvgpu_gr_ctx *gr_ctx);
+	struct nvgpu_gr_subctx *subctx, u64 pm_ctx_gpu_va);
 #endif
 #endif /* NVGPU_GR_SUBCTX_H */

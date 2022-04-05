@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -100,7 +100,7 @@ int test_gr_global_ctx_alloc_error_injection(struct unit_module *m,
 
 	/* Ensure mapping fails before buffers are allocated */
 	gpu_va = nvgpu_gr_global_ctx_buffer_map(desc,
-			NVGPU_GR_GLOBAL_CTX_CIRCULAR, NULL, 0, false);
+			NVGPU_GR_GLOBAL_CTX_CIRCULAR, NULL, false);
 	if (gpu_va != 0) {
 		unit_return_fail(m, "unexpected success");
 	}

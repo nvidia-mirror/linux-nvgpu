@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -757,15 +757,10 @@ int test_gr_init_hal_error_injection(struct unit_module *m,
 	}
 
 	nvgpu_gr_ctx_set_size(desc, NVGPU_GR_CTX_CTX, DUMMY_SIZE);
-	err = nvgpu_gr_ctx_alloc(g, gr_ctx, desc, vm);
+	nvgpu_gr_ctx_set_size(desc, NVGPU_GR_CTX_PATCH_CTX, DUMMY_SIZE);
+	err = nvgpu_gr_ctx_alloc_ctx_buffers(g, desc, gr_ctx);
 	if (err != 0) {
 		unit_return_fail(m, "failed to allocate context");
-	}
-
-	nvgpu_gr_ctx_set_size(desc, NVGPU_GR_CTX_PATCH_CTX, DUMMY_SIZE);
-	err = nvgpu_gr_ctx_alloc_patch_ctx(g, gr_ctx, desc, vm);
-	if (err != 0) {
-		unit_return_fail(m, "failed to allocate patch context");
 	}
 
 	/* global_ctx = false and arbitrary size */
@@ -803,7 +798,7 @@ int test_gr_init_hal_error_injection(struct unit_module *m,
 	g->ops = gops;
 
 	/* cleanup */
-	nvgpu_gr_ctx_free_patch_ctx(g, vm, gr_ctx);
+	nvgpu_gr_ctx_free_ctx_buffers(g, gr_ctx);
 	nvgpu_free_gr_ctx_struct(g, gr_ctx);
 	nvgpu_gr_ctx_desc_free(g, desc);
 	nvgpu_vm_put(vm);

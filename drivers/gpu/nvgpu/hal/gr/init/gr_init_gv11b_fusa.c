@@ -27,6 +27,7 @@
 #include <nvgpu/bug.h>
 #include <nvgpu/static_analysis.h>
 #include <nvgpu/gr/ctx.h>
+#include <nvgpu/gr/ctx_mappings.h>
 #include <nvgpu/ltc.h>
 #include <nvgpu/netlist.h>
 
@@ -711,21 +712,21 @@ u32 gv11b_gr_init_get_global_attr_cb_size(struct gk20a *g, u32 tpc_count,
 }
 
 void gv11b_gr_init_commit_global_attrib_cb(struct gk20a *g,
-	struct nvgpu_gr_ctx *gr_ctx, u32 tpc_count, u32 max_tpc, u64 addr,
-	bool patch)
+	struct nvgpu_gr_ctx *gr_ctx, struct nvgpu_gr_ctx_mappings *mappings,
+	u32 tpc_count, u32 max_tpc, u64 addr, bool patch)
 {
 	u32 attrBufferSize;
 	u32 cb_addr;
 
-	gm20b_gr_init_commit_global_attrib_cb(g, gr_ctx, tpc_count, max_tpc,
-		addr, patch);
+	gm20b_gr_init_commit_global_attrib_cb(g, gr_ctx, mappings, tpc_count,
+		max_tpc, addr, patch);
 
 	addr = addr >> gr_gpcs_setup_attrib_cb_base_addr_39_12_align_bits_v();
 
 #ifdef CONFIG_NVGPU_GFXP
-	if (nvgpu_gr_ctx_get_preempt_ctxsw_buffer(gr_ctx)->gpu_va != 0ULL) {
+	if (nvgpu_gr_ctx_mappings_get_ctx_va(mappings, NVGPU_GR_CTX_PREEMPT_CTXSW) != 0ULL) {
 		attrBufferSize = nvgpu_safe_cast_u64_to_u32(
-			nvgpu_gr_ctx_get_betacb_ctxsw_buffer(gr_ctx)->size);
+			nvgpu_gr_ctx_get_ctx_mem(gr_ctx, NVGPU_GR_CTX_BETACB_CTXSW)->size);
 	} else {
 #endif
 		attrBufferSize = g->ops.gr.init.get_global_attr_cb_size(g,

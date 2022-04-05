@@ -32,11 +32,6 @@ struct nvgpu_mem;
  */
 struct patch_desc {
 	/**
-	 * Memory to hold patch context buffer.
-	 */
-	struct nvgpu_mem mem;
-
-	/**
 	 * Count of entries written into patch context buffer.
 	 */
 	u32 data_count;
@@ -51,9 +46,8 @@ struct zcull_ctx_desc {
 
 #ifdef CONFIG_NVGPU_DEBUGGER
 struct pm_ctx_desc {
-	struct nvgpu_mem mem;
-	u64 gpu_va;
 	u32 pm_mode;
+	bool mapped;
 };
 #endif
 
@@ -100,17 +94,21 @@ struct nvgpu_gr_ctx {
 	bool ctx_id_valid;
 
 	/**
-	 * Memory to hold graphics context buffer.
+	 * Array to store all GR context buffers.
 	 */
-	struct nvgpu_mem mem;
+	struct nvgpu_mem mem[NVGPU_GR_CTX_COUNT];
 
-#ifdef CONFIG_NVGPU_GFXP
-	struct nvgpu_mem preempt_ctxsw_buffer;
-	struct nvgpu_mem spill_ctxsw_buffer;
-	struct nvgpu_mem betacb_ctxsw_buffer;
-	struct nvgpu_mem pagepool_ctxsw_buffer;
-	struct nvgpu_mem gfxp_rtvcb_ctxsw_buffer;
-#endif
+	/**
+	 * Cacheability flags for mapping the context buffers.
+	 */
+	u32 mapping_flags[NVGPU_GR_CTX_COUNT];
+
+	/**
+	 * Pointer to structure that holds GPU mapping of context buffers.
+	 * These mappings will exist for the lifetime of TSG when the
+	 * subcontexts are not enabled.
+	 */
+	struct nvgpu_gr_ctx_mappings *mappings;
 
 	/**
 	 * Patch context buffer descriptor struct.
@@ -145,18 +143,6 @@ struct nvgpu_gr_ctx {
 #ifdef CONFIG_NVGPU_DEBUGGER
 	bool boosted_ctx;
 #endif
-
-	/**
-	 * Array to store GPU virtual addresses of all global context
-	 * buffers.
-	 */
-	u64	global_ctx_buffer_va[NVGPU_GR_GLOBAL_CTX_VA_COUNT];
-
-	/**
-	 * Array to store indexes of global context buffers
-	 * corresponding to GPU virtual addresses above.
-	 */
-	u32	global_ctx_buffer_index[NVGPU_GR_GLOBAL_CTX_VA_COUNT];
 
 	/**
 	 * TSG identifier corresponding to the graphics context.

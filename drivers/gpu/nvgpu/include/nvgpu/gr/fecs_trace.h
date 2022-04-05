@@ -63,6 +63,7 @@ struct gk20a;
 struct nvgpu_mem;
 struct nvgpu_gr_subctx;
 struct nvgpu_gr_ctx;
+struct nvgpu_gr_ctx_mappings;
 struct nvgpu_tsg;
 struct vm_area_struct;
 
@@ -169,7 +170,8 @@ int nvgpu_gr_fecs_trace_reset(struct gk20a *g);
 
 int nvgpu_gr_fecs_trace_bind_channel(struct gk20a *g,
 	struct nvgpu_mem *inst_block, struct nvgpu_gr_subctx *subctx,
-	struct nvgpu_gr_ctx *gr_ctx, pid_t pid, u32 vmid);
+	struct nvgpu_gr_ctx *gr_ctx, struct nvgpu_gr_ctx_mappings *mappings,
+	pid_t pid, u32 vmid);
 int nvgpu_gr_fecs_trace_unbind_channel(struct gk20a *g,
 	struct nvgpu_mem *inst_block);
 

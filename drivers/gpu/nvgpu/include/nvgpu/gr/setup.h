@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -88,14 +88,13 @@ int nvgpu_gr_setup_alloc_obj_ctx(struct nvgpu_channel *c, u32 class_num,
  * @brief Free GR engine context image.
  *
  * @param g [in]		Pointer to GPU driver struct.
- * @param vm [in]		Pointer to virtual memory.
  * @param gr_ctx [in]		Pointer to GR engine context image.
  *
  * This function will free memory allocated for patch context image and
  * GR engine context image in #nvgpu_gr_setup_alloc_obj_ctx().
  */
 void nvgpu_gr_setup_free_gr_ctx(struct gk20a *g,
-		struct vm_gk20a *vm, struct nvgpu_gr_ctx *gr_ctx);
+		struct nvgpu_gr_ctx *gr_ctx);
 
 /**
  * @brief Free GR engine subcontext.

@@ -55,7 +55,7 @@ struct unit_module;
  *          nvgpu_gr_ctx_get_ctx_mem,
  *          nvgpu_gr_ctx_set_tsgid,
  *          nvgpu_gr_ctx_get_tsgid,
- *          nvgpu_gr_ctx_get_global_ctx_va,
+ *          nvgpu_gr_ctx_mappings_get_global_ctx_va,
  *          gops_gr_setup.alloc_obj_ctx,
  *          nvgpu_gr_ctx_load_golden_ctx_image,
  *          gm20b_ctxsw_prog_set_patch_addr,

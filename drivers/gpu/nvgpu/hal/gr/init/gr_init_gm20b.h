@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -34,6 +34,7 @@
 
 struct gk20a;
 struct nvgpu_gr_ctx;
+struct nvgpu_gr_ctx_mappings;
 struct nvgpu_gr_config;
 struct netlist_av_list;
 struct nvgpu_gr_config;
@@ -71,8 +72,8 @@ u32 gm20b_gr_init_get_global_ctx_cb_buffer_size(struct gk20a *g);
 u32 gm20b_gr_init_get_global_ctx_pagepool_buffer_size(struct gk20a *g);
 
 void gm20b_gr_init_commit_global_attrib_cb(struct gk20a *g,
-	struct nvgpu_gr_ctx *gr_ctx, u32 tpc_count, u32 max_tpc, u64 addr,
-	bool patch);
+	struct nvgpu_gr_ctx *gr_ctx, struct nvgpu_gr_ctx_mappings *mappings,
+	u32 tpc_count, u32 max_tpc, u64 addr, bool patch);
 
 u32 gm20b_gr_init_get_patch_slots(struct gk20a *g,
 	struct nvgpu_gr_config *config);
