@@ -25,9 +25,96 @@
 struct gk20a;
 struct nvgpu_gsp_sched;
 
+/*
+ * Scheduler shall support only two engines with two runlists per domain.
+ * 1. GR0
+ * 2. Async CE0
+ */
+#define TOTAL_NO_OF_RUNLISTS 2U
+
+struct nvgpu_gsp_runlist_info {
+	/*
+	 * Is this runlist valid, this field will be updated by NVGPU which tell GSP
+	 * to submit this runlist or ignore for that domain.
+	 */
+	bool is_runlist_valid;
+	/*
+	 * This is don't care for KMD.
+	 */
+	bool is_runlist_updated;
+	/*
+	 * Device id to which this runlist belongs to.
+	 */
+	u8 device_id;
+	/*
+	 * Domain Id to which this runlist belongs to.
+	 */
+	u32 domain_id;
+	/*
+	 * ID contains the identifier of the runlist.
+	 */
+	u32 runlist_id;
+	/*
+	 * Indicates how many runlist entries are in the runlist.
+	 */
+	u32 num_entries;
+	/*
+	 * Indicates runlist memory aperture.
+	 */
+	u32 aperture;
+	/*
+	 *NV_RUNLIST_SUBMIT_BASE_L0 in-memory location of runlist.
+	 */
+	u32 runlist_base_lo;
+	/*
+	 *NV_RUNLIST_SUBMIT_BASE_Hi in-memory location of runlist.
+	 */
+	u32 runlist_base_hi;
+};
+
+struct nvgpu_gsp_domain_info {
+	/*
+	 * Is the current Domain Active. This is don't care for KMD.
+	 */
+	bool is_domain_active;
+	/*
+	 * Is the current Domain Valid. This is don't care for KMD.
+	 */
+	bool is_domain_valid;
+	/*
+	 * Domain Id
+	 */
+	u32 domain_id;
+	/*
+	 * Priority of the Domain for priority driven scheduling.
+	 */
+	u32 priority;
+	/*
+	 * Time-slicing of the domain for which scheduler will schedule it for.
+	 */
+	u32 time_slicing;
+	/*
+	 * Runlist info
+	 */
+	struct nvgpu_gsp_runlist_info runlist_info[TOTAL_NO_OF_RUNLISTS];
+};
+
 int nvgpu_gsp_sched_bootstrap_ns(struct gk20a *g);
 int nvgpu_gsp_sched_sw_init(struct gk20a *g);
 void nvgpu_gsp_sched_sw_deinit(struct gk20a *g);
 void nvgpu_gsp_sched_suspend(struct gk20a *g, struct nvgpu_gsp_sched *gsp_sched);
 void nvgpu_gsp_sched_isr(struct gk20a *g);
+int nvgpu_gsp_sched_send_devices_info(struct gk20a *g);
+int nvgpu_gsp_sched_domain_submit(struct gk20a *g, u32 domain_id);
+int nvgpu_gsp_sched_domain_add(struct gk20a *g,
+		struct nvgpu_gsp_domain_info *gsp_dom);
+int nvgpu_gsp_sched_domain_update(struct gk20a *g,
+		struct nvgpu_gsp_domain_info *gsp_dom);
+int nvgpu_gsp_sched_runlist_update(struct gk20a *g,
+		struct nvgpu_gsp_runlist_info *gsp_rl);
+int nvgpu_gsp_sched_domain_delete(struct gk20a *g, u32 domain_id);
+int nvgpu_gsp_sched_query_active_domain(struct gk20a *g, u32 *active_domain);
+int nvgpu_gsp_sched_query_no_of_domains(struct gk20a *g, u32 *no_of_domains);
+int nvgpu_gsp_sched_start(struct gk20a *g);
+int nvgpu_gsp_sched_stop(struct gk20a *g);
 #endif /* GSP_SCHED_H */

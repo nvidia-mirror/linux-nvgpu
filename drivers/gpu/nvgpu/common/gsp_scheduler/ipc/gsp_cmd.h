@@ -24,21 +24,30 @@
 #define NVGPU_GSP_CMD_IF_H
 
 #include <nvgpu/types.h>
+#include <nvgpu/gsp_sched.h>
 #include "../gsp_runlist.h"
 #include "gsp_seq.h"
 
 struct gk20a;
 
-#define GSP_NV_CMDQ_LOG_ID		0U
-#define GSP_NV_CMDQ_LOG_ID__LAST	0U
-#define GSP_NV_MSGQ_LOG_ID		1U
+#define GSP_NV_CMDQ_LOG_ID				0U
+#define GSP_NV_CMDQ_LOG_ID__LAST		0U
+#define GSP_NV_MSGQ_LOG_ID				1U
 
-#define  NV_GSP_UNIT_REWIND		NV_FLCN_UNIT_ID_REWIND
-#define  NV_GSP_UNIT_NULL		0x01U
-#define  NV_GSP_UNIT_INIT		0x02U
-#define  NV_GSP_UNIT_DEVICES_INFO	0x03U
-#define  NV_GSP_UNIT_SUBMIT_RUNLIST	0x04U
-#define  NV_GSP_UNIT_END		0x0AU
+#define NV_GSP_UNIT_REWIND				NV_FLCN_UNIT_ID_REWIND
+#define NV_GSP_UNIT_NULL				0x01U
+#define NV_GSP_UNIT_INIT				0x02U
+#define NV_GSP_UNIT_DEVICES_INFO		0x03U
+#define NV_GSP_UNIT_DOMAIN_SUBMIT		0x04U
+#define NV_GSP_UNIT_DOMAIN_ADD			0x05U
+#define NV_GSP_UNIT_DOMAIN_DELETE		0x06U
+#define NV_GSP_UNIT_DOMAIN_UPDATE		0x07U
+#define NV_GSP_UNIT_RUNLIST_UPDATE		0x08U
+#define NV_GSP_UNIT_START_SCHEDULER		0x09U
+#define NV_GSP_UNIT_STOP_SCHEDULER		0x0AU
+#define NV_GSP_UNIT_QUERY_NO_OF_DOMAINS	0x0BU
+#define NV_GSP_UNIT_QUERY_ACTIVE_DOMAIN	0X0CU
+#define NV_GSP_UNIT_END					0x0DU
 
 #define GSP_MSG_HDR_SIZE	U32(sizeof(struct gsp_hdr))
 #define GSP_CMD_HDR_SIZE	U32(sizeof(struct gsp_hdr))
@@ -53,8 +62,10 @@ struct gsp_hdr {
 struct nv_flcn_cmd_gsp {
 	struct gsp_hdr hdr;
 	union {
+		struct nvgpu_gsp_domain_id domain_id;
 		struct nvgpu_gsp_device_info device;
 		struct nvgpu_gsp_runlist_info runlist;
+		struct nvgpu_gsp_domain_info domain;
 	} cmd;
 };
 

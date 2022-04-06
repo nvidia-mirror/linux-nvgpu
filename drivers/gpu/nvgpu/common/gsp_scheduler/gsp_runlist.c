@@ -20,8 +20,6 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include "gsp_runlist.h"
-
 #include <nvgpu/gk20a.h>
 #include <nvgpu/log.h>
 #include <nvgpu/gsp.h>
@@ -33,25 +31,60 @@
 
 #include "ipc/gsp_cmd.h"
 #include "ipc/gsp_msg.h"
+#include "gsp_runlist.h"
 
 static void gsp_handle_cmd_ack(struct gk20a *g, struct nv_flcn_msg_gsp *msg,
 	void *param, u32 status)
 {
 	bool *command_ack = param;
 
-	nvgpu_gsp_dbg(g, " ");
+	nvgpu_log_fn(g, " ");
 
 	switch (msg->hdr.unit_id) {
 	case NV_GSP_UNIT_NULL:
-		nvgpu_info(g, "Reply to NV_GSP_UNIT_NULL");
+		nvgpu_gsp_dbg(g, "Reply to NV_GSP_UNIT_NULL");
 		*command_ack = true;
 		break;
-	case NV_GSP_UNIT_SUBMIT_RUNLIST:
-		nvgpu_info(g, "Reply to NV_GSP_UNIT_RUNLIST_INFO");
+	case NV_GSP_UNIT_DOMAIN_SUBMIT:
+		nvgpu_gsp_dbg(g, "Reply to NV_GSP_UNIT_DOMAIN_SUBMIT");
 		*command_ack = true;
 		break;
 	case NV_GSP_UNIT_DEVICES_INFO:
-		nvgpu_info(g, "Reply to NV_GSP_UNIT_DEVICES_INFO");
+		nvgpu_gsp_dbg(g, "Reply to NV_GSP_UNIT_DEVICES_INFO");
+		*command_ack = true;
+		break;
+	case NV_GSP_UNIT_DOMAIN_ADD:
+		nvgpu_gsp_dbg(g, "Reply to NV_GSP_UNIT_DOMAIN_ADD");
+		*command_ack = true;
+		break;
+	case NV_GSP_UNIT_DOMAIN_DELETE:
+		nvgpu_gsp_dbg(g, "Reply to NV_GSP_UNIT_DOMAIN_DELETE");
+		*command_ack = true;
+		break;
+	case NV_GSP_UNIT_DOMAIN_UPDATE:
+		nvgpu_gsp_dbg(g, "Reply to NV_GSP_UNIT_DOMAIN_UPDATE");
+		*command_ack = true;
+		break;
+	case NV_GSP_UNIT_RUNLIST_UPDATE:
+		nvgpu_gsp_dbg(g, "Reply to NV_GSP_UNIT_RUNLIST_UPDATE");
+		*command_ack = true;
+		break;
+	case NV_GSP_UNIT_START_SCHEDULER:
+		nvgpu_gsp_dbg(g, "Reply to NV_GSP_UNIT_START_SCHEDULER");
+		*command_ack = true;
+		break;
+	case NV_GSP_UNIT_STOP_SCHEDULER:
+		nvgpu_gsp_dbg(g, "Reply to NV_GSP_UNIT_STOP_SCHEDULER");
+		*command_ack = true;
+		break;
+	case NV_GSP_UNIT_QUERY_NO_OF_DOMAINS:
+		nvgpu_gsp_dbg(g, "Reply to NV_GSP_UNIT_QUERY_NO_OF_DOMAINS");
+		g->gsp_sched->no_of_domains = msg->msg.no_of_domains.no_of_domains;
+		*command_ack = true;
+		break;
+	case NV_GSP_UNIT_QUERY_ACTIVE_DOMAIN:
+		nvgpu_gsp_dbg(g, "Reply to NV_GSP_UNIT_QUERY_ACTIVE_DOMAIN");
+		g->gsp_sched->active_domain = msg->msg.active_domain.active_domain;
 		*command_ack = true;
 		break;
 	default:
@@ -63,73 +96,59 @@ static void gsp_handle_cmd_ack(struct gk20a *g, struct nv_flcn_msg_gsp *msg,
 	(void)status;
 }
 
-static void gsp_get_runlist_info(struct gk20a *g,
-		struct nvgpu_gsp_runlist_info *rl_info, struct nvgpu_runlist *runlist)
+static int gsp_send_cmd_and_wait_for_ack(struct gk20a *g,
+		struct nv_flcn_cmd_gsp *cmd, u32 unit_id, u32 size)
 {
-	u64 runlist_iova;
-	u32 aperture, num_entries;
-
-	runlist_iova = nvgpu_mem_get_addr(g, &runlist->domain->mem_hw->mem);
-
-	num_entries = runlist->domain->mem_hw->count;
-
-	aperture = g->ops.runlist.get_runlist_aperture(g, runlist);
-
-	rl_info->runlist_base_lo = u64_lo32(runlist_iova);
-	rl_info->runlist_base_hi = u64_hi32(runlist_iova);
-	rl_info->aperture = aperture;
-	rl_info->num_entries = num_entries;
-	rl_info->runlist_id = runlist->id;
-}
-
-int nvgpu_gsp_runlist_submit(struct gk20a *g, struct nvgpu_runlist *runlist)
-{
-	struct nv_flcn_cmd_gsp cmd;
 	bool command_ack = false;
 	int err = 0;
 	size_t tmp_size;
 
 	nvgpu_gsp_dbg(g, " ");
 
-	(void) memset(&cmd, 0, sizeof(struct nv_flcn_cmd_gsp));
-	cmd.hdr.unit_id = NV_GSP_UNIT_SUBMIT_RUNLIST;
-	tmp_size = GSP_CMD_HDR_SIZE + sizeof(struct nvgpu_gsp_runlist_info);
+	tmp_size = GSP_CMD_HDR_SIZE + size;
 	nvgpu_assert(tmp_size <= U64(U8_MAX));
-	cmd.hdr.size = (u8)tmp_size;
+	cmd->hdr.size = tmp_size;
+	cmd->hdr.unit_id = unit_id;
 
-	/* copy domain info into cmd buffer */
-	gsp_get_runlist_info(g, &cmd.cmd.runlist, runlist);
-
-	err = nvgpu_gsp_cmd_post(g, &cmd, GSP_NV_CMDQ_LOG_ID,
+	err = nvgpu_gsp_cmd_post(g, cmd, GSP_NV_CMDQ_LOG_ID,
 			gsp_handle_cmd_ack, &command_ack, U32_MAX);
 	if (err != 0) {
-		nvgpu_err(g, "command post failed");
+		nvgpu_err(g, "cmd post failed unit_id:0x%x", unit_id);
 		goto exit;
 	}
 
 	err = nvgpu_gsp_wait_message_cond(g, nvgpu_get_poll_timeout(g),
 			&command_ack, U8(true));
 	if (err != 0) {
-		nvgpu_err(g, "command ack receive failed");
+		nvgpu_err(g, "cmd ack receive failed unit_id:0x%x", unit_id);
 	}
 
 exit:
 	return err;
 }
 
-static void gsp_get_device_info(struct gk20a *g,
-		struct nvgpu_gsp_device_info *dev_info)
+static int gsp_get_async_ce(struct gk20a *g, struct nvgpu_device *device,
+		u32 instance)
 {
-	const struct nvgpu_device *device;
+	const struct nvgpu_device *lces[NVGPU_MIG_MAX_ENGINES] = { };
+	u32 num_lce;
 
-	/* Only GRAPHICS 0-instance is supported by  GSP scheduler.
-	 * In future, more devices can be looped through and send it to the GSP.
-	 */
-	device = nvgpu_device_get(g, NVGPU_DEVTYPE_GRAPHICS, 0);
-	nvgpu_assert(device != NULL);
+	num_lce = nvgpu_device_get_async_copies(g, lces, NVGPU_MIG_MAX_ENGINES);
+	if (num_lce == 0) {
+		nvgpu_err(g, "Async CEs not supported");
+		return -1;
+	}
 
+	*device = *lces[instance];
+	return 0;
+}
+
+static void gsp_get_device_info(struct gk20a *g, u8 device_id,
+		struct nvgpu_gsp_device_info *dev_info,
+		const struct nvgpu_device *device)
+{
 	/* copy domain info into cmd buffer */
-	dev_info->device_id = NVGPU_DEVTYPE_GRAPHICS;
+	dev_info->device_id = device_id;
 	dev_info->is_engine = true;
 	dev_info->engine_type = device->type;
 	dev_info->engine_id = device->engine_id;
@@ -139,37 +158,208 @@ static void gsp_get_device_info(struct gk20a *g,
 	dev_info->runlist_pri_base = device->rl_pri_base;
 }
 
-int nvgpu_gsp_send_devices_info(struct gk20a *g)
+static int gsp_sched_send_devices_info(struct gk20a *g,
+		u8 device_id, const struct nvgpu_device *device)
 {
-	struct nv_flcn_cmd_gsp cmd;
-	bool command_ack = false;
+	struct nv_flcn_cmd_gsp cmd = { };
 	int err = 0;
-	size_t tmp_size;
 
 	nvgpu_gsp_dbg(g, " ");
 
-	(void) memset(&cmd, 0, sizeof(struct nv_flcn_cmd_gsp));
-	cmd.hdr.unit_id = NV_GSP_UNIT_DEVICES_INFO;
-	tmp_size = GSP_CMD_HDR_SIZE + sizeof(struct nvgpu_gsp_device_info);
-	nvgpu_assert(tmp_size <= U64(U8_MAX));
-	cmd.hdr.size = (u8)tmp_size;
-
 	/* copy domain info into cmd buffer */
-	gsp_get_device_info(g, &cmd.cmd.device);
+	gsp_get_device_info(g, device_id, &cmd.cmd.device, device);
 
-	err = nvgpu_gsp_cmd_post(g, &cmd, GSP_NV_CMDQ_LOG_ID,
-			gsp_handle_cmd_ack, &command_ack, U32_MAX);
+	err = gsp_send_cmd_and_wait_for_ack(g, &cmd,
+		NV_GSP_UNIT_DEVICES_INFO, sizeof(struct nvgpu_gsp_device_info));
+
+	return err;
+}
+
+int nvgpu_gsp_sched_send_devices_info(struct gk20a *g)
+{
+	const struct nvgpu_device *gr_dev = NULL;
+	struct nvgpu_device ce_dev = { };
+	u8 instance = 0;
+	int err = 0;
+
+	/*
+	 * Only GR0 is supported
+	 */
+	gr_dev = nvgpu_device_get(g, NVGPU_DEVTYPE_GRAPHICS, instance);
+	if (gr_dev == NULL) {
+		nvgpu_err(g, "Get GR0 device info failed");
+		goto exit;
+	}
+	err = gsp_sched_send_devices_info(g,
+			GSP_SCHED_GR0_DEVICE_ID, gr_dev);
 	if (err != 0) {
-		nvgpu_err(g, "command post failed");
+		nvgpu_err(g, "send GR0 device info failed");
 		goto exit;
 	}
 
-	err = nvgpu_gsp_wait_message_cond(g, nvgpu_get_poll_timeout(g),
-			&command_ack, U8(true));
+	/*
+	 * Only Async CE0 is supported
+	 */
+	err = gsp_get_async_ce(g, &ce_dev, instance);
 	if (err != 0) {
-		nvgpu_err(g, "command ack receive failed");
+		nvgpu_err(g, "Get Async CE0 device info failed");
+		goto exit;
+	}
+	err = gsp_sched_send_devices_info(g,
+			GSP_SCHED_ASYNC_CE0_DEVICE_ID, &ce_dev);
+	if (err != 0) {
+		nvgpu_err(g, "send Async CE0 device info failed");
+		goto exit;
 	}
 
 exit:
+	return err;
+}
+
+int nvgpu_gsp_sched_domain_add(struct gk20a *g,
+		struct nvgpu_gsp_domain_info *gsp_dom)
+{
+	struct nv_flcn_cmd_gsp cmd = { };
+	int err = 0;
+
+	nvgpu_gsp_dbg(g, " ");
+
+	/* copy domain info into cmd buffer */
+	cmd.cmd.domain = *gsp_dom;
+
+	err = gsp_send_cmd_and_wait_for_ack(g, &cmd,
+		NV_GSP_UNIT_DOMAIN_ADD, sizeof(struct nvgpu_gsp_domain_info));
+
+	return err;
+}
+
+int nvgpu_gsp_sched_domain_update(struct gk20a *g,
+		struct nvgpu_gsp_domain_info *gsp_dom)
+{
+	struct nv_flcn_cmd_gsp cmd = { };
+	int err = 0;
+
+	nvgpu_gsp_dbg(g, " ");
+
+	/* copy domain info into cmd buffer */
+	cmd.cmd.domain = *gsp_dom;
+
+	err = gsp_send_cmd_and_wait_for_ack(g, &cmd,
+		NV_GSP_UNIT_DOMAIN_UPDATE, sizeof(struct nvgpu_gsp_domain_info));
+
+	return err;
+}
+
+int nvgpu_gsp_sched_domain_delete(struct gk20a *g, u32 domain_id)
+{
+	struct nv_flcn_cmd_gsp cmd = { };
+	int err = 0;
+
+	nvgpu_gsp_dbg(g, " ");
+
+	/* copy domain_id to cmd buffer */
+	cmd.cmd.domain_id.domain_id = domain_id;
+
+	err = gsp_send_cmd_and_wait_for_ack(g, &cmd,
+		NV_GSP_UNIT_DOMAIN_DELETE, sizeof(struct nvgpu_gsp_domain_id));
+
+	return err;
+}
+
+int nvgpu_gsp_sched_domain_submit(struct gk20a *g, u32 domain_id)
+{
+	struct nv_flcn_cmd_gsp cmd = { };
+	int err = 0;
+
+	nvgpu_gsp_dbg(g, " ");
+
+	/* copy domain_id to cmd buffer */
+	cmd.cmd.domain_id.domain_id = domain_id;
+
+	err = gsp_send_cmd_and_wait_for_ack(g, &cmd,
+		NV_GSP_UNIT_DOMAIN_SUBMIT, sizeof(struct nvgpu_gsp_domain_id));
+
+	return err;
+}
+
+int nvgpu_gsp_sched_runlist_update(struct gk20a *g,
+		struct nvgpu_gsp_runlist_info *gsp_rl)
+{
+	struct nv_flcn_cmd_gsp cmd = { };
+	int err = 0;
+
+	nvgpu_gsp_dbg(g, " ");
+
+	/* copy domain info into cmd buffer */
+	cmd.cmd.runlist = *gsp_rl;
+
+	err = gsp_send_cmd_and_wait_for_ack(g, &cmd,
+		NV_GSP_UNIT_RUNLIST_UPDATE, sizeof(struct nvgpu_gsp_runlist_info));
+
+	return err;
+}
+
+int nvgpu_gsp_sched_query_no_of_domains(struct gk20a *g, u32 *no_of_domains)
+{
+	struct nv_flcn_cmd_gsp cmd = { };
+	int err = 0;
+
+	nvgpu_gsp_dbg(g, " ");
+
+	err = gsp_send_cmd_and_wait_for_ack(g, &cmd,
+		NV_GSP_UNIT_QUERY_NO_OF_DOMAINS, 0);
+	if (err != 0) {
+		nvgpu_err(g, "send cmd failed");
+		return err;
+	}
+
+	*no_of_domains = g->gsp_sched->no_of_domains;
+	return err;
+}
+
+int nvgpu_gsp_sched_query_active_domain(struct gk20a *g, u32 *active_domain)
+{
+	struct nv_flcn_cmd_gsp cmd = { };
+	int err = 0;
+
+	nvgpu_gsp_dbg(g, " ");
+
+	err = gsp_send_cmd_and_wait_for_ack(g, &cmd,
+		NV_GSP_UNIT_QUERY_ACTIVE_DOMAIN, 0);
+	if (err != 0) {
+		nvgpu_err(g, "send cmd failed");
+		return err;
+	}
+
+	*active_domain = g->gsp_sched->active_domain;
+	return err;
+}
+
+int nvgpu_gsp_sched_start(struct gk20a *g)
+{
+	struct nv_flcn_cmd_gsp cmd = { };
+	int err = 0;
+
+	nvgpu_gsp_dbg(g, " ");
+
+	err = gsp_send_cmd_and_wait_for_ack(g, &cmd,
+		NV_GSP_UNIT_START_SCHEDULER, 0);
+	if (err != 0) {
+		nvgpu_err(g, "send cmd failed");
+	}
+
+	return err;
+}
+
+int nvgpu_gsp_sched_stop(struct gk20a *g)
+{
+	struct nv_flcn_cmd_gsp cmd = { };
+	int err = 0;
+
+	nvgpu_gsp_dbg(g, " ");
+
+	err = gsp_send_cmd_and_wait_for_ack(g, &cmd,
+		NV_GSP_UNIT_STOP_SCHEDULER, 0);
+
 	return err;
 }

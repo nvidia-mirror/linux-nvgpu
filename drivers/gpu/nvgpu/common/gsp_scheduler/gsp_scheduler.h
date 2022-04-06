@@ -44,6 +44,10 @@ struct nvgpu_gsp_sched {
 
 	/* set to true once init received */
 	bool gsp_ready;
+
+	/* Log info of Domains */
+	u32 no_of_domains;
+	u32 active_domain;
 };
 
 #endif /* GSP_SCHEDULER_H */

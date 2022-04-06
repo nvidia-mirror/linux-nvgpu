@@ -61,11 +61,23 @@ union nv_flcn_msg_gsp_init {
 	struct gsp_init_msg_gsp_init gsp_init;
 };
 
+struct nvgpu_gsp_domain_msg_no_of_domains {
+	u8 msg_type;
+	u32 no_of_domains;
+};
+
+struct nvgpu_gsp_domain_msg_active_domain {
+	u8 msg_type;
+	u32 active_domain;
+};
+
 
 struct nv_flcn_msg_gsp {
 	struct gsp_hdr hdr;
 	union {
 		union nv_flcn_msg_gsp_init init;
+		struct nvgpu_gsp_domain_msg_no_of_domains no_of_domains;
+		struct nvgpu_gsp_domain_msg_active_domain active_domain;
 	} msg;
 };
 

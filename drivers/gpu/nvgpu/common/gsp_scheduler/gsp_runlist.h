@@ -23,9 +23,9 @@
 #ifndef NVGPU_GSP_RUNLIST
 #define NVGPU_GSP_RUNLIST
 
-#include <nvgpu/device.h>
+#define GSP_SCHED_GR0_DEVICE_ID			0U
+#define GSP_SCHED_ASYNC_CE0_DEVICE_ID	1U
 
-#define NVGPU_GSP_MAX_DEVTYPE 1U
 
 struct nvgpu_gsp_device_info {
 	/*
@@ -65,36 +65,10 @@ struct nvgpu_gsp_device_info {
 	u32 dev_pri_base;
 };
 
-struct nvgpu_gsp_runlist_info {
+struct nvgpu_gsp_domain_id {
 	/*
-	 * Device id to which this runlist belongs to
+	 * Domain id
 	 */
-	u8 device_id;
-	/*
-	 * Domain id to which this runlist need to mapped to
-	 */
-	u8 domain_id;
-	/*
-	 * Indicates how many runlist entries are in the newly submitted runlist
-	 */
-	u32 num_entries;
-	/*
-	 * Indicates how many runlist aperture
-	 */
-	u32 aperture;
-	/*
-	 * ID contains the identifier of the runlist.
-	 */
-	u32 runlist_id;
-	/*
-	 *NV_RUNLIST_SUBMIT_BASE_L0 in-memory location of runlist.
-	 */
-	u32 runlist_base_lo;
-	/*
-	 *NV_RUNLIST_SUBMIT_BASE_Hi in-memory location of runlist.
-	 */
-	u32 runlist_base_hi;
+	u32 domain_id;
 };
-
-int nvgpu_gsp_send_devices_info(struct gk20a *g);
 #endif // NVGPU_GSP_RUNLIST

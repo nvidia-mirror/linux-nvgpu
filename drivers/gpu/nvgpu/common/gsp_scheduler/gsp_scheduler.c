@@ -204,9 +204,10 @@ int nvgpu_gsp_sched_bootstrap_ns(struct gk20a *g)
 		goto de_init;
 	}
 
-	status = nvgpu_gsp_send_devices_info(g);
+	status = nvgpu_gsp_sched_send_devices_info(g);
 	if (status != 0) {
 		nvgpu_err(g, "gsp send device info failed");
+		goto de_init;
 	}
 
 	return status;
