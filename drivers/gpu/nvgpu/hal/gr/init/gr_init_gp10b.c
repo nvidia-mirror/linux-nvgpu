@@ -242,47 +242,6 @@ u32 gp10b_gr_init_get_global_attr_cb_size(struct gk20a *g, u32 tpc_count,
 	return size;
 }
 
-void gp10b_gr_init_commit_global_attrib_cb(struct gk20a *g,
-	struct nvgpu_gr_ctx *gr_ctx, u32 tpc_count, u32 max_tpc, u64 addr,
-	bool patch)
-{
-	u32 attrBufferSize;
-	u32 cb_addr;
-
-	gm20b_gr_init_commit_global_attrib_cb(g, gr_ctx, tpc_count, max_tpc,
-		addr, patch);
-
-	addr = addr >> gr_gpcs_setup_attrib_cb_base_addr_39_12_align_bits_v();
-
-#ifdef CONFIG_NVGPU_GFXP
-	if (nvgpu_gr_ctx_get_preempt_ctxsw_buffer(gr_ctx)->gpu_va != 0ULL) {
-		attrBufferSize = nvgpu_safe_cast_u64_to_u32(
-			nvgpu_gr_ctx_get_betacb_ctxsw_buffer(gr_ctx)->size);
-	} else {
-#endif
-		attrBufferSize = g->ops.gr.init.get_global_attr_cb_size(g,
-			tpc_count, max_tpc);
-#ifdef CONFIG_NVGPU_GFXP
-	}
-#endif
-
-	attrBufferSize /= gr_gpcs_tpcs_tex_rm_cb_1_size_div_128b_granularity_f();
-
-	nvgpu_assert(u64_hi32(addr) == 0U);
-
-	cb_addr = (u32)addr;
-	nvgpu_gr_ctx_patch_write(g, gr_ctx, gr_gpcs_tpcs_mpc_vtg_cb_global_base_addr_r(),
-		gr_gpcs_tpcs_mpc_vtg_cb_global_base_addr_v_f(cb_addr) |
-		gr_gpcs_tpcs_mpc_vtg_cb_global_base_addr_valid_true_f(), patch);
-
-	nvgpu_gr_ctx_patch_write(g, gr_ctx, gr_gpcs_tpcs_tex_rm_cb_0_r(),
-		gr_gpcs_tpcs_tex_rm_cb_0_base_addr_43_12_f(cb_addr), patch);
-
-	nvgpu_gr_ctx_patch_write(g, gr_ctx, gr_gpcs_tpcs_tex_rm_cb_1_r(),
-		gr_gpcs_tpcs_tex_rm_cb_1_size_div_128b_f(attrBufferSize) |
-		gr_gpcs_tpcs_tex_rm_cb_1_valid_true_f(), patch);
-}
-
 void gp10b_gr_init_commit_cbes_reserve(struct gk20a *g,
 	struct nvgpu_gr_ctx *gr_ctx, bool patch)
 {

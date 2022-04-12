@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -65,10 +65,6 @@ u32 gp10b_gr_init_get_attrib_cb_size(struct gk20a *g, u32 tpc_count);
 u32 gp10b_gr_init_get_alpha_cb_size(struct gk20a *g, u32 tpc_count);
 u32 gp10b_gr_init_get_global_attr_cb_size(struct gk20a *g, u32 tpc_count,
 	u32 max_tpc);
-
-void gp10b_gr_init_commit_global_attrib_cb(struct gk20a *g,
-	struct nvgpu_gr_ctx *gr_ctx, u32 tpc_count, u32 max_tpc, u64 addr,
-	bool patch);
 
 void gp10b_gr_init_commit_cbes_reserve(struct gk20a *g,
 	struct nvgpu_gr_ctx *gr_ctx, bool patch);

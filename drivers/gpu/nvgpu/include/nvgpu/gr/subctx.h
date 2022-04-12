@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -97,21 +97,6 @@ void nvgpu_gr_subctx_load_ctx_header(struct gk20a *g,
  * @return pointer to subcontext header memory struct.
  */
 struct nvgpu_mem *nvgpu_gr_subctx_get_ctx_header(struct nvgpu_gr_subctx *subctx);
-
-#ifdef CONFIG_NVGPU_HAL_NON_FUSA
-/**
- * @brief Set patch context buffer address in subcontext header.
- *
- * @param g [in]		Pointer to GPU driver struct.
- * @param subctx [in]		Pointer to graphics subcontext struct.
- * @param gr_ctx [in]		Pointer to graphics context struct.
- *
- * This function will program GPU virtual address of patch context buffer
- * into subcontext buffer header.
- */
-void nvgpu_gr_subctx_set_patch_ctx(struct gk20a *g,
-	struct nvgpu_gr_subctx *subctx, struct nvgpu_gr_ctx *gr_ctx);
-#endif
 
 #ifdef CONFIG_NVGPU_GRAPHICS
 void nvgpu_gr_subctx_zcull_setup(struct gk20a *g, struct nvgpu_gr_subctx *subctx,
