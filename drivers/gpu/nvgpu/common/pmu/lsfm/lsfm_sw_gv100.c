@@ -32,6 +32,7 @@
 #include <nvgpu/gr/config.h>
 #include <nvgpu/gr/gr_utils.h>
 #include <nvgpu/gr/gr_instances.h>
+#include <nvgpu/soc.h>
 
 #include "lsfm_sw_gv100.h"
 
@@ -61,7 +62,11 @@ static int gv100_pmu_lsfm_init_acr_wpr_region(struct gk20a *g,
 	 * This additional delay will help to skip reading the irqstat
 	 * incorrectly at corner case during the priv lockdown process.
 	 */
-	nvgpu_msleep(2);
+	if (nvgpu_platform_is_silicon(g)) {
+		nvgpu_msleep(2);
+	} else {
+		nvgpu_msleep(100);
+	}
 
 	return status;
 }
@@ -103,7 +108,11 @@ static int gv100_pmu_lsfm_bootstrap_ls_falcon(struct gk20a *g,
 	 * This additional delay will help to skip reading the irqstat
 	 * incorrectly at corner case during the priv lockdown process.
 	 */
-	nvgpu_msleep(5);
+	if (nvgpu_platform_is_silicon(g)) {
+		nvgpu_msleep(5);
+	} else {
+		nvgpu_msleep(500);
+	}
 
 	pmu_wait_message_cond(g->pmu, nvgpu_get_poll_timeout(g),
 		&lsfm->loaded_falcon_id, 1U);
@@ -173,7 +182,11 @@ static int gv100_pmu_lsfm_bootstrap_ls_falcon_eng(struct gk20a *g,
 	 * This additional delay will help to skip reading the irqstat
 	 * incorrectly at corner case during the priv lockdown process.
 	 */
-	nvgpu_msleep(5);
+	if (nvgpu_platform_is_silicon(g)) {
+		nvgpu_msleep(5);
+	} else {
+		nvgpu_msleep(500);
+	}
 
 	pmu_wait_message_cond(g->pmu, nvgpu_get_poll_timeout(g),
 		&lsfm->loaded_falcon_id, 1U);
