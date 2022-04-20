@@ -1860,7 +1860,18 @@ int ga10b_init_hal(struct gk20a *g)
 	nvgpu_set_errata(g, NVGPU_ERRATA_200391931, true);
 	nvgpu_set_errata(g, NVGPU_ERRATA_200677649, true);
 	nvgpu_set_errata(g, NVGPU_ERRATA_3154076, true);
-	nvgpu_set_errata(g, NVGPU_ERRATA_3288192, true);
+
+	/*
+	 * NVGPU_ERRATA_3288192 is only applicable for auto platforms which are
+	 * always virtualized, hence disable this errata on non-virtualized
+	 * platforms.
+	 */
+	if (nvgpu_is_hypervisor_mode(g)) {
+		nvgpu_set_errata(g, NVGPU_ERRATA_3288192, true);
+	} else {
+		nvgpu_set_errata(g, NVGPU_ERRATA_3288192, false);
+	}
+
 	nvgpu_set_errata(g, NVGPU_ERRATA_SYNCPT_INVALID_ID_0, true);
 	nvgpu_set_errata(g, NVGPU_ERRATA_2557724, true);
 	nvgpu_set_errata(g, NVGPU_ERRATA_3524791, true);
