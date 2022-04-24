@@ -51,7 +51,11 @@ int gp10b_mm_init_bar2_vm(struct gk20a *g)
 		goto clean_up_va;
 	}
 
-	g->ops.mm.init_inst_block_core(inst_block, mm->bar2.vm, big_page_size);
+	err = g->ops.mm.init_inst_block_core(inst_block, mm->bar2.vm, big_page_size);
+	if (err != 0) {
+		nvgpu_free_inst_block(g, inst_block);
+		goto clean_up_va;
+	}
 
 	return 0;
 

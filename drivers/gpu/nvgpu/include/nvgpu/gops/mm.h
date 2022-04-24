@@ -566,7 +566,7 @@ struct gops_mm {
 	 * - Configures the pdb base, big page size and
 	 *   0th sub context's pdb base in context's instance block memory.
 	 */
-	void (*init_inst_block_core)(struct nvgpu_mem *inst_block,
+	int (*init_inst_block_core)(struct nvgpu_mem *inst_block,
 			struct vm_gk20a *vm, u32 big_page_size);
 
 	/**

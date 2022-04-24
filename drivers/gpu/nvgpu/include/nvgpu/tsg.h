@@ -117,6 +117,10 @@ struct nvgpu_tsg {
 	 */
 	struct nvgpu_ref refcount;
 
+	u32 *subctx_pdb_map;
+
+	unsigned long *valid_subctxs;
+
 	/**
 	 * List of subcontexts (#nvgpu_tsg_subctx) bound to this TSG.
 	 * Accessed by holding #ch_list_lock from TSG.

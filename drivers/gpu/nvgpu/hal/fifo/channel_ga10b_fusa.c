@@ -82,8 +82,18 @@ void ga10b_channel_bind(struct nvgpu_channel *ch)
 {
 	struct gk20a *g = ch->g;
 	struct nvgpu_runlist *runlist = NULL;
+	int err;
 
 	runlist = ch->runlist;
+
+	/* Enable subcontext */
+	if (g->ops.tsg.add_subctx_channel_hw != NULL) {
+		err = g->ops.tsg.add_subctx_channel_hw(ch, ch->replayable);
+		if (err != 0) {
+			nvgpu_err(g, "Subcontext addition failed %d", err);
+			return;
+		}
+	}
 
 	/* Enable channel */
 	nvgpu_chram_bar0_writel(g, runlist, runlist_chram_channel_r(ch->chid),

@@ -44,7 +44,6 @@ int ga10b_ramfc_setup(struct nvgpu_channel *ch, u64 gpfifo_base,
 	u32 eng_intr_mask = 0U;
 	u32 eng_intr_vector = 0U;
 	u32 eng_bitmask = 0U;
-	bool replayable = false;
 
 	(void)flags;
 
@@ -65,17 +64,8 @@ int ga10b_ramfc_setup(struct nvgpu_channel *ch, u64 gpfifo_base,
 
 	nvgpu_memset(g, mem, 0U, 0U, ram_fc_size_val_v());
 
-#ifdef CONFIG_NVGPU_REPLAYABLE_FAULT
-	if ((flags & NVGPU_SETUP_BIND_FLAGS_REPLAYABLE_FAULTS_ENABLE) != 0U) {
-		replayable = true;
-	}
-#endif
-
 	nvgpu_log_info(g, "%llu %u", pbdma_acquire_timeout,
 		g->ops.pbdma.acquire_val(pbdma_acquire_timeout));
-
-	g->ops.ramin.init_subctx_pdb(g, mem, ch->vm->pdb.mem,
-		replayable, nvgpu_channel_get_max_subctx_count(ch));
 
 	nvgpu_mem_wr32(g, mem, ram_fc_gp_base_w(),
 		g->ops.pbdma.get_gp_base(gpfifo_base));

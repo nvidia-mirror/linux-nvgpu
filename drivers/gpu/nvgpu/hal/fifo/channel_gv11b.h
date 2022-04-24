@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,6 +30,7 @@ struct nvgpu_channel;
 struct nvgpu_channel_hw_state;
 struct nvgpu_debug_context;
 
+void gv11b_channel_bind(struct nvgpu_channel *ch);
 void gv11b_channel_unbind(struct nvgpu_channel *ch);
 u32 gv11b_channel_count(struct gk20a *g);
 void gv11b_channel_read_state(struct gk20a *g, struct nvgpu_channel *ch,

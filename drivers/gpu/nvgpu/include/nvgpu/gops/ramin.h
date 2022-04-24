@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -91,33 +91,77 @@ struct gops_ramin {
 			u64 pdb_addr, struct nvgpu_mem *pdb_mem);
 
 	/**
+	 * @brief Init subcontext pdb map for a TSG.
+	 *
+	 * @param g [in]		Pointer to GPU driver struct.
+	 * @param subctx_pdb_map [in]	Memory pointing to pdb map for a TSG.
+	 *
+	 * This HAL configures PDB for all subcontexts of an instance block.
+	 * It sets all PDBs invalid.
+	 */
+	void (*init_subctx_pdb_map)(struct gk20a *g,
+			u32 *subctx_pdb_map);
+
+	/**
+	 * @brief Update subcontext pdb map for subcontext addition/removal.
+	 *
+	 * @param g [in]		Pointer to GPU driver struct.
+	 * @param subctx_id [in]	Subcontext ID.
+	 * @param pdb_mem [in]		Memory descriptor of PDB.
+	 * @param replayable [in]	Indicates if errors are replayable
+	 *				for this Subcontext.
+	 * @param add [in]		Indicate if subcontext PDB is to be
+	 *				added or removed.
+	 * @param subctx_pdb_map [in]	Memory pointing to pdb map for a TSG.
+	 *
+	 * This HAL configures PDB for sub-context of Instance Block:
+	 * If adding a subcontext PDB:
+	 * - Get aperture mask from \a pdb_mem.
+	 * - Get physical address of \a pdb_mem.
+	 * - Build PDB entry with defaults for PT version, big page size,
+	 *   volatile attribute, and above aperture.
+	 * - If \a replayable is true, set replayable attribute for TEX
+	 *   and GCC faults.
+	 * - Set lo and hi 32-bits to point to \a pdb_mem.
+	 * - Program related entry in \a subctx_pdb_map.
+	 * If removing a subcontext PDB:
+	 * - Set aperture as ram_in_sc_page_dir_base_target_invalid_v().
+	 * - Program related entry in \a subctx_pdb_map.
+	 */
+	void (*set_subctx_pdb_info)(struct gk20a *g,
+		u32 subctx_id, struct nvgpu_mem *pdb_mem,
+		bool replayable, bool add, u32 *subctx_pdb_map);
+
+	/**
 	 * @brief Init PDB for sub-contexts.
 	 *
 	 * @param g [in]		Pointer to GPU driver struct.
 	 * @param inst_block [in]	Memory descriptor of Instance Block.
-	 * @param pdb_mem [in]		Memory descriptor of PDB.
-	 * @param replayable [in]	Indicates if errors are replayable
-	 * 				for this Instance Block.
-	 * @param max_subctx_count [in] Max number of sub context.
+	 * @param subctx_pdb_map [in]	Memory pointing to pdb map for a TSG.
 	 *
-	 * This HAL configures PDB for all sub-contexts of Instance Block:
-	 * - Get max number of sub-contexts from HW.
-	 * - Get aperture mask from \a pdb_mem.
-	 * - Get physical address of \a pdb_mem.
-	 * - For each sub-context:
-	 *    - Build PDB entry with defaults for PT version, big page size,
-	 *      volatile attribute, and above aperture.
-	 *    - If \a replayable is true, set replayable attribute for TEX
-	 *      and GCC faults.
-	 *    - Set lo and hi 32-bits to point to \a pdb_mem.
-	 *    - Program related entry in Instance Block.
-	 *
-	 * @see NVGPU_SETUP_BIND_FLAGS_REPLAYABLE_FAULTS_ENABLE
+	 * This HAL configures PDB for all sub-contexts of Instance Block.
+	 * It copies \a subctx_pdb_map to the offset
+	 * ram_in_sc_page_dir_base_vol_w(0) * 4U in
+	 * the instance block.
 	 */
 	void (*init_subctx_pdb)(struct gk20a *g,
-			struct nvgpu_mem *inst_block,
-			struct nvgpu_mem *pdb_mem,
-			bool replayable, u32 max_subctx_count);
+		struct nvgpu_mem *inst_block, u32 *subctx_pdb_map);
+
+	/**
+	 * @brief Set valid subcontexts masks.
+	 *
+	 * @param g [in]			Pointer to GPU driver struct.
+	 * @param inst_block [in]		Memory descriptor of Instance
+	 *					Block.
+	 * @param valid_subctx_mask [in]	Max number of sub context.
+	 *
+	 * This HAL configures mask for all sub-contexts of Instance Block:
+	 * - Get max number of sub-contexts from HW.
+	 * - For each set of 32 subcontexts, set the mask from
+	 *   \a valid_subctx_mask in ram_in_sc_pdb_valid_long_w().
+	 */
+	void (*init_subctx_mask)(struct gk20a *g,
+		struct nvgpu_mem *inst_block, unsigned long *valid_subctx_mask);
 
 	/**
 	 * @brief Instance Block shift.

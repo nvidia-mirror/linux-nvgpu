@@ -72,7 +72,12 @@ int nvgpu_perfbuf_init_inst_block(struct gk20a *g)
 		return err;
 	}
 
-	g->ops.mm.init_inst_block_core(&mm->perfbuf.inst_block, mm->perfbuf.vm, 0);
+	err = g->ops.mm.init_inst_block_core(&mm->perfbuf.inst_block, mm->perfbuf.vm, 0);
+	if (err != 0) {
+		nvgpu_free_inst_block(g, &mm->perfbuf.inst_block);
+		return err;
+	}
+
 	g->ops.perf.init_inst_block(g, &mm->perfbuf.inst_block);
 
 	return 0;

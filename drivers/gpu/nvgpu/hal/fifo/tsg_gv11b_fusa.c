@@ -25,6 +25,7 @@
 #include <nvgpu/runlist.h>
 #include <nvgpu/nvgpu_mem.h>
 #include <nvgpu/tsg.h>
+#include <nvgpu/tsg_subctx.h>
 #include <nvgpu/dma.h>
 #include <nvgpu/gk20a.h>
 #include <nvgpu/static_analysis.h>
@@ -173,4 +174,193 @@ void gv11b_tsg_deinit_eng_method_buffers(struct gk20a *g,
 	tsg->eng_method_buffers = NULL;
 
 	nvgpu_log_info(g, "eng method buffers de-allocated");
+}
+
+int gv11b_tsg_init_subctx_state(struct gk20a *g, struct nvgpu_tsg *tsg)
+{
+	u32 max_subctx_count;
+
+	if (!nvgpu_is_enabled(g, NVGPU_SUPPORT_TSG_SUBCONTEXTS)) {
+		return 0;
+	}
+
+	max_subctx_count = g->ops.gr.init.get_max_subctx_count();
+
+	/*
+	 * Allocate an array of subctx PDB configuration values for all supported
+	 * subcontexts. For each subctx, there will be two registers to be
+	 * configured, ram_in_sc_page_dir_base_lo_w(i) and
+	 * ram_in_sc_page_dir_base_hi_w(i) in the instance block for the channels
+	 * belonging to this TSG. Two more unused registers follow these for each
+	 * subcontext. Same PDB table/array is programmed in the instance block
+	 * of all the channels.
+	 *
+	 * As the subcontexts are bound to the TSG, their configurations register
+	 * values are added to the array and corresponding bit is set in the
+	 * valid_subctxs bitmask. And as the subcontexts are unbound from
+	 * the TSG, their configurations register values are added to the
+	 * array and corresponding bit is set in the valid_subctxs bitmask.
+	 */
+	tsg->subctx_pdb_map = nvgpu_kzalloc(g, max_subctx_count * sizeof(u32) * 4U);
+	if (tsg->subctx_pdb_map == NULL) {
+		nvgpu_err(g, "subctx_pdb_map alloc failed");
+		return -ENOMEM;
+	}
+
+	g->ops.ramin.init_subctx_pdb_map(g, tsg->subctx_pdb_map);
+
+	tsg->valid_subctxs = nvgpu_kzalloc(g,
+				BITS_TO_LONGS(max_subctx_count) *
+				sizeof(unsigned long));
+	if (tsg->valid_subctxs == NULL) {
+		nvgpu_err(g, "valid_subctxs bitmap alloc failed");
+		nvgpu_kfree(g, tsg->subctx_pdb_map);
+		tsg->subctx_pdb_map = NULL;
+		return -ENOMEM;
+	}
+
+	return 0;
+}
+
+void gv11b_tsg_deinit_subctx_state(struct gk20a *g, struct nvgpu_tsg *tsg)
+{
+	if (!nvgpu_is_enabled(g, NVGPU_SUPPORT_TSG_SUBCONTEXTS)) {
+		return;
+	}
+
+	nvgpu_kfree(g, tsg->subctx_pdb_map);
+	tsg->subctx_pdb_map = NULL;
+
+	nvgpu_kfree(g, tsg->valid_subctxs);
+	tsg->valid_subctxs = NULL;
+}
+
+static void gv11b_tsg_update_inst_blocks_subctxs(struct nvgpu_tsg *tsg)
+{
+	struct gk20a *g = tsg->g;
+	struct nvgpu_channel *ch;
+
+	nvgpu_list_for_each_entry(ch, &tsg->ch_list, nvgpu_channel, ch_entry) {
+		g->ops.ramin.init_subctx_pdb(g, &ch->inst_block,
+					     tsg->subctx_pdb_map);
+		g->ops.ramin.init_subctx_mask(g, &ch->inst_block,
+					      tsg->valid_subctxs);
+	}
+}
+
+static void gv11b_tsg_update_subctxs(struct nvgpu_tsg *tsg, u32 subctx_id,
+				struct vm_gk20a *vm, bool replayable, bool add)
+{
+	struct gk20a *g = tsg->g;
+
+	if (add) {
+		g->ops.ramin.set_subctx_pdb_info(g, subctx_id, vm->pdb.mem,
+				replayable, true, tsg->subctx_pdb_map);
+		nvgpu_set_bit(subctx_id, tsg->valid_subctxs);
+	} else {
+		g->ops.ramin.set_subctx_pdb_info(g, subctx_id, NULL,
+				false, false, tsg->subctx_pdb_map);
+		nvgpu_clear_bit(subctx_id, tsg->valid_subctxs);
+	}
+
+	gv11b_tsg_update_inst_blocks_subctxs(tsg);
+}
+
+static void gv11b_tsg_add_new_subctx_channel_hw(struct nvgpu_channel *ch,
+						bool replayable)
+{
+	struct nvgpu_tsg *tsg = nvgpu_tsg_from_ch(ch);
+	struct nvgpu_tsg_subctx *subctx = ch->subctx;
+	struct vm_gk20a *vm = nvgpu_tsg_subctx_get_vm(subctx);
+	u32 subctx_id = nvgpu_tsg_subctx_get_id(subctx);
+
+	nvgpu_tsg_subctx_set_replayable(subctx, replayable);
+
+	gv11b_tsg_update_subctxs(tsg, subctx_id, vm, replayable, true);
+}
+
+static void gv11b_tsg_add_existing_subctx_channel_hw(struct nvgpu_channel *ch,
+						 bool replayable)
+{
+	struct nvgpu_tsg *tsg = nvgpu_tsg_from_ch(ch);
+	struct nvgpu_tsg_subctx *subctx = ch->subctx;
+	struct gk20a *g = ch->g;
+
+	if (nvgpu_tsg_subctx_get_replayable(subctx) != replayable) {
+		nvgpu_err(g, "subctx replayable mismatch. ignoring.");
+	}
+
+	g->ops.ramin.init_subctx_pdb(g, &ch->inst_block, tsg->subctx_pdb_map);
+	g->ops.ramin.init_subctx_mask(g, &ch->inst_block, tsg->valid_subctxs);
+}
+
+int gv11b_tsg_add_subctx_channel_hw(struct nvgpu_channel *ch, bool replayable)
+{
+	struct nvgpu_tsg *tsg = nvgpu_tsg_from_ch(ch);
+	struct gk20a *g = tsg->g;
+	int err;
+
+	nvgpu_log(g, gpu_dbg_fn, " ");
+
+	if (!nvgpu_is_enabled(g, NVGPU_SUPPORT_TSG_SUBCONTEXTS)) {
+		return 0;
+	}
+
+	/*
+	 * Add new subcontext to the TSG. Sequence for this is below:
+	 *   1. Disable TSG.
+	 *   2. Preempt TSG.
+	 *   3. Program subctx PDBs in instance blocks of all channels in
+	 *      the TSG.
+	 *   4. Enable TSG.
+	 * This sequence is executed acquiring TSG level lock ctx_init_lock.
+	 * to synchronize with channels from other subcontexts.
+	 * ctx_init_lock is reused here. It is originally there for
+	 * synchronizing the GR context initialization by various
+	 * channels in the TSG.
+	 */
+
+	nvgpu_mutex_acquire(&tsg->ctx_init_lock);
+
+	g->ops.tsg.disable(tsg);
+	err = g->ops.fifo.preempt_tsg(g, tsg);
+	if (err != 0) {
+		g->ops.tsg.enable(tsg);
+		nvgpu_mutex_release(&tsg->ctx_init_lock);
+		nvgpu_err(g, "preempt failed %d", err);
+		return err;
+	}
+
+	nvgpu_rwsem_down_read(&tsg->ch_list_lock);
+
+	if (!nvgpu_test_bit(ch->subctx_id, tsg->valid_subctxs)) {
+		gv11b_tsg_add_new_subctx_channel_hw(ch, replayable);
+	} else {
+		gv11b_tsg_add_existing_subctx_channel_hw(ch, replayable);
+	}
+
+	nvgpu_rwsem_up_read(&tsg->ch_list_lock);
+
+
+	g->ops.tsg.enable(tsg);
+	nvgpu_mutex_release(&tsg->ctx_init_lock);
+
+	nvgpu_log(g, gpu_dbg_fn, "done");
+
+	return 0;
+}
+
+void gv11b_tsg_remove_subctx_channel_hw(struct nvgpu_channel *ch)
+{
+	struct nvgpu_tsg *tsg = nvgpu_tsg_from_ch(ch);
+	struct gk20a *g = tsg->g;
+	u32 subctx_id;
+
+	if (!nvgpu_is_enabled(g, NVGPU_SUPPORT_TSG_SUBCONTEXTS)) {
+		return;
+	}
+
+	subctx_id = nvgpu_tsg_subctx_get_id(ch->subctx);
+
+	gv11b_tsg_update_subctxs(tsg, subctx_id, NULL, false, false);
 }

@@ -228,7 +228,12 @@ static int nvgpu_init_system_vm(struct mm_gk20a *mm)
 	if (err != 0) {
 		goto clean_up_vm;
 	}
-	g->ops.mm.init_inst_block_core(inst_block, mm->pmu.vm, big_page_size);
+
+	err = g->ops.mm.init_inst_block_core(inst_block, mm->pmu.vm, big_page_size);
+	if (err != 0) {
+		nvgpu_free_inst_block(g, inst_block);
+		goto clean_up_vm;
+	}
 
 	return 0;
 
@@ -247,7 +252,12 @@ static int nvgpu_init_hwpm(struct mm_gk20a *mm)
 	if (err != 0) {
 		return err;
 	}
-	g->ops.mm.init_inst_block_core(inst_block, mm->pmu.vm, 0);
+
+	err = g->ops.mm.init_inst_block_core(inst_block, mm->pmu.vm, 0);
+	if (err != 0) {
+		nvgpu_free_inst_block(g, inst_block);
+		return err;
+	}
 
 	return 0;
 }
@@ -366,7 +376,12 @@ static int nvgpu_init_bar1_vm(struct mm_gk20a *mm)
 	if (err != 0) {
 		goto clean_up_vm;
 	}
-	g->ops.mm.init_inst_block_core(inst_block, mm->bar1.vm, big_page_size);
+
+	err = g->ops.mm.init_inst_block_core(inst_block, mm->bar1.vm, big_page_size);
+	if (err != 0) {
+		nvgpu_free_inst_block(g, inst_block);
+		goto clean_up_vm;
+	}
 
 	return 0;
 
@@ -401,7 +416,11 @@ static int nvgpu_init_engine_ucode_vm(struct gk20a *g,
 		goto clean_up_va;
 	}
 
-	g->ops.mm.init_inst_block_core(inst_block, ucode->vm, big_page_size);
+	err = g->ops.mm.init_inst_block_core(inst_block, ucode->vm, big_page_size);
+	if (err != 0) {
+		nvgpu_free_inst_block(g, inst_block);
+		goto clean_up_va;
+	}
 
 	return 0;
 

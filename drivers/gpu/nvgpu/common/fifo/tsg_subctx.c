@@ -120,6 +120,10 @@ void nvgpu_tsg_subctx_unbind_channel(struct nvgpu_tsg *tsg,
 	nvgpu_list_del(&ch->subctx_entry);
 
 	if (nvgpu_list_empty(&subctx->ch_list)) {
+		if (g->ops.tsg.remove_subctx_channel_hw != NULL) {
+			g->ops.tsg.remove_subctx_channel_hw(ch);
+		}
+
 		if (g->ops.gr.setup.free_subctx != NULL) {
 			g->ops.gr.setup.free_subctx(ch);
 			subctx->gr_subctx = NULL;
@@ -201,6 +205,22 @@ struct nvgpu_gr_subctx *nvgpu_tsg_subctx_get_gr_subctx(
 u32 nvgpu_tsg_subctx_get_id(struct nvgpu_tsg_subctx *subctx)
 {
 	return subctx->subctx_id;
+}
+
+void nvgpu_tsg_subctx_set_replayable(struct nvgpu_tsg_subctx *subctx,
+				     bool replayable)
+{
+	subctx->replayable = replayable;
+}
+
+bool nvgpu_tsg_subctx_get_replayable(struct nvgpu_tsg_subctx *subctx)
+{
+	return subctx->replayable;
+}
+
+struct vm_gk20a *nvgpu_tsg_subctx_get_vm(struct nvgpu_tsg_subctx *subctx)
+{
+	return subctx->vm;
 }
 
 struct nvgpu_gr_ctx_mappings *nvgpu_tsg_subctx_alloc_or_get_mappings(

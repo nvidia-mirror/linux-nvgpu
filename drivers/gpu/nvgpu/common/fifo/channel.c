@@ -1005,7 +1005,6 @@ static void channel_free(struct nvgpu_channel *ch, bool force)
 	nvgpu_cic_rm_wait_for_deferred_interrupts(g);
 
 unbind:
-	g->ops.channel.unbind(ch);
 	g->ops.channel.free_inst(g, ch);
 
 	nvgpu_channel_wdt_destroy(ch->wdt);
@@ -1517,6 +1516,14 @@ int nvgpu_channel_setup_bind(struct nvgpu_channel *c,
 
 		c->deterministic = true;
 		nvgpu_rwsem_up_read(&g->deterministic_busy);
+	}
+#endif
+
+	c->replayable = false;
+
+#ifdef CONFIG_NVGPU_REPLAYABLE_FAULT
+	if ((args->flags & NVGPU_SETUP_BIND_FLAGS_REPLAYABLE_FAULTS_ENABLE) != 0U) {
+		c->replayable = true;
 	}
 #endif
 

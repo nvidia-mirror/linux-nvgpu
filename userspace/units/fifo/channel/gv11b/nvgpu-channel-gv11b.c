@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -69,6 +69,12 @@ struct unit_ctx {
 	size_t size;
 };
 
+static int stub_add_subctx_channel_hw(struct nvgpu_channel *ch,
+				      bool replayable)
+{
+	return 0;
+}
+
 int test_gv11b_channel_unbind(struct unit_module *m,
 		struct gk20a *g, void *args)
 {
@@ -76,6 +82,8 @@ int test_gv11b_channel_unbind(struct unit_module *m,
 	u32 runlist_id = NVGPU_INVALID_RUNLIST_ID;
 	struct nvgpu_channel *ch;
 	int ret = UNIT_FAIL;
+
+	g->ops.tsg.add_subctx_channel_hw = stub_add_subctx_channel_hw;
 
 	ch = nvgpu_channel_open_new(g, runlist_id,
 		privileged, getpid(), getpid());

@@ -44,6 +44,9 @@ struct nvgpu_tsg_subctx {
 	/** Subcontext's GR ctx header and GR ctx buffers mappings. */
 	struct nvgpu_gr_subctx *gr_subctx;
 
+	/** Replayable faults state for a subcontext. */
+	bool replayable;
+
 	/**
 	 * Subcontext's entry in TSG's (#nvgpu_tsg) subcontexts list
 	 * #subctx_list.

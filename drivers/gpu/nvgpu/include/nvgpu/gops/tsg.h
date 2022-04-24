@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -55,6 +55,11 @@ struct gops_tsg {
 /** @cond DOXYGEN_SHOULD_SKIP_THIS */
 	int (*open)(struct nvgpu_tsg *tsg);
 	void (*release)(struct nvgpu_tsg *tsg);
+	int (*init_subctx_state)(struct gk20a *g, struct nvgpu_tsg *tsg);
+	void (*deinit_subctx_state)(struct gk20a *g, struct nvgpu_tsg *tsg);
+	int (*add_subctx_channel_hw)(struct nvgpu_channel *ch,
+				      bool replayable);
+	void (*remove_subctx_channel_hw)(struct nvgpu_channel *ch);
 	int (*init_eng_method_buffers)(struct gk20a *g,
 			struct nvgpu_tsg *tsg);
 	void (*deinit_eng_method_buffers)(struct gk20a *g,

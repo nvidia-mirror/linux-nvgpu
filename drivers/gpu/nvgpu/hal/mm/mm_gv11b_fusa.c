@@ -21,6 +21,7 @@
  */
 
 #include <nvgpu/gk20a.h>
+#include <nvgpu/fifo.h>
 #include <nvgpu/gmmu.h>
 #include <nvgpu/mm.h>
 
@@ -42,14 +43,48 @@ void gv11b_mm_init_inst_block(struct nvgpu_mem *inst_block,
 	}
 }
 
-void gv11b_mm_init_inst_block_core(struct nvgpu_mem *inst_block,
+int gv11b_mm_init_inst_block_core(struct nvgpu_mem *inst_block,
 		struct vm_gk20a *vm, u32 big_page_size)
 {
 	struct gk20a *g = gk20a_from_vm(vm);
+	u32 max_subctx_count = g->ops.gr.init.get_max_subctx_count();
+	unsigned long *valid_subctxs;
+	u32 *subctx_pdb_map;
+
+	subctx_pdb_map = nvgpu_kzalloc(g, max_subctx_count * sizeof(u32) * 4U);
+	if (subctx_pdb_map == NULL) {
+		nvgpu_err(g, "subctx_pdb_map alloc failed");
+		return -ENOMEM;
+	}
+
+	valid_subctxs = nvgpu_kzalloc(g,
+				BITS_TO_LONGS(max_subctx_count) *
+				sizeof(unsigned long));
+	if (valid_subctxs == NULL) {
+		nvgpu_err(g, "valid_subctxs bitmask alloc failed");
+		nvgpu_kfree(g, subctx_pdb_map);
+		return -ENOMEM;
+	}
 
 	gv11b_mm_init_inst_block(inst_block, vm, big_page_size);
 
-	g->ops.ramin.init_subctx_pdb(g, inst_block, vm->pdb.mem, false, 1U);
+	/* Program subctx pdb info in the instance block */
+	g->ops.ramin.init_subctx_pdb_map(g, subctx_pdb_map);
+	g->ops.ramin.set_subctx_pdb_info(g, CHANNEL_INFO_VEID0, vm->pdb.mem,
+					 false, true, subctx_pdb_map);
+	g->ops.ramin.init_subctx_pdb(g, inst_block, subctx_pdb_map);
+
+	/*
+	 * Program subctx pdb valid mask in the instance block.
+	 * Only subctx 0 is valid here.
+	 */
+	nvgpu_set_bit(CHANNEL_INFO_VEID0, valid_subctxs);
+	g->ops.ramin.init_subctx_mask(g, inst_block, valid_subctxs);
+
+	nvgpu_kfree(g, valid_subctxs);
+	nvgpu_kfree(g, subctx_pdb_map);
+
+	return 0;
 }
 
 bool gv11b_mm_is_bar1_supported(struct gk20a *g)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -109,6 +109,24 @@ int test_gv11b_ramin_init_subctx_pdb(struct unit_module *m, struct gk20a *g,
 	u64 pdb_addr;
 	u32 max_subctx_count = ram_in_sc_page_dir_base_target__size_1_v();
 	u32 aperture = ram_in_sc_page_dir_base_target_sys_mem_ncoh_v();
+	unsigned long *valid_subctxs;
+	u32 *subctx_pdb_map;
+
+	subctx_pdb_map = nvgpu_kzalloc(g, max_subctx_count * sizeof(u32) * 4U);
+	if (subctx_pdb_map == NULL) {
+		nvgpu_err(g, "subctx_pdb_map alloc failed");
+		return UNIT_FAIL;
+	}
+
+	valid_subctxs = nvgpu_kzalloc(g,
+				BITS_TO_LONGS(max_subctx_count) *
+				sizeof(unsigned long));
+	if (valid_subctxs == NULL) {
+		nvgpu_err(g, "valid_subctxs bitmap alloc failed");
+		nvgpu_kfree(g, subctx_pdb_map);
+		subctx_pdb_map = NULL;
+		return UNIT_FAIL;
+	}
 
 	g->ops.ramin.alloc_size = gk20a_ramin_alloc_size;
 
@@ -146,8 +164,21 @@ int test_gv11b_ramin_init_subctx_pdb(struct unit_module *m, struct gk20a *g,
 					1U, 0U);
 		}
 
-		gv11b_ramin_init_subctx_pdb(g, &inst_block, &pdb_mem,
-								replayable, 64);
+		g->ops.ramin.init_subctx_pdb_map(g, subctx_pdb_map);
+		for (subctx_id = 0; subctx_id < max_subctx_count; subctx_id++) {
+			g->ops.ramin.set_subctx_pdb_info(g, subctx_id,
+				&pdb_mem, replayable, true, subctx_pdb_map);
+			nvgpu_set_bit(subctx_id, valid_subctxs);
+		}
+
+		/* Program subctx pdb info in the instance block */
+		g->ops.ramin.init_subctx_pdb(g, &inst_block, subctx_pdb_map);
+
+		/*
+		 * Program subctx pdb valid mask in the instance block.
+		 * Only subctx 0 is valid here.
+		 */
+		g->ops.ramin.init_subctx_mask(g, &inst_block, valid_subctxs);
 
 		for (subctx_id = 0; subctx_id < max_subctx_count; subctx_id++) {
 			addr_lo = ram_in_sc_page_dir_base_vol_w(subctx_id);

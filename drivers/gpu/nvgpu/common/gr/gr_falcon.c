@@ -227,7 +227,11 @@ static int nvgpu_gr_falcon_init_ctxsw_ucode_vaspace(struct gk20a *g,
 		return err;
 	}
 
-	g->ops.mm.init_inst_block_core(&ucode_info->inst_blk_desc, vm, 0);
+	err = g->ops.mm.init_inst_block_core(&ucode_info->inst_blk_desc, vm, 0);
+	if (err != 0) {
+		nvgpu_free_inst_block(g, &ucode_info->inst_blk_desc);
+		return err;
+	}
 
 	/* Map ucode surface to GMMU */
 	ucode_info->surface_desc.gpu_va = nvgpu_gmmu_map(vm,

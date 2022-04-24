@@ -38,6 +38,7 @@
 #include <nvgpu/nvs.h>
 #include <nvgpu/static_analysis.h>
 #include <nvgpu/nvgpu_init.h>
+#include <nvgpu/kmem.h>
 #ifdef CONFIG_NVGPU_PROFILER
 #include <nvgpu/profiler.h>
 #endif
@@ -292,12 +293,7 @@ static int nvgpu_tsg_unbind_channel_common(struct nvgpu_tsg *tsg,
 	}
 #endif
 
-	/**
-	 * Remove channel from TSG and re-enable rest of the channels.
-	 * Since channel removal can lead to subctx removal and/or
-	 * VM mappings removal, acquire ctx_init_lock.
-	 */
-	nvgpu_mutex_acquire(&tsg->ctx_init_lock);
+	g->ops.channel.unbind(ch);
 
 	nvgpu_rwsem_down_write(&tsg->ch_list_lock);
 	nvgpu_tsg_subctx_unbind_channel(tsg, ch);
@@ -310,8 +306,6 @@ static int nvgpu_tsg_unbind_channel_common(struct nvgpu_tsg *tsg,
 	 */
 	g->ops.channel.disable(ch);
 	nvgpu_rwsem_up_write(&tsg->ch_list_lock);
-
-	nvgpu_mutex_release(&tsg->ctx_init_lock);
 
 	/*
 	 * Don't re-enable all channels if TSG has timed out already
@@ -345,8 +339,16 @@ int nvgpu_tsg_unbind_channel(struct nvgpu_tsg *tsg, struct nvgpu_channel *ch,
 
 	nvgpu_log_fn(g, "unbind tsg:%u ch:%u\n", tsg->tsgid, ch->chid);
 
+	/**
+	 * Remove channel from TSG and re-enable rest of the channels.
+	 * Since channel removal can lead to subctx removal and/or
+	 * VM mappings removal, acquire ctx_init_lock.
+	 */
+	nvgpu_mutex_acquire(&tsg->ctx_init_lock);
+
 	err = nvgpu_tsg_unbind_channel_common(tsg, ch);
 	if (!force && err == -EAGAIN) {
+		nvgpu_mutex_release(&tsg->ctx_init_lock);
 		return err;
 	}
 
@@ -367,6 +369,8 @@ int nvgpu_tsg_unbind_channel(struct nvgpu_tsg *tsg, struct nvgpu_channel *ch,
 			nvgpu_tsg_abort(g, tsg, true);
 		}
 	}
+
+	nvgpu_mutex_release(&tsg->ctx_init_lock);
 
 	nvgpu_ref_put(&tsg->refcount, nvgpu_tsg_release);
 
@@ -413,7 +417,7 @@ fail_common:
 	}
 #endif
 
-	nvgpu_mutex_acquire(&tsg->ctx_init_lock);
+	g->ops.channel.unbind(ch);
 
 	nvgpu_rwsem_down_write(&tsg->ch_list_lock);
 	nvgpu_tsg_subctx_unbind_channel(tsg, ch);
@@ -907,6 +911,15 @@ int nvgpu_tsg_open_common(struct gk20a *g, struct nvgpu_tsg *tsg, pid_t pid)
 		goto clean_up;
 	}
 
+	if (g->ops.tsg.init_subctx_state != NULL) {
+		err = g->ops.tsg.init_subctx_state(g, tsg);
+		if (err != 0) {
+			nvgpu_err(g, "tsg %d subctx state init failed %d",
+				  tsg->tsgid, err);
+			goto clean_up;
+		}
+	}
+
 #ifdef CONFIG_NVGPU_SM_DIVERSITY
 	nvgpu_gr_ctx_set_sm_diversity_config(tsg->gr_ctx,
 		NVGPU_INVALID_SM_CONFIG_ID);
@@ -969,6 +982,10 @@ void nvgpu_tsg_release_common(struct gk20a *g, struct nvgpu_tsg *tsg)
 
 	nvgpu_free_gr_ctx_struct(g, tsg->gr_ctx);
 	tsg->gr_ctx = NULL;
+
+	if (g->ops.tsg.deinit_subctx_state != NULL) {
+		g->ops.tsg.deinit_subctx_state(g, tsg);
+	}
 
 	if (g->ops.tsg.deinit_eng_method_buffers != NULL) {
 		g->ops.tsg.deinit_eng_method_buffers(g, tsg);

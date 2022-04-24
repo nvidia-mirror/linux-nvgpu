@@ -60,6 +60,8 @@ int nvgpu_tsg_subctx_bind_channel(struct nvgpu_tsg *tsg,
  * - Validate that #subctx is allocated for the channel #ch.
  * - Remove the channel from the subctx #ch_list.
  * - If the subctx #ch_list is empty
+ *   - Update the instance blocks of all channels to remove the
+ *     subctx pdb.
  *   - Invoke g->ops.gr.setup.free_subctx to free the GR subcontext
  *     struct (and GR subcontext mappings struct).
  *   - Remove the subctx from the TSG #subctx_list.
@@ -119,6 +121,35 @@ struct nvgpu_gr_subctx *nvgpu_tsg_subctx_get_gr_subctx(
  * - Return #subctx_id from #nvgpu_tsg_subctx.
  */
 u32 nvgpu_tsg_subctx_get_id(struct nvgpu_tsg_subctx *tsg_subctx);
+
+/**
+ * @brief Set replayable state for a TSG subcontext.
+ *
+ * @param subctx [in]		Pointer to TSG subcontext.
+ * @param Replayable [in]	replayable state for the subcontext.
+ *
+ * - Set #replayable in #nvgpu_tsg_subctx.
+ */
+void nvgpu_tsg_subctx_set_replayable(struct nvgpu_tsg_subctx *subctx,
+				     bool replayable);
+
+/**
+ * @brief Get replayable state for a TSG subcontext.
+ *
+ * @param subctx [in]		Pointer to TSG subcontext.
+ *
+ * - Return #replayable from #nvgpu_tsg_subctx.
+ */
+bool nvgpu_tsg_subctx_get_replayable(struct nvgpu_tsg_subctx *subctx);
+
+/**
+ * @brief Get VM for a TSG subcontext.
+ *
+ * @param subctx [in]		Pointer to TSG subcontext.
+ *
+ * - Return #vm from #nvgpu_tsg_subctx.
+ */
+struct vm_gk20a *nvgpu_tsg_subctx_get_vm(struct nvgpu_tsg_subctx *subctx);
 
 /**
  * @brief Allocate or get the mappings struct for the TSG subcontext.

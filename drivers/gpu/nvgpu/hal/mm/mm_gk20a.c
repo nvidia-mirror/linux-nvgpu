@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -42,6 +42,14 @@ void gk20a_mm_init_inst_block(struct nvgpu_mem *inst_block, struct vm_gk20a *vm,
 	if ((big_page_size != 0U) && (g->ops.ramin.set_big_page_size != NULL)) {
 		g->ops.ramin.set_big_page_size(g, inst_block, big_page_size);
 	}
+}
+
+int gk20a_mm_init_inst_block_core(struct nvgpu_mem *inst_block,
+		struct vm_gk20a *vm, u32 big_page_size)
+{
+	gk20a_mm_init_inst_block(inst_block, vm, big_page_size);
+
+	return 0;
 }
 
 #ifdef CONFIG_NVGPU_USERD

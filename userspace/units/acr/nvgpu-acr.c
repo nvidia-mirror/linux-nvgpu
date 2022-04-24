@@ -826,24 +826,24 @@ int test_acr_prepare_ucode_blob(struct unit_module *m,
 
 	nvgpu_posix_enable_fault_injection(kmem_fi, false, 0);
 
-	nvgpu_posix_enable_fault_injection(kmem_fi, true, 17);
+	nvgpu_posix_enable_fault_injection(kmem_fi, true, 19);
 
-	unit_info(m, " kmem counter 17\n");
+	unit_info(m, " kmem counter 19\n");
 	err = g->acr->prepare_ucode_blob(g);
 
 	if (err != -ENOENT) {
-		unit_return_fail(m, "kmem count 17 test did not fail as expected\n");
+		unit_return_fail(m, "kmem count 19 test did not fail as expected\n");
 	}
 
 	/*
-	 * the kmem counter is decreased after 17th count
+	 * the kmem counter is decreased after 19th count
 	 * because in the first attempt new memory is allocated and mapped for
 	 * page directories but after that since memory is already allocated it
 	 * is just mapped. Thus, number of kmallocs decrease.
 	 */
 	nvgpu_posix_enable_fault_injection(kmem_fi, false, 0);
 
-	for (i = 9; i < 17; i++) {
+	for (i = 9; i < 19; i++) {
 		unit_info(m, "kmem counter %d\n", i);
 		nvgpu_posix_enable_fault_injection(kmem_fi, true, i);
 		err = g->acr->prepare_ucode_blob(g);

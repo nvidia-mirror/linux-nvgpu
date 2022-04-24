@@ -502,6 +502,11 @@ struct nvgpu_channel {
 	struct nvgpu_runlist *runlist;
 
 	/**
+	 * Replayable fault state for the channel.
+	 */
+	bool replayable;
+
+	/**
 	 * Recovery path can be entered twice for the same error in
 	 * case of mmu_nack. This flag indicates if we already recovered
 	 * for the same context.
@@ -960,7 +965,7 @@ struct nvgpu_channel *nvgpu_channel_open_new(struct gk20a *g,
 		pid_t pid, pid_t tid);
 
 /**
- * @brief Setup and bind the channel
+ * @brief Setup and bind the channel and add subcontext PDB.
  *
  * @param ch [in]	Channel pointer.
  * @param args [in]	Setup bind arguments.
@@ -975,6 +980,7 @@ struct nvgpu_channel *nvgpu_channel_open_new(struct gk20a *g,
  * provided in args. A submit token is passed back to be written in the
  * doorbell register in the usermode region to notify the GPU for new
  * work on this channel.
+ * Update the instance blocks of all channels to add the subctx pdb.
  *
  * @note An address space needs to have been bound to the channel before
  *       calling this function.

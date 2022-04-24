@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -131,13 +131,6 @@ static int stub_ramfc_commit_userd(struct nvgpu_channel *ch)
 	return 0;
 }
 
-static void stub_ramin_init_subctx_pdb(struct gk20a *g,
-			struct nvgpu_mem *inst_block, struct nvgpu_mem *pdb_mem,
-			bool replayable, u32 max_subctx_count)
-{
-	global_count++;
-}
-
 #define F_RAMFC_SETUP_PRIVILEDGED_CH			BIT(0)
 #define F_RAMFC_SETUP_LAST				BIT(1)
 
@@ -156,7 +149,6 @@ int test_gv11b_ramfc_setup(struct unit_module *m, struct gk20a *g, void *args)
 
 	g->ops.ramin.alloc_size = gk20a_ramin_alloc_size;
 	g->ops.pbdma.acquire_val = stub_pbdma_acquire_val;
-	g->ops.ramin.init_subctx_pdb = stub_ramin_init_subctx_pdb;
 	g->ops.pbdma.get_gp_base = stub_pbdma_get_gp_base;
 	g->ops.pbdma.get_gp_base_hi = stub_pbdma_get_gp_base_hi;
 	g->ops.pbdma.get_signature = stub_pbdma_get_signature;
@@ -199,9 +191,9 @@ int test_gv11b_ramfc_setup(struct unit_module *m, struct gk20a *g, void *args)
 				ram_fc_config_w()) == 5U, goto done);
 
 		if (branches & F_RAMFC_SETUP_PRIVILEDGED_CH) {
-			unit_assert(global_count == 15U, goto done);
+			unit_assert(global_count == 14U, goto done);
 		} else {
-			unit_assert(global_count == 13U, goto done);
+			unit_assert(global_count == 12U, goto done);
 		}
 	}
 
