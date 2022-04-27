@@ -516,11 +516,17 @@ u32 nvgpu_gr_ctx_get_compute_preemption_mode(struct nvgpu_gr_ctx *gr_ctx)
 }
 
 bool nvgpu_gr_ctx_check_valid_preemption_mode(struct gk20a *g,
+		struct nvgpu_channel *ch,
 		struct nvgpu_gr_ctx *gr_ctx,
 		u32 graphics_preempt_mode, u32 compute_preempt_mode)
 {
 	u32 supported_graphics_preempt_mode = 0U;
 	u32 supported_compute_preempt_mode = 0U;
+#if defined(CONFIG_NVGPU_CILP) && defined(CONFIG_NVGPU_GFXP)
+	int err;
+#endif
+
+	(void)ch;
 
 	if ((graphics_preempt_mode == 0U) && (compute_preempt_mode == 0U)) {
 		return false;
@@ -557,6 +563,23 @@ bool nvgpu_gr_ctx_check_valid_preemption_mode(struct gk20a *g,
 	if ((graphics_preempt_mode == NVGPU_PREEMPTION_MODE_GRAPHICS_GFXP) &&
 		   (compute_preempt_mode == NVGPU_PREEMPTION_MODE_COMPUTE_CILP)) {
 		return false;
+	}
+
+	if (g->ops.gpu_class.is_valid_compute(ch->obj_class) &&
+	    compute_preempt_mode == NVGPU_PREEMPTION_MODE_COMPUTE_CILP) {
+		err = nvgpu_tsg_validate_cilp_config(ch);
+		if (err != 0) {
+			nvgpu_err(g, "Invalid class/veid/pbdma config. CILP not allowed.");
+			return false;
+		}
+	}
+
+	if (g->ops.gpu_class.is_valid_gfx(ch->obj_class)) {
+		err = nvgpu_tsg_validate_cilp_config(ch);
+		if (err != 0) {
+			nvgpu_err(g, "Invalid class/veid/pbdma config. CILP not allowed.");
+			return false;
+		}
 	}
 #endif
 

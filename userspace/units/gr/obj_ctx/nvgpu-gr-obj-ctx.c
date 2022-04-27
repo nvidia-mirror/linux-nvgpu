@@ -227,7 +227,7 @@ int test_gr_obj_ctx_error_injection(struct unit_module *m,
 	/* Fail gr_ctx allocation */
 	nvgpu_posix_enable_fault_injection(kmem_fi, true, 0);
 	err = nvgpu_gr_obj_ctx_alloc(g, golden_image, global_desc, desc,
-			config, gr_ctx, subctx, mappings, &inst_block,
+			config, gr_ctx, channel, subctx, mappings, &inst_block,
 			VOLTA_COMPUTE_A, 0, false, false);
 	if (err == 0) {
 		unit_return_fail(m, "unexpected success");
@@ -236,7 +236,7 @@ int test_gr_obj_ctx_error_injection(struct unit_module *m,
 	/* Fail patch_ctx allocation */
 	nvgpu_posix_enable_fault_injection(kmem_fi, true, 3);
 	err = nvgpu_gr_obj_ctx_alloc(g, golden_image, global_desc, desc,
-			config, gr_ctx, subctx, mappings, &inst_block,
+			config, gr_ctx, channel, subctx, mappings, &inst_block,
 			VOLTA_COMPUTE_A, 0, false, false);
 	if (err == 0) {
 		unit_return_fail(m, "unexpected success");
@@ -245,7 +245,7 @@ int test_gr_obj_ctx_error_injection(struct unit_module *m,
 	/* Fail circular buffer mapping */
 	nvgpu_posix_enable_fault_injection(kmem_fi, true, 8);
 	err = nvgpu_gr_obj_ctx_alloc(g, golden_image, global_desc, desc,
-			config, gr_ctx, subctx, mappings, &inst_block,
+			config, gr_ctx, channel, subctx, mappings, &inst_block,
 			VOLTA_COMPUTE_A, 0, false, false);
 	if (err == 0) {
 		unit_return_fail(m, "unexpected success");
@@ -257,7 +257,7 @@ int test_gr_obj_ctx_error_injection(struct unit_module *m,
 	g->ops.gr.init.fe_pwr_mode_force_on = test_fe_pwr_mode_force_on;
 	fe_pwr_mode_count = 0;
 	err = nvgpu_gr_obj_ctx_alloc(g, golden_image, global_desc, desc,
-			config, gr_ctx, subctx, mappings, &inst_block,
+			config, gr_ctx, channel, subctx, mappings, &inst_block,
 			VOLTA_COMPUTE_A, 0, false, false);
 	if (err == 0) {
 		unit_return_fail(m, "unexpected success");
@@ -266,7 +266,7 @@ int test_gr_obj_ctx_error_injection(struct unit_module *m,
 	/* Fail second call to gops.gr.init.fe_pwr_mode_force_on */
 	fe_pwr_mode_count = 1;
 	err = nvgpu_gr_obj_ctx_alloc(g, golden_image, global_desc, desc,
-			config, gr_ctx, subctx, mappings, &inst_block,
+			config, gr_ctx, channel, subctx, mappings, &inst_block,
 			VOLTA_COMPUTE_A, 0, false, false);
 	if (err == 0) {
 		unit_return_fail(m, "unexpected success");
@@ -281,7 +281,7 @@ int test_gr_obj_ctx_error_injection(struct unit_module *m,
 	g->ops.gr.falcon.ctrl_ctxsw = test_falcon_ctrl_ctxsw;
 	ctrl_ctxsw_count = -1;
 	err = nvgpu_gr_obj_ctx_alloc(g, golden_image, global_desc, desc,
-			config, gr_ctx, subctx, mappings, &inst_block,
+			config, gr_ctx, channel, subctx, mappings, &inst_block,
 			VOLTA_COMPUTE_A, 0, false, false);
 	if (err == 0) {
 		unit_return_fail(m, "unexpected success");
@@ -294,7 +294,7 @@ int test_gr_obj_ctx_error_injection(struct unit_module *m,
 	g->ops.gr.init.wait_idle = test_gr_wait_idle;
 	gr_wait_idle_count = 2;
 	err = nvgpu_gr_obj_ctx_alloc(g, golden_image, global_desc, desc,
-			config, gr_ctx, subctx, mappings, &inst_block,
+			config, gr_ctx, channel, subctx, mappings, &inst_block,
 			VOLTA_COMPUTE_A, 0, false, false);
 	if (err == 0) {
 		unit_return_fail(m, "unexpected success");
@@ -307,7 +307,7 @@ int test_gr_obj_ctx_error_injection(struct unit_module *m,
 	g->ops.gr.init.load_sw_bundle_init = test_load_sw_bundle;
 	load_sw_bundle_count = 0;
 	err = nvgpu_gr_obj_ctx_alloc(g, golden_image, global_desc, desc,
-			config, gr_ctx, subctx, mappings, &inst_block,
+			config, gr_ctx, channel, subctx, mappings, &inst_block,
 			VOLTA_COMPUTE_A, 0, false, false);
 	if (err == 0) {
 		unit_return_fail(m, "unexpected success");
@@ -317,7 +317,7 @@ int test_gr_obj_ctx_error_injection(struct unit_module *m,
 	g->ops.gr.init.load_sw_veid_bundle = test_load_sw_bundle;
 	load_sw_bundle_count = 1;
 	err = nvgpu_gr_obj_ctx_alloc(g, golden_image, global_desc, desc,
-			config, gr_ctx, subctx, mappings, &inst_block,
+			config, gr_ctx, channel, subctx, mappings, &inst_block,
 			VOLTA_COMPUTE_A, 0, false, false);
 	if (err == 0) {
 		unit_return_fail(m, "unexpected success");
@@ -337,7 +337,7 @@ int test_gr_obj_ctx_error_injection(struct unit_module *m,
 	g->ops.gr.init.wait_idle = test_gr_wait_idle;
 	gr_wait_idle_count = 4;
 	err = nvgpu_gr_obj_ctx_alloc(g, golden_image, global_desc, desc,
-			config, gr_ctx, subctx, mappings, &inst_block,
+			config, gr_ctx, channel, subctx, mappings, &inst_block,
 			VOLTA_COMPUTE_A, 0, false, false);
 	if (err == 0) {
 		unit_return_fail(m, "unexpected success");
@@ -352,7 +352,7 @@ int test_gr_obj_ctx_error_injection(struct unit_module *m,
 	 */
 	ctrl_ctxsw_count = 1;
 	err = nvgpu_gr_obj_ctx_alloc(g, golden_image, global_desc, desc,
-			config, gr_ctx, subctx, mappings, &inst_block,
+			config, gr_ctx, channel, subctx, mappings, &inst_block,
 			VOLTA_COMPUTE_A, 0, false, false);
 	if (err == 0) {
 		unit_return_fail(m, "unexpected success");
@@ -364,7 +364,7 @@ int test_gr_obj_ctx_error_injection(struct unit_module *m,
 	 */
 	ctrl_ctxsw_count = 2;
 	err = nvgpu_gr_obj_ctx_alloc(g, golden_image, global_desc, desc,
-			config, gr_ctx, subctx, mappings, &inst_block,
+			config, gr_ctx, channel, subctx, mappings, &inst_block,
 			VOLTA_COMPUTE_A, 0, false, false);
 	if (err == 0) {
 		unit_return_fail(m, "unexpected success");
@@ -376,7 +376,7 @@ int test_gr_obj_ctx_error_injection(struct unit_module *m,
 	/* Fail golden context verification */
 	nvgpu_posix_enable_fault_injection(golden_ctx_verif_fi, true, 0);
 	err = nvgpu_gr_obj_ctx_alloc(g, golden_image, global_desc, desc,
-			config, gr_ctx, subctx, mappings, &inst_block,
+			config, gr_ctx, channel, subctx, mappings, &inst_block,
 			VOLTA_COMPUTE_A, 0, false, false);
 	if (err == 0) {
 		unit_return_fail(m, "unexpected success");
@@ -387,7 +387,7 @@ int test_gr_obj_ctx_error_injection(struct unit_module *m,
 
 	/* Finally, successful obj_ctx allocation */
 	err = nvgpu_gr_obj_ctx_alloc(g, golden_image, global_desc, desc,
-			config, gr_ctx, subctx, mappings, &inst_block,
+			config, gr_ctx, channel, subctx, mappings, &inst_block,
 			VOLTA_COMPUTE_A, 0, false, false);
 	if (err != 0) {
 		unit_return_fail(m, "failed to allocate obj_ctx");
@@ -400,15 +400,16 @@ int test_gr_obj_ctx_error_injection(struct unit_module *m,
 
 	/* Reallocation with golden image already created */
 	err = nvgpu_gr_obj_ctx_alloc(g, golden_image, global_desc, desc,
-			config, gr_ctx, subctx, mappings, &inst_block,
+			config, gr_ctx, channel, subctx, mappings, &inst_block,
 			VOLTA_COMPUTE_A, 0, false, false);
 	if (err != 0) {
 		unit_return_fail(m, "failed to re-allocate obj_ctx");
 	}
 
 	/* Set preemption mode with invalid compute class */
-	err = nvgpu_gr_obj_ctx_set_ctxsw_preemption_mode(g, config, desc, gr_ctx,
-		VOLTA_DMA_COPY_A, 0, NVGPU_PREEMPTION_MODE_COMPUTE_CTA);
+	err = nvgpu_gr_obj_ctx_set_ctxsw_preemption_mode(g, channel, config,
+		desc, gr_ctx, VOLTA_DMA_COPY_A, 0,
+		NVGPU_PREEMPTION_MODE_COMPUTE_CTA);
 	if (err == 0) {
 		unit_return_fail(m, "unexpected success");
 	}

@@ -155,6 +155,7 @@ static void nvgpu_gr_obj_ctx_init_ctxsw_preemption_mode(struct gk20a *g,
 }
 
 static int nvgpu_gr_obj_ctx_init_ctxsw_preemption(struct gk20a *g,
+	struct nvgpu_channel *ch,
 	struct nvgpu_gr_config *config, struct nvgpu_gr_ctx_desc *gr_ctx_desc,
 	struct nvgpu_gr_ctx *gr_ctx,
 	u32 class_num, u32 flags)
@@ -193,7 +194,7 @@ static int nvgpu_gr_obj_ctx_init_ctxsw_preemption(struct gk20a *g,
 			&compute_preempt_mode);
 	}
 
-	err = nvgpu_gr_obj_ctx_set_ctxsw_preemption_mode(g, config,
+	err = nvgpu_gr_obj_ctx_set_ctxsw_preemption_mode(g, ch, config,
 		gr_ctx_desc, gr_ctx, class_num, graphics_preempt_mode,
 		compute_preempt_mode);
 	if (err != 0) {
@@ -296,6 +297,7 @@ static int nvgpu_gr_obj_ctx_set_compute_preemption_mode(struct gk20a *g,
 }
 
 int nvgpu_gr_obj_ctx_set_ctxsw_preemption_mode(struct gk20a *g,
+	struct nvgpu_channel *ch,
 	struct nvgpu_gr_config *config, struct nvgpu_gr_ctx_desc *gr_ctx_desc,
 	struct nvgpu_gr_ctx *gr_ctx, u32 class_num,
 	u32 graphics_preempt_mode, u32 compute_preempt_mode)
@@ -303,7 +305,7 @@ int nvgpu_gr_obj_ctx_set_ctxsw_preemption_mode(struct gk20a *g,
 	int err = 0;
 
 	/* check for invalid combinations */
-	if (nvgpu_gr_ctx_check_valid_preemption_mode(g, gr_ctx,
+	if (nvgpu_gr_ctx_check_valid_preemption_mode(g, ch, gr_ctx,
 			graphics_preempt_mode, compute_preempt_mode) == false) {
 		err = -EINVAL;
 		goto fail;
@@ -939,6 +941,7 @@ static void nvgpu_gr_obj_ctx_patch_ctx_set_size(struct gk20a *g,
 }
 
 static int nvgpu_gr_obj_ctx_alloc_buffers(struct gk20a *g,
+	struct nvgpu_channel *ch,
 	struct nvgpu_gr_obj_ctx_golden_image *golden_image,
 	struct nvgpu_gr_ctx_desc *gr_ctx_desc,
 	struct nvgpu_gr_config *config,
@@ -947,6 +950,7 @@ static int nvgpu_gr_obj_ctx_alloc_buffers(struct gk20a *g,
 {
 	int err;
 
+	(void)ch;
 	(void)class_num;
 	(void)flags;
 
@@ -959,7 +963,7 @@ static int nvgpu_gr_obj_ctx_alloc_buffers(struct gk20a *g,
 	}
 
 #if defined(CONFIG_NVGPU_GFXP) || defined(CONFIG_NVGPU_CILP)
-	err = nvgpu_gr_obj_ctx_init_ctxsw_preemption(g, config,
+	err = nvgpu_gr_obj_ctx_init_ctxsw_preemption(g, ch, config,
 		gr_ctx_desc, gr_ctx, class_num, flags);
 	if (err != 0) {
 		nvgpu_err(g, "fail to init preemption mode");
@@ -1149,6 +1153,7 @@ int nvgpu_gr_obj_ctx_alloc(struct gk20a *g,
 	struct nvgpu_gr_ctx_desc *gr_ctx_desc,
 	struct nvgpu_gr_config *config,
 	struct nvgpu_gr_ctx *gr_ctx,
+	struct nvgpu_channel *c,
 	struct nvgpu_tsg_subctx *subctx,
 	struct nvgpu_gr_ctx_mappings *mappings,
 	struct nvgpu_mem *inst_block,
@@ -1159,7 +1164,7 @@ int nvgpu_gr_obj_ctx_alloc(struct gk20a *g,
 
 	nvgpu_log(g, gpu_dbg_fn | gpu_dbg_gr, " ");
 
-	err = nvgpu_gr_obj_ctx_alloc_buffers(g, golden_image, gr_ctx_desc,
+	err = nvgpu_gr_obj_ctx_alloc_buffers(g, c, golden_image, gr_ctx_desc,
 					     config, gr_ctx, class_num, flags);
 	if (err != 0) {
 		nvgpu_err(g, "failed to alloc ctx buffers");

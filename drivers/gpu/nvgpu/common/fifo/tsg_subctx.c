@@ -356,3 +356,58 @@ void nvgpu_tsg_subctxs_set_pm_buffer_va(struct nvgpu_tsg *tsg,
 	nvgpu_log(g, gpu_dbg_gr, "done");
 }
 #endif /* CONFIG_NVGPU_DEBUGGER */
+
+static inline struct nvgpu_channel *
+nvgpu_channel_from_subctx_entry(struct nvgpu_list_node *node)
+{
+	return (struct nvgpu_channel *)
+	   ((uintptr_t)node - offsetof(struct nvgpu_channel, subctx_entry));
+};
+
+bool nvgpu_tsg_channel_type_active(struct nvgpu_tsg *tsg,
+				   bool match_subctx, u32 subctx_id,
+				   bool match_pbdma, u32 pbdma_id,
+				   bool (*is_valid_class)(u32 class_num))
+{
+	struct nvgpu_tsg_subctx *subctx = NULL;
+	bool channel_active = false;
+	struct gk20a *g = tsg->g;
+	struct nvgpu_channel *ch;
+
+	nvgpu_log(g, gpu_dbg_gr, " ");
+
+	if (is_valid_class == NULL) {
+		return false;
+	}
+
+	nvgpu_rwsem_down_write(&tsg->ch_list_lock);
+
+	nvgpu_list_for_each_entry(subctx, &tsg->subctx_list,
+				nvgpu_tsg_subctx, tsg_entry) {
+		if ((match_subctx && (subctx->subctx_id == subctx_id)) ||
+		    (!match_subctx && (subctx->subctx_id != subctx_id))) {
+
+			nvgpu_list_for_each_entry(ch, &subctx->ch_list,
+						nvgpu_channel, subctx_entry) {
+				if ((*is_valid_class)(ch->obj_class)) {
+
+					if ((match_pbdma && (ch->runqueue_sel == pbdma_id)) ||
+					    (!match_pbdma && (ch->runqueue_sel != pbdma_id))) {
+						channel_active = true;
+						break;
+					}
+				}
+			}
+
+			if (channel_active == true) {
+				break;
+			}
+		}
+	}
+
+	nvgpu_rwsem_up_write(&tsg->ch_list_lock);
+
+	nvgpu_log(g, gpu_dbg_gr, "done");
+
+	return channel_active;
+}

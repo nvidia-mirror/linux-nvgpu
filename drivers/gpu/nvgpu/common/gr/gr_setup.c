@@ -185,6 +185,13 @@ int nvgpu_gr_setup_alloc_obj_ctx(struct nvgpu_channel *c, u32 class_num,
 
 	nvgpu_mutex_acquire(&tsg->ctx_init_lock);
 
+	err = nvgpu_tsg_validate_class_veid_pbdma(c);
+	if (err != 0) {
+		nvgpu_err(g, "Invalid class/veid/pbdma config");
+		nvgpu_mutex_release(&tsg->ctx_init_lock);
+		goto out;
+	}
+
 	err = nvgpu_tsg_subctx_alloc_gr_subctx(g, c);
 	if (err != 0) {
 		nvgpu_err(g, "failed to alloc gr subctx");
@@ -210,7 +217,7 @@ int nvgpu_gr_setup_alloc_obj_ctx(struct nvgpu_channel *c, u32 class_num,
 
 	err = nvgpu_gr_obj_ctx_alloc(g, gr->golden_image,
 			gr->global_ctx_buffer, gr->gr_ctx_desc,
-			gr->config, gr_ctx, c->subctx,
+			gr->config, gr_ctx, c, c->subctx,
 			mappings, &c->inst_block, class_num, flags,
 			c->cde, c->vpr);
 	if (err != 0) {
@@ -384,7 +391,7 @@ int nvgpu_gr_setup_set_preemption_mode(struct nvgpu_channel *ch,
 			ch->chid, ch->tsgid, ch->tgid,
 			graphics_preempt_mode, compute_preempt_mode);
 
-	err = nvgpu_gr_obj_ctx_set_ctxsw_preemption_mode(g, gr->config,
+	err = nvgpu_gr_obj_ctx_set_ctxsw_preemption_mode(g, ch, gr->config,
 			gr->gr_ctx_desc, gr_ctx, class_num,
 			graphics_preempt_mode, compute_preempt_mode);
 	if (err != 0) {

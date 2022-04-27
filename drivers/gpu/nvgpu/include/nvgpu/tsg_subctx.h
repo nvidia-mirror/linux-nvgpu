@@ -211,4 +211,9 @@ void nvgpu_tsg_subctxs_set_pm_buffer_va(struct nvgpu_tsg *tsg,
 					bool set_pm_ctx_gpu_va);
 #endif /* CONFIG_NVGPU_DEBUGGER */
 
+bool nvgpu_tsg_channel_type_active(struct nvgpu_tsg *tsg,
+				   bool match_subctx, u32 subctx_id,
+				   bool match_pbdma, u32 pbdma_id,
+				   bool (*is_valid_class)(u32 class_num));
+
 #endif /* NVGPU_TSG_SUBCTX_H */

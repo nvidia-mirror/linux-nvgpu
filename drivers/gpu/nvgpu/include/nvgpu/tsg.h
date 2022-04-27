@@ -487,6 +487,32 @@ int nvgpu_tsg_unbind_channel(struct nvgpu_tsg *tsg, struct nvgpu_channel *ch,
 			     bool force);
 
 /**
+ * @brief Validate the channel class and VEID/PBDMA assignment.
+ *
+ * @param ch [in]		Pointer to the Channel struct.
+ *
+ * Refer section "SCG, PBDMA, and CILP Rules" from https://p4viewer.nvidia.com/
+ * /get//hw/doc/gpu/volta/volta/design/Functional_Descriptions/
+ * /Volta_Subcontexts_Functional_Description.docx.
+ *
+ * @return 0 in case of success, < 0 in case of failure.
+ */
+int nvgpu_tsg_validate_class_veid_pbdma(struct nvgpu_channel *ch);
+
+/**
+ * @brief Validate the CILP configuration with subcontexts.
+ *
+ * @param ch [in]		Pointer to the Channel struct.
+ *
+ * Refer section "SCG, PBDMA, and CILP Rules" from https://p4viewer.nvidia.com/
+ * /get//hw/doc/gpu/volta/volta/design/Functional_Descriptions/
+ * /Volta_Subcontexts_Functional_Description.docx.
+ *
+ * @return 0 in case of success, < 0 in case of failure.
+ */
+int nvgpu_tsg_validate_cilp_config(struct nvgpu_channel *ch);
+
+/**
  * @brief Check h/w channel status before unbinding Channel.
  *
  * @param tsg [in]		Pointer to TSG struct.

@@ -43,6 +43,154 @@
 #include <nvgpu/profiler.h>
 #endif
 
+#define MATCH_VEID		true
+#define MATCH_PBDMA_ID		true
+#define DONT_MATCH_VEID		false
+#define DONT_MATCH_PBDMA_ID	false
+
+/**
+ * Refer section "SCG, PBDMA, and CILP Rules" from https://p4viewer.nvidia.com/
+ * /get//hw/doc/gpu/volta/volta/design/Functional_Descriptions/
+ * /Volta_Subcontexts_Functional_Description.docx
+ */
+int nvgpu_tsg_validate_class_veid_pbdma(struct nvgpu_channel *ch)
+{
+	struct gk20a *g = ch->g;
+	struct nvgpu_tsg *tsg = nvgpu_tsg_from_ch(ch);
+	bool veidnz_pbdma0_compute_active = false;
+	bool veid0_pbdmanz_compute_active = false;
+	bool veid0_gfx_active = false;
+
+	if (!nvgpu_is_enabled(g, NVGPU_SUPPORT_TSG_SUBCONTEXTS)) {
+		return 0;
+	}
+
+	if (g->ops.gpu_class.is_valid_gfx(ch->obj_class)) {
+		if (ch->runqueue_sel != 0) {
+			nvgpu_err(g, "Can't have Graphics in non-zero'th PBDMA");
+			return -EINVAL;
+		}
+
+		if (ch->subctx_id != CHANNEL_INFO_VEID0) {
+			nvgpu_err(g, "Can't have Graphics in non-zero'th VEID");
+			return -EINVAL;
+		}
+	}
+
+	veid0_gfx_active = nvgpu_tsg_channel_type_active(tsg,
+				MATCH_VEID, CHANNEL_INFO_VEID0,
+				MATCH_PBDMA_ID, CHANNEL_INFO_PBDMA0,
+				g->ops.gpu_class.is_valid_gfx);
+	if (veid0_gfx_active) {
+		if (g->ops.gpu_class.is_valid_compute(ch->obj_class)) {
+			if (ch->subctx_id == CHANNEL_INFO_VEID0) {
+				if (ch->runqueue_sel != 0) {
+					nvgpu_err(g, "VEID0 can't do Graphics and Async Compute");
+					return -EINVAL;
+				}
+			} else {
+				if (ch->runqueue_sel == 0) {
+					nvgpu_err(g, "Async Compute can't be mixed with Graphics on PBDMA0");
+					return -EINVAL;
+				}
+			}
+		}
+	}
+
+	veid0_pbdmanz_compute_active = nvgpu_tsg_channel_type_active(tsg,
+				MATCH_VEID, CHANNEL_INFO_VEID0,
+				DONT_MATCH_PBDMA_ID, CHANNEL_INFO_PBDMA0,
+				g->ops.gpu_class.is_valid_compute);
+	if (veid0_pbdmanz_compute_active) {
+		if (g->ops.gpu_class.is_valid_gfx(ch->obj_class)) {
+			nvgpu_err(g, "VEID0 can't do Graphics and Async Compute");
+			return -EINVAL;
+		}
+	}
+
+	veidnz_pbdma0_compute_active = nvgpu_tsg_channel_type_active(tsg,
+				DONT_MATCH_VEID, CHANNEL_INFO_VEID0,
+				MATCH_PBDMA_ID, CHANNEL_INFO_PBDMA0,
+				g->ops.gpu_class.is_valid_compute);
+	if (veidnz_pbdma0_compute_active) {
+		if (g->ops.gpu_class.is_valid_gfx(ch->obj_class)) {
+			nvgpu_err(g, "Async Compute can't be mixed with Graphics on PBDMA0");
+			return -EINVAL;
+		}
+	}
+
+	return 0;
+}
+
+int nvgpu_tsg_validate_cilp_config(struct nvgpu_channel *ch)
+{
+#ifdef CONFIG_NVGPU_CILP
+	struct gk20a *g = ch->g;
+	struct nvgpu_tsg *tsg = nvgpu_tsg_from_ch(ch);
+	bool veidnz_compute_active;
+	bool veid0_compute_active;
+	bool veid0_gfx_active;
+	bool cilp_enabled;
+
+	if (!nvgpu_is_enabled(g, NVGPU_SUPPORT_TSG_SUBCONTEXTS)) {
+		return 0;
+	}
+
+	veid0_gfx_active = nvgpu_tsg_channel_type_active(tsg,
+				MATCH_VEID, CHANNEL_INFO_VEID0,
+				MATCH_PBDMA_ID, CHANNEL_INFO_PBDMA0,
+				g->ops.gpu_class.is_valid_gfx);
+
+	veidnz_compute_active = nvgpu_tsg_channel_type_active(tsg,
+				DONT_MATCH_VEID, CHANNEL_INFO_VEID0,
+				DONT_MATCH_PBDMA_ID, CHANNEL_INFO_PBDMA0,
+				g->ops.gpu_class.is_valid_compute);
+
+	if (veid0_gfx_active) {
+		if (g->ops.gpu_class.is_valid_compute(ch->obj_class)) {
+			if (ch->subctx_id != CHANNEL_INFO_VEID0) {
+				nvgpu_assert(ch->runqueue_sel != CHANNEL_INFO_PBDMA0);
+				nvgpu_err(g, "SCG, with or without Sync Compute - CILP not allowed");
+				return -EINVAL;
+			} else if (veidnz_compute_active) {
+				nvgpu_err(g, "SCG, with or without Sync Compute - CILP not allowed");
+				return -EINVAL;
+			}
+		}
+	}
+
+	cilp_enabled = (nvgpu_gr_ctx_get_compute_preemption_mode(tsg->gr_ctx) ==
+			NVGPU_PREEMPTION_MODE_COMPUTE_CILP);
+
+	if (!cilp_enabled) {
+		nvgpu_log(g, gpu_dbg_gr, "CILP not enabled currently.");
+		return 0;
+	}
+
+	if (veidnz_compute_active) {
+		if (g->ops.gpu_class.is_valid_gfx(ch->obj_class)) {
+			nvgpu_err(g, "SCG without Sync Compute - CILP not allowed");
+			return -EINVAL;
+		}
+	}
+
+	veid0_compute_active = nvgpu_tsg_channel_type_active(tsg,
+				MATCH_VEID, CHANNEL_INFO_VEID0,
+				MATCH_PBDMA_ID, CHANNEL_INFO_PBDMA0,
+				g->ops.gpu_class.is_valid_compute);
+	if (veid0_compute_active && veidnz_compute_active) {
+		if (g->ops.gpu_class.is_valid_gfx(ch->obj_class)) {
+			nvgpu_err(g, "SCG with Sync Compute - CILP not allowed");
+			return -EINVAL;
+		}
+	}
+#else
+	(void)ch;
+#endif
+
+	return 0;
+}
+
 void nvgpu_tsg_disable(struct nvgpu_tsg *tsg)
 {
 	struct gk20a *g = tsg->g;
