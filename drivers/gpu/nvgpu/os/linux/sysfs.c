@@ -1274,6 +1274,88 @@ static ssize_t mig_mode_config_list_show(struct device *dev,
 static DEVICE_ATTR(mig_mode_config_list, S_IRUGO,
 		   mig_mode_config_list_show, NULL);
 
+/*
+ * Prints out the available MIG configurations and their instances.
+*/
+static ssize_t mig_mode_config_list_parsable_show(struct device *dev,
+				       struct device_attribute *attr, char *buf)
+{
+	int offset = 0;
+	int num_written;
+	u32 config_id;
+	u32 num_configs;
+	const struct nvgpu_mig_gpu_instance_config *mig_gpu_instance_config;
+	const struct nvgpu_gpu_instance_config *config;
+	u32 num_instances_in_config;
+	u32 instance_id;
+	const struct nvgpu_gpu_instance_static_config *instance;
+	struct gk20a *g = get_gk20a(dev);
+	/* The passed buffer is of size PAGE_SIZE. */
+	int remaining = PAGE_SIZE;
+
+	if (!nvgpu_is_powered_on(g))
+		return -EINVAL;
+
+	mig_gpu_instance_config =
+		(g->ops.grmgr.get_mig_config_ptr != NULL) ?
+		g->ops.grmgr.get_mig_config_ptr(g) : NULL;
+	if (!mig_gpu_instance_config)
+		return -EINVAL;
+
+	/* Find the active MIG config and print it */
+	if (!nvgpu_is_enabled(g, NVGPU_SUPPORT_MIG)) {
+		num_written = snprintf(&buf[offset], (size_t)remaining, "active: -1\n");
+		if (num_written < 0 || num_written >= remaining)
+			return -ENOMEM;
+		offset += num_written;
+		remaining -= num_written;
+	} else {
+		num_written = snprintf(&buf[offset], (size_t)remaining, "active: %u\n", g->mig.current_gpu_instance_config_id);
+		if (num_written < 0 || num_written >= remaining)
+			return -ENOMEM;
+		offset += num_written;
+		remaining -= num_written;
+	}
+
+	/* Print number of MIG configs */
+	num_configs = mig_gpu_instance_config->num_config_supported;
+	num_written = snprintf(&buf[offset], (size_t)remaining, "num_configs: %u\n", num_configs);
+	if (num_written < 0 || num_written >= remaining)
+		return -ENOMEM;
+	offset += num_written;
+	remaining -= num_written;
+
+	/* Go through each config and print out its GPU instances */
+	for (config_id = 0U; config_id < num_configs ; config_id++) {
+		config = &mig_gpu_instance_config->gpu_instance_config[config_id];
+
+		/* Print the number of instances */
+		num_instances_in_config = config->num_gpu_instances;
+		num_written = snprintf(&buf[offset], (size_t)remaining, "num_instances: %u\n", num_instances_in_config);
+		if (num_written < 0 || num_written >= remaining)
+			return -ENOMEM;
+		offset += num_written;
+		remaining -= num_written;
+
+		/* Go through each GPU instance and print its id, number of GPCs, GR id */
+		for (instance_id = 0U; instance_id < num_instances_in_config; ++instance_id) {
+			instance = &config->gpu_instance_static_config[instance_id];
+			num_written = snprintf(&buf[offset], (size_t)remaining,
+				"id:%.12u gr:%.12u gpc:%.4u\n",
+				instance->gpu_instance_id, instance->gr_syspipe_id, instance->num_gpc);
+			if (num_written < 0 || num_written >= remaining)
+				return -ENOMEM;
+			offset += num_written;
+			remaining -= num_written;
+		}
+	}
+
+	return offset;
+}
+
+static DEVICE_ATTR(mig_mode_config_list_parsable, S_IRUGO,
+		   mig_mode_config_list_parsable_show, NULL);
+
 static ssize_t mig_mode_config_store(struct device *dev,
 					struct device_attribute *attr,
 					const char *buf, size_t count)
@@ -1398,6 +1480,7 @@ void nvgpu_remove_sysfs(struct device *dev)
 	device_remove_file(dev, &dev_attr_comptag_mem_deduct);
 #ifdef CONFIG_NVGPU_MIG
 	device_remove_file(dev, &dev_attr_mig_mode_config_list);
+	device_remove_file(dev, &dev_attr_mig_mode_config_list_parsable);
 	device_remove_file(dev, &dev_attr_mig_mode_config);
 #endif
 	device_remove_file(dev, &dev_attr_emulate_mode);
@@ -1465,6 +1548,7 @@ int nvgpu_create_sysfs(struct device *dev)
 	error |= device_create_file(dev, &dev_attr_comptag_mem_deduct);
 #ifdef CONFIG_NVGPU_MIG
 	error |= device_create_file(dev, &dev_attr_mig_mode_config_list);
+	error |= device_create_file(dev, &dev_attr_mig_mode_config_list_parsable);
 	error |= device_create_file(dev, &dev_attr_mig_mode_config);
 #endif
 	error |= device_create_file(dev, &dev_attr_emulate_mode);
