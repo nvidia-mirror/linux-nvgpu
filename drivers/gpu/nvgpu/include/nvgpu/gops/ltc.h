@@ -430,6 +430,7 @@ struct gops_ltc {
 #endif
 #ifdef CONFIG_NVGPU_DEBUGGER
 	bool (*pri_is_ltc_addr)(struct gk20a *g, u32 addr);
+	bool (*is_pltcg_ltcs_addr)(struct gk20a *g, u32 addr);
 	bool (*is_ltcs_ltss_addr)(struct gk20a *g, u32 addr);
 	bool (*is_ltcn_ltss_addr)(struct gk20a *g, u32 addr);
 	void (*split_lts_broadcast_addr)(struct gk20a *g, u32 addr,

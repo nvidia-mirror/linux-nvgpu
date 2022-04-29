@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -50,7 +50,9 @@ void gv11b_perf_deinit_inst_block(struct gk20a *g);
 
 u32 gv11b_perf_get_pmmsys_per_chiplet_offset(void);
 u32 gv11b_perf_get_pmmgpc_per_chiplet_offset(void);
+u32 gv11b_perf_get_pmmgpcrouter_per_chiplet_offset(void);
 u32 gv11b_perf_get_pmmfbp_per_chiplet_offset(void);
+u32 gv11b_perf_get_pmmfbprouter_per_chiplet_offset(void);
 
 const u32 *gv11b_perf_get_hwpm_sys_perfmon_regs(u32 *count);
 const u32 *gv11b_perf_get_hwpm_gpc_perfmon_regs(u32 *count);

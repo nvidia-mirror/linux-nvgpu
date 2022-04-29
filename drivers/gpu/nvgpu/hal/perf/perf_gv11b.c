@@ -170,9 +170,19 @@ u32 gv11b_perf_get_pmmgpc_per_chiplet_offset(void)
 	return (perf_pmmgpc_extent_v() - perf_pmmgpc_base_v() + 1U);
 }
 
+u32 gv11b_perf_get_pmmgpcrouter_per_chiplet_offset(void)
+{
+	return (perf_pmmgpcrouter_extent_v() - perf_pmmgpcrouter_base_v() + 1U);
+}
+
 u32 gv11b_perf_get_pmmfbp_per_chiplet_offset(void)
 {
 	return (perf_pmmfbp_extent_v() - perf_pmmfbp_base_v() + 1U);
+}
+
+u32 gv11b_perf_get_pmmfbprouter_per_chiplet_offset(void)
+{
+	return (perf_pmmfbprouter_extent_v() - perf_pmmfbprouter_base_v() + 1U);
 }
 
 static const u32 hwpm_sys_perfmon_regs[] =

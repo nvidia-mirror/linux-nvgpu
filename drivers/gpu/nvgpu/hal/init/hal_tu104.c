@@ -332,6 +332,7 @@ static const struct gops_ltc tu104_ops_ltc = {
 #endif /* CONFIG_NVGPU_GRAPHICS */
 #ifdef CONFIG_NVGPU_DEBUGGER
 	.pri_is_ltc_addr = gm20b_ltc_pri_is_ltc_addr,
+	.is_pltcg_ltcs_addr = gm20b_ltc_is_pltcg_ltcs_addr,
 	.is_ltcs_ltss_addr = gm20b_ltc_is_ltcs_ltss_addr,
 	.is_ltcn_ltss_addr = gm20b_ltc_is_ltcn_ltss_addr,
 	.split_lts_broadcast_addr = gm20b_ltc_split_lts_broadcast_addr,
@@ -1373,7 +1374,9 @@ static const struct gops_perf tu104_ops_perf = {
 	.get_membuf_overflow_status = gv11b_perf_get_membuf_overflow_status,
 	.get_pmmsys_per_chiplet_offset = gv11b_perf_get_pmmsys_per_chiplet_offset,
 	.get_pmmgpc_per_chiplet_offset = gv11b_perf_get_pmmgpc_per_chiplet_offset,
+	.get_pmmgpcrouter_per_chiplet_offset = gv11b_perf_get_pmmgpcrouter_per_chiplet_offset,
 	.get_pmmfbp_per_chiplet_offset = gv11b_perf_get_pmmfbp_per_chiplet_offset,
+	.get_pmmfbprouter_per_chiplet_offset = gv11b_perf_get_pmmfbprouter_per_chiplet_offset,
 	.update_get_put = gv11b_perf_update_get_put,
 	.get_hwpm_sys_perfmon_regs = tu104_perf_get_hwpm_sys_perfmon_regs,
 	.get_hwpm_gpc_perfmon_regs = tu104_perf_get_hwpm_gpc_perfmon_regs,

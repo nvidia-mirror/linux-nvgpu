@@ -54,6 +54,7 @@
 
 #include "common/gr/gr_priv.h"
 
+#include <nvgpu/hw/gv11b/hw_ltc_gv11b.h>
 #include <nvgpu/hw/gv11b/hw_gr_gv11b.h>
 #include <nvgpu/hw/gv11b/hw_proj_gv11b.h>
 #include <nvgpu/hw/gv11b/hw_perf_gv11b.h>
@@ -1802,6 +1803,8 @@ int gr_gv11b_decode_priv_addr(struct gk20a *g, u32 addr,
 			*broadcast_flags |= PRI_BROADCAST_FLAGS_LTCS;
 		} else if (g->ops.ltc.is_ltcn_ltss_addr(g, addr)) {
 			*broadcast_flags |= PRI_BROADCAST_FLAGS_LTSS;
+		} else if (g->ops.ltc.is_pltcg_ltcs_addr(g, addr)) {
+			*broadcast_flags |= PRI_BROADCAST_FLAGS_PLTCG_LTCS;
 		}
 		return 0;
 	} else if (pri_is_fbpa_addr(g, addr)) {
@@ -1843,6 +1846,16 @@ int gr_gv11b_decode_priv_addr(struct gk20a *g, u32 addr,
 				     PRI_BROADCAST_FLAGS_PMMGPC);
 		*addr_type = CTXSW_ADDR_TYPE_GPC;
 		return 0;
+	} else if (PRI_PMMGS_BASE_ADDR_MASK(addr) == NV_PERF_PMMFBP_FBPS_ROUTER) {
+		*broadcast_flags |= (PRI_BROADCAST_FLAGS_PMM_FBPS_ROUTER |
+				     PRI_BROADCAST_FLAGS_PMMFBP);
+		*addr_type = CTXSW_ADDR_TYPE_FBP;
+		return 0;
+	} else if (PRI_PMMGS_BASE_ADDR_MASK(addr) == NV_PERF_PMMGPC_GPCS_ROUTER) {
+		*broadcast_flags |= (PRI_BROADCAST_FLAGS_PMM_GPCS_ROUTER |
+				     PRI_BROADCAST_FLAGS_PMMGPC);
+		*addr_type = CTXSW_ADDR_TYPE_GPC;
+		return 0;
 	} else if (PRI_PMMS_BASE_ADDR_MASK(addr) == NV_PERF_PMMFBP_FBPS) {
 		*broadcast_flags |= (PRI_BROADCAST_FLAGS_PMM_FBPS |
 				     PRI_BROADCAST_FLAGS_PMMFBP);
@@ -1860,6 +1873,22 @@ static u32 gr_gv11b_pri_pmmgpc_addr(struct gk20a *g, u32 gpc_num,
 	return perf_pmmgpc_base_v() +
 		(gpc_num * g->ops.perf.get_pmmgpc_per_chiplet_offset()) +
 		(domain_idx * perf_pmmgpc_perdomain_offset_v()) +
+		offset;
+}
+
+static u32 gr_gv11b_pri_pmmgpcrouter_addr(struct gk20a *g, u32 gpc_num,
+	u32 offset)
+{
+	return perf_pmmgpcrouter_base_v() +
+		(gpc_num * g->ops.perf.get_pmmgpcrouter_per_chiplet_offset()) +
+		offset;
+}
+
+static u32 gr_gv11b_pri_pmmfbprouter_addr(struct gk20a *g, u32 fbp_num,
+	u32 offset)
+{
+	return perf_pmmfbprouter_base_v() +
+		(fbp_num * g->ops.perf.get_pmmfbprouter_per_chiplet_offset()) +
 		offset;
 }
 
@@ -2008,6 +2037,19 @@ int gr_gv11b_create_priv_addr_table(struct gk20a *g,
 			     perf_pmmgpc_perdomain_offset_v();
 			num_domains = 1;
 			offset = PRI_PMMS_ADDR_MASK(addr);
+		} else if ((broadcast_flags &
+			    PRI_BROADCAST_FLAGS_PMM_GPCS_ROUTER) != 0U) {
+			offset = PRI_PMMGS_OFFSET_MASK(addr);
+
+			for (gpc_num = 0;
+			     gpc_num < nvgpu_gr_config_get_gpc_count(gr->config);
+			     gpc_num++) {
+				priv_addr_table[t++] =
+					gr_gv11b_pri_pmmgpcrouter_addr(g, gpc_num,
+						offset);
+			}
+			*num_registers = t;
+			return 0;
 		} else {
 			return -EINVAL;
 		}
@@ -2046,6 +2088,18 @@ int gr_gv11b_create_priv_addr_table(struct gk20a *g,
 			priv_addr_table, &t,
 			nvgpu_get_litter_value(g, GPU_LIT_PERFMON_PMMFBP_LTC_DOMAIN_START),
 			nvgpu_get_litter_value(g, GPU_LIT_PERFMON_PMMFBP_LTC_DOMAIN_COUNT));
+	} else if ((addr_type == CTXSW_ADDR_TYPE_LTCS) &&
+		   ((broadcast_flags & PRI_BROADCAST_FLAGS_PLTCG_LTCS) != 0U)) {
+		u32 num_ltc = g->ltc->ltc_count;
+		u32 ltc_num;
+		u32 ltc_stride = nvgpu_get_litter_value(g, GPU_LIT_LTC_STRIDE);
+
+		for (ltc_num = 0; ltc_num < num_ltc; ltc_num =
+		     nvgpu_safe_add_u32(ltc_num, 1U)) {
+			priv_addr_table[t++] = nvgpu_safe_add_u32(ltc_pltcg_base_v(),
+				nvgpu_safe_add_u32(nvgpu_safe_mult_u32(ltc_num, ltc_stride),
+				(addr & nvgpu_safe_sub_u32(ltc_stride, 1U))));
+		}
 	} else if ((addr_type == CTXSW_ADDR_TYPE_PMM_FBPGS_ROP) &&
 		   ((broadcast_flags & PRI_BROADCAST_FLAGS_PMM_FBPGS_ROP) != 0U)) {
 		gr_gv11b_split_pmm_fbp_broadcast_address(g,
@@ -2064,6 +2118,22 @@ int gr_gv11b_create_priv_addr_table(struct gk20a *g,
 			PRI_PMMS_ADDR_MASK(addr),
 			priv_addr_table, &t,
 			domain_start, 1);
+	} else if ((addr_type == CTXSW_ADDR_TYPE_FBP) &&
+		   ((broadcast_flags & PRI_BROADCAST_FLAGS_PMM_FBPS_ROUTER) != 0U)) {
+		u32 offset = 0;
+		u32 fbp_num = 0;
+
+		offset = PRI_PMMGS_OFFSET_MASK(addr);
+
+		for (fbp_num = 0;
+		     fbp_num < nvgpu_fbp_get_num_fbps(g->fbp);
+		     fbp_num++) {
+			priv_addr_table[t++] =
+			gr_gv11b_pri_pmmfbprouter_addr(g, fbp_num,
+			offset);
+		}
+		*num_registers = t;
+		return 0;
 	} else if ((broadcast_flags & PRI_BROADCAST_FLAGS_GPC) == 0U) {
 		if ((broadcast_flags & PRI_BROADCAST_FLAGS_TPC) != 0U) {
 			for (tpc_num = 0;

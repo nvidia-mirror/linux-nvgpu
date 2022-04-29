@@ -1,7 +1,7 @@
 /*
  * GK20A Graphics Context Pri Register Addressing
  *
- * Copyright (c) 2014-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -264,6 +264,9 @@ enum ctxsw_addr_type {
 #define PRI_BROADCAST_FLAGS_PMM_FBPGS_LTC	BIT32(15)
 #define PRI_BROADCAST_FLAGS_PMM_FBPGS_ROP	BIT32(16)
 #define PRI_BROADCAST_FLAGS_SM			BIT32(17)
+#define PRI_BROADCAST_FLAGS_PMM_GPCS_ROUTER	BIT32(18)
+#define PRI_BROADCAST_FLAGS_PMM_FBPS_ROUTER	BIT32(19)
+#define PRI_BROADCAST_FLAGS_PLTCG_LTCS		BIT32(20)
 
 #endif /* CONFIG_NVGPU_DEBUGGER */
 #endif /* GR_PRI_GK20A_H */

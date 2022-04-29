@@ -366,6 +366,7 @@ static const struct gops_ltc ga10b_ops_ltc = {
 #endif /* CONFIG_NVGPU_GRAPHICS */
 #ifdef CONFIG_NVGPU_DEBUGGER
 	.pri_is_ltc_addr = gm20b_ltc_pri_is_ltc_addr,
+	.is_pltcg_ltcs_addr = gm20b_ltc_is_pltcg_ltcs_addr,
 	.is_ltcs_ltss_addr = gm20b_ltc_is_ltcs_ltss_addr,
 	.is_ltcn_ltss_addr = gm20b_ltc_is_ltcn_ltss_addr,
 	.split_lts_broadcast_addr = gm20b_ltc_split_lts_broadcast_addr,

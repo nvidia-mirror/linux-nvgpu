@@ -1,7 +1,7 @@
 /*
  * GV11B/GV100 Graphics Context Pri Register Addressing
  *
- * Copyright (c) 2018-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -37,7 +37,9 @@
 #define NV_PERF_PMMGPC_GPCGS_GPCTPCA         0x00250000U
 #define NV_PERF_PMMGPC_GPCGS_GPCTPCB         0x00250200U
 #define NV_PERF_PMMGPC_GPCS                  0x00278000U
+#define NV_PERF_PMMGPC_GPCS_ROUTER           0x00251800U
 #define NV_PERF_PMMFBP_FBPS                  0x0027C000U
+#define NV_PERF_PMMFBP_FBPS_ROUTER           0x00251A00U
 
 #define PRI_PMMGS_ADDR_WIDTH                 9U
 #define PRI_PMMS_ADDR_WIDTH                  14U

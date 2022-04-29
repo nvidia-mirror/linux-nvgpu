@@ -1,7 +1,7 @@
 /*
  * GM20B L2
  *
- * Copyright (c) 2014-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -45,6 +45,7 @@ void gm20b_ltc_set_zbc_depth_entry(struct gk20a *g,
 #endif /* CONFIG_NVGPU_GRAPHICS */
 #ifdef CONFIG_NVGPU_DEBUGGER
 bool gm20b_ltc_pri_is_ltc_addr(struct gk20a *g, u32 addr);
+bool gm20b_ltc_is_pltcg_ltcs_addr(struct gk20a *g, u32 addr);
 bool gm20b_ltc_is_ltcs_ltss_addr(struct gk20a *g, u32 addr);
 bool gm20b_ltc_is_ltcn_ltss_addr(struct gk20a *g, u32 addr);
 void gm20b_ltc_split_lts_broadcast_addr(struct gk20a *g, u32 addr,
