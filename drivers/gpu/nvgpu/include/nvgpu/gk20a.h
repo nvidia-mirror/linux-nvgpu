@@ -500,6 +500,8 @@ struct gk20a {
 #ifdef CONFIG_NVGPU_DGPU
 	struct nvgpu_falcon nvdec_flcn;
 	struct nvgpu_falcon minion_flcn;
+#endif
+#ifdef CONFIG_NVGPU_NON_FUSA
 	struct clk_gk20a clk;
 #endif
 	struct nvgpu_falcon gsp_flcn;

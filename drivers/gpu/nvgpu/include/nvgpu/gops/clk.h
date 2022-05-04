@@ -27,7 +27,7 @@
 struct gk20a;
 struct namemap_cfg;
 struct clk_gk20a;
-#ifdef CONFIG_NVGPU_CLK_ARB
+#ifdef CONFIG_NVGPU_NON_FUSA
 struct nvgpu_clk_pll_debug_data;
 #endif
 
@@ -39,7 +39,7 @@ struct nvgpu_clk_pll_debug_data;
  * func pointers.
  */
 struct gops_clk {
-#ifdef CONFIG_NVGPU_CLK_ARB
+#ifdef CONFIG_NVGPU_NON_FUSA
 	int (*init_debugfs)(struct gk20a *g);
 	int (*init_clk_support)(struct gk20a *g);
 	void (*suspend_clk_support)(struct gk20a *g);
@@ -95,7 +95,7 @@ struct gops_clk {
 	 * @return 0 in case of failure and > 0 in case of success
 	 */
 	unsigned long (*get_maxrate)(struct gk20a *g, u32 api_domain);
-#ifdef CONFIG_NVGPU_CLK_ARB
+#ifdef CONFIG_NVGPU_NON_FUSA
 	int (*prepare_enable)(struct clk_gk20a *clk);
 	void (*disable_unprepare)(struct clk_gk20a *clk);
 	int (*get_voltage)(struct clk_gk20a *clk, u64 *val);
