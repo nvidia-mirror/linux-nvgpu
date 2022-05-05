@@ -937,9 +937,6 @@ static const struct gops_fb ga10b_ops_fb = {
 	.handle_replayable_fault = gv11b_fb_handle_replayable_mmu_fault,
 	.mmu_invalidate_replay = gv11b_fb_mmu_invalidate_replay,
 #endif
-#ifdef CONFIG_NVGPU_DGPU
-	.mem_unlock = NULL,
-#endif
 	.write_mmu_fault_buffer_lo_hi = gv11b_fb_write_mmu_fault_buffer_lo_hi,
 	.write_mmu_fault_buffer_get = fb_gv11b_write_mmu_fault_buffer_get,
 	.write_mmu_fault_buffer_size = gv11b_fb_write_mmu_fault_buffer_size,
@@ -1996,11 +1993,6 @@ int ga10b_init_hal(struct gk20a *g)
 #ifdef CONFIG_NVGPU_SIM
 	/* SIM specific overrides for ga10b */
 	nvgpu_init_sim_support_ga10b(g);
-	if (nvgpu_is_enabled(g, NVGPU_IS_FMODEL)){
-		/* Disable fb mem_unlock */
-		gops->fb.mem_unlock = NULL;
-	}
-
 #endif
 
 #ifdef CONFIG_NVGPU_HAL_NON_FUSA
