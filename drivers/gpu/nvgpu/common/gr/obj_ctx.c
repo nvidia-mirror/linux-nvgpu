@@ -427,10 +427,8 @@ static int nvgpu_gr_obj_ctx_alloc_sw_bundle(struct gk20a *g)
 			nvgpu_netlist_get_sw_bundle_init_av_list(g);
 	struct netlist_av_list *sw_veid_bundle_init =
 			nvgpu_netlist_get_sw_veid_bundle_init_av_list(g);
-#ifdef CONFIG_NVGPU_DGPU
 	struct netlist_av64_list *sw_bundle64_init =
 			nvgpu_netlist_get_sw_bundle64_init_av64_list(g);
-#endif
 
 	/* enable pipe mode override */
 	g->ops.gr.init.pipe_mode_override(g, true);
@@ -449,14 +447,12 @@ static int nvgpu_gr_obj_ctx_alloc_sw_bundle(struct gk20a *g)
 		}
 	}
 
-#ifdef CONFIG_NVGPU_DGPU
 	if (g->ops.gr.init.load_sw_bundle64 != NULL) {
 		err = g->ops.gr.init.load_sw_bundle64(g, sw_bundle64_init);
 		if (err != 0) {
 			goto error;
 		}
 	}
-#endif
 
 	/* disable pipe mode override */
 	g->ops.gr.init.pipe_mode_override(g, false);
