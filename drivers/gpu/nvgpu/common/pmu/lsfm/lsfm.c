@@ -29,8 +29,8 @@
 
 #include "lsfm_sw_gm20b.h"
 #include "lsfm_sw_gp10b.h"
-#ifdef CONFIG_NVGPU_DGPU
 #include "lsfm_sw_gv100.h"
+#ifdef CONFIG_NVGPU_DGPU
 #include "lsfm_sw_tu104.h"
 #endif
 
