@@ -43,7 +43,7 @@ int nvgpu_vm_remap_os_buf_get(struct vm_gk20a *vm,
 	struct dma_buf *dmabuf;
 	struct sg_table *sgt = NULL;
 	struct nvgpu_sgt *nv_sgt = NULL;
-	struct dma_buf_attachment *attachment;
+	struct dma_buf_attachment *attachment = NULL;
 	enum nvgpu_aperture aperture;
 	enum dma_data_direction dmabuf_direction;
 	int err = 0;
@@ -105,7 +105,7 @@ int nvgpu_vm_remap_os_buf_get(struct vm_gk20a *vm,
 	return 0;
 
 clean_up:
-	if (IS_ERR(sgt)) {
+	if (!IS_ERR(sgt)) {
 		nvgpu_mm_unpin(dev, dmabuf, attachment, sgt);
 	}
 	dma_buf_put(dmabuf);
