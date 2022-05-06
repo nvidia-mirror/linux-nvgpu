@@ -477,9 +477,9 @@ void ga10b_priv_ring_decode_error_code(struct gk20a *g, u32 error_code)
 {
 	u32 err_code;
 	u32 error_extra;
-	const struct pri_error_code unknown_error_code =
-			{ "undefined", decode_pri_undefined_error_extra_info };
-	const struct pri_error_code *error_lookup_table = &unknown_error_code;
+	const struct pri_error_code unknown_error_code[1] = {
+		{ "undefined", decode_pri_undefined_error_extra_info } };
+	const struct pri_error_code *error_lookup_table = unknown_error_code;
 	size_t lookup_table_size = 1;
 	size_t index = 0;
 
