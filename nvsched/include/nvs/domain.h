@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2021-2022 NVIDIA Corporation.  All rights reserved.
  *
  * NVIDIA Corporation and its licensors retain all intellectual property
  * and proprietary rights in and to this software, related documentation
@@ -68,7 +68,11 @@ struct nvs_domain {
 struct nvs_domain *nvs_domain_create(struct nvs_sched *sched,
 		  const char *name, u64 timeslice, u64 preempt_grace,
 		  void *priv);
+struct nvs_domain *nvs_domain_get_next_domain(struct nvs_sched *sched, struct nvs_domain *dom);
+void nvs_domain_scheduler_attach(struct nvs_sched *sched, struct nvs_domain *dom);
 void nvs_domain_destroy(struct nvs_sched *sched, struct nvs_domain *dom);
+void nvs_domain_unlink_and_destroy(struct nvs_sched *sched,
+			struct nvs_domain *dom);
 void nvs_domain_clear_all(struct nvs_sched *sched);
 u32 nvs_domain_count(struct nvs_sched *sched);
 struct nvs_domain *nvs_domain_by_name(struct nvs_sched *sched, const char *name);

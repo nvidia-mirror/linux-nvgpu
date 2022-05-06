@@ -89,15 +89,6 @@ int nvgpu_tsg_bind_channel(struct nvgpu_tsg *tsg, struct nvgpu_channel *ch)
 		return -EINVAL;
 	}
 
-	/*
-	 * This runlist domain is set either by default or in an explicit
-	 * bind. If the default domain has been deleted, explicit bind is
-	 * mandatory.
-	 */
-	if (tsg->rl_domain == NULL) {
-		return -EINVAL;
-	}
-
 	/* cannot bind more channels than MAX channels supported per TSG */
 	nvgpu_rwsem_down_read(&tsg->ch_list_lock);
 	max_ch_per_tsg = g->ops.runlist.get_max_channels_per_tsg();
@@ -119,14 +110,17 @@ int nvgpu_tsg_bind_channel(struct nvgpu_tsg *tsg, struct nvgpu_channel *ch)
 	 */
 	if (tsg->runlist == NULL) {
 		tsg->runlist = ch->runlist;
-		/*
-		 * The rl domain identifier is stashed in tsg->rl_domain->name
-		 * when the tsg is bound to a domain, but at that point there
-		 * are no channels yet to describe which runlist id should be
-		 * used. Now we know.
-		 */
-		tsg->rl_domain = nvgpu_rl_domain_get(g, tsg->runlist->id, tsg->rl_domain->name);
-		WARN_ON(tsg->rl_domain == NULL);
+		if (tsg->rl_domain != NULL) {
+			/*
+			 * The rl domain identifier is stashed in tsg->rl_domain->name
+			 * when the tsg is bound to a domain, but at that point there
+			 * are no channels yet to describe which runlist id should be
+			 * used. Now we know.
+			 */
+			tsg->rl_domain = nvgpu_rl_domain_get(g, tsg->runlist->id,
+				tsg->rl_domain->name);
+			WARN_ON(tsg->rl_domain == NULL);
+		}
 	} else {
 		if (tsg->runlist != ch->runlist) {
 			nvgpu_err(tsg->g,
@@ -862,12 +856,8 @@ int nvgpu_tsg_open_common(struct gk20a *g, struct nvgpu_tsg *tsg, pid_t pid)
 	tsg->interleave_level = NVGPU_FIFO_RUNLIST_INTERLEAVE_LEVEL_LOW;
 	tsg->timeslice_us = g->ops.tsg.default_timeslice_us(g);
 	tsg->runlist = NULL;
-	/*
-	 * The domain ptr will get updated with the right id once the runlist
-	 * gets specified based on the first channel.
-	 */
-	tsg->rl_domain = nvgpu_rl_domain_get(g, 0, "(default)");
-	tsg->nvs_domain = nvgpu_nvs_domain_by_name(g, "(default)");
+	tsg->rl_domain = NULL;
+	tsg->nvs_domain = NULL;
 #ifdef CONFIG_NVGPU_DEBUGGER
 	tsg->sm_exception_mask_type = NVGPU_SM_EXCEPTION_TYPE_MASK_NONE;
 #endif

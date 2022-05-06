@@ -179,7 +179,7 @@ struct nvgpu_tsg {
 	struct nvgpu_runlist *runlist;
 
 	/**
-	 * Runlist domain this TSG is bound to. Bound with an ioctl, initially the default domain.
+	 * Runlist domain this TSG is bound to. Bound with an ioctl, initially empty
 	 */
 	struct nvgpu_runlist_domain *rl_domain;
 

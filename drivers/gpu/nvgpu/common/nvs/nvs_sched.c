@@ -22,6 +22,7 @@
 
 #include <nvs/log.h>
 #include <nvs/sched.h>
+#include <nvgpu/types.h>
 
 #include <nvgpu/nvs.h>
 #include <nvgpu/kmem.h>
@@ -92,7 +93,7 @@ static u64 nvgpu_nvs_tick(struct gk20a *g)
 {
 	struct nvgpu_nvs_scheduler *sched = g->scheduler;
 	struct nvgpu_nvs_domain *domain;
-	struct nvs_domain *nvs_domain;
+	struct nvs_domain *nvs_next;
 	u64 timeslice;
 
 	nvs_dbg(g, "nvs tick");
@@ -101,20 +102,16 @@ static u64 nvgpu_nvs_tick(struct gk20a *g)
 
 	domain = sched->active_domain;
 
-	if (domain == NULL) {
-		/* nothing to schedule, TODO wait for an event instead */
-		nvgpu_mutex_release(&g->sched_mutex);
-		return 100 * NSEC_PER_MSEC;
+	/* If active_domain == shadow_domain, then nvs_next is NULL */
+	nvs_next = nvs_domain_get_next_domain(sched->sched, domain->parent);
+	if (nvs_next == NULL) {
+		nvs_next = sched->shadow_domain->parent;
 	}
 
-	nvs_domain = domain->parent->next;
-	if (nvs_domain == NULL) {
-		nvs_domain = g->scheduler->sched->domain_list->domains;
-	}
-	timeslice = nvs_domain->timeslice_ns;
+	timeslice = nvs_next->timeslice_ns;
 
 	nvgpu_runlist_tick(g);
-	sched->active_domain = nvs_domain->priv;
+	sched->active_domain = nvs_next->priv;
 
 	nvgpu_mutex_release(&g->sched_mutex);
 
@@ -165,9 +162,93 @@ static void nvgpu_nvs_worker_deinit(struct gk20a *g)
 	nvs_dbg(g, "NVS worker suspended");
 }
 
+static struct nvgpu_nvs_domain *
+	nvgpu_nvs_gen_domain(struct gk20a *g, const char *name, u64 id,
+		u64 timeslice, u64 preempt_grace)
+{
+	struct nvs_domain *nvs_dom = NULL;
+	struct nvgpu_nvs_domain *nvgpu_dom = NULL;
+
+	nvs_dbg(g, "Adding new domain: %s", name);
+
+	nvgpu_dom = nvgpu_kzalloc(g, sizeof(*nvgpu_dom));
+	if (nvgpu_dom == NULL) {
+		nvs_dbg(g, "failed to allocate memory for domain %s", name);
+		return nvgpu_dom;
+	}
+
+	nvgpu_dom->id = id;
+	nvgpu_dom->ref = 1U;
+
+	nvs_dom = nvs_domain_create(g->scheduler->sched, name,
+				timeslice, preempt_grace, nvgpu_dom);
+
+	if (nvs_dom == NULL) {
+		nvs_dbg(g, "failed to create nvs domain for %s", name);
+		nvgpu_kfree(g, nvgpu_dom);
+		nvgpu_dom = NULL;
+		return nvgpu_dom;
+	}
+
+	nvgpu_dom->parent = nvs_dom;
+
+	return nvgpu_dom;
+}
+
+static int nvgpu_nvs_gen_shadow_domain(struct gk20a *g)
+{
+	int err = 0;
+	struct nvgpu_nvs_domain *nvgpu_dom;
+
+	if (g->scheduler->shadow_domain != NULL) {
+		goto error;
+	}
+
+	nvgpu_dom = nvgpu_nvs_gen_domain(g, SHADOW_DOMAIN_NAME, U64_MAX,
+		100U * NSEC_PER_MSEC, 0U);
+	if (nvgpu_dom == NULL) {
+		err = -ENOMEM;
+		goto error;
+	}
+
+	g->scheduler->shadow_domain = nvgpu_dom;
+
+	/* Set active_domain to shadow_domain during Init */
+	g->scheduler->active_domain = g->scheduler->shadow_domain;
+
+error:
+	return err;
+}
+
+static void nvgpu_nvs_remove_shadow_domain(struct gk20a *g)
+{
+	struct nvgpu_nvs_scheduler *sched = g->scheduler;
+	struct nvs_domain *nvs_dom;
+
+	if (sched == NULL) {
+		/* never powered on to init anything */
+		return;
+	}
+
+	if (sched->shadow_domain == NULL) {
+		return;
+	}
+
+	if (sched->shadow_domain->ref != 1U) {
+		nvgpu_warn(g,
+				"domain %llu is still in use during shutdown! refs: %u",
+				sched->shadow_domain->id, sched->shadow_domain->ref);
+	}
+
+	nvs_dom = sched->shadow_domain->parent;
+	nvs_domain_destroy(sched->sched, nvs_dom);
+
+	nvgpu_kfree(g, sched->shadow_domain);
+	sched->shadow_domain = NULL;
+}
+
 int nvgpu_nvs_init(struct gk20a *g)
 {
-	struct nvgpu_nvs_domain *domain;
 	int err;
 
 	nvgpu_mutex_init(&g->sched_mutex);
@@ -175,16 +256,6 @@ int nvgpu_nvs_init(struct gk20a *g)
 	err = nvgpu_nvs_open(g);
 	if (err != 0) {
 		return err;
-	}
-
-	if (nvgpu_rl_domain_get(g, 0, "(default)") == NULL) {
-		int err = nvgpu_nvs_add_domain(g, "(default)",
-				100U * NSEC_PER_MSEC,
-				0U,
-				&domain);
-		if (err != 0) {
-			return err;
-		}
 	}
 
 	return 0;
@@ -213,6 +284,8 @@ void nvgpu_nvs_remove_support(struct gk20a *g)
 		/* runlist removal will clear the rl domains */
 		nvgpu_kfree(g, nvgpu_dom);
 	}
+
+	nvgpu_nvs_remove_shadow_domain(g);
 
 	nvs_sched_close(sched->sched);
 	nvgpu_kfree(g, sched->sched);
@@ -247,15 +320,22 @@ int nvgpu_nvs_open(struct gk20a *g)
 		goto unlock;
 	}
 
-	err = nvgpu_nvs_worker_init(g);
+	nvs_dbg(g, "  Creating NVS scheduler.");
+	err = nvs_sched_create(g->scheduler->sched, &nvgpu_nvs_ops, g);
 	if (err != 0) {
 		goto unlock;
 	}
 
-	nvs_dbg(g, "  Creating NVS scheduler.");
-	err = nvs_sched_create(g->scheduler->sched, &nvgpu_nvs_ops, g);
+	if (nvgpu_rl_domain_get(g, 0, SHADOW_DOMAIN_NAME) == NULL) {
+		err = nvgpu_nvs_gen_shadow_domain(g);
+		if (err != 0) {
+			goto unlock;
+		}
+	}
+
+	err = nvgpu_nvs_worker_init(g);
 	if (err != 0) {
-		nvgpu_nvs_worker_deinit(g);
+		nvgpu_nvs_remove_shadow_domain(g);
 		goto unlock;
 	}
 
@@ -289,8 +369,6 @@ int nvgpu_nvs_add_domain(struct gk20a *g, const char *name, u64 timeslice,
 	struct nvs_domain *nvs_dom;
 	struct nvgpu_nvs_domain *nvgpu_dom;
 
-	nvs_dbg(g, "Adding new domain: %s", name);
-
 	nvgpu_mutex_acquire(&g->sched_mutex);
 
 	if (nvs_domain_by_name(g->scheduler->sched, name) != NULL) {
@@ -298,37 +376,29 @@ int nvgpu_nvs_add_domain(struct gk20a *g, const char *name, u64 timeslice,
 		goto unlock;
 	}
 
-	nvgpu_dom = nvgpu_kzalloc(g, sizeof(*nvgpu_dom));
+	nvgpu_dom = nvgpu_nvs_gen_domain(g, name, nvgpu_nvs_new_id(g),
+		timeslice, preempt_grace);
 	if (nvgpu_dom == NULL) {
 		err = -ENOMEM;
 		goto unlock;
 	}
 
-	nvgpu_dom->id = nvgpu_nvs_new_id(g);
-	nvgpu_dom->ref = 1U;
+	nvs_dom = nvgpu_dom->parent;
 
-	nvs_dom = nvs_domain_create(g->scheduler->sched, name,
-				    timeslice, preempt_grace, nvgpu_dom);
-
-	if (nvs_dom == NULL) {
-		nvs_dbg(g, "failed to create nvs domain for %s", name);
-		nvgpu_kfree(g, nvgpu_dom);
-		err = -ENOMEM;
-		goto unlock;
-	}
+	nvs_domain_scheduler_attach(g->scheduler->sched, nvs_dom);
 
 	err = nvgpu_rl_domain_alloc(g, name);
 	if (err != 0) {
 		nvs_dbg(g, "failed to alloc rl domain for %s", name);
-		nvs_domain_destroy(g->scheduler->sched, nvs_dom);
+		nvs_domain_unlink_and_destroy(g->scheduler->sched, nvs_dom);
 		nvgpu_kfree(g, nvgpu_dom);
 		goto unlock;
 	}
 
-
 	nvgpu_dom->parent = nvs_dom;
 
-	if (g->scheduler->active_domain == NULL) {
+	/* Set the first user created domain as active domain */
+	if (g->scheduler->active_domain == g->scheduler->shadow_domain) {
 		g->scheduler->active_domain = nvgpu_dom;
 	}
 
@@ -464,14 +534,15 @@ int nvgpu_nvs_del_domain(struct gk20a *g, u64 dom_id)
 
 	/* note: same wraparound logic as in RL domains to keep in sync */
 	if (s->active_domain == nvgpu_dom) {
-		nvs_next = nvs_dom->next;
-		if (nvs_next == NULL) {
-			nvs_next = s->sched->domain_list->domains;
+		nvs_next = nvs_domain_get_next_domain(s->sched, nvs_dom);
+		/* Its the only entry in the list. Set the default domain as the active domain */
+		if (nvs_next == nvs_dom) {
+			nvs_next = s->shadow_domain->parent;
 		}
 		s->active_domain = nvs_next->priv;
 	}
 
-	nvs_domain_destroy(s->sched, nvs_dom);
+	nvs_domain_unlink_and_destroy(s->sched, nvs_dom);
 	nvgpu_kfree(g, nvgpu_dom);
 
 unlock:

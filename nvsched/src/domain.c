@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2021-2022 NVIDIA Corporation.  All rights reserved.
  *
  * NVIDIA Corporation and its licensors retain all intellectual property
  * and proprietary rights in and to this software, related documentation
@@ -13,13 +13,12 @@
 #include <nvs/domain.h>
 
 /*
- * Create and add a new domain to the end of the domain list.
+ * Create a new domain and populate it with default values
  */
 struct nvs_domain *nvs_domain_create(struct nvs_sched *sched,
 		  const char *name, u64 timeslice, u64 preempt_grace,
 		  void *priv)
 {
-	struct nvs_domain_list *dlist = sched->domain_list;
 	struct nvs_domain *dom = nvs_malloc(sched, sizeof(*dom));
 
 	nvs_log(sched, "Creating domain - %s", name);
@@ -34,8 +33,28 @@ struct nvs_domain *nvs_domain_create(struct nvs_sched *sched,
 	dom->timeslice_ns     = timeslice;
 	dom->preempt_grace_ns = preempt_grace;
 	dom->priv             = priv;
+	dom->next             = NULL;
 
-	nvs_log_event(sched, NVS_EV_CREATE_DOMAIN, 0U);
+	return dom;
+}
+
+struct nvs_domain *nvs_domain_get_next_domain(struct nvs_sched *sched, struct nvs_domain *dom)
+{
+	struct nvs_domain *nvs_next = dom->next;
+
+	if (nvs_next == NULL) {
+		nvs_next = sched->domain_list->domains;
+	}
+
+	return nvs_next;
+}
+
+/*
+ * Attach a new domain to the end of the domain list.
+ */
+void nvs_domain_scheduler_attach(struct nvs_sched *sched, struct nvs_domain *dom)
+{
+	struct nvs_domain_list *dlist = sched->domain_list;
 
 	/*
 	 * Now add the domain to the list of domains. If this is the first
@@ -46,14 +65,13 @@ struct nvs_domain *nvs_domain_create(struct nvs_sched *sched,
 	if (dlist->domains == NULL) {
 		dlist->domains = dom;
 		dlist->last    = dom;
-		return dom;
+		return;
 	}
 
 	dlist->last->next = dom;
 	dlist->last       = dom;
 
-	nvs_log(sched, "%s: Domain added", name);
-	return dom;
+	nvs_log(sched, "%s: Domain added", dom->name);
 }
 
 /*
@@ -66,7 +84,6 @@ static void nvs_domain_unlink(struct nvs_sched *sched,
 	struct nvs_domain_list *dlist = sched->domain_list;
 	struct nvs_domain *tmp;
 
-
 	if (dlist->domains == dom) {
 		dlist->domains = dom->next;
 
@@ -76,6 +93,7 @@ static void nvs_domain_unlink(struct nvs_sched *sched,
 		 * pointer as well.
 		 */
 		if (dom == dlist->last) {
+			dlist->domains = NULL;
 			dlist->last = NULL;
 		}
 		return;
@@ -100,14 +118,19 @@ static void nvs_domain_unlink(struct nvs_sched *sched,
 void nvs_domain_destroy(struct nvs_sched *sched,
 			struct nvs_domain *dom)
 {
+	nvs_memset(dom, 0, sizeof(*dom));
+	nvs_free(sched, dom);
+}
+
+void nvs_domain_unlink_and_destroy(struct nvs_sched *sched,
+			struct nvs_domain *dom)
+{
 	nvs_log_event(sched, NVS_EV_REMOVE_DOMAIN, 0);
 
 	nvs_domain_unlink(sched, dom);
-
-	nvs_memset(dom, 0, sizeof(*dom));
-	nvs_free(sched, dom);
-
 	sched->domain_list->nr--;
+
+	nvs_domain_destroy(sched, dom);
 }
 
 void nvs_domain_clear_all(struct nvs_sched *sched)
@@ -115,7 +138,7 @@ void nvs_domain_clear_all(struct nvs_sched *sched)
 	struct nvs_domain_list *dlist = sched->domain_list;
 
 	while (dlist->domains != NULL) {
-		nvs_domain_destroy(sched, dlist->domains);
+		nvs_domain_unlink_and_destroy(sched, dlist->domains);
 	}
 }
 

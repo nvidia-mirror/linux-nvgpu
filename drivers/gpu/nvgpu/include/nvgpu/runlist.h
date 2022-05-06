@@ -156,7 +156,8 @@ struct nvgpu_runlist {
 	 */
 	struct nvgpu_runlist_domain *shadow_rl_domain;
 	/*
-	 * All scheduling domains of this RL, see nvgpu_runlist_domain::domain_node.
+	 * All scheduling domains(created by users) of this RL,
+	 * see nvgpu_runlist_domain::domain_node.
 	 *
 	 * Design note: the runlist hardware unit should not own the actual
 	 * domain memory; this arrangement is temporary to aid in transition

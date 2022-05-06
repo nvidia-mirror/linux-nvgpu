@@ -84,6 +84,7 @@ struct nvgpu_nvs_scheduler {
 	nvgpu_atomic64_t id_counter;
 	struct nvgpu_nvs_worker worker;
 	struct nvgpu_nvs_domain *active_domain;
+	struct nvgpu_nvs_domain *shadow_domain;
 };
 
 #ifdef CONFIG_NVS_PRESENT
