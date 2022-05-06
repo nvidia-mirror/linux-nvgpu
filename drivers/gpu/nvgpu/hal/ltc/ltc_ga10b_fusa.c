@@ -27,6 +27,7 @@
 #include <nvgpu/channel.h>
 #include <nvgpu/regops.h>
 #include <nvgpu/errata.h>
+#include <nvgpu/gr/ctx.h>
 
 #include "hal/gr/gr/gr_gk20a.h"
 #include "ltc_gv11b.h"
@@ -92,6 +93,25 @@ int ga10b_ltc_lts_set_mgmt_setup(struct gk20a *g)
 
 	return 0;
 }
+
+#ifndef CONFIG_NVGPU_NON_FUSA
+void ga10b_set_default_l2_max_ways_evict_last(struct gk20a *g,
+		struct nvgpu_gr_ctx *gr_ctx)
+{
+	u32 reg_val;
+	nvgpu_gr_ctx_patch_write_begin(g, gr_ctx, true);
+
+	reg_val = nvgpu_readl(g, ltc_ltcs_ltss_tstg_set_mgmt0_r());
+	reg_val = set_field(reg_val,
+			ltc_ltcs_ltss_tstg_set_mgmt0_max_evict_last_m(),
+			ltc_ltcs_ltss_tstg_set_mgmt0_max_evict_last_f(16));
+	nvgpu_gr_ctx_patch_write(g, gr_ctx, ltc_ltcs_ltss_tstg_set_mgmt0_r(),
+			reg_val, true);
+
+	nvgpu_gr_ctx_patch_write_end(g, gr_ctx, true);
+}
+
+#endif
 
 #ifdef CONFIG_NVGPU_DEBUGGER
 int ga10b_set_l2_max_ways_evict_last(struct gk20a *g, struct nvgpu_tsg *tsg,

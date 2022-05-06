@@ -901,6 +901,10 @@ int nvgpu_gr_obj_ctx_alloc(struct gk20a *g,
 	    g->ops.gr.init.set_default_compute_regs != NULL) {
 		g->ops.gr.init.set_default_compute_regs(g, gr_ctx);
 	}
+
+	if (g->ops.ltc.set_default_l2_max_ways_evict_last != NULL) {
+		g->ops.ltc.set_default_l2_max_ways_evict_last(g, gr_ctx);
+	}
 #endif
 
 	/*

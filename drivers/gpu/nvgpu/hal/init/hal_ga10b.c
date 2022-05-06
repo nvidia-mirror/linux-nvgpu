@@ -376,6 +376,9 @@ static const struct gops_ltc ga10b_ops_ltc = {
 	.get_l2_max_ways_evict_last = ga10b_get_l2_max_ways_evict_last,
 	.set_l2_sector_promotion = tu104_set_l2_sector_promotion,
 #endif /* CONFIG_NVGPU_DEBUGGER */
+#ifndef CONFIG_NVGPU_NON_FUSA
+	.set_default_l2_max_ways_evict_last = ga10b_set_default_l2_max_ways_evict_last,
+#endif /*not defined CONFIG_NVGPU_NON_FUSA*/
 };
 
 #ifdef CONFIG_NVGPU_COMPRESSION

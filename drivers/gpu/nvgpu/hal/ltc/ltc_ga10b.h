@@ -26,6 +26,7 @@
 #include <nvgpu/types.h>
 
 struct gk20a;
+struct nvgpu_gr_ctx;
 
 #ifdef CONFIG_NVGPU_HAL_NON_FUSA
 u32 ga10b_ltc_zbc_table_size(struct gk20a *g);
@@ -41,7 +42,10 @@ void ga10b_ltc_init_fs_state(struct gk20a *g);
 int ga10b_ltc_lts_set_mgmt_setup(struct gk20a *g);
 u64 ga10b_determine_L2_size_bytes(struct gk20a *g);
 int ga10b_lts_ecc_init(struct gk20a *g);
-
+#ifndef CONFIG_NVGPU_NON_FUSA
+void ga10b_set_default_l2_max_ways_evict_last(struct gk20a *g,
+			struct nvgpu_gr_ctx *gr_ctx);
+#endif
 #ifdef CONFIG_NVGPU_DEBUGGER
 u32 ga10b_ltc_pri_shared_addr(struct gk20a *g, u32 addr);
 int ga10b_set_l2_max_ways_evict_last(struct gk20a *g, struct nvgpu_tsg *tsg,

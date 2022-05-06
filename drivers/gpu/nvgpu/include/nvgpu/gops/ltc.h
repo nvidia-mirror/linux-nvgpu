@@ -30,7 +30,7 @@
  * common.ltc interface.
  */
 struct gk20a;
-
+struct nvgpu_gr_ctx;
 /**
  * common.ltc intr subunit hal operations.
  *
@@ -412,6 +412,10 @@ struct gops_ltc {
 	int (*ecc_init)(struct gk20a *g);
 
 	void (*init_fs_state)(struct gk20a *g);
+#ifndef CONFIG_NVGPU_NON_FUSA
+	void (*set_default_l2_max_ways_evict_last)(struct gk20a *g,
+			struct nvgpu_gr_ctx *gr_ctx);
+#endif
 #if defined(CONFIG_NVGPU_NON_FUSA) || defined(CONFIG_NVGPU_KERNEL_MODE_SUBMIT)
 	void (*set_enabled)(struct gk20a *g, bool enabled);
 #endif
