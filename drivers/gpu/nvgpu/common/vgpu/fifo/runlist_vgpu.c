@@ -124,7 +124,7 @@ static void vgpu_runlist_reconstruct_locked(struct gk20a *g,
 	}
 }
 
-static int vgpu_runlist_update_locked(struct gk20a *g,
+static void vgpu_runlist_update_locked(struct gk20a *g,
 					struct nvgpu_runlist *runlist,
 					struct nvgpu_runlist_domain *domain,
 					struct nvgpu_channel *ch, bool add,
@@ -139,7 +139,7 @@ static int vgpu_runlist_update_locked(struct gk20a *g,
 				domain, ch, add);
 		if (!update) {
 			/* no change in runlist contents */
-			return 0;
+			return;
 		}
 		/* had a channel to update, so reconstruct */
 		add_entries = true;
@@ -149,8 +149,6 @@ static int vgpu_runlist_update_locked(struct gk20a *g,
 	}
 
 	vgpu_runlist_reconstruct_locked(g, runlist, domain, add_entries);
-
-	return vgpu_submit_runlist(g, vgpu_get_handle(g), runlist, domain);
 }
 
 /* add/remove a channel from runlist
@@ -162,14 +160,24 @@ static int vgpu_runlist_do_update(struct gk20a *g, struct nvgpu_runlist *rl,
 				struct nvgpu_channel *ch,
 				bool add, bool wait_for_finish)
 {
-	u32 ret = 0;
-
+	int ret = 0;
+	/* Indicates whether the shadow rl domain needs to be updated separately */
 	nvgpu_log_fn(g, " ");
 
 	nvgpu_mutex_acquire(&rl->runlist_lock);
 
-	ret = vgpu_runlist_update_locked(g, rl, domain, ch, add,
-					wait_for_finish);
+	if (domain == NULL) {
+		domain = rl->shadow_rl_domain;
+	}
+
+	vgpu_runlist_update_locked(g, rl, domain, ch, add,
+				wait_for_finish);
+	if (domain != rl->shadow_rl_domain) {
+		vgpu_runlist_update_locked(g, rl, rl->shadow_rl_domain,
+				ch, add, wait_for_finish);
+	}
+
+	ret = vgpu_submit_runlist(g, vgpu_get_handle(g), rl, domain);
 
 	nvgpu_mutex_release(&rl->runlist_lock);
 	return ret;

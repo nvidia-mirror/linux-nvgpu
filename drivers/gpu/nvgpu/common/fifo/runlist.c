@@ -322,13 +322,57 @@ u32 nvgpu_runlist_construct_locked(struct nvgpu_fifo *f,
 	}
 }
 
-static bool nvgpu_runlist_modify_active_locked(struct gk20a *g,
-					       struct nvgpu_runlist_domain *domain,
-					       struct nvgpu_channel *ch, bool add)
-{
-	struct nvgpu_tsg *tsg = NULL;
 
-	tsg = nvgpu_tsg_from_ch(ch);
+static bool nvgpu_runlist_modify_active_add_channel(
+					struct nvgpu_runlist_domain *domain,
+					struct nvgpu_channel *ch,
+					struct nvgpu_tsg *tsg)
+{
+	if (nvgpu_test_and_set_bit(ch->chid,
+			domain->active_channels)) {
+		/* was already there */
+		return false;
+	} else {
+		/* new, and belongs to a tsg */
+		nvgpu_set_bit(tsg->tsgid, domain->active_tsgs);
+
+		return true;
+	}
+}
+
+static bool nvgpu_runlist_modify_active_remove_channel(
+					struct nvgpu_runlist_domain *domain,
+					struct nvgpu_channel *ch,
+					struct nvgpu_tsg *tsg)
+{
+	if (!nvgpu_test_and_clear_bit(ch->chid,
+			domain->active_channels)) {
+		/* wasn't there */
+		return false;
+	} else {
+		if (tsg->num_active_channels == 1U) {
+			/* was the only member of this tsg */
+			nvgpu_clear_bit(tsg->tsgid,
+					domain->active_tsgs);
+		}
+		return true;
+	}
+}
+
+/*
+ * When a user rl domain is updated(i.e. a channel is removed/added),
+ * the shadow rl domain is also updated. A channel remove/add
+ * might require tsg states to be updated i.e. tsg->num_active_channels.
+ * The flag can_update_tsg_state is used to control whether
+ * this function can update the tsg states.
+ */
+static bool nvgpu_runlist_modify_active_locked(struct gk20a *g,
+					struct nvgpu_runlist_domain *domain,
+					struct nvgpu_channel *ch, bool add,
+					bool can_update_tsg_state)
+{
+	struct nvgpu_tsg *tsg = nvgpu_tsg_from_ch(ch);
+	bool needs_tsg_update;
 
 	if (tsg == NULL) {
 		/*
@@ -340,33 +384,24 @@ static bool nvgpu_runlist_modify_active_locked(struct gk20a *g,
 	}
 
 	if (add) {
-		if (nvgpu_test_and_set_bit(ch->chid,
-				domain->active_channels)) {
-			/* was already there */
-			return false;
-		} else {
-			/* new, and belongs to a tsg */
-			nvgpu_set_bit(tsg->tsgid, domain->active_tsgs);
+		needs_tsg_update = nvgpu_runlist_modify_active_add_channel(
+				domain, ch, tsg);
+
+		if (needs_tsg_update && can_update_tsg_state) {
 			tsg->num_active_channels = nvgpu_safe_add_u32(
-					tsg->num_active_channels, 1U);
+				tsg->num_active_channels, 1U);
 		}
 	} else {
-		if (!nvgpu_test_and_clear_bit(ch->chid,
-				domain->active_channels)) {
-			/* wasn't there */
-			return false;
-		} else {
+		needs_tsg_update = nvgpu_runlist_modify_active_remove_channel(
+				domain, ch, tsg);
+
+		if (needs_tsg_update && can_update_tsg_state) {
 			tsg->num_active_channels = nvgpu_safe_sub_u32(
-				tsg->num_active_channels, 1U);
-			if (tsg->num_active_channels == 0U) {
-				/* was the only member of this tsg */
-				nvgpu_clear_bit(tsg->tsgid,
-						domain->active_tsgs);
-			}
+					tsg->num_active_channels, 1U);
 		}
 	}
 
-	return true;
+	return needs_tsg_update;
 }
 
 static int nvgpu_runlist_reconstruct_locked(struct gk20a *g,
@@ -376,9 +411,6 @@ static int nvgpu_runlist_reconstruct_locked(struct gk20a *g,
 {
 	u32 num_entries;
 	struct nvgpu_fifo *f = &g->fifo;
-
-	rl_dbg(g, "[%u] switch to new buffer 0x%16llx",
-		runlist->id, (u64)nvgpu_mem_get_addr(g, &domain->mem->mem));
 
 	if (!add_entries) {
 		domain->mem->count = 0;
@@ -392,47 +424,37 @@ static int nvgpu_runlist_reconstruct_locked(struct gk20a *g,
 	}
 
 	domain->mem->count = num_entries;
+
+	rl_dbg(g, "runlist[%u] num entries: [%u]", runlist->id, domain->mem->count);
+
 	WARN_ON(domain->mem->count > f->num_runlist_entries);
 
 	return 0;
 }
 
-int nvgpu_runlist_update_locked(struct gk20a *g, struct nvgpu_runlist *rl,
-				struct nvgpu_runlist_domain *domain,
-				struct nvgpu_channel *ch, bool add,
-				bool wait_for_finish)
+static void nvgpu_runlist_swap_mem(struct nvgpu_runlist_domain *domain)
 {
-	int ret = 0;
-	bool add_entries;
 	struct nvgpu_runlist_mem *mem_tmp;
 
-	if (ch != NULL) {
-		bool update = nvgpu_runlist_modify_active_locked(g, domain, ch, add);
-		if (!update) {
-			/* no change in runlist contents */
-			return 0;
-		}
-		/* had a channel to update, so reconstruct */
-		add_entries = true;
-	} else {
-		/* no channel; add means update all, !add means clear all */
-		add_entries = add;
-	}
-
-	ret = nvgpu_runlist_reconstruct_locked(g, rl, domain, add_entries);
-	if (ret != 0) {
-		return ret;
-	}
-
 	/*
-	 * hw_submit updates mem_hw to hardware; swap the buffers now. mem
-	 * becomes the previously scheduled buffer and it can be modified once
+	 * mem becomes the previously scheduled buffer and it can be modified once
 	 * the runlist lock is released.
 	 */
 
 	mem_tmp = domain->mem;
 	domain->mem = domain->mem_hw;
 	domain->mem_hw = mem_tmp;
+}
+
+static int nvgpu_runlist_submit_locked(struct gk20a *g, struct nvgpu_runlist *rl,
+				struct nvgpu_runlist_domain *domain, bool wait_for_finish)
+{
+	int ret = 0;
+
+	/*
+	 * hw_submit updates mem_hw to hardware; swap the buffers now.
+	 */
+	nvgpu_runlist_swap_mem(domain);
 
 	/*
 	 * A non-active domain may be updated, but submit still the currently
@@ -457,6 +479,84 @@ int nvgpu_runlist_update_locked(struct gk20a *g, struct nvgpu_runlist *rl,
 			}
 		}
 	}
+
+	return ret;
+}
+
+static int nvgpu_runlist_update_mem_locked(struct gk20a *g, struct nvgpu_runlist *rl,
+				struct nvgpu_runlist_domain *domain,
+				struct nvgpu_channel *ch, bool add, bool can_update_tsg_state)
+{
+	int ret = 0;
+	bool add_entries;
+
+	rl_dbg(g, "updating runlist[%u], domain[%s], channel = [%u], op = %s",
+		rl->id, domain->name,
+		ch == NULL ? NVGPU_INVALID_CHANNEL_ID : ch->chid,
+		add ? "add" : "remove");
+
+	if (ch != NULL) {
+		bool update = nvgpu_runlist_modify_active_locked(g, domain, ch, add,
+			can_update_tsg_state);
+
+		if (!update) {
+			/* no change in runlist contents */
+			return 0;
+		}
+		/* had a channel to update, so reconstruct */
+		add_entries = true;
+	} else {
+		/* no channel; add means update all, !add means clear all */
+		add_entries = add;
+	}
+
+	ret = nvgpu_runlist_reconstruct_locked(g, rl, domain, add_entries);
+	if (ret != 0) {
+		return ret;
+	}
+
+	return ret;
+}
+
+int nvgpu_runlist_update_locked(struct gk20a *g, struct nvgpu_runlist *rl,
+				struct nvgpu_runlist_domain *domain,
+				struct nvgpu_channel *ch, bool add,
+				bool wait_for_finish)
+{
+	int ret = 0;
+
+	/*
+	 * Certain use-cases might not have existing user rl domains, fall
+	 * back to shadow domain.
+	 */
+	if (domain == NULL) {
+		domain = rl->shadow_rl_domain;
+	}
+
+	if (domain != rl->shadow_rl_domain) {
+		/* Avoid duplicate updates to the TSG state in nvgpu_runlist_modify_active_locked */
+		ret = nvgpu_runlist_update_mem_locked(g, rl, rl->shadow_rl_domain, ch, add, false);
+		if (ret != 0) {
+			return ret;
+		}
+
+		/*
+		 * A submit assumes domain->mem_hw to be the active buffer,
+		 * and the reconstruction above updates domain->mem, and the swap happens
+		 * in nvgpu_runlist_submit_locked which is done below for only the user
+		 * domain so calling swap_mem here is "equivalent" to nvgpu_runlist_submit_locked
+		 * to keep the ordering for any shadow rl domain submits that may happen in the
+		 * future without going via this nvgpu_runlist_update_locked path.
+		 */
+		nvgpu_runlist_swap_mem(rl->shadow_rl_domain);
+	}
+
+	ret = nvgpu_runlist_update_mem_locked(g, rl, domain, ch, add, true);
+	if (ret != 0) {
+		return ret;
+	}
+
+	ret = nvgpu_runlist_submit_locked(g, rl, domain, wait_for_finish);
 
 	return ret;
 }
@@ -604,16 +704,24 @@ static void runlist_switch_domain_locked(struct gk20a *g,
 	struct nvgpu_runlist_domain *domain;
 	struct nvgpu_runlist_domain *last;
 
-	if (nvgpu_list_empty(&runlist->domains)) {
+	/*
+	 * When the last of user created rl domains is removed,
+	 * driver switches to the default domain. Hence, exit.
+	 */
+	if (nvgpu_list_empty(&runlist->user_rl_domains)) {
 		return;
 	}
 
+	/*
+	 * If there are user created rl domains available,
+	 * runlist->domain always points to one of them.
+	 */
 	domain = runlist->domain;
-	last = nvgpu_list_last_entry(&runlist->domains,
+	last = nvgpu_list_last_entry(&runlist->user_rl_domains,
 			nvgpu_runlist_domain, domains_list);
 
 	if (domain == last) {
-		domain = nvgpu_list_first_entry(&runlist->domains,
+		domain = nvgpu_list_first_entry(&runlist->user_rl_domains,
 				nvgpu_runlist_domain, domains_list);
 	} else {
 		domain = nvgpu_list_next_entry(domain,
@@ -658,14 +766,6 @@ int nvgpu_runlist_update(struct gk20a *g, struct nvgpu_runlist *rl,
 	tsg = nvgpu_tsg_from_ch(ch);
 	if (tsg == NULL) {
 		return -EINVAL;
-	}
-
-	if (tsg->rl_domain == NULL) {
-		/*
-		 * "Success" case because the TSG is not participating in
-		 * scheduling at the moment, so there is nothing to be done.
-		 */
-		return 0;
 	}
 
 	return nvgpu_runlist_do_update(g, rl, tsg->rl_domain, ch, add, wait_for_finish);
@@ -764,12 +864,15 @@ static void free_rl_mem(struct gk20a *g, struct nvgpu_runlist_mem *mem)
 	nvgpu_kfree(g, mem);
 }
 
-static void nvgpu_runlist_domain_free(struct gk20a *g,
-				      struct nvgpu_runlist_domain *domain)
+static void nvgpu_runlist_domain_unlink(struct nvgpu_runlist_domain *domain)
 {
 	/* added in nvgpu_runlist_domain_alloc() */
 	nvgpu_list_del(&domain->domains_list);
+}
 
+static void nvgpu_runlist_domain_free(struct gk20a *g,
+		struct nvgpu_runlist_domain *domain)
+{
 	free_rl_mem(g, domain->mem);
 	domain->mem = NULL;
 	free_rl_mem(g, domain->mem_hw);
@@ -780,6 +883,13 @@ static void nvgpu_runlist_domain_free(struct gk20a *g,
 	domain->active_tsgs = NULL;
 
 	nvgpu_kfree(g, domain);
+}
+
+static void nvgpu_runlist_domain_unlink_and_free(struct gk20a *g,
+		struct nvgpu_runlist_domain *domain)
+{
+	nvgpu_runlist_domain_unlink(domain);
+	nvgpu_runlist_domain_free(g, domain);
 }
 
 int nvgpu_rl_domain_delete(struct gk20a *g, const char *name)
@@ -799,28 +909,22 @@ int nvgpu_rl_domain_delete(struct gk20a *g, const char *name)
 			struct nvgpu_runlist_domain *first;
 			struct nvgpu_runlist_domain *last;
 
-			/*
-			 * For now there has to be at least one domain, or else
-			 * we'd have to explicitly prepare for no domains and
-			 * submit nothing to the runlist HW in various corner
-			 * cases. Don't allow deletion if this is the last one.
-			 */
-			first = nvgpu_list_first_entry(&runlist->domains,
+			rl_dbg(g, "deleting rl domain [%s]", domain->name);
+
+			first = nvgpu_list_first_entry(&runlist->user_rl_domains,
 					nvgpu_runlist_domain, domains_list);
 
-			last = nvgpu_list_last_entry(&runlist->domains,
+			last = nvgpu_list_last_entry(&runlist->user_rl_domains,
 					nvgpu_runlist_domain, domains_list);
 
 			if (first == last) {
-				nvgpu_mutex_release(&runlist->runlist_lock);
-				return -EINVAL;
-			}
-
-			if (domain == runlist->domain) {
-				/* Don't let the HW access this anymore */
+				/* Last of the user created rl domains, switch to default rl domain */
+				runlist_select_locked(g, runlist, runlist->shadow_rl_domain);
+			} else if (domain == runlist->domain) {
+				/* Don't let the HW access this anymore, switch to another rl domain */
 				runlist_switch_domain_locked(g, runlist);
 			}
-			nvgpu_runlist_domain_free(g, domain);
+			nvgpu_runlist_domain_unlink_and_free(g, domain);
 		}
 		nvgpu_mutex_release(&runlist->runlist_lock);
 	}
@@ -843,16 +947,20 @@ void nvgpu_runlist_cleanup_sw(struct gk20a *g)
 	for (i = 0; i < f->num_runlists; i++) {
 		runlist = &f->active_runlists[i];
 
-		while (!nvgpu_list_empty(&runlist->domains)) {
+		while (!nvgpu_list_empty(&runlist->user_rl_domains)) {
 			struct nvgpu_runlist_domain *domain;
 
-			domain = nvgpu_list_first_entry(&runlist->domains,
+			domain = nvgpu_list_first_entry(&runlist->user_rl_domains,
 						     nvgpu_runlist_domain,
 						     domains_list);
-			nvgpu_runlist_domain_free(g, domain);
+
+			nvgpu_runlist_domain_unlink_and_free(g, domain);
 		}
 		/* this isn't an owning pointer, just reset */
 		runlist->domain = NULL;
+
+		nvgpu_runlist_domain_free(g, runlist->shadow_rl_domain);
+		runlist->shadow_rl_domain = NULL;
 
 		nvgpu_mutex_destroy(&runlist->runlist_lock);
 		f->runlists[runlist->id] = NULL;
@@ -1002,8 +1110,20 @@ static struct nvgpu_runlist_mem *init_rl_mem(struct gk20a *g, u32 runlist_size)
 	return mem;
 }
 
+static void nvgpu_runlist_link_domain(struct nvgpu_runlist *runlist,
+		struct nvgpu_runlist_domain *domain)
+{
+	/* deleted in nvgpu_runlist_domain_unlink() */
+	nvgpu_list_add_tail(&domain->domains_list, &runlist->user_rl_domains);
+
+	/* Select the first created domain as the boot-time default */
+	if (runlist->domain == runlist->shadow_rl_domain) {
+		runlist->domain = domain;
+	}
+}
+
 static struct nvgpu_runlist_domain *nvgpu_runlist_domain_alloc(struct gk20a *g,
-		struct nvgpu_runlist *runlist, const char *name)
+		const char *name)
 {
 	struct nvgpu_runlist_domain *domain = nvgpu_kzalloc(g, sizeof(*domain));
 	struct nvgpu_fifo *f = &g->fifo;
@@ -1040,14 +1160,6 @@ static struct nvgpu_runlist_domain *nvgpu_runlist_domain_alloc(struct gk20a *g,
 		goto free_active_channels;
 	}
 
-	/* deleted in nvgpu_runlist_domain_free() */
-	nvgpu_list_add_tail(&domain->domains_list, &runlist->domains);
-
-	/* Select the first created domain as the boot-time default */
-	if (runlist->domain == NULL) {
-		runlist->domain = domain;
-	}
-
 	return domain;
 free_active_channels:
 	nvgpu_kfree(g, domain->active_channels);
@@ -1067,7 +1179,7 @@ struct nvgpu_runlist_domain *nvgpu_rl_domain_get(struct gk20a *g, u32 runlist_id
 	struct nvgpu_runlist *runlist = f->runlists[runlist_id];
 	struct nvgpu_runlist_domain *domain;
 
-	nvgpu_list_for_each_entry(domain, &runlist->domains, nvgpu_runlist_domain,
+	nvgpu_list_for_each_entry(domain, &runlist->user_rl_domains, nvgpu_runlist_domain,
 				  domains_list) {
 		if (strcmp(domain->name, name) == 0) {
 			return domain;
@@ -1096,12 +1208,15 @@ int nvgpu_rl_domain_alloc(struct gk20a *g, const char *name)
 			return -EEXIST;
 		}
 
-		domain = nvgpu_runlist_domain_alloc(g, runlist, name);
-		nvgpu_mutex_release(&runlist->runlist_lock);
+		domain = nvgpu_runlist_domain_alloc(g, name);
 		if (domain == NULL) {
+			nvgpu_mutex_release(&runlist->runlist_lock);
 			err = -ENOMEM;
 			goto clear;
 		}
+
+		nvgpu_runlist_link_domain(runlist, domain);
+		nvgpu_mutex_release(&runlist->runlist_lock);
 	}
 
 	return 0;
@@ -1148,22 +1263,21 @@ static void nvgpu_init_active_runlist_mapping(struct gk20a *g)
 		rl_dbg(g, "    RL entries: %d", f->num_runlist_entries);
 		rl_dbg(g, "    RL size %zu", runlist_size);
 
-		nvgpu_init_list_node(&runlist->domains);
+		nvgpu_init_list_node(&runlist->user_rl_domains);
 		nvgpu_mutex_init(&runlist->runlist_lock);
 	}
 }
 
-static int nvgpu_runlist_alloc_default_domain(struct gk20a *g)
+static int nvgpu_runlist_alloc_shadow_rl_domain(struct gk20a *g)
 {
-#ifndef CONFIG_NVS_PRESENT
 	struct nvgpu_fifo *f = &g->fifo;
 	u32 i;
 
 	for (i = 0; i < g->fifo.num_runlists; i++) {
 		struct nvgpu_runlist *runlist = &f->active_runlists[i];
 
-		runlist->domain = nvgpu_runlist_domain_alloc(g, runlist, "(default)");
-		if (runlist->domain == NULL) {
+		runlist->shadow_rl_domain = nvgpu_runlist_domain_alloc(g, SHADOW_DOMAIN_NAME);
+		if (runlist->shadow_rl_domain == NULL) {
 			nvgpu_err(g, "memory allocation failed");
 			/*
 			 * deletion of prior domains happens in
@@ -1171,8 +1285,12 @@ static int nvgpu_runlist_alloc_default_domain(struct gk20a *g)
 			 */
 			return -ENOMEM;
 		}
+
+		rl_dbg(g, "Allocated default domain for runlist[%u]: %s", runlist->id,
+			runlist->shadow_rl_domain->name);
+
+		runlist->domain = runlist->shadow_rl_domain;
 	}
-#endif
 	return 0;
 }
 
@@ -1220,7 +1338,7 @@ int nvgpu_runlist_setup_sw(struct gk20a *g)
 
 	nvgpu_init_active_runlist_mapping(g);
 
-	err = nvgpu_runlist_alloc_default_domain(g);
+	err = nvgpu_runlist_alloc_shadow_rl_domain(g);
 	if (err != 0) {
 		goto clean_up_runlist;
 	}

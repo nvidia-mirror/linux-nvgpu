@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -76,6 +76,8 @@ struct nvgpu_pbdma_info;
 /** Runlist identifier is invalid. */
 #define NVGPU_INVALID_RUNLIST_ID		U32_MAX
 
+#define SHADOW_DOMAIN_NAME "(shadow)"
+
 /*
  * Updates to this memory are still serialized by the runlist lock.
  *
@@ -143,8 +145,16 @@ struct nvgpu_runlist {
 	/** The HW has some designated RL IDs that are bound to engines. */
 	u32 id;
 
-	/* The currently active scheduling domain. */
+	/* The currently active scheduling domain. If user created domain exists
+	 * i.e. nvgpu_list_empty(&nvgpu_runlist::user_rl_domains) == false,
+	 * only schedule from amongst them, else schedule the default domain.
+	 */
 	struct nvgpu_runlist_domain *domain;
+
+	/* An all inclusive shadow rl domain. Shadows the other rl domains(if present).
+	 * H/W runlist entries for other user_rl_domains are duplicated here.
+	 */
+	struct nvgpu_runlist_domain *shadow_rl_domain;
 	/*
 	 * All scheduling domains of this RL, see nvgpu_runlist_domain::domain_node.
 	 *
@@ -154,7 +164,7 @@ struct nvgpu_runlist {
 	 * domain-related runlist data (nvgpu_runlist_domain). See the
 	 * documentation of nvgpu_runlist_domain.
 	 */
-	struct nvgpu_list_node domains;
+	struct nvgpu_list_node user_rl_domains;
 
 	/** Bitmask of PBDMAs supported for this runlist. */
 	u32  pbdma_bitmask;
