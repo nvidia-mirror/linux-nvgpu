@@ -649,6 +649,9 @@ static const struct gops_gr_init ga10b_ops_gr_init = {
 	.commit_global_attrib_cb = gv11b_gr_init_commit_global_attrib_cb,
 	.commit_global_cb_manager = gp10b_gr_init_commit_global_cb_manager,
 	.pipe_mode_override = gm20b_gr_init_pipe_mode_override,
+#ifdef CONFIG_NVGPU_NON_FUSA
+	.enable_mme_config_ptimer = ga10b_gr_init_enable_mme_config_ptimer,
+#endif
 #ifdef CONFIG_NVGPU_GR_GOLDEN_CTX_VERIFICATION
 	.load_sw_bundle_init = gv11b_gr_init_load_sw_bundle_init,
 #else

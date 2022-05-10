@@ -856,6 +856,10 @@ struct gops_gr_init {
 				struct nvgpu_gr_ctx *gr_ctx,
 				bool patch);
 	void (*pipe_mode_override)(struct gk20a *g, bool enable);
+#ifdef CONFIG_NVGPU_NON_FUSA
+	int (*enable_mme_config_ptimer)(struct gk20a *g,
+				struct nvgpu_gr_ctx *gr_ctx);
+#endif
 	void (*commit_ctxsw_spill)(struct gk20a *g,
 				   struct nvgpu_gr_ctx *gr_ctx,
 				   u64 addr, u32 size, bool patch);

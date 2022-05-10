@@ -78,7 +78,31 @@ void ga10b_gr_init_commit_rops_crop_override(struct gk20a *g,
 	}
 }
 #endif
+#ifdef CONFIG_NVGPU_NON_FUSA
+int ga10b_gr_init_enable_mme_config_ptimer(struct gk20a *g,
+		struct nvgpu_gr_ctx *gr_ctx)
+{
+	u32 reg_val;
 
+	nvgpu_gr_ctx_patch_write_begin(g, gr_ctx, true);
+
+	reg_val = nvgpu_readl(g, gr_pri_mme_config_r());
+	reg_val = set_field(reg_val,
+		gr_pri_mme_config_config_ptimer_m(),
+		gr_pri_mme_config_config_ptimer_enable_f());
+	nvgpu_gr_ctx_patch_write(g, gr_ctx, gr_pri_mme_config_r(),
+		reg_val, true);
+	reg_val = nvgpu_readl(g, gr_pri_mme_fe1_config_r());
+	reg_val = set_field(reg_val,
+		gr_pri_mme_fe1_config_config_fe1_ptimer_m(),
+		gr_pri_mme_fe1_config_config_fe1_ptimer_enable_f());
+	nvgpu_gr_ctx_patch_write(g, gr_ctx, gr_pri_mme_fe1_config_r(),
+		reg_val, true);
+
+	nvgpu_gr_ctx_patch_write_end(g, gr_ctx, true);
+	return 0;
+}
+#endif
 #ifdef CONFIG_NVGPU_SET_FALCON_ACCESS_MAP
 void ga10b_gr_init_get_access_map(struct gk20a *g,
 				   u32 **whitelist, u32 *num_entries)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -78,6 +78,10 @@ int ga10b_gr_init_wait_idle(struct gk20a *g);
 void ga10b_gr_init_eng_config(struct gk20a *g);
 int ga10b_gr_init_reset_gpcs(struct gk20a *g);
 int ga10b_gr_init_wait_empty(struct gk20a *g);
+#ifdef CONFIG_NVGPU_NON_FUSA
+int ga10b_gr_init_enable_mme_config_ptimer(struct gk20a *g,
+		struct nvgpu_gr_ctx *gr_ctx);
+#endif
 #ifndef CONFIG_NVGPU_NON_FUSA
 void ga10b_gr_init_set_default_compute_regs(struct gk20a *g,
 		struct nvgpu_gr_ctx *gr_ctx);

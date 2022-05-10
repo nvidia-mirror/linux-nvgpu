@@ -907,6 +907,17 @@ int nvgpu_gr_obj_ctx_alloc(struct gk20a *g,
 	}
 #endif
 
+#ifdef CONFIG_NVGPU_NON_FUSA
+	if (g->ops.gr.init.enable_mme_config_ptimer != NULL) {
+		err = nvgpu_pg_elpg_protected_call(g,
+				g->ops.gr.init.enable_mme_config_ptimer(g, gr_ctx));
+
+		if (err != 0) {
+			nvgpu_err(g, "fail to enable mme_config_ptimer");
+			goto out;
+		}
+	}
+#endif
 	/*
 	 * Register init values are saved in
 	 * gops.gr.init.capture_gfx_regs(). Update and set the values as
