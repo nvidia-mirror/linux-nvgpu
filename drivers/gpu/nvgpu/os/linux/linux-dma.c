@@ -48,7 +48,7 @@
  */
 void nvgpu_dma_flags_to_str(struct gk20a *g, unsigned long flags, char *buf)
 {
-	int bytes_available = NVGPU_DMA_STR_SIZE;
+	int bytes_available = NVGPU_DMA_STR_SIZE - 1;
 
 	memset(buf, 0, NVGPU_DMA_STR_SIZE);
 
