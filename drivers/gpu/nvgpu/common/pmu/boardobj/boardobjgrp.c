@@ -419,7 +419,7 @@ static int pmu_cmd_send_rpc(struct gk20a *g,
 	rpc.hdr.function = pboardobjgrp->pmu.rpc_func_id;
 	rpc.hdr.flags    = 0x0;
 
-	status = nvgpu_pmu_rpc_execute(pmu, &(rpc.hdr),
+	status = nvgpu_pmu_rpc_execute(pmu, (u8 *)&rpc,
 		U16(sizeof(rpc) - sizeof(rpc.scratch)),
 		pcmd->dmem_buffer_size,
 		NULL, NULL, copy_out);

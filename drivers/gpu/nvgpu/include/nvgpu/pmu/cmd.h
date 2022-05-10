@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -58,10 +58,9 @@ int nvgpu_pmu_cmd_post(struct gk20a *g, struct pmu_cmd *cmd,
 		u32 queue_id, pmu_callback callback, void *cb_param);
 
 /* PMU RPC */
-int nvgpu_pmu_rpc_execute(struct nvgpu_pmu *pmu, struct nv_pmu_rpc_header *rpc,
+int nvgpu_pmu_rpc_execute(struct nvgpu_pmu *pmu, u8 *rpc,
 	u16 size_rpc, u16 size_scratch, pmu_callback caller_cb,
 	void *caller_cb_param, bool is_copy_back);
-
 
 /* RPC */
 #define PMU_RPC_EXECUTE(_stat, _pmu, _unit, _func, _prpc, _size)\
@@ -72,7 +71,7 @@ int nvgpu_pmu_rpc_execute(struct nvgpu_pmu *pmu, struct nv_pmu_rpc_header *rpc,
 		(_prpc)->hdr.function = NV_PMU_RPC_ID_##_unit##_##_func;\
 		(_prpc)->hdr.flags    = 0x0;    \
 		\
-		_stat = nvgpu_pmu_rpc_execute(_pmu, &((_prpc)->hdr),    \
+		_stat = nvgpu_pmu_rpc_execute(_pmu, (u8 *)_prpc,    \
 			(u16)(sizeof(*(_prpc)) - sizeof((_prpc)->scratch)), \
 			(_size), NULL, NULL, false);	\
 	} while (false)
@@ -86,7 +85,7 @@ int nvgpu_pmu_rpc_execute(struct nvgpu_pmu *pmu, struct nv_pmu_rpc_header *rpc,
 		(_prpc)->hdr.function = NV_PMU_RPC_ID_##_unit##_##_func;\
 		(_prpc)->hdr.flags    = 0x0;    \
 		\
-		_stat = nvgpu_pmu_rpc_execute(_pmu, &((_prpc)->hdr),    \
+		_stat = nvgpu_pmu_rpc_execute(_pmu, (u8 *)_prpc,    \
 			(u16)(sizeof(*(_prpc)) - sizeof((_prpc)->scratch)),\
 			(_size), NULL, NULL, true);	\
 	} while (false)
@@ -100,7 +99,7 @@ int nvgpu_pmu_rpc_execute(struct nvgpu_pmu *pmu, struct nv_pmu_rpc_header *rpc,
 		(_prpc)->hdr.function = NV_PMU_RPC_ID_##_unit##_##_func;\
 		(_prpc)->hdr.flags    = 0x0;    \
 		\
-		_stat = nvgpu_pmu_rpc_execute(_pmu, &((_prpc)->hdr),    \
+		_stat = nvgpu_pmu_rpc_execute(_pmu, (u8 *)_prpc,    \
 			(sizeof(*(_prpc)) - sizeof((_prpc)->scratch)),\
 			(_size), _cb, _cbp, false);	\
 	} while (false)

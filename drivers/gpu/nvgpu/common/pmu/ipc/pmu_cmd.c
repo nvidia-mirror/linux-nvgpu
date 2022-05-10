@@ -637,7 +637,7 @@ exit:
 	return err;
 }
 
-int nvgpu_pmu_rpc_execute(struct nvgpu_pmu *pmu, struct nv_pmu_rpc_header *rpc,
+int nvgpu_pmu_rpc_execute(struct nvgpu_pmu *pmu, u8 *rpc,
 	u16 size_rpc, u16 size_scratch, pmu_callback caller_cb,
 	void *caller_cb_param, bool is_copy_back)
 {
@@ -645,6 +645,7 @@ int nvgpu_pmu_rpc_execute(struct nvgpu_pmu *pmu, struct nv_pmu_rpc_header *rpc,
 	struct pmu_cmd cmd;
 	struct pmu_payload payload;
 	struct rpc_handler_payload *rpc_payload = NULL;
+	struct nv_pmu_rpc_header *rpc_header = NULL;
 	pmu_callback callback = NULL;
 	void *rpc_buff = NULL;
 	int status = 0;
@@ -658,6 +659,8 @@ int nvgpu_pmu_rpc_execute(struct nvgpu_pmu *pmu, struct nv_pmu_rpc_header *rpc,
 		status = EINVAL;
 		goto exit;
 	}
+
+	rpc_header = (struct nv_pmu_rpc_header *)rpc;
 
 	if (caller_cb == NULL) {
 		rpc_payload = nvgpu_kzalloc(g,
@@ -696,12 +699,12 @@ int nvgpu_pmu_rpc_execute(struct nvgpu_pmu *pmu, struct nv_pmu_rpc_header *rpc,
 	(void) memset(&cmd, 0, sizeof(struct pmu_cmd));
 	(void) memset(&payload, 0, sizeof(struct pmu_payload));
 
-	cmd.hdr.unit_id = rpc->unit_id;
+	cmd.hdr.unit_id = rpc_header->unit_id;
 	cmd.hdr.size = (u8)(PMU_CMD_HDR_SIZE + sizeof(struct nv_pmu_rpc_cmd));
 	cmd.cmd.rpc.cmd_type = NV_PMU_RPC_CMD_ID;
-	cmd.cmd.rpc.flags = rpc->flags;
+	cmd.cmd.rpc.flags = rpc_header->flags;
 
-	nvgpu_memcpy((u8 *)rpc_buff, (u8 *)rpc, size_rpc);
+	nvgpu_memcpy((u8 *)rpc_buff, rpc, size_rpc);
 	payload.rpc.prpc = rpc_buff;
 	payload.rpc.size_rpc = size_rpc;
 	payload.rpc.size_scratch = size_scratch;
@@ -711,7 +714,7 @@ int nvgpu_pmu_rpc_execute(struct nvgpu_pmu *pmu, struct nv_pmu_rpc_header *rpc,
 			rpc_payload);
 	if (status != 0) {
 		nvgpu_err(g, "Failed to execute RPC status=0x%x, func=0x%x",
-				status, rpc->function);
+				status, rpc_header->function);
 		goto cleanup;
 	}
 
@@ -730,7 +733,7 @@ int nvgpu_pmu_rpc_execute(struct nvgpu_pmu *pmu, struct nv_pmu_rpc_header *rpc,
 			goto cleanup;
 		}
 		/* copy back data to caller */
-		nvgpu_memcpy((u8 *)rpc, (u8 *)rpc_buff, size_rpc);
+		nvgpu_memcpy(rpc, (u8 *)rpc_buff, size_rpc);
 		/* free allocated memory */
 		nvgpu_kfree(g, rpc_payload);
 	}
