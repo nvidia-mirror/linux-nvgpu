@@ -1,7 +1,7 @@
 /*
  * GK20A Platform (SoC) Interface
  *
- * Copyright (c) 2014-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -133,6 +133,9 @@ struct gk20a_platform {
 	/* init value for slowdown factor */
 	u8 ldiv_slowdown_factor_init;
 
+	/* First Level Clock Gating: true = enable false = disable */
+	bool enable_flcg;
+
 	/* Second Level Clock Gating: true = enable false = disable */
 	bool enable_slcg;
 
@@ -141,6 +144,9 @@ struct gk20a_platform {
 
 	/* Engine Level Clock Gating: true = enable flase = disable */
 	bool enable_elcg;
+
+	/* Should be populated at probe. */
+	bool can_flcg;
 
 	/* Should be populated at probe. */
 	bool can_slcg;

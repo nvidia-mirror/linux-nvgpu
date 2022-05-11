@@ -571,6 +571,9 @@ void nvgpu_cg_slcg_timer_load_enable(struct gk20a *g);
 #endif
 
 #ifdef CONFIG_NVGPU_PROFILER
+void nvgpu_cg_flcg_perf_load_enable(struct gk20a *g, bool enable);
 void nvgpu_cg_slcg_perf_load_enable(struct gk20a *g, bool enable);
 #endif
+
+void nvgpu_cg_flcg_set_flcg_enabled(struct gk20a *g, bool enable);
 #endif /*NVGPU_POWER_FEATURES_CG_H*/

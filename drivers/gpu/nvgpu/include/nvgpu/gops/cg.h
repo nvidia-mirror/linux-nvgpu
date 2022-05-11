@@ -63,6 +63,7 @@ struct gops_cg {
 	void (*blcg_hshub_load_gating_prod)(struct gk20a *g, bool prod);
 	void (*slcg_runlist_load_gating_prod)(struct gk20a *g, bool prod);
 	void (*blcg_runlist_load_gating_prod)(struct gk20a *g, bool prod);
+	void (*flcg_perf_load_gating_prod)(struct gk20a *g, bool prod);
 
 	/* Ring station slcg prod gops */
 	void (*slcg_rs_ctrl_fbp_load_gating_prod)(struct gk20a *g, bool prod);

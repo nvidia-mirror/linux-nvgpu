@@ -188,6 +188,8 @@ static void nvgpu_init_pm_vars(struct gk20a *g)
 	 * Set up initial power settings. For non-slicon platforms, disable
 	 * power features and for silicon platforms, read from platform data
 	 */
+	g->flcg_enabled =
+		nvgpu_platform_is_silicon(g) ? platform->enable_flcg : false;
 	g->slcg_enabled =
 		nvgpu_platform_is_silicon(g) ? platform->enable_slcg : false;
 	g->blcg_enabled =
@@ -203,6 +205,8 @@ static void nvgpu_init_pm_vars(struct gk20a *g)
 
 	nvgpu_set_enabled(g, NVGPU_GPU_CAN_ELCG,
 		nvgpu_platform_is_silicon(g) ? platform->can_elcg : false);
+	nvgpu_set_enabled(g, NVGPU_GPU_CAN_FLCG,
+		nvgpu_platform_is_silicon(g) ? platform->can_flcg : false);
 	nvgpu_set_enabled(g, NVGPU_GPU_CAN_SLCG,
 		nvgpu_platform_is_silicon(g) ? platform->can_slcg : false);
 	nvgpu_set_enabled(g, NVGPU_GPU_CAN_BLCG,

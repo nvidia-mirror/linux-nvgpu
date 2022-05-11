@@ -182,6 +182,45 @@ static ssize_t slcg_enable_read(struct device *dev,
 
 static DEVICE_ATTR(slcg_enable, ROOTRW, slcg_enable_read, slcg_enable_store);
 
+static ssize_t flcg_enable_store(struct device *dev,
+	struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct gk20a *g = get_gk20a(dev);
+	unsigned long val = 0;
+	int err;
+
+	if (kstrtoul(buf, 10, &val) < 0)
+		return -EINVAL;
+
+	err = gk20a_busy(g);
+	if (err) {
+		return err;
+	}
+
+	if (val) {
+		nvgpu_cg_flcg_set_flcg_enabled(g, true);
+	} else {
+		nvgpu_cg_flcg_set_flcg_enabled(g, false);
+	}
+
+	gk20a_idle(g);
+
+	nvgpu_info(g, "FLCG is %s.", val ? "enabled" :
+			"disabled");
+
+	return count;
+}
+
+static ssize_t flcg_enable_read(struct device *dev,
+	struct device_attribute *attr, char *buf)
+{
+	struct gk20a *g = get_gk20a(dev);
+
+	return snprintf(buf, NVGPU_CPU_PAGE_SIZE, "%d\n", g->flcg_enabled ? 1 : 0);
+}
+
+static DEVICE_ATTR(flcg_enable, ROOTRW, flcg_enable_read, flcg_enable_store);
+
 static ssize_t ptimer_scale_factor_show(struct device *dev,
 					struct device_attribute *attr,
 					char *buf)
@@ -1447,6 +1486,7 @@ void nvgpu_remove_sysfs(struct device *dev)
 	device_remove_file(dev, &dev_attr_elcg_enable);
 	device_remove_file(dev, &dev_attr_blcg_enable);
 	device_remove_file(dev, &dev_attr_slcg_enable);
+	device_remove_file(dev, &dev_attr_flcg_enable);
 	device_remove_file(dev, &dev_attr_ptimer_scale_factor);
 	device_remove_file(dev, &dev_attr_ptimer_ref_freq);
 	device_remove_file(dev, &dev_attr_ptimer_src_freq);
@@ -1515,6 +1555,7 @@ int nvgpu_create_sysfs(struct device *dev)
 	error |= device_create_file(dev, &dev_attr_elcg_enable);
 	error |= device_create_file(dev, &dev_attr_blcg_enable);
 	error |= device_create_file(dev, &dev_attr_slcg_enable);
+	error |= device_create_file(dev, &dev_attr_flcg_enable);
 	error |= device_create_file(dev, &dev_attr_ptimer_scale_factor);
 	error |= device_create_file(dev, &dev_attr_ptimer_ref_freq);
 	error |= device_create_file(dev, &dev_attr_ptimer_src_freq);

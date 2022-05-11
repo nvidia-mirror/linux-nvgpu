@@ -584,6 +584,8 @@ struct gk20a {
 
 	/** Lock serializing CG an PG programming for various units */
 	struct nvgpu_mutex cg_pg_lock;
+	/** FLCG setting read from the platform data */
+	bool flcg_enabled;
 	/** SLCG setting read from the platform data */
 	bool slcg_enabled;
 	/** BLCG setting read from the platform data */

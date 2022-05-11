@@ -128,6 +128,8 @@ struct gk20a;
 	DEFINE_FLAG(NVGPU_PMU_ZBC_SAVE, "Save ZBC reglist"),		\
 	DEFINE_FLAG(NVGPU_GPU_CAN_BLCG,					\
 		"Supports Block Level Clock Gating"),			\
+	DEFINE_FLAG(NVGPU_GPU_CAN_FLCG,					\
+		"Supports First Level Clock Gating"),			\
 	DEFINE_FLAG(NVGPU_GPU_CAN_SLCG,					\
 		"Supports Second Level Clock Gating"),			\
 	DEFINE_FLAG(NVGPU_GPU_CAN_ELCG,					\
