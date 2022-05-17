@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,6 +28,7 @@
 struct gk20a;
 struct nvgpu_gr_zbc_table_indices;
 struct nvgpu_gr_zbc_entry;
+struct nvgpu_gr_zbc;
 
 void gm20b_gr_zbc_init_table_indices(struct gk20a *g,
 			struct nvgpu_gr_zbc_table_indices *zbc_indices);
@@ -35,4 +36,6 @@ void gm20b_gr_zbc_add_color(struct gk20a *g,
 			struct nvgpu_gr_zbc_entry *color_val, u32 index);
 void gm20b_gr_zbc_add_depth(struct gk20a *g,
 			struct nvgpu_gr_zbc_entry *depth_val, u32 index);
+void gm20b_gr_zbc_load_default_sw_table(struct gk20a *g,
+					struct nvgpu_gr_zbc *zbc);
 #endif /* NVGPU_GR_ZBC_GM20B_H */

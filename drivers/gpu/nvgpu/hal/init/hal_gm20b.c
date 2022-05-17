@@ -303,6 +303,7 @@ static const struct gops_gr_setup gm20b_ops_gr_setup = {
 #ifdef CONFIG_NVGPU_GRAPHICS
 static const struct gops_gr_zbc gm20b_ops_gr_zbc = {
 	.add_color = gm20b_gr_zbc_add_color,
+	.load_default_sw_table = gm20b_gr_zbc_load_default_sw_table,
 	.add_depth = gm20b_gr_zbc_add_depth,
 	.set_table = nvgpu_gr_zbc_set_table,
 	.query_table = nvgpu_gr_zbc_query_table,

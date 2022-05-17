@@ -23,13 +23,12 @@
 #include <nvgpu/gk20a.h>
 #include <nvgpu/io.h>
 #include <nvgpu/bug.h>
+#include <nvgpu/gr/zbc.h>
 #include <nvgpu/string.h>
 #include <nvgpu/power_features/pg.h>
 #ifdef CONFIG_NVGPU_LS_PMU
 #include <nvgpu/pmu/pmu_pg.h>
 #endif
-
-#include "zbc_priv.h"
 
 #define ZBC_ENTRY_UPDATED	1
 #define ZBC_ENTRY_ADDED		2
@@ -407,95 +406,6 @@ void nvgpu_gr_zbc_load_table(struct gk20a *g, struct nvgpu_gr_zbc *zbc)
 	}
 }
 
-static void nvgpu_gr_zbc_load_default_sw_stencil_table(struct gk20a *g,
-					  struct nvgpu_gr_zbc *zbc)
-{
-	u32 index = zbc->min_stencil_index;
-
-	(void)g;
-
-	zbc->zbc_s_tbl[index].stencil = 0x0;
-	zbc->zbc_s_tbl[index].format = GR_ZBC_STENCIL_CLEAR_FMT_U8;
-	zbc->zbc_s_tbl[index].ref_cnt =
-		nvgpu_safe_add_u32(zbc->zbc_s_tbl[index].ref_cnt, 1U);
-	index = nvgpu_safe_add_u32(index, 1U);
-
-	zbc->zbc_s_tbl[index].stencil = 0x1;
-	zbc->zbc_s_tbl[index].format = GR_ZBC_STENCIL_CLEAR_FMT_U8;
-	zbc->zbc_s_tbl[index].ref_cnt =
-		nvgpu_safe_add_u32(zbc->zbc_s_tbl[index].ref_cnt, 1U);
-	index = nvgpu_safe_add_u32(index, 1U);
-
-	zbc->zbc_s_tbl[index].stencil = 0xff;
-	zbc->zbc_s_tbl[index].format = GR_ZBC_STENCIL_CLEAR_FMT_U8;
-	zbc->zbc_s_tbl[index].ref_cnt =
-		nvgpu_safe_add_u32(zbc->zbc_s_tbl[index].ref_cnt, 1U);
-
-	zbc->max_used_stencil_index = index;
-}
-
-static void nvgpu_gr_zbc_load_default_sw_depth_table(struct gk20a *g,
-					struct nvgpu_gr_zbc *zbc)
-{
-	u32 index = zbc->min_depth_index;
-
-	(void)g;
-
-	zbc->zbc_dep_tbl[index].format = GR_ZBC_Z_FMT_VAL_FP32;
-	zbc->zbc_dep_tbl[index].depth = 0x3f800000;
-	zbc->zbc_dep_tbl[index].ref_cnt =
-		nvgpu_safe_add_u32(zbc->zbc_dep_tbl[index].ref_cnt, 1U);
-	index = nvgpu_safe_add_u32(index, 1U);
-
-	zbc->zbc_dep_tbl[index].format = GR_ZBC_Z_FMT_VAL_FP32;
-	zbc->zbc_dep_tbl[index].depth = 0;
-	zbc->zbc_dep_tbl[index].ref_cnt =
-		nvgpu_safe_add_u32(zbc->zbc_dep_tbl[index].ref_cnt, 1U);
-
-	zbc->max_used_depth_index = index;
-}
-
-static void nvgpu_gr_zbc_load_default_sw_color_table(struct gk20a *g,
-					struct nvgpu_gr_zbc *zbc)
-{
-	u32 i;
-	u32 index = zbc->min_color_index;
-
-	(void)g;
-
-	/* Opaque black (i.e. solid black, fmt 0x28 = A8B8G8R8) */
-	zbc->zbc_col_tbl[index].format = GR_ZBC_SOLID_BLACK_COLOR_FMT;
-	for (i = 0U; i < NVGPU_GR_ZBC_COLOR_VALUE_SIZE; i++) {
-		zbc->zbc_col_tbl[index].color_ds[i] = 0U;
-		zbc->zbc_col_tbl[index].color_l2[i] = 0xff000000U;
-	}
-	zbc->zbc_col_tbl[index].color_ds[3] = 0x3f800000U;
-	zbc->zbc_col_tbl[index].ref_cnt =
-		nvgpu_safe_add_u32(zbc->zbc_col_tbl[index].ref_cnt, 1U);
-	index = nvgpu_safe_add_u32(index, 1U);
-
-	/* Transparent black = (fmt 1 = zero) */
-	zbc->zbc_col_tbl[index].format = GR_ZBC_TRANSPARENT_BLACK_COLOR_FMT;
-	for (i = 0; i < NVGPU_GR_ZBC_COLOR_VALUE_SIZE; i++) {
-		zbc->zbc_col_tbl[index].color_ds[i] = 0U;
-		zbc->zbc_col_tbl[index].color_l2[i] = 0U;
-	}
-	zbc->zbc_col_tbl[index].ref_cnt =
-		nvgpu_safe_add_u32(zbc->zbc_col_tbl[index].ref_cnt, 1U);
-	index = nvgpu_safe_add_u32(index, 1U);
-
-	/* Opaque white (i.e. solid white) = (fmt 2 = uniform 1) */
-	zbc->zbc_col_tbl[index].format = GR_ZBC_SOLID_WHITE_COLOR_FMT;
-	for (i = 0; i < NVGPU_GR_ZBC_COLOR_VALUE_SIZE; i++) {
-		zbc->zbc_col_tbl[index].color_ds[i] = 0x3f800000U;
-		zbc->zbc_col_tbl[index].color_l2[i] = 0xffffffffU;
-	}
-	zbc->zbc_col_tbl[index].ref_cnt =
-		nvgpu_safe_add_u32(zbc->zbc_col_tbl[index].ref_cnt, 1U);
-
-	zbc->max_used_color_index = index;
-}
-
 static void nvgpu_gr_zbc_init_indices(struct gk20a *g, struct nvgpu_gr_zbc *zbc)
 {
 	struct nvgpu_gr_zbc_table_indices zbc_indices;
@@ -528,13 +438,10 @@ static void nvgpu_gr_zbc_load_default_sw_table(struct gk20a *g,
 {
 	nvgpu_mutex_init(&zbc->zbc_lock);
 
-	nvgpu_gr_zbc_load_default_sw_color_table(g, zbc);
-
-	nvgpu_gr_zbc_load_default_sw_depth_table(g, zbc);
-
-	if (nvgpu_is_enabled(g, NVGPU_SUPPORT_ZBC_STENCIL)) {
-		nvgpu_gr_zbc_load_default_sw_stencil_table(g, zbc);
+	if (g->ops.gr.zbc.load_default_sw_table != NULL) {
+		g->ops.gr.zbc.load_default_sw_table(g, zbc);
 	}
+
 }
 
 static int gr_zbc_allocate_local_tbls(struct gk20a *g, struct nvgpu_gr_zbc *zbc)

@@ -184,6 +184,7 @@
 #include "hal/gr/config/gr_config_gv11b.h"
 #include "hal/gr/config/gr_config_ga10b.h"
 #ifdef CONFIG_NVGPU_GRAPHICS
+#include "hal/gr/zbc/zbc_gm20b.h"
 #include "hal/gr/zbc/zbc_gp10b.h"
 #include "hal/gr/zbc/zbc_gv11b.h"
 #include "hal/gr/zbc/zbc_ga10b.h"
@@ -566,6 +567,11 @@ static const struct gops_gr_setup ga10b_ops_gr_setup = {
 #ifdef CONFIG_NVGPU_GRAPHICS
 static const struct gops_gr_zbc ga10b_ops_gr_zbc = {
 	.add_color = ga10b_gr_zbc_add_color,
+#ifdef CONFIG_NVGPU_HAL_NON_FUSA
+	.load_default_sw_table = gm20b_gr_zbc_load_default_sw_table,
+#else
+	.load_default_sw_table = ga10b_gr_zbc_load_static_table,
+#endif
 	.add_depth = gp10b_gr_zbc_add_depth,
 	.set_table = nvgpu_gr_zbc_set_table,
 	.query_table = nvgpu_gr_zbc_query_table,

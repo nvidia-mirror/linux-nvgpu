@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -86,3 +86,106 @@ void ga10b_gr_zbc_add_color(struct gk20a *g,
 			nvgpu_gr_zbc_get_entry_color_l2(
 				color_val, data_index_3)));
 }
+
+#ifndef CONFIG_NVGPU_NON_FUSA
+static void ga10b_gr_zbc_load_default_sw_color_table(struct gk20a *g,
+					struct nvgpu_gr_zbc *zbc)
+{
+	u32 index = zbc->min_color_index;
+
+	(void)g;
+
+	NVGPU_ZBC_SET_COLOR_ATTR(zbc->zbc_col_tbl, index, 1);
+	NVGPU_ZBC_SET_COLOR_ATTR(zbc->zbc_col_tbl, index, 2);
+	NVGPU_ZBC_SET_COLOR_ATTR(zbc->zbc_col_tbl, index, 3);
+	NVGPU_ZBC_SET_COLOR_ATTR(zbc->zbc_col_tbl, index, 4);
+	NVGPU_ZBC_SET_COLOR_ATTR(zbc->zbc_col_tbl, index, 5);
+	NVGPU_ZBC_SET_COLOR_ATTR(zbc->zbc_col_tbl, index, 6);
+	NVGPU_ZBC_SET_COLOR_ATTR(zbc->zbc_col_tbl, index, 7);
+	NVGPU_ZBC_SET_COLOR_ATTR(zbc->zbc_col_tbl, index, 8);
+	NVGPU_ZBC_SET_COLOR_ATTR(zbc->zbc_col_tbl, index, 9);
+	NVGPU_ZBC_SET_COLOR_ATTR(zbc->zbc_col_tbl, index, 10);
+
+	NVGPU_ZBC_SET_COLOR_ATTR(zbc->zbc_col_tbl, index, 11);
+	NVGPU_ZBC_SET_COLOR_ATTR(zbc->zbc_col_tbl, index, 12);
+	NVGPU_ZBC_SET_COLOR_ATTR(zbc->zbc_col_tbl, index, 13);
+	NVGPU_ZBC_SET_COLOR_ATTR(zbc->zbc_col_tbl, index, 14);
+	NVGPU_ZBC_SET_COLOR_ATTR(zbc->zbc_col_tbl, index, 15);
+	NVGPU_ZBC_SET_COLOR_ATTR(zbc->zbc_col_tbl, index, 16);
+	NVGPU_ZBC_SET_COLOR_ATTR(zbc->zbc_col_tbl, index, 17);
+	NVGPU_ZBC_SET_COLOR_ATTR(zbc->zbc_col_tbl, index, 18);
+	NVGPU_ZBC_SET_COLOR_ATTR(zbc->zbc_col_tbl, index, 19);
+	NVGPU_ZBC_SET_COLOR_ATTR(zbc->zbc_col_tbl, index, 20);
+
+	NVGPU_ZBC_SET_COLOR_ATTR(zbc->zbc_col_tbl, index, 21);
+	NVGPU_ZBC_SET_COLOR_ATTR(zbc->zbc_col_tbl, index, 22);
+	NVGPU_ZBC_SET_COLOR_ATTR(zbc->zbc_col_tbl, index, 23);
+	NVGPU_ZBC_SET_COLOR_ATTR(zbc->zbc_col_tbl, index, 24);
+	NVGPU_ZBC_SET_COLOR_ATTR(zbc->zbc_col_tbl, index, 25);
+	NVGPU_ZBC_SET_COLOR_ATTR(zbc->zbc_col_tbl, index, 26);
+	NVGPU_ZBC_SET_COLOR_ATTR(zbc->zbc_col_tbl, index, 27);
+	NVGPU_ZBC_SET_COLOR_ATTR(zbc->zbc_col_tbl, index, 28);
+	NVGPU_ZBC_SET_COLOR_ATTR(zbc->zbc_col_tbl, index, 29);
+	NVGPU_ZBC_SET_COLOR_ATTR(zbc->zbc_col_tbl, index, 30);
+
+	/*
+	 * Reached to last entry, reduce index by 1 as it has increased
+	 * as part of macro.
+	 */
+	index = nvgpu_wrapping_sub_u32(index, 1U);
+	zbc->max_used_color_index = index;
+}
+
+static void ga10b_gr_zbc_load_default_sw_depth_table(struct gk20a *g,
+					struct nvgpu_gr_zbc *zbc)
+{
+	u32 index = zbc->min_depth_index;
+
+	(void)g;
+
+	NVGPU_ZBC_SET_DEPTH_ATTR(zbc->zbc_dep_tbl[index], 1);
+	index = nvgpu_safe_add_u32(index, 1U);
+
+	NVGPU_ZBC_SET_DEPTH_ATTR(zbc->zbc_dep_tbl[index], 2);
+
+	zbc->max_used_depth_index = index;
+}
+
+static void ga10b_gr_zbc_load_default_sw_stencil_table(struct gk20a *g,
+					  struct nvgpu_gr_zbc *zbc)
+{
+	u32 index = zbc->min_stencil_index;
+
+	(void)g;
+
+	NVGPU_ZBC_SET_STENCIL_ATTR(zbc->zbc_s_tbl[index], 1);
+	index = nvgpu_safe_add_u32(index, 1U);
+
+	NVGPU_ZBC_SET_STENCIL_ATTR(zbc->zbc_s_tbl[index], 2);
+	index = nvgpu_safe_add_u32(index, 1U);
+
+	NVGPU_ZBC_SET_STENCIL_ATTR(zbc->zbc_s_tbl[index], 3);
+	index = nvgpu_safe_add_u32(index, 1U);
+
+	NVGPU_ZBC_SET_STENCIL_ATTR(zbc->zbc_s_tbl[index], 4);
+	index = nvgpu_safe_add_u32(index, 1U);
+
+	NVGPU_ZBC_SET_STENCIL_ATTR(zbc->zbc_s_tbl[index], 5);
+
+	zbc->max_used_stencil_index = index;
+}
+
+void ga10b_gr_zbc_load_static_table(struct gk20a *g,
+					struct nvgpu_gr_zbc *zbc)
+{
+	nvgpu_mutex_init(&zbc->zbc_lock);
+
+	ga10b_gr_zbc_load_default_sw_color_table(g, zbc);
+
+	ga10b_gr_zbc_load_default_sw_depth_table(g, zbc);
+
+	if (nvgpu_is_enabled(g, NVGPU_SUPPORT_ZBC_STENCIL)) {
+		ga10b_gr_zbc_load_default_sw_stencil_table(g, zbc);
+	}
+}
+#endif

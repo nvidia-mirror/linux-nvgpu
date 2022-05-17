@@ -574,7 +574,6 @@ gr:
     zbc:
       safe: no
       sources: [ common/gr/zbc.c,
-                 common/gr/zbc_priv.h,
                  include/nvgpu/gr/zbc.h ]
     zcull:
       safe: no

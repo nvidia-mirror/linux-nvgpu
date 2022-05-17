@@ -1158,6 +1158,8 @@ struct gops_gr_zbc {
 	u32 (*get_gpcs_swdx_dss_zbc_z_format_reg)(struct gk20a *g);
 	void (*init_table_indices)(struct gk20a *g,
 			struct nvgpu_gr_zbc_table_indices *zbc_indices);
+	void (*load_default_sw_table)(struct gk20a *g,
+		struct nvgpu_gr_zbc *zbc);
 };
 struct gops_gr_zcull {
 	int (*init_zcull_hw)(struct gk20a *g,

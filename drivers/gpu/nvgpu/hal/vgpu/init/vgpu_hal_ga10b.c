@@ -366,6 +366,7 @@ static const struct gops_gr_setup vgpu_ga10b_ops_gr_setup = {
 #ifdef CONFIG_NVGPU_GRAPHICS
 static const struct gops_gr_zbc vgpu_ga10b_ops_gr_zbc = {
 	.add_color = NULL,
+	.load_default_sw_table = NULL,
 	.add_depth = NULL,
 	.set_table = vgpu_gr_add_zbc,
 	.query_table = vgpu_gr_query_zbc,
