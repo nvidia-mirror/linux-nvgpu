@@ -38,6 +38,7 @@
 #include <nvgpu/sort.h>
 #include <nvgpu/gr/gr_instances.h>
 #include <nvgpu/grmgr.h>
+#include <nvgpu/power_features/pg.h>
 
 static int nvgpu_profiler_build_regops_allowlist(struct nvgpu_profiler_object *prof);
 static void nvgpu_profiler_destroy_regops_allowlist(struct nvgpu_profiler_object *prof);
@@ -496,6 +497,7 @@ static int nvgpu_profiler_quiesce_hwpm_streamout_non_resident(struct gk20a *g,
 		struct nvgpu_tsg *tsg)
 {
 	struct nvgpu_mem *pm_ctx_mem;
+	int err;
 
 	nvgpu_log(g, gpu_dbg_prof,
 		"HWPM streamout quiesce in non-resident state started");
@@ -505,9 +507,16 @@ static int nvgpu_profiler_quiesce_hwpm_streamout_non_resident(struct gk20a *g,
 	}
 
 	pm_ctx_mem = nvgpu_gr_ctx_get_pm_ctx_mem(tsg->gr_ctx);
+
 	if (pm_ctx_mem == NULL) {
 		nvgpu_err(g, "No PM context");
 		return -EINVAL;
+	}
+
+	err = nvgpu_pg_elpg_ms_protected_call(g, g->ops.mm.cache.l2_flush(g, true));
+	if (err != 0) {
+		nvgpu_err(g, "l2_flush failed");
+		return err;
 	}
 
 	nvgpu_memset(g, pm_ctx_mem, 0U, 0U, pm_ctx_mem->size);

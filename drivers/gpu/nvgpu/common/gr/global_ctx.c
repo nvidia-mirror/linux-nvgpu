@@ -450,13 +450,6 @@ void nvgpu_gr_global_ctx_load_local_golden_image(struct gk20a *g,
 	struct nvgpu_gr_global_ctx_local_golden_image *local_golden_image,
 	struct nvgpu_mem *target_mem)
 {
-	/* Channel gr_ctx buffer is gpu cacheable.
-	   Flush and invalidate before cpu update. */
-	if (nvgpu_pg_elpg_ms_protected_call(g,
-				g->ops.mm.cache.l2_flush(g, true)) != 0) {
-		nvgpu_err(g, "l2_flush failed");
-	}
-
 	nvgpu_mem_wr_n(g, target_mem, 0, local_golden_image->context,
 		nvgpu_safe_cast_u64_to_u32(local_golden_image->size));
 
