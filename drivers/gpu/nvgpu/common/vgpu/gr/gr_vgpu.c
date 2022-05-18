@@ -50,6 +50,8 @@
 #include <nvgpu/cyclestats_snapshot.h>
 #include <nvgpu/power_features/pg.h>
 
+#include <nvgpu/tsg_subctx.h>
+
 #include "gr_vgpu.h"
 #include "ctx_vgpu.h"
 #include "subctx_vgpu.h"
@@ -173,6 +175,7 @@ int vgpu_gr_alloc_obj_ctx(struct nvgpu_channel  *c, u32 class_num, u32 flags)
 	struct nvgpu_tsg *tsg = NULL;
 	struct tegra_vgpu_cmd_msg msg = {};
 	struct tegra_vgpu_alloc_obj_ctx_params *p = &msg.params.alloc_obj_ctx;
+	struct nvgpu_gr_ctx_mappings *mappings = NULL;
 	int err = 0;
 
 	nvgpu_log_fn(g, " ");
@@ -211,11 +214,27 @@ int vgpu_gr_alloc_obj_ctx(struct nvgpu_channel  *c, u32 class_num, u32 flags)
 	gr_ctx = tsg->gr_ctx;
 
 	nvgpu_mutex_acquire(&tsg->ctx_init_lock);
-	if (tsg->vm == NULL) {
-		tsg->vm = c->vm;
-		nvgpu_vm_get(tsg->vm);
-		gr_ctx->tsgid = tsg->tsgid;
+
+	/*
+	 * gr_subctx and mappings are allocated/setup here just to track the
+	 * VM references. When a new mapping is created VM reference is taken.
+	 * It will be dropped when the last channel in the subcontext is
+	 * released.
+	 */
+	err = nvgpu_tsg_subctx_alloc_gr_subctx(g, c);
+	if (err != 0) {
+		nvgpu_err(g, "failed to alloc gr subctx");
+		nvgpu_mutex_release(&tsg->ctx_init_lock);
+		return err;
 	}
+
+	mappings = nvgpu_gr_ctx_alloc_or_get_mappings(g, tsg, c);
+	if (mappings == NULL) {
+		nvgpu_err(g, "fail to allocate/get ctx mappings struct");
+		nvgpu_mutex_release(&tsg->ctx_init_lock);
+		return -ENOMEM;
+	}
+
 	nvgpu_mutex_release(&tsg->ctx_init_lock);
 
 	msg.cmd = TEGRA_VGPU_CMD_ALLOC_OBJ_CTX;
@@ -234,6 +253,7 @@ int vgpu_gr_alloc_obj_ctx(struct nvgpu_channel  *c, u32 class_num, u32 flags)
 	err = vgpu_comm_sendrecv(&msg, sizeof(msg), sizeof(msg));
 	err = err ? err : msg.ret;
 	if (err == 0) {
+		gr_ctx->tsgid = tsg->tsgid;
 		nvgpu_gr_ctx_mark_ctx_initialized(gr_ctx);
 	} else {
 		nvgpu_err(g, "alloc obj ctx failed err %d", err);

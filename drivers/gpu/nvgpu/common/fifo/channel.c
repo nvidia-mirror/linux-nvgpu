@@ -983,11 +983,6 @@ static void channel_free(struct nvgpu_channel *ch, bool force)
 		g->ops.gr.fecs_trace.unbind_channel(g, &ch->inst_block);
 #endif
 
-	if (g->ops.gr.setup.free_subctx != NULL) {
-		g->ops.gr.setup.free_subctx(ch);
-		ch->subctx = NULL;
-	}
-
 	g->ops.gr.intr.flush_channel_tlb(g);
 
 	if (ch->usermode_submit_enabled) {
@@ -1803,6 +1798,7 @@ int nvgpu_channel_init_support(struct gk20a *g, u32 chid)
 	nvgpu_mutex_init(&c->dbg_s_lock);
 #endif
 	nvgpu_init_list_node(&c->ch_entry);
+	nvgpu_init_list_node(&c->subctx_entry);
 	nvgpu_list_add(&c->free_chs, &g->fifo.free_chs);
 
 	return 0;

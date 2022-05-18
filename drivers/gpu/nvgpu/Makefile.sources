@@ -155,6 +155,7 @@ srcs +=	common/device.c \
 	common/fifo/fifo.c \
 	common/fifo/pbdma.c \
 	common/fifo/tsg.c \
+	common/fifo/tsg_subctx.c \
 	common/fifo/runlist.c \
 	common/fifo/engine_status.c \
 	common/fifo/engines.c \

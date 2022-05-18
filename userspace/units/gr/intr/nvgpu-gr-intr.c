@@ -37,7 +37,9 @@
 #include <nvgpu/runlist.h>
 #include <nvgpu/tsg.h>
 #include <nvgpu/class.h>
+#include <nvgpu/gr/ctx.h>
 #include <nvgpu/gr/gr_intr.h>
+#include <nvgpu/tsg_subctx.h>
 
 #include <nvgpu/hw/gv11b/hw_gr_gv11b.h>
 
@@ -264,12 +266,45 @@ static int gr_test_intr_cache_current_ctx(struct gk20a *g,
 	return g->ops.gr.intr.stall_isr(g);
 }
 
+static u64 nvgpu_gmmu_map_locked_stub(struct vm_gk20a *vm,
+			  u64 vaddr,
+			  struct nvgpu_sgt *sgt,
+			  u64 buffer_offset,
+			  u64 size,
+			  u32 pgsz_idx,
+			  u8 kind_v,
+			  u32 ctag_offset,
+			  u32 flags,
+			  enum gk20a_mem_rw_flag rw_flag,
+			  bool clear_ctags,
+			  bool sparse,
+			  bool priv,
+			  struct vm_gk20a_mapping_batch *batch,
+			  enum nvgpu_aperture aperture)
+{
+	return 1;
+}
+
+static void nvgpu_gmmu_unmap_locked_stub(struct vm_gk20a *vm,
+			     u64 vaddr,
+			     u64 size,
+			     u32 pgsz_idx,
+			     bool va_allocated,
+			     enum gk20a_mem_rw_flag rw_flag,
+			     bool sparse,
+			     struct vm_gk20a_mapping_batch *batch)
+{
+	return;
+}
+
 static int gr_test_intr_allocate_ch_tsg(struct unit_module *m,
 					struct gk20a *g)
 {
 	u32 tsgid = getpid();
+	struct nvgpu_gr_ctx_mappings *mappings = NULL;
 	struct nvgpu_channel *ch = NULL;
 	struct nvgpu_tsg *tsg = NULL;
+	struct vm_gk20a *vm = NULL;
 	bool sema_init, notify_init;
 	int err;
 
@@ -295,9 +330,43 @@ static int gr_test_intr_allocate_ch_tsg(struct unit_module *m,
 		goto ch_cleanup;
 	}
 
+	/* Setup VM */
+	vm = nvgpu_vm_init(g, SZ_4K, SZ_4K << 10,
+		nvgpu_safe_sub_u64(1ULL << 37, SZ_4K << 10),
+		(1ULL << 32), 0ULL,
+		false, false, false, "dummy");
+	if (!vm) {
+		unit_err(m, "failed to allocate VM");
+		goto ch_cleanup;
+	}
+
+	ch->g = g;
+	ch->vm = vm;
+
 	err = nvgpu_tsg_bind_channel(tsg, ch);
 	if (err != 0) {
 		unit_err(m, "failed tsg channel bind\n");
+		goto ch_cleanup;
+	}
+
+	g->ops.mm.gmmu.map = nvgpu_gmmu_map_locked_stub;
+	g->ops.mm.gmmu.unmap = nvgpu_gmmu_unmap_locked_stub;
+
+	err = nvgpu_tsg_subctx_alloc_gr_subctx(g, ch);
+	if (err != 0) {
+		unit_err(m, "failed to alloc gr subctx");
+		goto ch_cleanup;
+	}
+
+	err = nvgpu_tsg_subctx_setup_subctx_header(g, ch);
+	if (err != 0) {
+		unit_err(m, "failed to setup subctx header");
+		goto ch_cleanup;
+	}
+
+	mappings = nvgpu_gr_ctx_alloc_or_get_mappings(g, tsg, ch);
+	if (mappings == NULL) {
+		unit_err(m, "failed to allocate gr_ctx mappings");
 		goto ch_cleanup;
 	}
 

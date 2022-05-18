@@ -46,6 +46,7 @@
 #include <nvgpu/gr/hwpm_map.h>
 #include <nvgpu/preempt.h>
 #include <nvgpu/power_features/pg.h>
+#include <nvgpu/tsg_subctx.h>
 
 #include "gr_gk20a.h"
 #include "gr_pri_gk20a.h"
@@ -82,14 +83,15 @@ int gr_gk20a_update_hwpm_ctxsw_mode(struct gk20a *g,
 				  struct nvgpu_tsg *tsg,
 				  u32 mode)
 {
-	struct nvgpu_channel *ch;
+	bool set_pm_ctx_gpu_va = false;
 	struct nvgpu_gr_ctx *gr_ctx;
 	bool skip_update = false;
-	u64 pm_ctx_gpu_va = 0ULL;
 	int ret;
 	struct nvgpu_gr *gr = nvgpu_gr_get_instance_ptr(g, gr_instance_id);
 
 	nvgpu_log_fn(g, " ");
+
+	nvgpu_mutex_acquire(&tsg->ctx_init_lock);
 
 	gr_ctx = tsg->gr_ctx;
 
@@ -99,6 +101,7 @@ int gr_gk20a_update_hwpm_ctxsw_mode(struct gk20a *g,
 		if (ret != 0) {
 			nvgpu_err(g,
 				"failed to allocate and map pm ctxt buffer");
+			nvgpu_mutex_release(&tsg->ctx_init_lock);
 			return ret;
 		}
 
@@ -109,11 +112,14 @@ int gr_gk20a_update_hwpm_ctxsw_mode(struct gk20a *g,
 	}
 
 	ret = nvgpu_gr_ctx_prepare_hwpm_mode(g, gr_ctx, mode,
-					     &pm_ctx_gpu_va, &skip_update);
+					     &set_pm_ctx_gpu_va, &skip_update);
 	if (ret != 0) {
+		nvgpu_mutex_release(&tsg->ctx_init_lock);
 		return ret;
 	}
+
 	if (skip_update) {
+		nvgpu_mutex_release(&tsg->ctx_init_lock);
 		return 0;
 	}
 
@@ -128,19 +134,15 @@ int gr_gk20a_update_hwpm_ctxsw_mode(struct gk20a *g,
 	nvgpu_gr_ctx_set_hwpm_pm_mode(g, gr_ctx);
 
 	if (nvgpu_is_enabled(g, NVGPU_SUPPORT_TSG_SUBCONTEXTS)) {
-		nvgpu_rwsem_down_read(&tsg->ch_list_lock);
-		nvgpu_list_for_each_entry(ch, &tsg->ch_list,
-					  nvgpu_channel, ch_entry) {
-			nvgpu_gr_subctx_set_hwpm_ptr(g, ch->subctx,
-				pm_ctx_gpu_va);
-		}
-		nvgpu_rwsem_up_read(&tsg->ch_list_lock);
+		nvgpu_tsg_subctxs_set_pm_buffer_va(tsg, set_pm_ctx_gpu_va);
 	} else {
-		nvgpu_gr_ctx_set_hwpm_ptr(g, gr_ctx, pm_ctx_gpu_va);
+		nvgpu_gr_ctx_set_hwpm_ptr(g, gr_ctx, set_pm_ctx_gpu_va);
 	}
 
 out:
 	g->ops.tsg.enable(tsg);
+
+	nvgpu_mutex_release(&tsg->ctx_init_lock);
 
 	return ret;
 }

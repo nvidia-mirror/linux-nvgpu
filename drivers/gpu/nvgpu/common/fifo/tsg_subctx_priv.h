@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,22 +20,41 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include <nvgpu/tsg_subctx.h>
-#include <nvgpu/gr/subctx.h>
-#include <nvgpu/channel.h>
-#include <nvgpu/log.h>
+#ifndef NVGPU_COMMON_FIFO_TSG_SUBCTX_PRIV_H
+#define NVGPU_COMMON_FIFO_TSG_SUBCTX_PRIV_H
 
-#include "subctx_vgpu.h"
+#include <nvgpu/types.h>
+#include <nvgpu/list.h>
 
-void vgpu_gr_setup_free_subctx(struct nvgpu_channel *c)
-{
-	nvgpu_log(c->g, gpu_dbg_gr, " ");
+struct nvgpu_tsg;
+struct vm_gk20a;
+struct nvgpu_gr_subctx;
 
-	if (!nvgpu_is_enabled(c->g, NVGPU_SUPPORT_TSG_SUBCONTEXTS)) {
-		return;
-	}
+struct nvgpu_tsg_subctx {
 
-	nvgpu_gr_subctx_free(c->g, c->subctx, c->vm, false);
+	/** Subcontext Id (aka. veid). */
+	u32 subctx_id;
 
-	nvgpu_log(c->g, gpu_dbg_gr, "done");
-}
+	/** TSG to which this subcontext belongs. */
+	struct nvgpu_tsg *tsg;
+
+	/** Subcontext's address space. */
+	struct vm_gk20a *vm;
+
+	/** Subcontext's GR ctx header and GR ctx buffers mappings. */
+	struct nvgpu_gr_subctx *gr_subctx;
+
+	/**
+	 * Subcontext's entry in TSG's (#nvgpu_tsg) subcontexts list
+	 * #subctx_list.
+	 */
+	struct nvgpu_list_node tsg_entry;
+
+	/**
+	 * List of channels (#nvgpu_channel) bound to this TSG subcontext.
+	 * Accessed by holding #ch_list_lock from TSG.
+	 */
+	struct nvgpu_list_node ch_list;
+};
+
+#endif /* NVGPU_COMMON_FIFO_TSG_SUBCTX_PRIV_H */

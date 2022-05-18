@@ -78,8 +78,6 @@ struct nvgpu_tsg {
 	/** Pointer to GPU driver struct. */
 	struct gk20a *g;
 
-	/** Points to TSG's virtual memory */
-	struct vm_gk20a *vm;
 	/**
 	 * Starting with Volta, when a Channel/TSG is set up, a recovery buffer
 	 * region must be allocated in BAR2, to allow engine to save methods if
@@ -99,6 +97,12 @@ struct nvgpu_tsg {
 	struct nvgpu_gr_ctx *gr_ctx;
 
 	/**
+	 * List of gr_ctx buffers maps (#nvgpu_gr_ctx_mappings) for gr ctx
+	 * for this TSG. Accessed by holding #ctx_init_lock from TSG.
+	 */
+	struct nvgpu_list_node gr_ctx_mappings_list;
+
+	/**
 	 * Mutex to prevent concurrent context initialization for channels
 	 * in same TSG. All channels in one TSG share the context buffer,
 	 * and only one of the channel needs to initialize the context.
@@ -112,6 +116,12 @@ struct nvgpu_tsg {
 	 * This is ref_put whenever a channel is unbound from the TSG.
 	 */
 	struct nvgpu_ref refcount;
+
+	/**
+	 * List of subcontexts (#nvgpu_tsg_subctx) bound to this TSG.
+	 * Accessed by holding #ch_list_lock from TSG.
+	 */
+	struct nvgpu_list_node subctx_list;
 
 	/** List of channels bound to this TSG. */
 	struct nvgpu_list_node ch_list;
@@ -128,7 +138,7 @@ struct nvgpu_tsg {
 #endif
 	/**
 	 * Read write type of semaphore lock used for accessing/modifying
-	 * #ch_list.
+	 * #ch_list, #subctx_list and #ch_list in #nvgpu_tsg_subctx.
 	 */
 	struct nvgpu_rwsem ch_list_lock;
 
@@ -272,8 +282,6 @@ struct nvgpu_tsg *nvgpu_tsg_open(struct gk20a *g, pid_t pid);
  * - Call non-NULL HAL to release tsg. This HAL is non-NULL for vgpu only.
  * - Call nvgpu_free_gr_ctx_struct to free #nvgpu_tsg.gr_ctx.
  * - Set #nvgpu_tsg.gr_ctx to NULL.
- * - If #nvgpu_tsg.vm is non-NULL, do #nvgpu_vm_put for this vm and set
- *   it to NULL (Unhook TSG from VM).
  * - If #nvgpu_tsg.sm_error_states is non-NULL, free allocated memory and set
  *   it to NULL.
  */
@@ -286,7 +294,7 @@ void nvgpu_tsg_release_common(struct gk20a *g, struct nvgpu_tsg *tsg);
  *
  * - Get pointer to the #nvgpu_tsg using #ref.
  * - Call HAL to free #nvgpu_tsg.gr_ctx if this memory pointer is non-NULL
- *   and valid and also #nvgpu_tsg.vm is non-NULL.
+ *   and valid.
  * - Unhook all events created on the TSG being released.
  * -- Acquire #nvgpu_tsg.event_id_list_lock.
  * -- While #nvgpu_tsg.event_id_list is non-empty,
@@ -363,6 +371,7 @@ void nvgpu_tsg_disable(struct nvgpu_tsg *tsg);
  * - If channel had ASYNC subctx id, then set runqueue selector to 1.
  * - Set runlist id of TSG to channel's runlist_id if runlist_id of TSG
  *   is set to #NVGPU_INVALID_TSG_ID.
+ * - Bind channel to TSG subcontext calling #nvgpu_tsg_subctx_bind_channel.
  * - Call HAL to bind channel to TSG.
  * - Add channel to TSG's list of channels. See #nvgpu_tsg.ch_list
  * - Set #nvgpu_channel.tsgid to #nvgpu_tsg.tsgid.
@@ -445,6 +454,7 @@ struct nvgpu_tsg *nvgpu_tsg_check_and_get_from_id(struct gk20a *g, u32 tsgid);
  *  - If NEXT bit is set and force is set to false, caller will
  *    have to retry unbind.
  *  - Remove channel from its runlist.
+ *  - Remove channel from subctx by calling #nvgpu_tsg_subctx_unbind_channel.
  *  - Remove channel from TSG's channel list.
  *  - Set tsgid of the channel to #NVGPU_INVALID_TSG_ID.
  *  - Disable channel so that it is not picked up by h/w scheduler.
@@ -456,6 +466,7 @@ struct nvgpu_tsg *nvgpu_tsg_check_and_get_from_id(struct gk20a *g, u32 tsgid);
  *  - Call #nvgpu_channel_update_runlist to remove the channel from the runlist.
  *  - Acquire #nvgpu_tsg.ch_list_lock of the tsg and delete channel from
  *    #nvgpu_tsg.ch_list.
+ *  - Remove channel from subctx by calling #nvgpu_tsg_subctx_unbind_channel.
  *  - Remove channel from TSG's channel list.
  *  - Set #nvgpu_channel.tsgid to #NVGPU_INVALID_TSG_ID
  *  - Release #nvgpu_tsg.ch_list_lock of the tsg.

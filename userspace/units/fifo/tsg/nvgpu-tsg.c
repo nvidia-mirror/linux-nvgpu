@@ -654,7 +654,6 @@ int test_tsg_release(struct unit_module *m,
 	struct nvgpu_fifo *f = &g->fifo;
 	struct gpu_ops gops = g->ops;
 	struct nvgpu_tsg *tsg = NULL;
-	struct vm_gk20a vm;
 	u32 branches = 0U;
 	int ret = UNIT_FAIL;
 	u32 free_gr_ctx_mask =
@@ -706,12 +705,6 @@ int test_tsg_release(struct unit_module *m,
 		if (branches & F_TSG_RELEASE_MEM) {
 			ret = nvgpu_gr_ctx_alloc_ctx_buffers(g, gr_ctx_desc, tsg->gr_ctx);
 			unit_assert(ret == UNIT_SUCCESS, goto done);
-			tsg->vm = &vm;
-			/* prevent nvgpu_vm_remove */
-			nvgpu_ref_init(&vm.ref);
-			nvgpu_ref_get(&vm.ref);
-		} else {
-			tsg->vm = NULL;
 		}
 
 		if ((branches & free_gr_ctx_mask) == free_gr_ctx_mask) {
@@ -755,7 +748,6 @@ int test_tsg_release(struct unit_module *m,
 
 		unit_assert(!f->tsg[tsg->tsgid].in_use, goto done);
 		unit_assert(tsg->gr_ctx == NULL, goto done);
-		unit_assert(tsg->vm == NULL, goto done);
 		unit_assert(tsg->sm_error_states == NULL, goto done);
 	}
 	ret = UNIT_SUCCESS;

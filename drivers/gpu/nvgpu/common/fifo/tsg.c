@@ -28,6 +28,7 @@
 #include <nvgpu/channel.h>
 #include <nvgpu/tsg.h>
 #include <nvgpu/atomic.h>
+#include <nvgpu/tsg_subctx.h>
 #include <nvgpu/rc.h>
 #include <nvgpu/gk20a.h>
 #include <nvgpu/error_notifier.h>
@@ -142,6 +143,13 @@ int nvgpu_tsg_bind_channel(struct nvgpu_tsg *tsg, struct nvgpu_channel *ch)
 	}
 
 	nvgpu_rwsem_down_write(&tsg->ch_list_lock);
+	err = nvgpu_tsg_subctx_bind_channel(tsg, ch);
+	if (err != 0) {
+		nvgpu_err(g, "Subcontext %u bind failed", ch->subctx_id);
+		nvgpu_rwsem_up_write(&tsg->ch_list_lock);
+		return err;
+	}
+
 	nvgpu_list_add_tail(&ch->ch_entry, &tsg->ch_list);
 	tsg->ch_count = nvgpu_safe_add_u32(tsg->ch_count, 1U);
 	ch->tsgid = tsg->tsgid;
@@ -284,8 +292,15 @@ static int nvgpu_tsg_unbind_channel_common(struct nvgpu_tsg *tsg,
 	}
 #endif
 
-	/* Remove channel from TSG and re-enable rest of the channels */
+	/**
+	 * Remove channel from TSG and re-enable rest of the channels.
+	 * Since channel removal can lead to subctx removal and/or
+	 * VM mappings removal, acquire ctx_init_lock.
+	 */
+	nvgpu_mutex_acquire(&tsg->ctx_init_lock);
+
 	nvgpu_rwsem_down_write(&tsg->ch_list_lock);
+	nvgpu_tsg_subctx_unbind_channel(tsg, ch);
 	nvgpu_list_del(&ch->ch_entry);
 	tsg->ch_count = nvgpu_safe_sub_u32(tsg->ch_count, 1U);
 	ch->tsgid = NVGPU_INVALID_TSG_ID;
@@ -295,6 +310,8 @@ static int nvgpu_tsg_unbind_channel_common(struct nvgpu_tsg *tsg,
 	 */
 	g->ops.channel.disable(ch);
 	nvgpu_rwsem_up_write(&tsg->ch_list_lock);
+
+	nvgpu_mutex_release(&tsg->ctx_init_lock);
 
 	/*
 	 * Don't re-enable all channels if TSG has timed out already
@@ -396,11 +413,16 @@ fail_common:
 	}
 #endif
 
+	nvgpu_mutex_acquire(&tsg->ctx_init_lock);
+
 	nvgpu_rwsem_down_write(&tsg->ch_list_lock);
+	nvgpu_tsg_subctx_unbind_channel(tsg, ch);
 	nvgpu_list_del(&ch->ch_entry);
 	ch->tsgid = NVGPU_INVALID_TSG_ID;
 	tsg->ch_count = nvgpu_safe_sub_u32(tsg->ch_count, 1U);
 	nvgpu_rwsem_up_write(&tsg->ch_list_lock);
+
+	nvgpu_mutex_release(&tsg->ctx_init_lock);
 
 	nvgpu_ref_put(&tsg->refcount, nvgpu_tsg_release);
 
@@ -512,6 +534,8 @@ static void nvgpu_tsg_init_support(struct gk20a *g, u32 tsgid)
 	tsg->abortable = true;
 
 	nvgpu_init_list_node(&tsg->ch_list);
+	nvgpu_init_list_node(&tsg->subctx_list);
+	nvgpu_init_list_node(&tsg->gr_ctx_mappings_list);
 	nvgpu_rwsem_init(&tsg->ch_list_lock);
 	nvgpu_mutex_init(&tsg->ctx_init_lock);
 
@@ -869,7 +893,6 @@ int nvgpu_tsg_open_common(struct gk20a *g, struct nvgpu_tsg *tsg, pid_t pid)
 	tsg->ch_count = 0U;
 	nvgpu_ref_init(&tsg->refcount);
 
-	tsg->vm = NULL;
 	tsg->interleave_level = NVGPU_FIFO_RUNLIST_INTERLEAVE_LEVEL_LOW;
 	tsg->timeslice_us = g->ops.tsg.default_timeslice_us(g);
 	tsg->runlist = NULL;
@@ -961,11 +984,6 @@ void nvgpu_tsg_release_common(struct gk20a *g, struct nvgpu_tsg *tsg)
 		nvgpu_nvs_domain_put(g, tsg->nvs_domain);
 		tsg->nvs_domain = NULL;
 		tsg->rl_domain = NULL;
-	}
-
-	if (tsg->vm != NULL) {
-		nvgpu_vm_put(tsg->vm);
-		tsg->vm = NULL;
 	}
 
 	if(tsg->sm_error_states != NULL) {

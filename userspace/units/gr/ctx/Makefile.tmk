@@ -28,7 +28,8 @@ NVGPU_UNIT_NAME = nvgpu-gr-ctx
 NVGPU_UNIT_SRCS = nvgpu-gr-ctx.c
 
 NVGPU_UNIT_INTERFACE_DIRS := \
-	$(NV_COMPONENT_DIR)/..
+	$(NV_COMPONENT_DIR)/.. \
+	$(NV_COMPONENT_DIR)/../../fifo
 
 include $(NV_COMPONENT_DIR)/../../Makefile.units.common.tmk
 

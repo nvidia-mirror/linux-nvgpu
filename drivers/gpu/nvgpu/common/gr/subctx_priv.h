@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,14 +27,23 @@ struct nvgpu_mem;
 
 /**
  * GR subcontext data structure.
- *
- * One subcontext is allocated per GPU channel.
  */
 struct nvgpu_gr_subctx {
 	/**
 	 * Memory to hold subcontext header image.
 	 */
 	struct nvgpu_mem ctx_header;
+
+	/**
+	 * GPU mappings of the GR ctx buffers for this subcontext.
+	 */
+	struct nvgpu_gr_ctx_mappings *mappings;
+
+	/**
+	 * GR subcontext's entry in gr ctx mappings' (#nvgpu_gr_ctx_mappings)
+	 * subcontexts list #subctx_list.
+	 */
+	struct nvgpu_list_node gr_ctx_mappings_entry;
 };
 
 #endif /* NVGPU_GR_SUBCTX_PRIV_H */

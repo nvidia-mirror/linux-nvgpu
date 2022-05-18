@@ -37,6 +37,7 @@
 #include <nvgpu/gr/ctx.h>
 #include <nvgpu/gr/ctx_mappings.h>
 #include <nvgpu/gr/obj_ctx.h>
+#include <nvgpu/tsg_subctx.h>
 
 #include <nvgpu/posix/posix-fault-injection.h>
 #include <nvgpu/posix/dma.h>
@@ -119,7 +120,7 @@ int test_gr_obj_ctx_error_injection(struct unit_module *m,
 	struct nvgpu_gr_global_ctx_buffer_desc *global_desc;
 	struct nvgpu_gr_ctx *gr_ctx = NULL;
 	struct nvgpu_gr_ctx_mappings *mappings = NULL;
-	struct nvgpu_gr_subctx *subctx = NULL;
+	struct nvgpu_tsg_subctx *subctx = NULL;
 	struct nvgpu_mem inst_block;
 	struct nvgpu_gr_config *config = nvgpu_gr_get_config_ptr(g);
 	struct nvgpu_posix_fault_inj *kmem_fi =
@@ -132,6 +133,8 @@ int test_gr_obj_ctx_error_injection(struct unit_module *m,
 		struct nvgpu_gr_config *config);
 	struct nvgpu_tsg *tsg = (struct nvgpu_tsg *)
 		malloc(sizeof(struct nvgpu_tsg));
+	struct nvgpu_channel *channel = (struct nvgpu_channel *)
+		malloc(sizeof(struct nvgpu_channel));
 
 	/* Inject allocation failures and initialize obj_ctx, should fail */
 	nvgpu_posix_enable_fault_injection(kmem_fi, true, 0);
@@ -196,15 +199,30 @@ int test_gr_obj_ctx_error_injection(struct unit_module *m,
 		unit_return_fail(m, "failed to allocate global buffers");
 	}
 
-	subctx = nvgpu_gr_subctx_alloc(g, vm);
-	if (!subctx) {
-		unit_return_fail(m, "failed to allocate subcontext");
+	channel->g = g;
+	channel->vm = vm;
+
+	err = nvgpu_tsg_subctx_bind_channel(tsg, channel);
+	if (err != 0) {
+		unit_return_fail(m, "tsg subctx bind failed");
 	}
 
-	mappings = nvgpu_gr_ctx_mappings_create(g, tsg, vm);
-	if (mappings == NULL) {
-		unit_return_fail(m, "failed to allocate gr_ctx mappings");
+	err = nvgpu_tsg_subctx_alloc_gr_subctx(g, channel);
+	if (err != 0) {
+		unit_return_fail(m, "failed to allocate gr_subctx");
 	}
+
+	err = nvgpu_tsg_subctx_setup_subctx_header(g, channel);
+	if (err != 0) {
+		unit_return_fail(m, "failed to setup subctx header");
+	}
+
+	mappings = nvgpu_gr_ctx_alloc_or_get_mappings(g, tsg, channel);
+	if (mappings == NULL) {
+		unit_return_fail(m, "failed to allocate or get mappings");
+	}
+
+	subctx = channel->subctx;
 
 	/* Fail gr_ctx allocation */
 	nvgpu_posix_enable_fault_injection(kmem_fi, true, 0);
@@ -396,7 +414,7 @@ int test_gr_obj_ctx_error_injection(struct unit_module *m,
 	}
 
 	/* Cleanup */
-	nvgpu_gr_subctx_free(g, subctx, vm);
+	nvgpu_tsg_subctx_unbind_channel(tsg, channel);
 	nvgpu_gr_ctx_free(g, gr_ctx, global_desc);
 	nvgpu_free_gr_ctx_struct(g, gr_ctx);
 	nvgpu_gr_ctx_desc_free(g, desc);

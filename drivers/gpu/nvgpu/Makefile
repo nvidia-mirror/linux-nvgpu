@@ -647,6 +647,7 @@ nvgpu-y += \
 	common/fifo/job.o \
 	common/fifo/priv_cmdbuf.o \
 	common/fifo/tsg.o \
+	common/fifo/tsg_subctx.o \
 	common/fifo/runlist.o \
 	common/fifo/engine_status.o \
 	common/fifo/engines.o \

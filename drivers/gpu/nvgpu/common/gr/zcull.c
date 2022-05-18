@@ -23,6 +23,7 @@
 #include <nvgpu/log.h>
 #include <nvgpu/io.h>
 #include <nvgpu/gk20a.h>
+#include <nvgpu/tsg_subctx.h>
 #include <nvgpu/gr/subctx.h>
 #include <nvgpu/gr/ctx.h>
 #include <nvgpu/gr/zcull.h>
@@ -159,15 +160,17 @@ int nvgpu_gr_zcull_init_hw(struct gk20a *g,
 	return 0;
 }
 
-int nvgpu_gr_zcull_ctx_setup(struct gk20a *g, struct nvgpu_gr_subctx *subctx,
+int nvgpu_gr_zcull_ctx_setup(struct gk20a *g, struct nvgpu_tsg_subctx *subctx,
 		struct nvgpu_gr_ctx *gr_ctx)
 {
+	struct nvgpu_gr_subctx *gr_subctx;
 	int ret = 0;
 
-	if (subctx != NULL) {
+	if (nvgpu_is_enabled(g, NVGPU_SUPPORT_TSG_SUBCONTEXTS)) {
+		gr_subctx = nvgpu_tsg_subctx_get_gr_subctx(subctx);
 		ret = nvgpu_gr_ctx_zcull_setup(g, gr_ctx, false);
 		if (ret == 0) {
-			nvgpu_gr_subctx_zcull_setup(g, subctx, gr_ctx);
+			nvgpu_gr_subctx_zcull_setup(g, gr_subctx, gr_ctx);
 		}
 	} else {
 		ret = nvgpu_gr_ctx_zcull_setup(g, gr_ctx, true);

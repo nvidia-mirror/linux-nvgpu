@@ -42,6 +42,8 @@
 #include "../nvgpu-gr.h"
 #include "nvgpu-gr-ctx.h"
 
+#include "../../fifo/nvgpu-fifo-common.h"
+
 #define DUMMY_SIZE	0xF0U
 
 static u64 nvgpu_gmmu_map_locked_stub(struct vm_gk20a *vm,
@@ -92,12 +94,22 @@ int test_gr_ctx_error_injection(struct unit_module *m,
 	u64 low_hole = SZ_4K * 16UL;
 	struct nvgpu_channel *channel = (struct nvgpu_channel *)
 		malloc(sizeof(struct nvgpu_channel));
-	struct nvgpu_tsg *tsg = (struct nvgpu_tsg *)
-		malloc(sizeof(struct nvgpu_tsg));
+	struct nvgpu_tsg *tsg;
 	u32 i;
 
-	if (channel == NULL || tsg == NULL) {
+	if (channel == NULL) {
 		unit_return_fail(m, "failed to allocate channel/tsg");
+	}
+
+	err = test_fifo_init_support(m, g, NULL);
+	if (err != 0) {
+		unit_return_fail(m, "failed to init fifo support\n");
+		return err;
+	}
+
+	tsg = nvgpu_tsg_open(g, 0);
+	if (!tsg) {
+		unit_return_fail(m, "failed to allocate tsg");
 	}
 
 	desc = nvgpu_gr_ctx_desc_alloc(g);
@@ -147,7 +159,7 @@ int test_gr_ctx_error_injection(struct unit_module *m,
 
 	tsg->gr_ctx = gr_ctx;
 
-	mappings = nvgpu_gr_ctx_alloc_or_get_mappings(g, tsg, vm);
+	mappings = nvgpu_gr_ctx_alloc_or_get_mappings(g, tsg, channel);
 	if (mappings == NULL) {
 		unit_return_fail(m, "failed to allocate gr_ctx mappings");
 	}
@@ -179,7 +191,7 @@ int test_gr_ctx_error_injection(struct unit_module *m,
 	/* Inject kmem alloc failures to trigger mapping failures */
 	for (i = 0; i < 2; i++) {
 		nvgpu_posix_enable_fault_injection(kmem_fi, true, 2 * i);
-		err = nvgpu_gr_ctx_mappings_map_gr_ctx_buffers(g, gr_ctx,
+		err = nvgpu_gr_ctx_mappings_map_gr_ctx_buffers(g, gr_ctx, NULL,
 					global_desc, mappings, false);
 		if (err == 0) {
 			unit_return_fail(m, "unexpected success");
@@ -188,8 +200,8 @@ int test_gr_ctx_error_injection(struct unit_module *m,
 	}
 
 	/* global ctx_desc size is not set. */
-	err = nvgpu_gr_ctx_mappings_map_gr_ctx_buffers(g, gr_ctx, global_desc,
-				       mappings, false);
+	err = nvgpu_gr_ctx_mappings_map_gr_ctx_buffers(g, gr_ctx, NULL,
+					global_desc, mappings, false);
 	if (err == 0) {
 		unit_return_fail(m, "unexpected success");
 	}
@@ -211,8 +223,8 @@ int test_gr_ctx_error_injection(struct unit_module *m,
 	/* Fail global ctx buffer mappings */
 	for (i = 0; i < 4; i++) {
 		nvgpu_posix_enable_fault_injection(kmem_fi, true, 4 + (2 * i));
-		err = nvgpu_gr_ctx_mappings_map_gr_ctx_buffers(g, gr_ctx, global_desc,
-					       mappings, false);
+		err = nvgpu_gr_ctx_mappings_map_gr_ctx_buffers(g, gr_ctx, NULL,
+						global_desc, mappings, false);
 		if (err == 0) {
 			unit_return_fail(m, "unexpected success");
 		}
@@ -221,8 +233,8 @@ int test_gr_ctx_error_injection(struct unit_module *m,
 
 
 	/* Successful mapping */
-	err = nvgpu_gr_ctx_mappings_map_gr_ctx_buffers(g, gr_ctx, global_desc,
-				       mappings, false);
+	err = nvgpu_gr_ctx_mappings_map_gr_ctx_buffers(g, gr_ctx, NULL,
+					global_desc, mappings, false);
 	if (err != 0) {
 		unit_return_fail(m, "failed to map global buffers");
 	}
@@ -252,6 +264,12 @@ int test_gr_ctx_error_injection(struct unit_module *m,
 	nvgpu_free_gr_ctx_struct(g, gr_ctx);
 	nvgpu_gr_ctx_desc_free(g, desc);
 	nvgpu_vm_put(g->mm.bar1.vm);
+
+	err = test_fifo_remove_support(m, g, NULL);
+	if (err != 0) {
+		unit_return_fail(m, "failed to remove fifo support\n");
+		return err;
+	}
 
 	return UNIT_SUCCESS;
 }

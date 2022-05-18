@@ -53,5 +53,16 @@ struct nvgpu_gr_ctx_mappings {
 	 * corresponding to GPU virtual addresses above.
 	 */
 	u32	global_ctx_buffer_index[NVGPU_GR_GLOBAL_CTX_VA_COUNT];
+
+	/**
+	 * GR ctx mappings' entry in TSG's (#nvgpu_tsg) mappings list
+	 * #gr_ctx_mappings_list.
+	 */
+	struct nvgpu_list_node tsg_entry;
+
+	/**
+	 * List of GR subcontexts (#nvgpu_gr_subctx) using this mapping.
+	 */
+	struct nvgpu_list_node subctx_list;
 };
 #endif /* NVGPU_GR_CTX_MAPPINGS_PRIV_H */

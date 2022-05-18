@@ -42,6 +42,7 @@ struct gk20a;
 struct vm_gk20a;
 struct nvgpu_tsg;
 struct nvgpu_gr_ctx;
+struct nvgpu_channel;
 struct nvgpu_gr_ctx_mappings;
 struct nvgpu_gr_global_ctx_buffer_desc;
 struct nvgpu_gr_global_ctx_local_golden_image;
@@ -470,30 +471,33 @@ void nvgpu_gr_ctx_init_ctx_buffers_mapping_flags(struct gk20a *g,
 	struct nvgpu_gr_ctx *ctx);
 
 /**
- * @brief Allocate or get GR ctx buffers mappings for a TSG.
+ * @brief Allocate or get GR ctx buffers mappings for a TSG/Subcontext.
  *
  * @param g [in]		Pointer to GPU driver struct.
  * @param tsg [in]		Pointer to TSG struct.
- * @param vm [in]		Pointer to vm struct.
+ * @param ch [in]		Pointer to Channel struct.
  *
- * This function allocates the mappings struct for TSG corresponding to
- * given vm if not available already else returns the same.
+ * This function allocates the mappings struct for TSG/subcontext corresponding
+ * to given Channel's VM if not available already else returns the same.
  *
  * @return mappings struct in case of success, null in case of failure.
  */
 struct nvgpu_gr_ctx_mappings *nvgpu_gr_ctx_alloc_or_get_mappings(struct gk20a *g,
-				struct nvgpu_tsg *tsg, struct vm_gk20a *vm);
+				struct nvgpu_tsg *tsg, struct nvgpu_channel *ch);
 
 /**
- * @brief Get GR ctx buffers mappings for a TSG.
+ * @brief Get GR ctx buffers mappings for a TSG or Subcontext corresponding to
+ *        a channel.
  *
  * @param tsg [in]		Pointer to TSG struct.
+ * @param ch [in]		Pointer to Channel struct.
  *
  * This function returns the mappings struct for TSG.
  *
  * @return mappings struct.
  */
-struct nvgpu_gr_ctx_mappings *nvgpu_gr_ctx_get_mappings(struct nvgpu_tsg *tsg);
+struct nvgpu_gr_ctx_mappings *nvgpu_gr_ctx_get_mappings(struct nvgpu_tsg *tsg,
+					struct nvgpu_channel *ch);
 
 /**
  * @brief Free the gr ctx mapping struct.
@@ -564,8 +568,7 @@ bool nvgpu_gr_ctx_desc_force_preemption_cilp(
 
 #ifdef CONFIG_NVGPU_GFXP
 void nvgpu_gr_ctx_set_preemption_buffer_va(struct gk20a *g,
-	struct nvgpu_gr_ctx *gr_ctx,
-	struct nvgpu_gr_ctx_mappings *mappings);
+	struct nvgpu_gr_ctx *gr_ctx);
 
 bool nvgpu_gr_ctx_desc_force_preemption_gfxp(
 		struct nvgpu_gr_ctx_desc *gr_ctx_desc);
@@ -608,10 +611,10 @@ int nvgpu_gr_ctx_set_smpc_mode(struct gk20a *g, struct nvgpu_gr_ctx *gr_ctx,
 
 int nvgpu_gr_ctx_prepare_hwpm_mode(struct gk20a *g,
 	struct nvgpu_gr_ctx *gr_ctx,
-	u32 mode, u64 *pm_ctx_gpu_va, bool *skip_update);
+	u32 mode, bool *set_pm_ctx_gpu_va, bool *skip_update);
 void nvgpu_gr_ctx_set_hwpm_pm_mode(struct gk20a *g, struct nvgpu_gr_ctx *gr_ctx);
 void nvgpu_gr_ctx_set_hwpm_ptr(struct gk20a *g, struct nvgpu_gr_ctx *gr_ctx,
-			       u64 pm_ctx_gpu_va);
+			       bool set_pm_ctx_gpu_va);
 void nvgpu_gr_ctx_set_pm_ctx_mapped(struct nvgpu_gr_ctx *ctx, bool mapped);
 
 #ifdef CONFIG_NVGPU_CHANNEL_TSG_SCHEDULING
@@ -624,5 +627,18 @@ bool nvgpu_gr_ctx_get_boosted_ctx(struct nvgpu_gr_ctx *gr_ctx);
 bool nvgpu_gr_ctx_desc_dump_ctxsw_stats_on_channel_close(
 		struct nvgpu_gr_ctx_desc *gr_ctx_desc);
 #endif
+
+bool nvgpu_gr_obj_ctx_global_ctx_buffers_patched(struct nvgpu_gr_ctx *gr_ctx);
+void nvgpu_gr_obj_ctx_set_global_ctx_buffers_patched(
+			struct nvgpu_gr_ctx *gr_ctx, bool patched);
+bool nvgpu_gr_obj_ctx_preempt_buffers_patched(struct nvgpu_gr_ctx *gr_ctx);
+void nvgpu_gr_obj_ctx_set_preempt_buffers_patched(
+			struct nvgpu_gr_ctx *gr_ctx, bool patched);
+bool nvgpu_gr_obj_ctx_default_compute_regs_patched(struct nvgpu_gr_ctx *gr_ctx);
+void nvgpu_gr_obj_ctx_set_default_compute_regs_patched(
+			struct nvgpu_gr_ctx *gr_ctx, bool patched);
+bool nvgpu_gr_obj_ctx_default_gfx_regs_patched(struct nvgpu_gr_ctx *gr_ctx);
+void nvgpu_gr_obj_ctx_set_default_gfx_regs_patched(
+			struct nvgpu_gr_ctx *gr_ctx, bool patched);
 
 #endif /* NVGPU_GR_CTX_H */

@@ -85,14 +85,12 @@ struct nvgpu_gr_zbc *nvgpu_gr_get_zbc_ptr(struct gk20a *g)
 }
 #endif
 
-#ifdef CONFIG_NVGPU_FECS_TRACE
 struct nvgpu_gr_global_ctx_buffer_desc *nvgpu_gr_get_global_ctx_buffer_ptr(
 							struct gk20a *g)
 {
 	struct nvgpu_gr *gr = nvgpu_gr_get_cur_instance_ptr(g);
 	return gr->global_ctx_buffer;
 }
-#endif
 
 #ifdef CONFIG_NVGPU_CILP
 u32 nvgpu_gr_get_cilp_preempt_pending_chid(struct gk20a *g)

@@ -130,9 +130,7 @@ struct nvgpu_gr_hwpm_map *nvgpu_gr_get_hwpm_map_ptr(struct gk20a *g);
 void nvgpu_gr_reset_falcon_ptr(struct gk20a *g);
 void nvgpu_gr_reset_golden_image_ptr(struct gk20a *g);
 #endif
-#ifdef CONFIG_NVGPU_FECS_TRACE
 struct nvgpu_gr_global_ctx_buffer_desc *nvgpu_gr_get_global_ctx_buffer_ptr(
 							struct gk20a *g);
-#endif
 
 #endif /* NVGPU_GR_UTILS_H */

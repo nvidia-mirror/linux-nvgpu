@@ -446,6 +446,12 @@ fifo:
                  include/nvgpu/gops/tsg.h,
                  include/nvgpu/tsg.h ]
       deps: [ ]
+    tsg_subctx:
+      safe: yes
+      sources: [ common/fifo/tsg_subctx.c,
+                 common/fifo/tsg_subctx_priv.h,
+                 include/nvgpu/tsg_subctx.h ]
+      deps: [ ]
     submit:
       safe: yes
       sources: [ common/fifo/submit.c,

@@ -22,17 +22,38 @@
 
 #include <nvgpu/gk20a.h>
 #include <nvgpu/static_analysis.h>
+#include <nvgpu/tsg_subctx.h>
+#include <nvgpu/gr/subctx.h>
 #include <nvgpu/gr/global_ctx.h>
 #include <nvgpu/gr/ctx.h>
+#include <nvgpu/gr/obj_ctx.h>
 #include <nvgpu/gr/ctx_mappings.h>
 #include <nvgpu/vm.h>
 #include <nvgpu/io.h>
 #include <nvgpu/gmmu.h>
 #include <nvgpu/dma.h>
 #include <nvgpu/string.h>
+#include <nvgpu/list.h>
+#include <nvgpu/gr/gr_utils.h>
+#include <nvgpu/fifo.h>
 
 #include <nvgpu/power_features/pg.h>
 #include "common/gr/ctx_mappings_priv.h"
+#include "common/gr/subctx_priv.h"
+
+static inline struct nvgpu_gr_ctx_mappings *
+nvgpu_gr_ctx_mappings_from_tsg_entry(struct nvgpu_list_node *node)
+{
+	return (struct nvgpu_gr_ctx_mappings *)
+	   ((uintptr_t)node - offsetof(struct nvgpu_gr_ctx_mappings, tsg_entry));
+};
+
+static inline struct nvgpu_gr_subctx *
+nvgpu_gr_subctx_from_gr_ctx_mappings_entry(struct nvgpu_list_node *node)
+{
+	return (struct nvgpu_gr_subctx *)
+	   ((uintptr_t)node - offsetof(struct nvgpu_gr_subctx, gr_ctx_mappings_entry));
+};
 
 struct nvgpu_gr_ctx_mappings *nvgpu_gr_ctx_mappings_create(struct gk20a *g,
 				struct nvgpu_tsg *tsg, struct vm_gk20a *vm)
@@ -83,10 +104,13 @@ int nvgpu_gr_ctx_mappings_map_ctx_buffer(struct gk20a *g,
 
 	nvgpu_log(g, gpu_dbg_gr, " ");
 
+	if (mappings->ctx_buffer_va[index] != 0ULL) {
+		nvgpu_log_info(g, "buffer %u already mapped", index);
+		return 0;
+	}
+
 	mem = nvgpu_gr_ctx_get_ctx_mem(ctx, index);
 	mapping_flags = nvgpu_gr_ctx_get_ctx_mapping_flags(ctx, index);
-
-	nvgpu_assert(mappings->ctx_buffer_va[index] == 0ULL);
 
 	if (nvgpu_mem_is_valid(mem)) {
 		gpu_va = nvgpu_gmmu_map(vm,
@@ -138,28 +162,149 @@ static void nvgpu_gr_ctx_mappings_unmap_ctx_buffer(struct nvgpu_gr_ctx *ctx,
 	}
 }
 
+static void nvgpu_gr_ctx_mappings_unmap_buffer_all_subctx(
+		struct nvgpu_tsg *tsg, u32 index)
+{
+	struct nvgpu_gr_ctx_mappings *mappings = NULL;
+	struct nvgpu_gr_ctx *gr_ctx = tsg->gr_ctx;
+
+	nvgpu_assert(index < NVGPU_GR_CTX_COUNT);
+
+	nvgpu_list_for_each_entry(mappings, &tsg->gr_ctx_mappings_list,
+				  nvgpu_gr_ctx_mappings, tsg_entry) {
+		nvgpu_gr_ctx_mappings_unmap_ctx_buffer(gr_ctx,
+				index, mappings);
+	}
+}
+
+int nvgpu_gr_ctx_mappings_map_buffer_all_subctx(
+		struct nvgpu_tsg *tsg, u32 index)
+{
+	struct nvgpu_gr_ctx_mappings *mappings = NULL;
+	struct nvgpu_gr_ctx *gr_ctx = tsg->gr_ctx;
+	struct gk20a *g = tsg->g;
+	int err;
+
+	nvgpu_assert(index < NVGPU_GR_CTX_COUNT);
+
+	nvgpu_list_for_each_entry(mappings, &tsg->gr_ctx_mappings_list,
+				  nvgpu_gr_ctx_mappings, tsg_entry) {
+		err = nvgpu_gr_ctx_mappings_map_ctx_buffer(g, gr_ctx,
+				index, mappings);
+		if (err != 0) {
+			nvgpu_err(g, "gr_ctx buffer %u map failed %d", index, err);
+			nvgpu_gr_ctx_mappings_unmap_buffer_all_subctx(tsg, index);
+			return err;
+		}
+
+	}
+
+	return 0;
+}
+
 static void nvgpu_gr_ctx_mappings_unmap_ctx_buffers(struct nvgpu_gr_ctx *ctx,
+	struct nvgpu_tsg_subctx *subctx,
 	struct nvgpu_gr_ctx_mappings *mappings)
 {
+	u32 buffers_count = NVGPU_GR_CTX_COUNT;
 	u32 i;
+#ifdef CONFIG_NVGPU_GFXP
+	struct nvgpu_tsg *tsg = mappings->tsg;
+	struct gk20a *g = tsg->g;
+	bool is_sync_veid;
+	bool gfxp_active;
+#endif
 
-	for (i = 0; i < NVGPU_GR_CTX_COUNT; i++) {
+	(void) subctx;
+
+#ifdef CONFIG_NVGPU_GFXP
+	if (nvgpu_is_enabled(g, NVGPU_SUPPORT_TSG_SUBCONTEXTS)) {
+		is_sync_veid = nvgpu_tsg_subctx_get_id(subctx) ==
+					CHANNEL_INFO_VEID0;
+		gfxp_active = (nvgpu_gr_ctx_get_graphics_preemption_mode(ctx) ==
+			       NVGPU_PREEMPTION_MODE_GRAPHICS_GFXP);
+
+		if (is_sync_veid && gfxp_active) {
+			nvgpu_gr_ctx_mappings_unmap_buffer_all_subctx(tsg,
+				NVGPU_GR_CTX_PREEMPT_CTXSW);
+			nvgpu_tsg_subctxs_clear_preemption_buffer_va(subctx);
+			nvgpu_gr_ctx_init_graphics_preemption_mode(ctx,
+				NVGPU_PREEMPTION_MODE_GRAPHICS_WFI);
+		}
+
+		if (!is_sync_veid) {
+			if (gfxp_active) {
+				nvgpu_gr_subctx_clear_preemption_buffer_va(g,
+					nvgpu_tsg_subctx_get_gr_subctx(subctx));
+				buffers_count = NVGPU_GR_CTX_PREEMPT_CTXSW + 1U;
+			} else {
+				buffers_count = NVGPU_GR_CTX_PATCH_CTX + 1U;
+			}
+		}
+	}
+#endif
+
+	for (i = 0; i < buffers_count; i++) {
 		nvgpu_gr_ctx_mappings_unmap_ctx_buffer(ctx, i, mappings);
 	}
 }
 
 static int nvgpu_gr_ctx_mappings_map_ctx_buffers(struct gk20a *g,
 	struct nvgpu_gr_ctx *ctx,
+	struct nvgpu_tsg_subctx *subctx,
 	struct nvgpu_gr_ctx_mappings *mappings)
 {
+	u32 buffers_count = NVGPU_GR_CTX_COUNT;
 	int err = 0;
 	u32 i;
+#ifdef CONFIG_NVGPU_GFXP
+	struct nvgpu_tsg *tsg = mappings->tsg;
+	bool is_sync_veid;
+	bool gfxp_active;
+#endif
 
-	for (i = 0; i < NVGPU_GR_CTX_COUNT; i++) {
+	(void) subctx;
+
+#ifdef CONFIG_NVGPU_GFXP
+	if (nvgpu_is_enabled(g, NVGPU_SUPPORT_TSG_SUBCONTEXTS)) {
+		is_sync_veid = nvgpu_tsg_subctx_get_id(subctx) ==
+					CHANNEL_INFO_VEID0;
+		gfxp_active = (nvgpu_gr_ctx_get_graphics_preemption_mode(ctx) ==
+			       NVGPU_PREEMPTION_MODE_GRAPHICS_GFXP);
+
+		if (is_sync_veid && gfxp_active) {
+			err = nvgpu_gr_ctx_mappings_map_buffer_all_subctx(tsg,
+					NVGPU_GR_CTX_PREEMPT_CTXSW);
+			if (err != 0) {
+				nvgpu_err(g, "preempt buffer mapping failed %d",
+					  err);
+				nvgpu_gr_ctx_mappings_unmap_buffer_all_subctx(
+					tsg, NVGPU_GR_CTX_PREEMPT_CTXSW);
+				return err;
+			}
+		}
+
+		/*
+		 * Only NVGPU_GR_CTX_PREEMPT_CTXSW is to be mapped for
+		 * all VEIDs.
+		 * Don't map other preemption buffers for ASYNC VEIDs.
+		 */
+		if (!is_sync_veid) {
+			if (gfxp_active) {
+				buffers_count = NVGPU_GR_CTX_PREEMPT_CTXSW + 1U;
+			} else {
+				buffers_count = NVGPU_GR_CTX_PATCH_CTX + 1U;
+			}
+		}
+	}
+#endif
+
+	for (i = 0; i < buffers_count; i++) {
 		err = nvgpu_gr_ctx_mappings_map_ctx_buffer(g, ctx, i, mappings);
 		if (err != 0) {
 			nvgpu_err(g, "gr_ctx buffer %u map failed %d", i, err);
-			nvgpu_gr_ctx_mappings_unmap_ctx_buffers(ctx, mappings);
+			nvgpu_gr_ctx_mappings_unmap_ctx_buffers(ctx,
+						subctx, mappings);
 			return err;
 		}
 	}
@@ -170,34 +315,95 @@ static int nvgpu_gr_ctx_mappings_map_ctx_buffers(struct gk20a *g,
 #ifdef CONFIG_NVGPU_GFXP
 static void nvgpu_gr_ctx_mappings_unmap_ctx_preemption_buffers(
 	struct nvgpu_gr_ctx *ctx,
+	struct nvgpu_tsg_subctx *subctx,
 	struct nvgpu_gr_ctx_mappings *mappings)
 {
+	u32 buffers_count = NVGPU_GR_CTX_GFXP_RTVCB_CTXSW;
+	struct nvgpu_tsg *tsg = mappings->tsg;
+	struct gk20a *g = tsg->g;
+	bool is_sync_veid;
+	bool gfxp_active;
 	u32 i;
 
-	for (i = NVGPU_GR_CTX_PREEMPT_CTXSW;
-			i <= NVGPU_GR_CTX_GFXP_RTVCB_CTXSW; i++) {
+	if (nvgpu_is_enabled(g, NVGPU_SUPPORT_TSG_SUBCONTEXTS)) {
+		is_sync_veid = nvgpu_tsg_subctx_get_id(subctx) ==
+					CHANNEL_INFO_VEID0;
+		gfxp_active = (nvgpu_gr_ctx_get_graphics_preemption_mode(ctx) ==
+			       NVGPU_PREEMPTION_MODE_GRAPHICS_GFXP);
+
+		if (is_sync_veid && gfxp_active) {
+			nvgpu_gr_ctx_mappings_unmap_buffer_all_subctx(tsg,
+				NVGPU_GR_CTX_PREEMPT_CTXSW);
+
+			nvgpu_rwsem_down_read(&tsg->ch_list_lock);
+			nvgpu_tsg_subctxs_clear_preemption_buffer_va(subctx);
+			nvgpu_rwsem_up_read(&tsg->ch_list_lock);
+
+			nvgpu_gr_ctx_init_graphics_preemption_mode(ctx,
+				NVGPU_PREEMPTION_MODE_GRAPHICS_WFI);
+		}
+
+		if (!is_sync_veid) {
+			if (gfxp_active) {
+				nvgpu_gr_subctx_clear_preemption_buffer_va(g,
+					nvgpu_tsg_subctx_get_gr_subctx(subctx));
+				buffers_count = NVGPU_GR_CTX_PREEMPT_CTXSW;
+			} else {
+				return;
+			}
+		}
+	}
+
+	for (i = NVGPU_GR_CTX_PREEMPT_CTXSW; i <= buffers_count; i++) {
 		nvgpu_gr_ctx_mappings_unmap_ctx_buffer(ctx, i, mappings);
 	}
 }
 
 int nvgpu_gr_ctx_mappings_map_ctx_preemption_buffers(struct gk20a *g,
 	struct nvgpu_gr_ctx *ctx,
+	struct nvgpu_tsg_subctx *subctx,
 	struct nvgpu_gr_ctx_mappings *mappings)
 {
+	u32 buffers_count = NVGPU_GR_CTX_GFXP_RTVCB_CTXSW;
+	struct nvgpu_tsg *tsg = mappings->tsg;
+	bool is_sync_veid;
+	bool gfxp_active;
 	int err = 0;
 	u32 i;
 
-	nvgpu_log(g, gpu_dbg_gr, " ");
+	if (nvgpu_is_enabled(g, NVGPU_SUPPORT_TSG_SUBCONTEXTS)) {
+		is_sync_veid = nvgpu_tsg_subctx_get_id(subctx) ==
+					CHANNEL_INFO_VEID0;
+		gfxp_active = (nvgpu_gr_ctx_get_graphics_preemption_mode(ctx) ==
+			       NVGPU_PREEMPTION_MODE_GRAPHICS_GFXP);
 
-	for (i = NVGPU_GR_CTX_PREEMPT_CTXSW;
-			i <= NVGPU_GR_CTX_GFXP_RTVCB_CTXSW; i++) {
-		if (mappings->ctx_buffer_va[i] == 0ULL) {
-			err = nvgpu_gr_ctx_mappings_map_ctx_buffer(g, ctx, i, mappings);
+		if (is_sync_veid && gfxp_active) {
+			err = nvgpu_gr_ctx_mappings_map_buffer_all_subctx(tsg,
+					NVGPU_GR_CTX_PREEMPT_CTXSW);
 			if (err != 0) {
-				nvgpu_err(g, "gr_ctx buffer %u map failed %d", i, err);
-				nvgpu_gr_ctx_mappings_unmap_ctx_preemption_buffers(ctx, mappings);
+				nvgpu_err(g, "preempt buffer mapping failed %d", err);
+				nvgpu_gr_ctx_mappings_unmap_buffer_all_subctx(tsg,
+					NVGPU_GR_CTX_PREEMPT_CTXSW);
 				return err;
 			}
+		}
+
+		if (!is_sync_veid) {
+			if (gfxp_active) {
+				buffers_count = NVGPU_GR_CTX_PREEMPT_CTXSW;
+			} else {
+				return 0;
+			}
+		}
+	}
+
+	for (i = NVGPU_GR_CTX_PREEMPT_CTXSW; i <= buffers_count; i++) {
+		err = nvgpu_gr_ctx_mappings_map_ctx_buffer(g, ctx, i, mappings);
+		if (err != 0) {
+			nvgpu_err(g, "gr_ctx buffer %u map failed %d", i, err);
+			nvgpu_gr_ctx_mappings_unmap_ctx_preemption_buffers(ctx,
+				subctx, mappings);
+			return err;
 		}
 	}
 
@@ -273,7 +479,9 @@ static void nvgpu_gr_ctx_mappings_unmap_global_ctx_buffers(
 
 static int nvgpu_gr_ctx_mappings_map_global_ctx_buffers(struct gk20a *g,
 	struct nvgpu_gr_global_ctx_buffer_desc *global_ctx_buffer,
-	struct nvgpu_gr_ctx_mappings *mappings, bool vpr)
+	struct nvgpu_tsg_subctx *subctx,
+	struct nvgpu_gr_ctx_mappings *mappings,
+	bool vpr)
 {
 	int err;
 
@@ -282,7 +490,7 @@ static int nvgpu_gr_ctx_mappings_map_global_ctx_buffers(struct gk20a *g,
 	 * Allocate BUNDLE_CB, PAGEPOOL, ATTRIBUTE_CB and RTV_CB
 	 * if 2D/3D/I2M classes(graphics) are supported.
 	 */
-	if (!nvgpu_is_enabled(g, NVGPU_SUPPORT_MIG)) {
+	if (nvgpu_gr_obj_ctx_is_gfx_engine(g, subctx)) {
 		/* Circular Buffer */
 		err = nvgpu_gr_ctx_mappings_map_global_ctx_buffer(
 					global_ctx_buffer,
@@ -388,7 +596,7 @@ fail:
 }
 
 int nvgpu_gr_ctx_mappings_map_gr_ctx_buffers(struct gk20a *g,
-	struct nvgpu_gr_ctx *gr_ctx,
+	struct nvgpu_gr_ctx *gr_ctx, struct nvgpu_tsg_subctx *subctx,
 	struct nvgpu_gr_global_ctx_buffer_desc *global_ctx_buffer,
 	struct nvgpu_gr_ctx_mappings *mappings,
 	bool vpr)
@@ -403,17 +611,17 @@ int nvgpu_gr_ctx_mappings_map_gr_ctx_buffers(struct gk20a *g,
 		return -EINVAL;
 	}
 
-	err = nvgpu_gr_ctx_mappings_map_ctx_buffers(g, gr_ctx, mappings);
+	err = nvgpu_gr_ctx_mappings_map_ctx_buffers(g, gr_ctx, subctx, mappings);
 	if (err != 0) {
 		nvgpu_err(g, "fail to map ctx buffers");
 		return err;
 	}
 
 	err = nvgpu_gr_ctx_mappings_map_global_ctx_buffers(g,
-			global_ctx_buffer, mappings, vpr);
+			global_ctx_buffer, subctx, mappings, vpr);
 	if (err != 0) {
 		nvgpu_err(g, "fail to map global ctx buffer");
-		nvgpu_gr_ctx_mappings_unmap_ctx_buffers(gr_ctx, mappings);
+		nvgpu_gr_ctx_mappings_unmap_ctx_buffers(gr_ctx, subctx, mappings);
 		return err;
 	}
 
@@ -424,6 +632,7 @@ int nvgpu_gr_ctx_mappings_map_gr_ctx_buffers(struct gk20a *g,
 
 void nvgpu_gr_ctx_unmap_buffers(struct gk20a *g,
 	struct nvgpu_gr_ctx *gr_ctx,
+	struct nvgpu_tsg_subctx *subctx,
 	struct nvgpu_gr_global_ctx_buffer_desc *global_ctx_buffer,
 	struct nvgpu_gr_ctx_mappings *mappings)
 {
@@ -432,7 +641,7 @@ void nvgpu_gr_ctx_unmap_buffers(struct gk20a *g,
 	nvgpu_gr_ctx_mappings_unmap_global_ctx_buffers(global_ctx_buffer,
 		mappings);
 
-	nvgpu_gr_ctx_mappings_unmap_ctx_buffers(gr_ctx, mappings);
+	nvgpu_gr_ctx_mappings_unmap_ctx_buffers(gr_ctx, subctx, mappings);
 
 	nvgpu_log(g, gpu_dbg_gr, "done");
 }
@@ -449,4 +658,119 @@ u64 nvgpu_gr_ctx_mappings_get_ctx_va(struct nvgpu_gr_ctx_mappings *mappings,
 {
 	nvgpu_assert(index < NVGPU_GR_CTX_COUNT);
 	return mappings->ctx_buffer_va[index];
+}
+
+struct nvgpu_gr_ctx_mappings *nvgpu_gr_ctx_mappings_get_subctx_mappings(
+				struct gk20a *g,
+				struct nvgpu_tsg *tsg,
+				struct vm_gk20a *vm)
+{
+	struct nvgpu_gr_ctx_mappings *mappings = NULL;
+
+	nvgpu_log(g, gpu_dbg_gr, " ");
+
+	nvgpu_list_for_each_entry(mappings, &tsg->gr_ctx_mappings_list,
+				nvgpu_gr_ctx_mappings, tsg_entry) {
+		if (mappings->vm == vm) {
+			return mappings;
+		}
+	}
+
+	nvgpu_log(g, gpu_dbg_gr, "done");
+
+	return NULL;
+}
+
+struct nvgpu_gr_ctx_mappings *nvgpu_gr_ctx_mappings_create_subctx_mappings(
+				struct gk20a *g,
+				struct nvgpu_tsg *tsg,
+				struct vm_gk20a *vm)
+{
+	struct nvgpu_gr_ctx_mappings *mappings = NULL;
+
+	nvgpu_log(g, gpu_dbg_gr, " ");
+
+	mappings = (struct nvgpu_gr_ctx_mappings *)
+			nvgpu_kzalloc(g, sizeof(struct nvgpu_gr_ctx_mappings));
+	if (mappings == NULL) {
+		nvgpu_err(g, "failed to alloc mappings");
+		return NULL;
+	}
+
+	nvgpu_vm_get(vm);
+	mappings->tsg = tsg;
+	mappings->vm = vm;
+
+	nvgpu_init_list_node(&mappings->tsg_entry);
+	nvgpu_init_list_node(&mappings->subctx_list);
+
+	/* add mappings to the list in the tsg */
+	nvgpu_list_add_tail(&mappings->tsg_entry,
+			    &tsg->gr_ctx_mappings_list);
+
+	nvgpu_log(g, gpu_dbg_gr, "done");
+
+	return mappings;
+}
+
+void nvgpu_gr_ctx_mappings_add_gr_subctx(struct nvgpu_gr_ctx_mappings *mappings,
+				   struct nvgpu_gr_subctx *subctx)
+{
+	struct nvgpu_gr_subctx *subctx_iter = NULL;
+	struct nvgpu_tsg *tsg = mappings->tsg;
+	struct gk20a *g = tsg->g;
+	bool found = false;
+
+	nvgpu_log(g, gpu_dbg_gr, " ");
+
+	nvgpu_list_for_each_entry(subctx_iter, &mappings->subctx_list,
+				nvgpu_gr_subctx, gr_ctx_mappings_entry) {
+		if (subctx_iter == subctx) {
+			found = true;
+			goto out;
+		}
+	}
+
+out:
+	if (!found) {
+		subctx->mappings = mappings;
+		nvgpu_list_add_tail(&subctx->gr_ctx_mappings_entry,
+				    &mappings->subctx_list);
+	}
+
+	nvgpu_log(g, gpu_dbg_gr, "done");
+}
+
+void nvgpu_gr_ctx_mappings_free_subctx_mappings(struct nvgpu_tsg_subctx *subctx,
+			struct nvgpu_gr_ctx_mappings *mappings, bool unmap)
+{
+	struct nvgpu_tsg *tsg = mappings->tsg;
+	struct nvgpu_gr_ctx *gr_ctx = tsg->gr_ctx;
+	struct gk20a *g = tsg->g;
+	struct nvgpu_gr_global_ctx_buffer_desc *global_ctx_buffer =
+				nvgpu_gr_get_global_ctx_buffer_ptr(g);
+	bool is_sync_veid;
+
+	nvgpu_log(g, gpu_dbg_gr, " ");
+
+	if (nvgpu_list_empty(&mappings->subctx_list)) {
+		if (unmap) {
+			nvgpu_gr_ctx_unmap_buffers(g,
+				gr_ctx, subctx, global_ctx_buffer, mappings);
+		}
+
+		/* remove mappings from the list in the tsg */
+		nvgpu_list_del(&mappings->tsg_entry);
+
+		nvgpu_gr_ctx_mappings_free(g, mappings);
+	}
+
+	is_sync_veid = nvgpu_tsg_subctx_get_id(subctx) == CHANNEL_INFO_VEID0;
+
+	if (is_sync_veid) {
+		nvgpu_gr_obj_ctx_set_global_ctx_buffers_patched(gr_ctx, false);
+		nvgpu_gr_obj_ctx_set_preempt_buffers_patched(gr_ctx, false);
+	}
+
+	nvgpu_log(g, gpu_dbg_gr, "done");
 }

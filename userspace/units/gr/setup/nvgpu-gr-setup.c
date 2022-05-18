@@ -209,12 +209,6 @@ static int gr_test_setup_allocate_ch_tsg(struct unit_module *m,
 		goto ch_cleanup;
 	}
 
-	err = nvgpu_tsg_bind_channel(tsg, ch);
-	if (err != 0) {
-		unit_err(m, "failed tsg channel bind\n");
-		goto ch_cleanup;
-	}
-
 	err = gk20a_as_alloc_share(g,
 		0U, NVGPU_AS_ALLOC_UNIFIED_VA,
 		U64(SZ_4K) << U64(10),
@@ -228,6 +222,12 @@ static int gr_test_setup_allocate_ch_tsg(struct unit_module *m,
 	if (err != 0) {
 		unit_err(m, "failed vm binding to ch\n");
 		goto tsg_unbind;
+	}
+
+	err = nvgpu_tsg_bind_channel(tsg, ch);
+	if (err != 0) {
+		unit_err(m, "failed tsg channel bind\n");
+		goto ch_cleanup;
 	}
 
 	gr_setup_ch = ch;
@@ -574,7 +574,7 @@ static int gr_setup_alloc_no_tsg_subcontext(struct unit_module *m, struct gk20a 
 
 static void gr_setup_fake_free_obj_ctx(struct unit_module *m, struct gk20a *g)
 {
-	struct nvgpu_gr_subctx *gr_subctx = gr_setup_ch->subctx;
+	struct nvgpu_tsg_subctx *gr_subctx = gr_setup_ch->subctx;
 
 	/* pass NULL variable*/
 	gr_setup_ch->subctx = NULL;

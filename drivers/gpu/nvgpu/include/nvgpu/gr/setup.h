@@ -107,6 +107,20 @@ void nvgpu_gr_setup_free_gr_ctx(struct gk20a *g,
 void nvgpu_gr_setup_free_subctx(struct nvgpu_channel *c);
 
 /**
+ * @brief Validate preemption mode in GR engine context image in case
+ *        Application optionally wants to change default preemption mode.
+ *
+ * @param graphics_preempt_mode [in]	Requested graphics preemption mode.
+ * @param compute_preempt_mode [in]	Requested compute preemption mode.
+ * @param gr_ctx [in]			Pointer to GR engine context image.
+ *
+ * @return true in case of success, false in case of failure.
+ */
+bool nvgpu_gr_setup_validate_preemption_mode(u32 *graphics_preempt_mode,
+				u32 *compute_preempt_mode,
+				struct nvgpu_gr_ctx *gr_ctx);
+
+/**
  * @brief Setup preemption mode in GR engine context image in case
  *        Application optionally wants to change default preemption mode.
  *

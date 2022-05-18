@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,8 +28,8 @@
 struct gk20a;
 struct nvgpu_gr_config;
 struct nvgpu_gr_ctx;
-struct nvgpu_gr_subctx;
 struct nvgpu_gr_zcull;
+struct nvgpu_tsg_subctx;
 
 struct nvgpu_gr_zcull_info {
 	u32 width_align_pixels;
@@ -54,7 +54,7 @@ int nvgpu_gr_zcull_init_hw(struct gk20a *g,
 			struct nvgpu_gr_zcull *gr_zcull,
 			struct nvgpu_gr_config *gr_config);
 
-int nvgpu_gr_zcull_ctx_setup(struct gk20a *g, struct nvgpu_gr_subctx *subctx,
+int nvgpu_gr_zcull_ctx_setup(struct gk20a *g, struct nvgpu_tsg_subctx *subctx,
 		struct nvgpu_gr_ctx *gr_ctx);
 
 #endif /* NVGPU_GR_ZCULL_H */

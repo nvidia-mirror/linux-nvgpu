@@ -43,7 +43,6 @@ struct nvgpu_fence_type;
 struct nvgpu_swprofiler;
 struct nvgpu_channel_sync;
 struct nvgpu_gpfifo_userdata;
-struct nvgpu_gr_subctx;
 struct nvgpu_gr_ctx;
 struct nvgpu_debug_context;
 struct priv_cmd_queue;
@@ -363,6 +362,12 @@ struct nvgpu_channel {
 	/** Channel's entry in TSG's channel list. */
 	struct nvgpu_list_node ch_entry;
 
+	/**
+	 * Channel's entry in TSG Subcontext's (#nvgpu_tsg_subctx) channels list
+	 * #ch_list.
+	 */
+	struct nvgpu_list_node subctx_entry;
+
 #ifdef CONFIG_NVGPU_KERNEL_MODE_SUBMIT
 	struct nvgpu_channel_joblist joblist;
 	struct gpfifo_desc gpfifo;
@@ -440,8 +445,8 @@ struct nvgpu_channel {
 	u64 virt_ctx;
 #endif
 
-	/** Channel's graphics subcontext. */
-	struct nvgpu_gr_subctx *subctx;
+	/** Channel's subcontext. */
+	struct nvgpu_tsg_subctx *subctx;
 
 	/** Lock to access unserviceable state. */
 	struct nvgpu_spinlock unserviceable_lock;

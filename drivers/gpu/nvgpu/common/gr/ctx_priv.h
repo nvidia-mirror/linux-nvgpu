@@ -160,6 +160,11 @@ struct nvgpu_gr_ctx {
 	 */
 	u32 sm_diversity_config;
 #endif
+
+	bool global_ctx_buffers_patched;
+	bool preempt_buffers_patched;
+	bool default_compute_regs_patched;
+	bool default_gfx_regs_patched;
 };
 
 #endif /* NVGPU_GR_CTX_PRIV_H */
