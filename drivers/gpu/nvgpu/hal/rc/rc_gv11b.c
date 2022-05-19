@@ -165,6 +165,20 @@ void gv11b_fifo_recover(struct gk20a *g, u32 act_eng_bitmask,
 	rec_dbg(g, "  rc_type = %s", nvgpu_rc_type_to_str(rc_type));
 	rec_dbg(g, "  Engine bitmask: 0x%x", act_eng_bitmask);
 
+	/*
+	 * Recovery path accesses many GR registers.
+	 * Any access to GR registers with CG/PG enabled
+	 * in recovery path will cause errors like pri timeout
+	 * idle snap etc. So disable CG/PG before we start
+	 * the recovery process to avoid such errors.
+	 */
+#ifdef CONFIG_NVGPU_NON_FUSA
+	rec_dbg(g, "Disabling CG/PG now");
+	if (nvgpu_cg_pg_disable(g) != 0) {
+		nvgpu_warn(g, "fail to disable power mgmt");
+	}
+#endif
+
 	nvgpu_swprofile_begin_sample(prof);
 
 	rec_dbg(g, "Acquiring engines_reset_mutex");
@@ -255,13 +269,6 @@ void gv11b_fifo_recover(struct gk20a *g, u32 act_eng_bitmask,
 	nvgpu_runlist_set_state(g, runlists_mask, RUNLIST_DISABLED);
 
 	nvgpu_swprofile_snapshot(prof, PROF_RECOVERY_DISABLE_RL);
-
-#ifdef CONFIG_NVGPU_NON_FUSA
-	rec_dbg(g, "Disabling CG/PG now");
-	if (nvgpu_cg_pg_disable(g) != 0) {
-		nvgpu_warn(g, "fail to disable power mgmt");
-	}
-#endif
 
 	if (rc_type == RC_TYPE_MMU_FAULT) {
 		if (!nvgpu_swprofile_is_enabled(prof)) {
