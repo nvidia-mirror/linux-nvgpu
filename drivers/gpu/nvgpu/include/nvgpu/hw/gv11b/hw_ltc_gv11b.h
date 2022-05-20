@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -61,6 +61,7 @@
 
 #define ltc_pltcg_base_v()                                         (0x00140000U)
 #define ltc_pltcg_extent_v()                                       (0x0017ffffU)
+#define ltc_pltcg_ltcs_base_v()                                    (0x0017e000U)
 #define ltc_ltc0_ltss_v()                                          (0x00140200U)
 #define ltc_ltc0_lts0_v()                                          (0x00140400U)
 #define ltc_ltcs_ltss_v()                                          (0x0017e200U)

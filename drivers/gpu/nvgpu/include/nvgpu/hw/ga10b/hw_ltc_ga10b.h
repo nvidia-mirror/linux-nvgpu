@@ -60,6 +60,8 @@
 #include <nvgpu/static_analysis.h>
 
 #define ltc_pltcg_base_v()                                         (0x00140000U)
+#define ltc_pltcg_extent_v()                                       (0x0017ffffU)
+#define ltc_pltcg_ltcs_base_v()                                    (0x0017e000U)
 #define ltc_ltc0_lts0_v()                                          (0x00140400U)
 #define ltc_ltcs_ltss_v()                                          (0x0017e200U)
 #define ltc_ltcs_ltss_tstg_set_mgmt0_r()                           (0x0017e2acU)
