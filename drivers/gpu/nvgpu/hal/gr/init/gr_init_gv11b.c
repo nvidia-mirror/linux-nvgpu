@@ -60,6 +60,7 @@ void gv11b_gr_init_get_access_map(struct gk20a *g,
 		0x418380, /* gr_pri_gpcs_rasterarb_line_class  */
 		0x418800, /* gr_pri_gpcs_setup_debug           */
 		0x418830, /* gr_pri_gpcs_setup_debug_z_gamut_offset */
+		0x4188b0, /* gr_pri_gpcs_mmu_debug_ctrl        */
 		0x4188fc, /* gr_pri_gpcs_zcull_ctx_debug       */
 		0x418e00, /* gr_pri_gpcs_swdx_config           */
 		0x418e40, /* gr_pri_gpcs_swdx_tc_bundle_ctrl   */
@@ -86,9 +87,11 @@ void gv11b_gr_init_get_access_map(struct gk20a *g,
 		0x419864, /* gr_pri_gpcs_tpcs_pe_l2_evict_policy */
 		0x419a04, /* gr_pri_gpcs_tpcs_tex_lod_dbg      */
 		0x419a08, /* gr_pri_gpcs_tpcs_tex_samp_dbg     */
+		0x419b48, /* gr_pri_gpcs_tpcs_sm_sch_macro_sched */
 		0x419ba4, /* gr_pri_gpcs_tpcs_sm_disp_ctrl     */
 		0x419e84, /* gr_pri_gpcs_tpcs_sms_dbgr_control0 */
 		0x419ea8, /* gr_pri_gpcs_tpcs_sms_hww_warp_esr_report_mask */
+		0x419eac, /* gr_pri_gpcs_tpcs_sms_hww_global_esr_report_mask */
 	};
 	size_t array_size;
 
