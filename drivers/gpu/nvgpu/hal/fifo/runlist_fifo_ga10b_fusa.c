@@ -128,8 +128,15 @@ void ga10b_runlist_write_state(struct gk20a *g, u32 runlists_mask,
 	while (runlists_mask != 0U && (runlist_id < g->fifo.max_runlists)) {
 		if ((runlists_mask & BIT32(runlist_id)) != 0U) {
 			runlist = g->fifo.runlists[runlist_id];
-			nvgpu_runlist_writel(g, runlist,
-				runlist_sched_disable_r(), reg_val);
+			/*
+			 * Its possible that some of the engines might be
+			 * FSed, in which case the entry in fifo.runlists will
+			 * be NULL, hence perform a NULL check first.
+			 */
+			if (runlist != NULL) {
+				nvgpu_runlist_writel(g, runlist,
+					runlist_sched_disable_r(), reg_val);
+			}
 		}
 		runlists_mask &= ~BIT32(runlist_id);
 		runlist_id++;
