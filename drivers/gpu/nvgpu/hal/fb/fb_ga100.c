@@ -1,7 +1,7 @@
 /*
  * GA100 FB
  *
- * Copyright (c) 2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -63,9 +63,8 @@ bool ga100_fb_is_comptagline_mode_enabled(struct gk20a *g)
 	u32 reg = 0U;
 	bool result = true;
 
-	gk20a_busy_noresume(g);
-	if (nvgpu_is_powered_off(g)) {
-		goto done;
+	if (!gk20a_busy_noresume(g)) {
+		return result;
 	}
 
 	reg = nvgpu_readl(g, fb_mmu_hypervisor_ctl_r());
@@ -73,7 +72,6 @@ bool ga100_fb_is_comptagline_mode_enabled(struct gk20a *g)
 	result = (fb_mmu_hypervisor_ctl_force_cbc_raw_mode_v(reg) ==
 		fb_mmu_hypervisor_ctl_force_cbc_raw_mode_disable_v());
 
-done:
 	gk20a_idle_nosuspend(g);
 	return result;
 }

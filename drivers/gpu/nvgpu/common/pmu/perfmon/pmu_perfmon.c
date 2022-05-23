@@ -413,10 +413,9 @@ int nvgpu_pmu_busy_cycles_norm(struct gk20a *g, u32 *norm)
 	u64 busy_cycles, total_cycles;
 	u32 intr_status;
 
-	gk20a_busy_noresume(g);
-	if (nvgpu_is_powered_off(g)) {
+	if (!gk20a_busy_noresume(g)) {
 		*norm = 0;
-		goto exit;
+		return 0;
 	}
 
 	if (g->ops.pmu.pmu_read_idle_counter == NULL ||

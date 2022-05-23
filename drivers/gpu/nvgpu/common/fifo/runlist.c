@@ -658,31 +658,14 @@ static int nvgpu_runlist_do_update(struct gk20a *g, struct nvgpu_runlist *rl,
 static void runlist_select_locked(struct gk20a *g, struct nvgpu_runlist *runlist,
 		struct nvgpu_runlist_domain *next_domain)
 {
-	int err;
-
 	rl_dbg(g, "Runlist[%u]: switching to domain %s",
 	       runlist->id, next_domain->name);
 
 	runlist->domain = next_domain;
 
-	gk20a_busy_noresume(g);
-	if (nvgpu_is_powered_off(g)) {
+	if (!gk20a_busy_noresume(g)) {
 		rl_dbg(g, "Runlist[%u]: power is off, skip submit",
 				runlist->id);
-		gk20a_idle_nosuspend(g);
-		return;
-	}
-
-	err = gk20a_busy(g);
-	gk20a_idle_nosuspend(g);
-
-	if (err != 0) {
-		nvgpu_err(g, "failed to hold power for runlist submit");
-		/*
-		 * probably shutting down though, so don't bother propagating
-		 * the error. Power is already on when the domain scheduler is
-		 * actually in use.
-		 */
 		return;
 	}
 
@@ -695,7 +678,7 @@ static void runlist_select_locked(struct gk20a *g, struct nvgpu_runlist *runlist
 	 */
 	g->ops.runlist.hw_submit(g, runlist);
 
-	gk20a_idle(g);
+	gk20a_idle_nosuspend(g);
 }
 
 static void runlist_switch_domain_locked(struct gk20a *g,

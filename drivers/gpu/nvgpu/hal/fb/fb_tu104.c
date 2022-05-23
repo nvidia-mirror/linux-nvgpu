@@ -56,8 +56,8 @@ int fb_tu104_tlb_invalidate(struct gk20a *g, struct nvgpu_mem *pdb)
 	 * hw. Use the power_on flag to skip tlb invalidation when gpu
 	 * power is turned off
 	 */
-	if (nvgpu_is_powered_off(g)) {
-		return 0;
+	if (!gk20a_busy_noresume(g)) {
+		return err;
 	}
 
 	addr_lo = u64_lo32(nvgpu_mem_get_addr(g, pdb) >> 12);
@@ -101,6 +101,9 @@ int fb_tu104_tlb_invalidate(struct gk20a *g, struct nvgpu_mem *pdb)
 #endif
 
 	nvgpu_mutex_release(&g->mm.tlb_lock);
+
+	gk20a_idle_nosuspend(g);
+
 	return err;
 }
 

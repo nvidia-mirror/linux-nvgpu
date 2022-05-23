@@ -168,9 +168,63 @@ struct device_node *nvgpu_get_node(struct gk20a *g)
 	return dev->of_node;
 }
 
-void gk20a_busy_noresume(struct gk20a *g)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
+static bool gk20a_pm_runtime_get_if_in_use(struct gk20a *g)
 {
-	pm_runtime_get_noresume(dev_from_gk20a(g));
+	int ret = pm_runtime_get_if_active(dev_from_gk20a(g), true);
+	if (ret == 1) {
+		return true;
+	} else {
+		return false;
+	}
+}
+#endif
+
+static bool gk20a_busy_noresume_legacy(struct gk20a *g)
+{
+	struct device *dev = dev_from_gk20a(g);;
+
+	pm_runtime_get_noresume(dev);
+	if (nvgpu_is_powered_off(g)) {
+		pm_runtime_put_noidle(dev);
+		return false;
+	} else {
+		return true;
+	}
+}
+
+/*
+ * Cases:
+ * 1) For older than Kernel 5.8, use legacy
+ *    i.e. gk20a_busy_noresume_legacy()
+ * 2) else if pm_runtime_disabled (e.g. VGPU, DGPU)
+ *    use legacy.
+ * 3) Else use gk20a_pm_runtime_get_if_in_use()
+ */
+bool gk20a_busy_noresume(struct gk20a *g)
+{
+	struct device *dev;
+
+	if (!g)
+		return false;
+
+	dev = dev_from_gk20a(g);
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
+	if (pm_runtime_enabled(dev)) {
+		if (gk20a_pm_runtime_get_if_in_use(g)) {
+			atomic_inc(&g->usage_count.atomic_var);
+			return true;
+		} else {
+			return false;
+		}
+	} else {
+		/* VGPU, DGPU */
+		return gk20a_busy_noresume_legacy(g);
+	}
+#else
+	return gk20a_busy_noresume_legacy(g);
+#endif
 }
 
 int gk20a_busy(struct gk20a *g)
@@ -222,7 +276,17 @@ fail:
 
 void gk20a_idle_nosuspend(struct gk20a *g)
 {
-	pm_runtime_put_noidle(dev_from_gk20a(g));
+	struct device *dev = dev_from_gk20a(g);
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
+	if (pm_runtime_enabled(dev)) {
+		gk20a_idle(g);
+	} else {
+		pm_runtime_put_noidle(dev);
+	}
+#else
+	pm_runtime_put_noidle(dev);
+#endif
 }
 
 void gk20a_idle(struct gk20a *g)
@@ -1941,6 +2005,14 @@ int nvgpu_remove(struct device *dev)
 	err = nvgpu_quiesce(g);
 	WARN(err, "gpu failed to idle during driver removal");
 
+	/**
+	 * nvgpu_quiesce has been invoked already, disable pm runtime.
+	 * Informs PM domain that its safe to power down the h/w now.
+	 * Anything after this is just software deinit. Any cache/tlb
+	 * flush/invalidate must have already happened before this.
+	 */
+	gk20a_pm_deinit(dev);
+
 	if (nvgpu_mem_is_valid(&g->syncpt_mem))
 		nvgpu_dma_free(g, &g->syncpt_mem);
 
@@ -2000,8 +2072,6 @@ static int __exit gk20a_remove(struct platform_device *pdev)
 	set_gk20a(pdev, NULL);
 
 	nvgpu_put(g);
-
-	gk20a_pm_deinit(dev);
 
 	return err;
 }

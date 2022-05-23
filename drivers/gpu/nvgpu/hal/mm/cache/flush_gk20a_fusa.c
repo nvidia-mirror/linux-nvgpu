@@ -41,9 +41,7 @@ int gk20a_mm_fb_flush(struct gk20a *g)
 
 	nvgpu_log(g, gpu_dbg_mm, " ");
 
-	gk20a_busy_noresume(g);
-	if (nvgpu_is_powered_off(g)) {
-		gk20a_idle_nosuspend(g);
+	if (!gk20a_busy_noresume(g)) {
 		return 0;
 	}
 
@@ -151,13 +149,12 @@ static void gk20a_mm_l2_invalidate_locked(struct gk20a *g)
 void gk20a_mm_l2_invalidate(struct gk20a *g)
 {
 	struct mm_gk20a *mm = &g->mm;
-	gk20a_busy_noresume(g);
-	if (!nvgpu_is_powered_off(g)) {
+	if (gk20a_busy_noresume(g)) {
 		nvgpu_mutex_acquire(&mm->l2_op_lock);
 		gk20a_mm_l2_invalidate_locked(g);
 		nvgpu_mutex_release(&mm->l2_op_lock);
+		gk20a_idle_nosuspend(g);
 	}
-	gk20a_idle_nosuspend(g);
 }
 
 int gk20a_mm_l2_flush(struct gk20a *g, bool invalidate)
@@ -170,9 +167,7 @@ int gk20a_mm_l2_flush(struct gk20a *g, bool invalidate)
 
 	nvgpu_log(g, gpu_dbg_mm, " ");
 
-	gk20a_busy_noresume(g);
-	if (nvgpu_is_powered_off(g)) {
-		gk20a_idle_nosuspend(g);
+	if (!gk20a_busy_noresume(g)) {
 		return 0;
 	}
 
@@ -234,9 +229,8 @@ void gk20a_mm_cbc_clean(struct gk20a *g)
 
 	nvgpu_log_fn(g, " ");
 
-	gk20a_busy_noresume(g);
-	if (nvgpu_is_powered_off(g)) {
-		goto hw_was_off;
+	if (!gk20a_busy_noresume(g)) {
+		return;
 	}
 
 	if (g->ops.mm.get_flush_retries != NULL) {
@@ -268,7 +262,6 @@ void gk20a_mm_cbc_clean(struct gk20a *g)
 
 	nvgpu_mutex_release(&mm->l2_op_lock);
 
-hw_was_off:
 	gk20a_idle_nosuspend(g);
 }
 #endif

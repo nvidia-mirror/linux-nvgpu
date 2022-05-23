@@ -116,9 +116,13 @@ void nvgpu_disable_irqs(struct gk20a *g)
 /*
  * We have no runtime PM stuff in userspace so these are really just noops.
  */
-void gk20a_busy_noresume(struct gk20a *g)
+bool gk20a_busy_noresume(struct gk20a *g)
 {
-	(void)g;
+	if (nvgpu_is_powered_off(g)) {
+		return false;
+	} else {
+		return true;
+	}
 }
 
 void gk20a_idle_nosuspend(struct gk20a *g)
