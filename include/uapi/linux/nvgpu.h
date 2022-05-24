@@ -74,11 +74,31 @@ struct nvgpu_tsg_read_single_sm_error_state_args {
 	__u32 sm_id;
 	__u32 reserved;
 	/*
-	 * This is pointer to the struct nvgpu_gpu_sm_error_state_record
+	 * This is pointer to the struct nvgpu_tsg_sm_error_state_record
 	 */
 	__u64 record_mem;
 	/* size of the record size to read */
 	__u64 record_size;
+};
+
+/*
+ * This struct helps to read SM error states for all the SMs
+ */
+struct nvgpu_tsg_read_all_sm_error_state_args {
+	/*
+	 * in: Number of SM error states to be returned. Must be equal to the number of SMs.
+	 */
+	__u32 num_sm;
+	/*
+	 * Padding to make KMD UAPI compatible with both 32-bit and 64-bit callers.
+	 */
+	__u32 reserved;
+	/*
+	 * out: This points to an array of nvgpu_tsg_read_single_sm_error_state_args.
+	 */
+	__u64 buffer_mem;
+	/* in: size of the buffer to store error states */
+	__u64 buffer_size;
 };
 
 /*
@@ -145,11 +165,14 @@ struct nvgpu_tsg_set_l2_sector_promotion_args {
 #define NVGPU_TSG_IOCTL_BIND_SCHEDULING_DOMAIN \
 	_IOW(NVGPU_TSG_IOCTL_MAGIC, 16, \
 			struct nvgpu_tsg_bind_scheduling_domain_args)
+#define NVGPU_TSG_IOCTL_READ_ALL_SM_ERROR_STATES \
+	_IOWR(NVGPU_TSG_IOCTL_MAGIC, 17, \
+			struct nvgpu_tsg_read_all_sm_error_state_args)
 #define NVGPU_TSG_IOCTL_MAX_ARG_SIZE	\
 		sizeof(struct nvgpu_tsg_bind_scheduling_domain_args)
 
 #define NVGPU_TSG_IOCTL_LAST		\
-	_IOC_NR(NVGPU_TSG_IOCTL_BIND_SCHEDULING_DOMAIN)
+	_IOC_NR(NVGPU_TSG_IOCTL_READ_ALL_SM_ERROR_STATES)
 
 /*
  * /dev/nvhost-dbg-gpu device
