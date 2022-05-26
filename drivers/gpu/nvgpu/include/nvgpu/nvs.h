@@ -39,6 +39,8 @@
 
 struct gk20a;
 struct nvgpu_nvs_domain_ioctl;
+struct nvgpu_runlist;
+struct nvgpu_runlist_domain;
 
 /*
  * NvGPU KMD domain implementation details for nvsched.
@@ -71,9 +73,16 @@ struct nvgpu_nvs_domain {
 	 * Userspace API on the device nodes.
 	 */
 	struct nvgpu_nvs_domain_ioctl *ioctl;
+
+	/*
+	 * One corresponding to every runlist
+	 */
+	struct nvgpu_runlist_domain **rl_domains;
 };
 
 struct nvgpu_nvs_worker {
+	nvgpu_atomic_t nvs_sched_init;
+	struct nvgpu_cond wq_init;
 	struct nvgpu_worker worker;
 	struct nvgpu_timeout timeout;
 	u32 current_timeout;

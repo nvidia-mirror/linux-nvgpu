@@ -74,6 +74,8 @@ struct nvgpu_fifo;
 struct nvgpu_channel;
 struct nvgpu_gr;
 struct nvgpu_fbp;
+struct nvgpu_runlist;
+struct nvgpu_runlist_domain;
 #ifdef CONFIG_NVGPU_SIM
 struct sim_nvgpu;
 #endif
@@ -900,6 +902,20 @@ struct gk20a {
 #ifdef CONFIG_NVS_PRESENT
 	struct nvgpu_nvs_scheduler *scheduler;
 	struct nvgpu_mutex sched_mutex;
+
+	/**
+	 * A global interface to notify NVS thread about a domain
+	 * modification. Wakes up the worker thread to process domain
+	 * submission synchronously. If the current submitted rl_domain is
+	 * active, update immediately, otherwise return as NVS thread will
+	 * eventually schedule the domain updates.
+	 *
+	 * Must not hold NVS lock while invoking this interface.
+	 * Must hold runlist lock while invoking this interface.
+	 */
+	int (*nvs_worker_submit)(struct gk20a *g, struct nvgpu_runlist *rl,
+		struct nvgpu_runlist_domain *rl_domain, bool swap_buffer,
+			bool wait_for_finish);
 #endif
 
 #ifdef CONFIG_NVGPU_ENABLE_MISC_EC

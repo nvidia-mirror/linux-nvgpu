@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -80,8 +80,6 @@ int test_gk20a_runlist_hw_submit(struct unit_module *m,
 	u32 runlist_id = nvgpu_engine_get_gr_runlist_id(g);
 	struct nvgpu_runlist *runlist = g->fifo.runlists[runlist_id];
 	u32 count;
-
-	nvgpu_rl_domain_alloc(g, "(default)");
 
 	for (count = 0; count < 2; count++) {
 

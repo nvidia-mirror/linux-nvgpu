@@ -123,6 +123,16 @@ static void gv11b_fifo_locked_abort_runlist_active_tsgs(struct gk20a *g,
 				nvgpu_err(g, "runlist id %d is not cleaned up",
 					runlist->id);
 			}
+#ifdef CONFIG_NVS_PRESENT
+			/* Special case. Submit the recovery runlist now */
+			err = g->nvs_worker_submit(g, runlist, runlist->domain, true, false);
+#else
+			err = nvgpu_rl_domain_sync_submit(g, runlist, runlist->domain, true, false);
+#endif
+			if (err != 0 && err != 1) {
+				nvgpu_err(g, "runlist id %d is not cleaned up",
+					runlist->id);
+			}
 
 			nvgpu_tsg_abort(g, tsg, false);
 

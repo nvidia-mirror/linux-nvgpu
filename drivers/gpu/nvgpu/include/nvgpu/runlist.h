@@ -26,6 +26,7 @@
 #include <nvgpu/types.h>
 #include <nvgpu/nvgpu_mem.h>
 #include <nvgpu/lock.h>
+#include <nvgpu/atomic.h>
 
 /**
  * @file
@@ -139,6 +140,14 @@ struct nvgpu_runlist_domain {
 
 	/** Currently active buffer submitted for hardware. */
 	struct nvgpu_runlist_mem *mem_hw;
+
+	/**
+	 * When a channel is removed or added, this value is set to true.
+	 * When this rl domain is scheduled to be submitted to the h/w,
+	 * swap mem and mem_hw and submit mem_hw and then its value is
+	 * set to false.
+	 */
+	nvgpu_atomic_t pending_update;
 };
 
 struct nvgpu_runlist {
@@ -190,10 +199,33 @@ struct nvgpu_runlist {
 	/** @endcond DOXYGEN_SHOULD_SKIP_THIS */
 };
 
-int nvgpu_rl_domain_alloc(struct gk20a *g, const char *name);
-int nvgpu_rl_domain_delete(struct gk20a *g, const char *name);
+bool nvgpu_rl_domain_exists(struct gk20a *g, const char *name);
+struct nvgpu_runlist_domain *nvgpu_runlist_domain_alloc(struct gk20a *g,
+		const char *name);
+void nvgpu_runlist_domain_free(struct gk20a *g,
+		struct nvgpu_runlist_domain *domain);
+void nvgpu_runlist_swap_mem(struct gk20a *g, struct nvgpu_runlist_domain *domain);
+void nvgpu_runlist_link_domain(struct nvgpu_runlist *runlist,
+		struct nvgpu_runlist_domain *domain);
+void nvgpu_runlist_unlink_domain(struct nvgpu_runlist *runlist,
+		struct nvgpu_runlist_domain *domain);
 struct nvgpu_runlist_domain *nvgpu_rl_domain_get(struct gk20a *g, u32 runlist_id,
 						 const char *name);
+
+/**
+ * @brief Schedule runlist domain
+ *
+ * @param g			Global gk20a struct
+ * @param runlist	Runlist context
+ * @param next_domain	-> Actual domain data thats meant to be scheduled
+ * @param wait_for_finish	-> Wait for finish
+ * @return int	0 in case of success, less than 0 otherwise,
+ *
+ * Submit next_domain if there is a pending update.
+ */
+int nvgpu_rl_domain_sync_submit(struct gk20a *g, struct nvgpu_runlist *runlist,
+		struct nvgpu_runlist_domain *next_domain, bool swap_buffers,
+		bool wait_for_finish);
 
 static inline struct nvgpu_runlist_domain *
 nvgpu_runlist_domain_from_domains_list(struct nvgpu_list_node *node)
@@ -202,7 +234,7 @@ nvgpu_runlist_domain_from_domains_list(struct nvgpu_list_node *node)
 	((uintptr_t)node - offsetof(struct nvgpu_runlist_domain, domains_list));
 }
 
-void nvgpu_runlist_tick(struct gk20a *g);
+void nvgpu_runlist_tick(struct gk20a *g, struct nvgpu_runlist_domain **rl_domain);
 
 /**
  * @brief Rebuild runlist
