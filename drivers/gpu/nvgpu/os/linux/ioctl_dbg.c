@@ -1235,6 +1235,51 @@ clean_up:
 	return err;
 }
 
+static int nvgpu_dbg_gpu_set_sched_wait_for_errbar(
+	struct dbg_session_gk20a *dbg_s,
+	struct nvgpu_sched_exit_wait_for_errbar_args *args)
+{
+	int err;
+	struct gk20a *g = dbg_s->g;
+	struct nvgpu_channel *ch;
+	bool enable = (args->enable == NVGPU_DBG_GPU_SCHED_EXIT_WAIT_FOR_ERRBAR_ENABLED);
+	u32 gr_instance_id =
+		nvgpu_grmgr_get_gr_instance_id(g, dbg_s->gpu_instance_id);
+
+	nvgpu_log_fn(g, "enable=%u", args->enable);
+
+	if (g->ops.gr.set_sched_wait_for_errbar == NULL) {
+		return -ENOSYS;
+	}
+
+	err = gk20a_busy(g);
+	if (err) {
+		nvgpu_err(g, "failed to poweron, err=%d", err);
+		return err;
+	}
+
+	/* Take the global lock, since we'll be doing global regops */
+	nvgpu_mutex_acquire(&g->dbg_sessions_lock);
+
+	ch = nvgpu_dbg_gpu_get_session_channel(dbg_s);
+	if (ch == NULL) {
+		nvgpu_err(g, "no bound channel for mmu debug mode");
+		err = -EINVAL;
+		goto clean_up;
+	}
+
+	err = nvgpu_gr_exec_with_err_for_instance(g, gr_instance_id,
+					nvgpu_tsg_set_sched_exit_wait_for_errbar(ch, enable));
+	if (err) {
+		nvgpu_err(g, "set mmu debug mode failed, err=%d", err);
+	}
+
+clean_up:
+	nvgpu_mutex_release(&g->dbg_sessions_lock);
+	gk20a_idle(g);
+	return err;
+}
+
 static int nvgpu_dbg_gpu_ioctl_suspend_resume_sm(
 		struct dbg_session_gk20a *dbg_s,
 		struct nvgpu_dbg_gpu_suspend_resume_all_sms_args *args)
@@ -2929,6 +2974,11 @@ long gk20a_dbg_gpu_dev_ioctl(struct file *filp, unsigned int cmd,
 	case NVGPU_DBG_GPU_IOCTL_ACCESS_GPU_VA:
 		err = nvgpu_dbg_gpu_access_gpu_va(dbg_s,
 			(struct nvgpu_dbg_gpu_va_access_args *)buf);
+		break;
+
+	case NVGPU_DBG_GPU_IOCTL_SET_SCHED_EXIT_WAIT_FOR_ERRBAR:
+		err = nvgpu_dbg_gpu_set_sched_wait_for_errbar(dbg_s,
+			(struct nvgpu_sched_exit_wait_for_errbar_args *)buf);
 		break;
 
 	default:

@@ -1247,4 +1247,11 @@
 #define gr_gpcs_tpcs_sm_l1tag_ctrl_surface_cut_collector_enable_f()\
 				(0x20000000U)
 #define gr_gpc0_tpc0_sm_l1tag_ctrl_r()                             (0x005043f0U)
+#define gr_gpcs_pri_tpcs_sm_sch_macro_sched_r()                    (0x00419b48U)
+#define gr_gpcs_pri_tpcs_sm_sch_macro_sched_exit_wait_for_errbar_m()\
+				(U32(0x1U) << 20U)
+#define gr_gpcs_pri_tpcs_sm_sch_macro_sched_exit_wait_for_errbar_enabled_f()\
+				(0x100000U)
+#define gr_gpcs_pri_tpcs_sm_sch_macro_sched_exit_wait_for_errbar_disabled_f()\
+				(0x0U)
 #endif

@@ -210,6 +210,9 @@ struct nvgpu_tsg {
 	/** MMU debug mode enabled if mmu_debug_mode_refcnt > 0 */
 	u32  mmu_debug_mode_refcnt;
 
+	/** ERRBAR enabled if sched_exit_wait_for_errbar_refcnt > 0 */
+	nvgpu_atomic_t sched_exit_wait_for_errbar_refcnt;
+
 	/**
 	 * Pointer to store SM errors read from h/w registers.
 	 * Check #nvgpu_tsg_sm_error_state.
@@ -754,5 +757,6 @@ void nvgpu_tsg_reset_faulted_eng_pbdma(struct gk20a *g, struct nvgpu_tsg *tsg,
 		bool eng, bool pbdma);
 #ifdef CONFIG_NVGPU_DEBUGGER
 int nvgpu_tsg_set_mmu_debug_mode(struct nvgpu_channel *ch, bool enable);
+int nvgpu_tsg_set_sched_exit_wait_for_errbar(struct nvgpu_channel *ch, bool enable);
 #endif
 #endif /* NVGPU_TSG_H */

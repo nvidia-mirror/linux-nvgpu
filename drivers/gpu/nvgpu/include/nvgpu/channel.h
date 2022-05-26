@@ -548,6 +548,10 @@ struct nvgpu_channel {
 	 * MMU Debugger Mode is enabled for this channel if refcnt > 0
 	 */
 	u32 mmu_debug_mode_refcnt;
+	/**
+	 * ERRBAR is enabled for this channel if refcnt > 0
+	 */
+	nvgpu_atomic_t sched_exit_wait_for_errbar_refcnt;
 #endif
 };
 

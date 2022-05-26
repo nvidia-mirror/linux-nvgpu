@@ -27,6 +27,7 @@
 #include <nvgpu/os_sched.h>
 #include <nvgpu/channel.h>
 #include <nvgpu/tsg.h>
+#include <nvgpu/atomic.h>
 #include <nvgpu/rc.h>
 #include <nvgpu/gk20a.h>
 #include <nvgpu/error_notifier.h>
@@ -273,6 +274,14 @@ static int nvgpu_tsg_unbind_channel_common(struct nvgpu_tsg *tsg,
 			break;
 		}
 	}
+	while (nvgpu_atomic_read(&ch->sched_exit_wait_for_errbar_refcnt) > 0) {
+		err = nvgpu_tsg_set_sched_exit_wait_for_errbar(ch, false);
+		if (err != 0) {
+			nvgpu_err(g, "disable implicit ERRBAR failed ch:%u",
+				ch->chid);
+			break;
+		}
+	}
 #endif
 
 	/* Remove channel from TSG and re-enable rest of the channels */
@@ -373,6 +382,14 @@ fail:
 		err = nvgpu_tsg_set_mmu_debug_mode(ch, false);
 		if (err != 0) {
 			nvgpu_err(g, "disable mmu debug mode failed ch:%u",
+				ch->chid);
+			break;
+		}
+	}
+	while (nvgpu_atomic_read(&ch->sched_exit_wait_for_errbar_refcnt) > 0) {
+		err = nvgpu_tsg_set_sched_exit_wait_for_errbar(ch, false);
+		if (err != 0) {
+			nvgpu_err(g, "disable implicit ERRBAR failed ch:%u",
 				ch->chid);
 			break;
 		}
@@ -1211,6 +1228,48 @@ int nvgpu_tsg_set_mmu_debug_mode(struct nvgpu_channel *ch, bool enable)
 	ch->mmu_debug_mode_refcnt = ch_refcnt;
 	tsg->mmu_debug_mode_refcnt = tsg_refcnt;
 	g->mmu_debug_mode_refcnt = fb_refcnt;
+
+	return err;
+}
+
+int nvgpu_tsg_set_sched_exit_wait_for_errbar(struct nvgpu_channel *ch, bool enable)
+{
+	struct gk20a *g;
+	int err = 0;
+	struct nvgpu_tsg *tsg = nvgpu_tsg_from_ch(ch);
+
+	if (tsg == NULL) {
+		return -EINVAL;
+	}
+	g = ch->g;
+
+	if (g->ops.gr.set_sched_wait_for_errbar == NULL) {
+		return -ENOSYS;
+	}
+
+	if (enable) {
+		nvgpu_atomic_inc(&ch->sched_exit_wait_for_errbar_refcnt);
+		nvgpu_atomic_inc(&tsg->sched_exit_wait_for_errbar_refcnt);
+	} else {
+		if (nvgpu_atomic_read(&ch->sched_exit_wait_for_errbar_refcnt) != 0) {
+			nvgpu_atomic_dec(&ch->sched_exit_wait_for_errbar_refcnt);
+		}
+
+		if (nvgpu_atomic_read(&tsg->sched_exit_wait_for_errbar_refcnt) != 0) {
+			nvgpu_atomic_dec(&tsg->sched_exit_wait_for_errbar_refcnt);
+		}
+	}
+
+	/*
+	 * enable GPC implict ERRBAR if it was requested for at
+	 * least one channel in the TSG
+	 */
+	err = g->ops.gr.set_sched_wait_for_errbar(g, ch,
+			nvgpu_atomic_read(&tsg->sched_exit_wait_for_errbar_refcnt) > 0);
+	if (err != 0) {
+		nvgpu_err(g, "set implicit ERRBAR failed, err=%d", err);
+		return err;
+	}
 
 	return err;
 }

@@ -859,6 +859,7 @@ static const struct gops_gr ga100_ops_gr = {
 		gr_ga100_process_context_buffer_priv_segment,
 	.set_debug_mode = gm20b_gr_set_debug_mode,
 	.set_mmu_debug_mode = gm20b_gr_set_mmu_debug_mode,
+	.set_sched_wait_for_errbar = ga10b_gr_set_sched_wait_for_errbar,
 	.esr_bpt_pending_events = gv11b_gr_esr_bpt_pending_events,
 	.get_ctx_buffer_offsets = gr_gk20a_get_ctx_buffer_offsets,
 	.get_pm_ctx_buffer_offsets = gr_gk20a_get_pm_ctx_buffer_offsets,
@@ -1903,6 +1904,7 @@ int ga100_init_hal(struct gk20a *g)
 #endif
 #ifdef CONFIG_NVGPU_DEBUGGER
 	nvgpu_set_enabled(g, NVGPU_L2_MAX_WAYS_EVICT_LAST_ENABLED, true);
+	nvgpu_set_enabled(g, NVGPU_SCHED_EXIT_WAIT_FOR_ERRBAR_SUPPORTED, true);
 #endif
 	/*
 	 * Tu104 has multiple async-LCE (3), GRCE (2) and PCE (4).

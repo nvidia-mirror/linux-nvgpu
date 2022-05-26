@@ -228,6 +228,8 @@ struct gk20a;
 			"Emulate mode support"), \
 	DEFINE_FLAG(NVGPU_SUPPORT_PES_FS, \
 			"PES Floorsweeping"), \
+	DEFINE_FLAG(NVGPU_SCHED_EXIT_WAIT_FOR_ERRBAR_SUPPORTED,               \
+			"Implicit ERRBAR support"),		\
 	DEFINE_FLAG(NVGPU_MAX_ENABLED_BITS, "Marks max number of flags"),
 
 /**

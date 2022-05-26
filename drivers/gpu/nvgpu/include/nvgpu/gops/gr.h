@@ -1367,6 +1367,8 @@ struct gops_gr {
 					     u32 num_ppcs, u32 ppc_mask,
 					     u32 *priv_offset);
 	void (*set_debug_mode)(struct gk20a *g, bool enable);
+	int (*set_sched_wait_for_errbar)(struct gk20a *g,
+					struct nvgpu_channel *ch, bool enable);
 	int (*set_mmu_debug_mode)(struct gk20a *g,
 				  struct nvgpu_channel *ch, bool enable);
 	bool (*esr_bpt_pending_events)(u32 global_esr,

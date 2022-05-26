@@ -67,5 +67,7 @@ int gr_ga10b_find_priv_offset_in_buffer(struct gk20a *g, u32 addr,
 					u32 context_buffer_size,
 					u32 *priv_offset);
 const u32 *ga10b_gr_get_hwpm_cau_init_data(u32 *count);
+int ga10b_gr_set_sched_wait_for_errbar(struct gk20a *g,
+					struct nvgpu_channel *ch, bool enable);
 #endif /* CONFIG_NVGPU_DEBUGGER */
 #endif /* NVGPU_GR_GA10B_H */

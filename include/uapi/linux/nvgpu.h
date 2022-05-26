@@ -621,8 +621,20 @@ struct nvgpu_dbg_gpu_va_access_args {
 #define NVGPU_DBG_GPU_IOCTL_ACCESS_GPU_VA \
 	_IOWR(NVGPU_DBG_GPU_IOCTL_MAGIC, 32, struct nvgpu_dbg_gpu_va_access_args)
 
+/* Implicit ERRBAR Mode */
+#define NVGPU_DBG_GPU_SCHED_EXIT_WAIT_FOR_ERRBAR_DISABLED	0
+#define NVGPU_DBG_GPU_SCHED_EXIT_WAIT_FOR_ERRBAR_ENABLED	1
+
+struct nvgpu_sched_exit_wait_for_errbar_args {
+	__u32 enable; /* enable 1, disable 0*/
+};
+
+#define NVGPU_DBG_GPU_IOCTL_SET_SCHED_EXIT_WAIT_FOR_ERRBAR \
+	_IOW(NVGPU_DBG_GPU_IOCTL_MAGIC, 33, \
+	struct nvgpu_sched_exit_wait_for_errbar_args)
+
 #define NVGPU_DBG_GPU_IOCTL_LAST		\
-	_IOC_NR(NVGPU_DBG_GPU_IOCTL_ACCESS_GPU_VA)
+	_IOC_NR(NVGPU_DBG_GPU_IOCTL_SET_SCHED_EXIT_WAIT_FOR_ERRBAR)
 
 #define NVGPU_DBG_GPU_IOCTL_MAX_ARG_SIZE		\
 	sizeof(struct nvgpu_dbg_gpu_access_fb_memory_args)

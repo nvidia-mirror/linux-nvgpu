@@ -1112,6 +1112,28 @@ const u32 *ga10b_gr_get_hwpm_cau_init_data(u32 *count)
 	return hwpm_cau_init_data;
 }
 
+int ga10b_gr_set_sched_wait_for_errbar(struct gk20a *g,
+	struct nvgpu_channel *ch, bool enable)
+{
+	struct nvgpu_dbg_reg_op ctx_ops = {
+		.op = REGOP(WRITE_32),
+		.type = REGOP(TYPE_GR_CTX),
+		.offset = gr_gpcs_pri_tpcs_sm_sch_macro_sched_r(),
+		.value_lo = enable ?
+		gr_gpcs_pri_tpcs_sm_sch_macro_sched_exit_wait_for_errbar_enabled_f() :
+		gr_gpcs_pri_tpcs_sm_sch_macro_sched_exit_wait_for_errbar_disabled_f(),
+	};
+	int err;
+	struct nvgpu_tsg *tsg = nvgpu_tsg_from_ch(ch);
+	u32 flags = NVGPU_REG_OP_FLAG_MODE_ALL_OR_NONE;
+
+	err = gr_gk20a_exec_ctx_ops(tsg, &ctx_ops, 1, 1, 0, &flags);
+	if (err != 0) {
+		nvgpu_err(g, "update implicit ERRBAR failed");
+	}
+	return err;
+}
+
 #endif /* CONFIG_NVGPU_DEBUGGER */
 
 #ifdef CONFIG_NVGPU_HAL_NON_FUSA
