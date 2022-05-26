@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -353,7 +353,7 @@ int nvgpu_init_gpu_characteristics(struct gk20a *g);
  *
  * @param g [in] The GPU
  */
-bool gk20a_busy_noresume(struct gk20a *g);
+void gk20a_busy_noresume(struct gk20a *g);
 
 /**
  * @brief Drops a reference for gpu. Does nothing for safety.
