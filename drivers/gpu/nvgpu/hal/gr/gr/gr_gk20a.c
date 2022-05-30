@@ -63,6 +63,8 @@ int gr_gk20a_update_smpc_ctxsw_mode(struct gk20a *g,
 
 	nvgpu_log_fn(g, " ");
 
+	nvgpu_mutex_acquire(&tsg->ctx_init_lock);
+
 	g->ops.tsg.disable(tsg);
 
 	ret = g->ops.fifo.preempt_tsg(g, tsg);
@@ -75,6 +77,9 @@ int gr_gk20a_update_smpc_ctxsw_mode(struct gk20a *g,
 
 out:
 	g->ops.tsg.enable(tsg);
+
+	nvgpu_mutex_release(&tsg->ctx_init_lock);
+
 	return ret;
 }
 

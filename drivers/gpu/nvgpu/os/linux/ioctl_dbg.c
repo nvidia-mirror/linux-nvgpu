@@ -1963,27 +1963,33 @@ static int nvgpu_dbg_gpu_ioctl_get_gr_context(struct dbg_session_gk20a *dbg_s,
 		return -EINVAL;
 	}
 
+	nvgpu_mutex_acquire(&tsg->ctx_init_lock);
+
 	ctx_mem = nvgpu_gr_ctx_get_ctx_mem(tsg->gr_ctx, NVGPU_GR_CTX_CTX);
 	if (ctx_mem == NULL || !nvgpu_mem_is_valid(ctx_mem)) {
 		nvgpu_err(g, "invalid context mem");
-		return -EINVAL;
+		err = -EINVAL;
+		goto out;
 	}
 
 	if (ctx_mem->size > (u64)UINT_MAX) {
 		nvgpu_err(ch->g, "ctx size is larger than expected");
-		return -EINVAL;
+		err = -EINVAL;
+		goto out;
 	}
 
 	/* Check if the input buffer size equals the gr context size */
 	size = (u32)ctx_mem->size;
 	if (args->size != size) {
 		nvgpu_err(g, "size mismatch: %d != %d", args->size, size);
-		return -EINVAL;
+		err = -EINVAL;
+		goto out;
 	}
 
 	if (nvgpu_channel_disable_tsg(g, ch) != 0) {
 		nvgpu_err(g, "failed to disable channel/TSG");
-		return -EINVAL;
+		err = -EINVAL;
+		goto out;
 	}
 
 	err = nvgpu_preempt_channel(g, ch);
@@ -1998,8 +2004,12 @@ done:
 	enable_err = nvgpu_channel_enable_tsg(g, ch);
 	if (enable_err != 0) {
 		nvgpu_err(g, "failed to re-enable channel/TSG");
+		nvgpu_mutex_release(&tsg->ctx_init_lock);
 		return (err != 0) ? err : enable_err;
 	}
+
+out:
+	nvgpu_mutex_release(&tsg->ctx_init_lock);
 
 	return err;
 }

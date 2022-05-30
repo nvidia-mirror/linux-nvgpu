@@ -41,12 +41,16 @@
 static int nvgpu_gr_setup_zcull(struct gk20a *g, struct nvgpu_channel *c,
 				struct nvgpu_gr_ctx *gr_ctx)
 {
+	struct nvgpu_tsg *tsg = nvgpu_tsg_from_ch(c);
 	int ret = 0;
 
 	nvgpu_log_fn(g, " ");
 
+	nvgpu_mutex_acquire(&tsg->ctx_init_lock);
+
 	ret = nvgpu_channel_disable_tsg(g, c);
 	if (ret != 0) {
+		nvgpu_mutex_release(&tsg->ctx_init_lock);
 		nvgpu_err(g, "failed to disable channel/TSG");
 		return ret;
 	}
@@ -68,6 +72,8 @@ static int nvgpu_gr_setup_zcull(struct gk20a *g, struct nvgpu_channel *c,
 		nvgpu_err(g, "failed to re-enable channel/TSG");
 	}
 
+	nvgpu_mutex_release(&tsg->ctx_init_lock);
+
 	return ret;
 
 out:
@@ -80,6 +86,8 @@ out:
 		/* ch might not be bound to tsg */
 		nvgpu_err(g, "failed to enable channel/TSG");
 	}
+
+	nvgpu_mutex_release(&tsg->ctx_init_lock);
 
 	return ret;
 }
@@ -185,25 +193,30 @@ int nvgpu_gr_setup_alloc_obj_ctx(struct nvgpu_channel *c, u32 class_num,
 
 	nvgpu_mutex_acquire(&tsg->ctx_init_lock);
 
+	g->ops.tsg.disable(tsg);
+
+	err = g->ops.fifo.preempt_tsg(g, tsg);
+	if (err != 0) {
+		nvgpu_err(g, "preempt failed %d", err);
+		goto enable_tsg;
+	}
+
 	err = nvgpu_tsg_validate_class_veid_pbdma(c);
 	if (err != 0) {
 		nvgpu_err(g, "Invalid class/veid/pbdma config");
-		nvgpu_mutex_release(&tsg->ctx_init_lock);
-		goto out;
+		goto enable_tsg;
 	}
 
 	err = nvgpu_tsg_subctx_alloc_gr_subctx(g, c);
 	if (err != 0) {
 		nvgpu_err(g, "failed to alloc gr subctx");
-		nvgpu_mutex_release(&tsg->ctx_init_lock);
-		goto out;
+		goto enable_tsg;
 	}
 
 	err = nvgpu_tsg_subctx_setup_subctx_header(g, c);
 	if (err != 0) {
 		nvgpu_err(g, "failed to setup subctx header");
-		nvgpu_mutex_release(&tsg->ctx_init_lock);
-		goto out;
+		goto enable_tsg;
 	}
 
 	gr_ctx = tsg->gr_ctx;
@@ -211,8 +224,7 @@ int nvgpu_gr_setup_alloc_obj_ctx(struct nvgpu_channel *c, u32 class_num,
 	mappings = nvgpu_gr_ctx_alloc_or_get_mappings(g, tsg, c);
 	if (mappings == NULL) {
 		nvgpu_err(g, "fail to allocate/get ctx mappings struct");
-		nvgpu_mutex_release(&tsg->ctx_init_lock);
-		goto out;
+		goto enable_tsg;
 	}
 
 	err = nvgpu_gr_obj_ctx_alloc(g, gr->golden_image,
@@ -223,8 +235,7 @@ int nvgpu_gr_setup_alloc_obj_ctx(struct nvgpu_channel *c, u32 class_num,
 	if (err != 0) {
 		nvgpu_err(g,
 			"failed to allocate gr ctx buffer");
-		nvgpu_mutex_release(&tsg->ctx_init_lock);
-		goto out;
+		goto enable_tsg;
 	}
 
 	nvgpu_gr_ctx_set_tsgid(gr_ctx, tsg->tsgid);
@@ -263,10 +274,17 @@ int nvgpu_gr_setup_alloc_obj_ctx(struct nvgpu_channel *c, u32 class_num,
 
 	nvgpu_gr_ctx_mark_ctx_initialized(gr_ctx);
 
+	g->ops.tsg.enable(tsg);
+
 	nvgpu_mutex_release(&tsg->ctx_init_lock);
 
 	nvgpu_log(g, gpu_dbg_fn | gpu_dbg_gr, "done");
 	return 0;
+
+enable_tsg:
+	g->ops.tsg.enable(tsg);
+
+	nvgpu_mutex_release(&tsg->ctx_init_lock);
 out:
 	/* 1. gr_ctx, patch_ctx and global ctx buffer mapping
 	   can be reused so no need to release them.

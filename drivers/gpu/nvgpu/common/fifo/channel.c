@@ -248,6 +248,7 @@ static void channel_kernelmode_deinit(struct nvgpu_channel *ch)
 int nvgpu_channel_set_syncpt(struct nvgpu_channel *ch)
 {
 	struct gk20a *g = ch->g;
+	struct nvgpu_tsg *tsg = nvgpu_tsg_from_ch(ch);
 	struct nvgpu_channel_sync_syncpt *sync_syncpt;
 	u32 new_syncpt = 0U;
 	u32 old_syncpt = g->ops.ramfc.get_syncpt(ch);
@@ -268,9 +269,12 @@ int nvgpu_channel_set_syncpt(struct nvgpu_channel *ch)
 	}
 
 	if ((new_syncpt != 0U) && (new_syncpt != old_syncpt)) {
+		nvgpu_mutex_acquire(&tsg->ctx_init_lock);
+
 		/* disable channel */
 		err = nvgpu_channel_disable_tsg(g, ch);
 		if (err != 0) {
+			nvgpu_mutex_release(&tsg->ctx_init_lock);
 			nvgpu_err(g, "failed to disable channel/TSG");
 			return err;
 		}
@@ -288,6 +292,8 @@ int nvgpu_channel_set_syncpt(struct nvgpu_channel *ch)
 		if (err != 0) {
 			nvgpu_err(g, "failed to enable channel/TSG");
 		}
+
+		nvgpu_mutex_release(&tsg->ctx_init_lock);
 	}
 
 	nvgpu_log_fn(g, "done");
@@ -296,6 +302,9 @@ out:
 	if (nvgpu_channel_enable_tsg(g, ch) != 0) {
 		nvgpu_err(g, "failed to enable channel/TSG");
 	}
+
+	nvgpu_mutex_release(&tsg->ctx_init_lock);
+
 	return err;
 }
 #endif

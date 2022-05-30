@@ -766,11 +766,15 @@ int gr_gp10b_set_boosted_ctx(struct nvgpu_channel *ch,
 	}
 
 	gr_ctx = tsg->gr_ctx;
+
+	nvgpu_mutex_acquire(&tsg->ctx_init_lock);
+
 	nvgpu_gr_ctx_set_boosted_ctx(gr_ctx, boost);
 	mem = nvgpu_gr_ctx_get_ctx_mem(gr_ctx, NVGPU_GR_CTX_CTX);
 
 	err = nvgpu_channel_disable_tsg(g, ch);
 	if (err != 0) {
+		nvgpu_mutex_release(&tsg->ctx_init_lock);
 		return err;
 	}
 
@@ -792,6 +796,9 @@ int gr_gp10b_set_boosted_ctx(struct nvgpu_channel *ch,
 	if (err != 0) {
 		nvgpu_err(g, "failed to enable channel/TSG");
 	}
+
+	nvgpu_mutex_release(&tsg->ctx_init_lock);
+
 	return err;
 
 out:
@@ -805,6 +812,9 @@ out:
 		/* ch might not be bound to tsg anymore */
 		nvgpu_err(g, "failed to enable channel/TSG");
 	}
+
+	nvgpu_mutex_release(&tsg->ctx_init_lock);
+
 	return err;
 }
 #endif
