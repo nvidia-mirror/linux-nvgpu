@@ -64,7 +64,10 @@ static void __nvgpu_really_print_log(u32 trace, const char *gpu_name,
 				     enum nvgpu_log_type type, const char *log)
 {
 	const char *name = gpu_name ? gpu_name : "";
-	const char *log_type = log_types[type];
+	const char *log_type;
+
+	nvgpu_assert(type >= NVGPU_ERROR && type <= NVGPU_INFO);
+	log_type = log_types[type];
 
 #ifdef CONFIG_GK20A_TRACE_PRINTK
 	if (trace)
