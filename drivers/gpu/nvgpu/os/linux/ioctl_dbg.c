@@ -283,8 +283,6 @@ static int nvgpu_dbg_gpu_ioctl_read_single_sm_error_state(
 	struct nvgpu_tsg *tsg;
 	u32 sm_id;
 	int err = 0;
-	struct nvgpu_gr_config *gr_config =
-		nvgpu_gr_get_gpu_instance_config_ptr(g, dbg_s->gpu_instance_id);
 
 	ch = nvgpu_dbg_gpu_get_session_channel(dbg_s);
 	if (ch == NULL) {
@@ -298,17 +296,14 @@ static int nvgpu_dbg_gpu_ioctl_read_single_sm_error_state(
 	}
 
 	sm_id = args->sm_id;
-	if (sm_id >= nvgpu_gr_config_get_no_of_sm(gr_config)) {
-		return -EINVAL;
-	}
-
-	if (tsg->sm_error_states == NULL) {
-		return -EINVAL;
-	}
 
 	nvgpu_speculation_barrier();
 
 	sm_error_state = nvgpu_tsg_get_sm_error_state(tsg, sm_id);
+	if (sm_error_state == NULL) {
+		return -EINVAL;
+	}
+
 	sm_error_state_record.hww_global_esr =
 		sm_error_state->hww_global_esr;
 	sm_error_state_record.hww_warp_esr =

@@ -629,17 +629,16 @@ static int gk20a_tsg_ioctl_read_single_sm_error_state(struct gk20a *g,
 	struct nvgpu_tsg_sm_error_state_record sm_error_state_record;
 	u32 sm_id;
 	int err = 0;
-	struct nvgpu_gr_config *gr_config;
 
-	gr_config = nvgpu_gr_get_gpu_instance_config_ptr(g, gpu_instance_id);
 	sm_id = args->sm_id;
-	if (sm_id >= nvgpu_gr_config_get_no_of_sm(gr_config)) {
-		return -EINVAL;
-	}
 
 	nvgpu_speculation_barrier();
 
 	sm_error_state = nvgpu_tsg_get_sm_error_state(tsg, sm_id);
+	if (sm_error_state == NULL) {
+		return -EINVAL;
+	}
+
 	sm_error_state_record.global_esr =
 		sm_error_state->hww_global_esr;
 	sm_error_state_record.warp_esr =
