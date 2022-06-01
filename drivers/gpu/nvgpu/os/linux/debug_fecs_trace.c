@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2018-2022, NVIDIA CORPORATION. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -60,6 +60,10 @@ static int gk20a_fecs_trace_debugfs_ring_seq_show(
 		g->ops.gr.ctxsw_prog.hw_get_ts_tag_invalid_timestamp();
 	u32 tag;
 	u64 timestamp;
+
+	if (r == NULL) {
+		return -ENOMEM;
+	}
 
 	seq_printf(s, "record #%lld (%p)\n", *pos, r);
 	seq_printf(s, "\tmagic_lo=%08x\n", r->magic_lo);

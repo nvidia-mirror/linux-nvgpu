@@ -69,6 +69,7 @@ const struct nvgpu_mig_gpu_instance_config *ga10b_grmgr_get_mig_config_ptr(
 	static struct nvgpu_mig_gpu_instance_config ga10b_gpu_instance_default_config;
 	struct nvgpu_gpu_instance_config *gpu_instance_config =
 		&ga10b_gpu_instance_default_config.gpu_instance_config[0];
+	int err;
 
 	if ((g->mig.usable_gr_syspipe_count ==
 				ga10b_gpu_instance_config.usable_gr_syspipe_count) &&
@@ -97,9 +98,11 @@ const struct nvgpu_mig_gpu_instance_config *ga10b_grmgr_get_mig_config_ptr(
 	ga10b_gpu_instance_default_config.gpcgrp_gpc_count[1] =
 		g->mig.gpcgrp_gpc_count[1];
 	ga10b_gpu_instance_default_config.gpc_count = g->mig.gpc_count;
-	snprintf(gpu_instance_config->config_name,
+	err = snprintf(gpu_instance_config->config_name,
 		NVGPU_MIG_MAX_CONFIG_NAME_SIZE,
 		"1 GPU instance with %u GPCs", g->mig.gpc_count);
+	nvgpu_assert(err > 0);
+
 	gpu_instance_config->num_gpu_instances = 1U;
 	gpu_instance_config->gpu_instance_static_config[0].gpu_instance_id = 0U;
 	gpu_instance_config->gpu_instance_static_config[0].gr_syspipe_id = 0U;

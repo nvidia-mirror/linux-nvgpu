@@ -435,6 +435,7 @@ static int nvgpu_prepare_mig_dev_node_class_list(struct gk20a *g, u32 *num_class
 	u32 i;
 	u32 num_instances;
 	struct nvgpu_cdev_class_priv_data *priv_data;
+	int err;
 
 	num_instances = g->mig.num_gpu_instances;
 	/*
@@ -446,9 +447,10 @@ static int nvgpu_prepare_mig_dev_node_class_list(struct gk20a *g, u32 *num_class
 			return -ENOMEM;
 		}
 
-		snprintf(priv_data->class_name, sizeof(priv_data->class_name),
+		err = snprintf(priv_data->class_name, sizeof(priv_data->class_name),
 			"nvidia%s-gpu-fgpu%u",
 			(g->pci_class != 0U) ? "-pci" : "", i);
+		nvgpu_assert(err > 0);
 
 		class = nvgpu_create_class(g, priv_data->class_name);
 		if (class == NULL) {

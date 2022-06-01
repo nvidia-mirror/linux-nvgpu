@@ -374,8 +374,9 @@ nvgpu_channel_sync_syncpt_create(struct nvgpu_channel *c)
 	sp->c = c;
 	sp->nvhost = c->g->nvhost;
 
-	snprintf(syncpt_name, sizeof(syncpt_name),
+	err = snprintf(syncpt_name, sizeof(syncpt_name),
 		"%s_%d", c->g->name, c->chid);
+	nvgpu_assert(err > 0);
 
 	sp->id = nvgpu_nvhost_get_syncpt_client_managed(sp->nvhost,
 					syncpt_name);

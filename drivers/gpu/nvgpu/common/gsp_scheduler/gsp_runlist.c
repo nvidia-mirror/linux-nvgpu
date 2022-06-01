@@ -126,6 +126,7 @@ static void gsp_get_device_info(struct gk20a *g,
 	 * In future, more devices can be looped through and send it to the GSP.
 	 */
 	device = nvgpu_device_get(g, NVGPU_DEVTYPE_GRAPHICS, 0);
+	nvgpu_assert(device != NULL);
 
 	/* copy domain info into cmd buffer */
 	dev_info->device_id = NVGPU_DEVTYPE_GRAPHICS;

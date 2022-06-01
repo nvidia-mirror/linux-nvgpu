@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2021, NVIDIA Corporation.  All rights reserved.
+ * Copyright (C) 2017-2022, NVIDIA Corporation.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -59,9 +59,12 @@ static inline void gk20a_debug_write_to_seqfile(void *ctx, const char *str)
 void gk20a_debug_output(struct nvgpu_debug_context *o, const char *fmt, ...)
 {
 	va_list args;
+	int err;
 
 	va_start(args, fmt);
-	vsnprintf(o->buf, sizeof(o->buf), fmt, args);
+	err = vsnprintf(o->buf, sizeof(o->buf), fmt, args);
+	nvgpu_assert(err > 0);
+
 	va_end(args);
 	o->fn(o->ctx, o->buf);
 }

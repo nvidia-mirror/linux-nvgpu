@@ -1,7 +1,7 @@
 /*
  * GA100 GR MANAGER
  *
- * Copyright (c) 2020-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1097,9 +1097,11 @@ const struct nvgpu_mig_gpu_instance_config *ga100_grmgr_get_mig_config_ptr(
 		u32 start_id_of_half_partition = 0x1;
 		gpu_instance_config =
 			&ga100_gpu_instance_default_config.gpu_instance_config[num_config];
-		snprintf(gpu_instance_config->config_name,
+		err = snprintf(gpu_instance_config->config_name,
 			NVGPU_MIG_MAX_CONFIG_NAME_SIZE,
 			"2 GPU instances each with %u GPCs", gpc_count_per_gpu_instance);
+		nvgpu_assert(err > 0);
+
 		gpu_instance_config->num_gpu_instances = 2U;
 
 		for (index = 0U; index < 2U; index++) {
