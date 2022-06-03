@@ -205,6 +205,7 @@ static ssize_t ptimer_scale_factor_show(struct device *dev,
 				"%u.%u\n",
 				scaling_factor_fp / PTIMER_FP_FACTOR,
 				scaling_factor_fp % PTIMER_FP_FACTOR);
+	nvgpu_assert(res > 0);
 
 	return res;
 
@@ -230,6 +231,7 @@ static ssize_t ptimer_ref_freq_show(struct device *dev,
 	}
 
 	res = snprintf(buf, NVGPU_CPU_PAGE_SIZE, "%u\n", PTIMER_REF_FREQ_HZ);
+	nvgpu_assert(res > 0);
 
 	return res;
 
@@ -255,6 +257,7 @@ static ssize_t ptimer_src_freq_show(struct device *dev,
 	}
 
 	res = snprintf(buf, NVGPU_CPU_PAGE_SIZE, "%u\n", src_freq_hz);
+	nvgpu_assert(res > 0);
 
 	return res;
 
@@ -402,6 +405,7 @@ static ssize_t counters_show(struct device *dev,
 	nvgpu_pmu_get_load_counters(g, &busy_cycles, &total_cycles);
 
 	res = snprintf(buf, NVGPU_CPU_PAGE_SIZE, "%u %u\n", busy_cycles, total_cycles);
+	nvgpu_assert(res > 0);
 
 	return res;
 }
@@ -442,6 +446,7 @@ static ssize_t gk20a_load_show(struct device *dev,
 	}
 
 	res = snprintf(buf, NVGPU_CPU_PAGE_SIZE, "%u\n", busy_time);
+	nvgpu_assert(res > 0);
 
 	return res;
 }
@@ -626,6 +631,7 @@ static ssize_t aelpg_param_store(struct device *dev,
 	int status = 0;
 	union pmu_ap_cmd ap_cmd;
 	int *paramlist = NULL;
+	int ret = 0;
 	u32 defaultparam[5] = {
 			APCTRL_SAMPLING_PERIOD_PG_DEFAULT_US,
 			APCTRL_MINIMUM_IDLE_FILTER_DEFAULT_US,
@@ -641,8 +647,9 @@ static ssize_t aelpg_param_store(struct device *dev,
 
 	paramlist = (int *)g->pmu->pg->aelpg_param;
 	/* Get each parameter value from input string*/
-	sscanf(buf, "%d %d %d %d %d", &paramlist[0], &paramlist[1],
+	ret = sscanf(buf, "%d %d %d %d %d", &paramlist[0], &paramlist[1],
 				&paramlist[2], &paramlist[3], &paramlist[4]);
+	nvgpu_assert(ret == 5);
 
 	/* If parameter value is 0 then reset to SW default values*/
 	if ((paramlist[0] | paramlist[1] | paramlist[2]
