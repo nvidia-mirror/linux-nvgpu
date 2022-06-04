@@ -1,7 +1,7 @@
 /*
  * Semaphore Sync Framework Integration
  *
- * Copyright (c) 2020, NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2020-2022, NVIDIA Corporation.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -46,6 +46,7 @@ static inline struct nvgpu_dma_fence *to_nvgpu_dma_fence(struct dma_fence *fence
 static const char *nvgpu_dma_fence_get_driver_name(struct dma_fence *fence)
 {
 	struct nvgpu_dma_fence *nvfence = to_nvgpu_dma_fence(fence);
+	nvgpu_assert(nvfence != NULL);
 
 	return nvfence->g->name;
 }
@@ -64,6 +65,7 @@ static const char *nvgpu_dma_fence_get_timeline_name(struct dma_fence *fence)
 static bool nvgpu_dma_fence_enable_signaling(struct dma_fence *fence)
 {
 	struct nvgpu_dma_fence *f = to_nvgpu_dma_fence(fence);
+	nvgpu_assert(f != NULL);
 
 	if (nvgpu_semaphore_is_released(f->sema))
 		return false;
@@ -75,6 +77,7 @@ static bool nvgpu_dma_fence_enable_signaling(struct dma_fence *fence)
 static bool nvgpu_dma_fence_signaled(struct dma_fence *fence)
 {
 	struct nvgpu_dma_fence *f = to_nvgpu_dma_fence(fence);
+	nvgpu_assert(f != NULL);
 
 	return nvgpu_semaphore_is_released(f->sema);
 }
@@ -82,7 +85,10 @@ static bool nvgpu_dma_fence_signaled(struct dma_fence *fence)
 static void nvgpu_dma_fence_release(struct dma_fence *fence)
 {
 	struct nvgpu_dma_fence *f = to_nvgpu_dma_fence(fence);
-	struct gk20a *g = f->g;
+	struct gk20a *g;
+
+	nvgpu_assert(f != NULL);
+	g = f->g;
 
 	nvgpu_semaphore_put(f->sema);
 
@@ -140,6 +146,7 @@ u32 nvgpu_dma_fence_length(struct dma_fence *fence)
 
 	if (is_nvgpu_dma_fence_array(fence)) {
 		struct dma_fence_array *farray = to_dma_fence_array(fence);
+		nvgpu_assert(farray != NULL);
 
 		return farray->num_fences;
 	}
@@ -180,7 +187,7 @@ struct nvgpu_semaphore *nvgpu_dma_fence_nth(struct dma_fence *fence, u32 i)
 	}
 
 	farray = to_dma_fence_array(fence);
-	nvgpu_assert(i < farray->num_fences);
+	nvgpu_assert(farray != NULL && i < farray->num_fences);
 	return nvgpu_dma_fence_sema(farray->fences[i]);
 }
 
@@ -216,6 +223,7 @@ struct dma_fence *nvgpu_sync_dma_create(struct nvgpu_channel *c,
 	struct nvgpu_dma_fence *f;
 	struct gk20a *g = c->g;
 	u64 context;
+	int err;
 
 	f = nvgpu_kzalloc(g, sizeof(*f));
 	if (f == NULL) {
@@ -224,8 +232,10 @@ struct dma_fence *nvgpu_sync_dma_create(struct nvgpu_channel *c,
 
 	f->g = g;
 	f->sema = sema;
-	snprintf(f->timeline_name, sizeof(f->timeline_name),
+	err = snprintf(f->timeline_name, sizeof(f->timeline_name),
 		"ch%d-user", c->chid);
+	nvgpu_assert(err > 0);
+
 	spin_lock_init(&f->lock);
 
 	fence_framework = &os_channel_priv->fence_framework;
