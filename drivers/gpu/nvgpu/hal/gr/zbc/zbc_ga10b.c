@@ -87,7 +87,6 @@ void ga10b_gr_zbc_add_color(struct gk20a *g,
 				color_val, data_index_3)));
 }
 
-#ifndef CONFIG_NVGPU_NON_FUSA
 static void ga10b_gr_zbc_load_default_sw_color_table(struct gk20a *g,
 					struct nvgpu_gr_zbc *zbc)
 {
@@ -98,6 +97,7 @@ static void ga10b_gr_zbc_load_default_sw_color_table(struct gk20a *g,
 	NVGPU_ZBC_SET_COLOR_ATTR(zbc->zbc_col_tbl, index, 1);
 	NVGPU_ZBC_SET_COLOR_ATTR(zbc->zbc_col_tbl, index, 2);
 	NVGPU_ZBC_SET_COLOR_ATTR(zbc->zbc_col_tbl, index, 3);
+#ifndef CONFIG_NVGPU_NON_FUSA
 	NVGPU_ZBC_SET_COLOR_ATTR(zbc->zbc_col_tbl, index, 4);
 	NVGPU_ZBC_SET_COLOR_ATTR(zbc->zbc_col_tbl, index, 5);
 	NVGPU_ZBC_SET_COLOR_ATTR(zbc->zbc_col_tbl, index, 6);
@@ -123,10 +123,7 @@ static void ga10b_gr_zbc_load_default_sw_color_table(struct gk20a *g,
 	NVGPU_ZBC_SET_COLOR_ATTR(zbc->zbc_col_tbl, index, 24);
 	NVGPU_ZBC_SET_COLOR_ATTR(zbc->zbc_col_tbl, index, 25);
 	NVGPU_ZBC_SET_COLOR_ATTR(zbc->zbc_col_tbl, index, 26);
-	NVGPU_ZBC_SET_COLOR_ATTR(zbc->zbc_col_tbl, index, 27);
-	NVGPU_ZBC_SET_COLOR_ATTR(zbc->zbc_col_tbl, index, 28);
-	NVGPU_ZBC_SET_COLOR_ATTR(zbc->zbc_col_tbl, index, 29);
-	NVGPU_ZBC_SET_COLOR_ATTR(zbc->zbc_col_tbl, index, 30);
+#endif
 
 	/*
 	 * Reached to last entry, reduce index by 1 as it has increased
@@ -165,12 +162,6 @@ static void ga10b_gr_zbc_load_default_sw_stencil_table(struct gk20a *g,
 	index = nvgpu_safe_add_u32(index, 1U);
 
 	NVGPU_ZBC_SET_STENCIL_ATTR(zbc->zbc_s_tbl[index], 3);
-	index = nvgpu_safe_add_u32(index, 1U);
-
-	NVGPU_ZBC_SET_STENCIL_ATTR(zbc->zbc_s_tbl[index], 4);
-	index = nvgpu_safe_add_u32(index, 1U);
-
-	NVGPU_ZBC_SET_STENCIL_ATTR(zbc->zbc_s_tbl[index], 5);
 
 	zbc->max_used_stencil_index = index;
 }
@@ -188,4 +179,3 @@ void ga10b_gr_zbc_load_static_table(struct gk20a *g,
 		ga10b_gr_zbc_load_default_sw_stencil_table(g, zbc);
 	}
 }
-#endif
