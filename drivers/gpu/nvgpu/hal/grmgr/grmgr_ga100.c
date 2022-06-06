@@ -1139,9 +1139,11 @@ const struct nvgpu_mig_gpu_instance_config *ga100_grmgr_get_mig_config_ptr(
 	gpu_instance_config =
 		&ga100_gpu_instance_default_config.gpu_instance_config[num_config];
 
-	snprintf(gpu_instance_config->config_name,
+	err = snprintf(gpu_instance_config->config_name,
 		NVGPU_MIG_MAX_CONFIG_NAME_SIZE,
 		"1 GPU instance with %u GPCs", g->mig.gpc_count);
+	nvgpu_assert(err > 0);
+
 	gpu_instance_config->num_gpu_instances = 1U;
 	gpu_instance_config->gpu_instance_static_config[0].gpu_instance_id = 0U;
 	gpu_instance_config->gpu_instance_static_config[0].gr_syspipe_id = 0U;
