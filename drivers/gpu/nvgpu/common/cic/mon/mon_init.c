@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2021-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -24,7 +24,6 @@
 #include <nvgpu/kmem.h>
 #include <nvgpu/log.h>
 #include <nvgpu/cic_mon.h>
-
 #include "cic_mon_priv.h"
 
 int nvgpu_cic_mon_setup(struct gk20a *g)
@@ -45,6 +44,21 @@ int nvgpu_cic_mon_setup(struct gk20a *g)
 	}
 
 	g->cic_mon = cic_mon;
+
+#ifdef CONFIG_NVGPU_FSI_ERR_INJECTION
+	err = nvgpu_cic_mon_reg_errinj_cb(g);
+	if (err != 0) {
+		nvgpu_err(g,
+			"Err inj callback registration failed: %d",
+			err);
+		/* Continue CIC init despite err inj utility
+		 * registration failure, as the err inj support
+		 * is meant only for debug purposes.
+		 */
+		err = 0;
+	}
+#endif
+
 	cic_dbg(g, "CIC_MON unit initialization done.");
 	return err;
 }

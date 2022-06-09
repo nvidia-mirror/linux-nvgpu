@@ -21,7 +21,12 @@
 #include <linux/tegra-epl.h>
 #include <nvgpu/timers.h>
 #include "os/linux/os_linux.h"
+#ifdef CONFIG_NVGPU_FSI_ERR_INJECTION
+#include <linux/tegra-hsierrrptinj.h>
+#define NVGPU_FSI_REPORTER_ID 0x8016
 #endif
+#endif
+
 
 struct gk20a;
 
@@ -99,3 +104,48 @@ int nvgpu_cic_mon_report_err_safety_services(struct gk20a *g, u32 err_id)
 
 	return ret;
 }
+
+#ifdef CONFIG_NVGPU_FSI_ERR_INJECTION
+static struct gk20a *g_err_inj;
+
+static int nvgpu_cic_mon_inject_err_fsi(uint32_t inst_id,
+				struct epl_error_report_frame err_rpt_frame)
+{
+	struct gk20a *g = g_err_inj;
+	int err = 0;
+
+	/* Sanity check reporter_id */
+	if (err_rpt_frame.reporter_id != NVGPU_FSI_REPORTER_ID) {
+		nvgpu_err(g, "Invalid Input -> Reporter ID = %u",
+					err_rpt_frame.reporter_id);
+		return -EINVAL;
+	}
+
+	/* Sanity check inst_id */
+	if (inst_id != 0U) {
+		nvgpu_err(g, "Invalid Input -> instance ID = %u", inst_id);
+		return -EINVAL;
+	}
+
+	err = nvgpu_cic_mon_report_err_safety_services(g,
+					err_rpt_frame.error_code);
+	if (err != 0) {
+		nvgpu_err(g, "Error injection failed for err_id: %u",
+					err_rpt_frame.error_code);
+		return -EFAULT;
+	}
+
+	return err;
+}
+
+int nvgpu_cic_mon_reg_errinj_cb(struct gk20a *g)
+{
+	hsierrrpt_ipid_t ip_id = IP_GPU;
+	unsigned int inst_id = 0U;
+
+	/* Save NvGPU context which can be used during error injection */
+	g_err_inj = g;
+
+	return  hsierrrpt_reg_cb(ip_id, inst_id, nvgpu_cic_mon_inject_err_fsi);
+}
+#endif

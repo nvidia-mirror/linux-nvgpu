@@ -56,3 +56,11 @@ int nvgpu_cic_mon_report_err_safety_services(struct gk20a *g,
 	(void)err_id;
 	return 0;
 }
+
+#ifdef CONFIG_NVGPU_FSI_ERR_INJECTION
+int nvgpu_cic_mon_reg_errinj_cb(struct gk20a *g)
+{
+	(void)g;
+	return 0;
+}
+#endif

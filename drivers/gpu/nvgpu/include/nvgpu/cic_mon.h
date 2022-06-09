@@ -643,4 +643,7 @@ void nvgpu_cic_mon_intr_nonstall_resume(struct gk20a *g);
 
 void nvgpu_cic_mon_intr_enable(struct gk20a *g);
 
+#ifdef CONFIG_NVGPU_FSI_ERR_INJECTION
+int nvgpu_cic_mon_reg_errinj_cb(struct gk20a *g);
+#endif
 #endif /* NVGPU_CIC_MON_H */

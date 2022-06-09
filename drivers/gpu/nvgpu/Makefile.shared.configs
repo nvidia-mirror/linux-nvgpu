@@ -167,6 +167,16 @@ NVGPU_COMMON_CFLAGS             += -DCONFIG_NVGPU_TRACE
 CONFIG_NVGPU_FALCON_DEBUG       := 1
 NVGPU_COMMON_CFLAGS             += -DCONFIG_NVGPU_FALCON_DEBUG
 
+# Enable FSI Error injection support on safety debug and regular build
+# when the HSI error injection utility and NVGPU's MISC_EC support is
+# enabled.
+ifeq ($(CONFIG_TEGRA_HSIERRRPTINJ),1)
+ifeq ($(CONFIG_NVGPU_ENABLE_MISC_EC),1)
+CONFIG_NVGPU_FSI_ERR_INJECTION    := 1
+NVGPU_COMMON_CFLAGS             += -DCONFIG_NVGPU_FSI_ERR_INJECTION
+endif
+endif
+
 #
 # Flags enabled only for regular build profile.
 #
