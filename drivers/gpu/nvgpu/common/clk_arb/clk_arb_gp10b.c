@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -305,11 +305,23 @@ void gp10b_clk_arb_run_arbiter_cb(struct nvgpu_clk_arb *arb)
 
 	gpc2clk_session_target = gpc2clk_target;
 
+/* When DVFS is enabled, there is a mismatch between
+ * arb->actual->gpc2clk as dvfs doesn't synchronize
+ * values w.r.t Arbiter. Hence, allow the clocks
+ * to be set irrespective of whether it exists.
+ *
+ * CONFIG_GK20A_DEVFREQ is defined only for Linux
+ * and DVFS is supported only for linux. For, other
+ * platforms, arb->actual->gpc2clk contains the correct
+ * value.
+ */
+#ifndef CONFIG_GK20A_DEVFREQ
 	if (arb->actual->gpc2clk == gpc2clk_target) {
 		nvgpu_atomic_inc(&arb->req_nr);
 		nvgpu_cond_signal_interruptible(&arb->request_wq);
 		goto exit_arb;
 	}
+#endif
 
 	nvgpu_mutex_acquire(&arb->pstate_lock);
 
@@ -343,6 +355,8 @@ void gp10b_clk_arb_run_arbiter_cb(struct nvgpu_clk_arb *arb)
 		nvgpu_cond_signal_interruptible(&arb->request_wq);
 		goto exit_arb;
 	}
+
+	g->last_freq = rounded_rate;
 
 	actual = ((NV_READ_ONCE(arb->actual)) == &arb->actual_pool[0] ?
 			&arb->actual_pool[1] : &arb->actual_pool[0]);
