@@ -35,7 +35,7 @@
 
 static void gsp_sched_get_file_names(struct gk20a *g, struct gsp_fw *gsp_ucode)
 {
-	nvgpu_log_fn(g, " ");
+	nvgpu_gsp_dbg(g, " ");
 
 	gsp_ucode->code_name = GSP_DBG_RISCV_FW_CODE;
 	gsp_ucode->data_name = GSP_DBG_RISCV_FW_DATA;
@@ -46,7 +46,7 @@ void nvgpu_gsp_sched_suspend(struct gk20a *g, struct nvgpu_gsp_sched *gsp_sched)
 {
 	struct nvgpu_gsp *gsp = gsp_sched->gsp;
 
-	nvgpu_log_fn(g, " ");
+	nvgpu_gsp_dbg(g, " ");
 
 	if (gsp == NULL) {
 		nvgpu_info(g, "GSP not initialized");
@@ -69,7 +69,7 @@ void nvgpu_gsp_sched_sw_deinit(struct gk20a *g)
 {
 	struct nvgpu_gsp_sched *gsp_sched = g->gsp_sched;
 
-	nvgpu_log_fn(g, " ");
+	nvgpu_gsp_dbg(g, " ");
 
 	if (gsp_sched == NULL) {
 		return;
@@ -93,7 +93,7 @@ void nvgpu_gsp_sched_sw_deinit(struct gk20a *g)
 static int gsp_sched_wait_for_init(struct gk20a *g,
 	struct nvgpu_gsp_sched *gsp_sched, signed int timeoutms)
 {
-	nvgpu_log_fn(g, " ");
+	nvgpu_gsp_dbg(g, " ");
 
 	do {
 		if (gsp_sched->gsp_ready) {
@@ -118,7 +118,7 @@ int nvgpu_gsp_sched_sw_init(struct gk20a *g)
 	struct nvgpu_gsp_sched *gsp_sched;
 	struct nvgpu_gsp *gsp;
 
-	nvgpu_log_fn(g, " ");
+	nvgpu_gsp_dbg(g, " ");
 
 	if (g->gsp_sched != NULL) {
 		/*
@@ -161,7 +161,7 @@ int nvgpu_gsp_sched_sw_init(struct gk20a *g)
 		goto de_init;
 	}
 
-	nvgpu_log_fn(g, " Done ");
+	nvgpu_gsp_dbg(g, " Done ");
 	return err;
 de_init:
 	nvgpu_gsp_sched_sw_deinit(g);

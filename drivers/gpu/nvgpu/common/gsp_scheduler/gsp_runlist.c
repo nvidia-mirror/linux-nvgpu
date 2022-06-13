@@ -39,7 +39,7 @@ static void gsp_handle_cmd_ack(struct gk20a *g, struct nv_flcn_msg_gsp *msg,
 {
 	bool *command_ack = param;
 
-	nvgpu_log_fn(g, " ");
+	nvgpu_gsp_dbg(g, " ");
 
 	switch (msg->hdr.unit_id) {
 	case NV_GSP_UNIT_NULL:
@@ -89,7 +89,7 @@ int nvgpu_gsp_runlist_submit(struct gk20a *g, struct nvgpu_runlist *runlist)
 	int err = 0;
 	size_t tmp_size;
 
-	nvgpu_log_fn(g, " ");
+	nvgpu_gsp_dbg(g, " ");
 
 	(void) memset(&cmd, 0, sizeof(struct nv_flcn_cmd_gsp));
 	cmd.hdr.unit_id = NV_GSP_UNIT_SUBMIT_RUNLIST;
@@ -146,7 +146,7 @@ int nvgpu_gsp_send_devices_info(struct gk20a *g)
 	int err = 0;
 	size_t tmp_size;
 
-	nvgpu_log_fn(g, " ");
+	nvgpu_gsp_dbg(g, " ");
 
 	(void) memset(&cmd, 0, sizeof(struct nv_flcn_cmd_gsp));
 	cmd.hdr.unit_id = NV_GSP_UNIT_DEVICES_INFO;

@@ -34,7 +34,7 @@ static void gsp_sequences_init(struct gk20a *g,
 {
 	u16 i = 0;
 
-	nvgpu_log_fn(g, " ");
+	nvgpu_gsp_dbg(g, " ");
 
 	(void) memset(sequences->seq, 0,
 		sizeof(*sequences->seq) * GSP_MAX_NUM_SEQUENCES);
@@ -52,7 +52,7 @@ int nvgpu_gsp_sequences_init(struct gk20a *g, struct nvgpu_gsp_sched *gsp_sched)
 	int err = 0;
 	struct gsp_sequences *seqs;
 
-	nvgpu_log_fn(g, " ");
+	nvgpu_gsp_dbg(g, " ");
 
 	seqs = (struct gsp_sequences *) nvgpu_kzalloc(g, sizeof(*seqs->seq));
 	if (seqs == NULL) {
@@ -95,7 +95,7 @@ int nvgpu_gsp_seq_acquire(struct gk20a *g,
 	u32 index = 0;
 	int err = 0;
 
-	nvgpu_log_fn(g, " ");
+	nvgpu_gsp_dbg(g, " ");
 
 	nvgpu_mutex_acquire(&sequences->gsp_seq_lock);
 
@@ -146,7 +146,7 @@ int nvgpu_gsp_seq_response_handle(struct gk20a *g,
 {
 	struct gsp_sequence *seq;
 
-	nvgpu_log_fn(g, " ");
+	nvgpu_gsp_dbg(g, " ");
 
 	/* get the sequence info data associated with this message */
 	seq = &sequences->seq[seq_id];

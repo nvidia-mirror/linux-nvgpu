@@ -24,6 +24,10 @@
 #define NVGPU_GSP
 #include <nvgpu/lock.h>
 #include <nvgpu/nvgpu_mem.h>
+
+/* macro is used to log debug messages when the gpu_dbg_gsp is enabled */
+#define nvgpu_gsp_dbg(g, fmt, arg...)  nvgpu_log(g, gpu_dbg_gsp, fmt, ##arg)
+
 struct gk20a;
 struct nvgpu_gsp;
 struct nvgpu_runlist;

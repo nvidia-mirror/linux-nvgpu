@@ -78,7 +78,7 @@ static int gsp_write_cmd(struct nvgpu_gsp_sched *gsp_sched,
 	struct nvgpu_gsp *gsp = gsp_sched->gsp;
 	int err;
 
-	nvgpu_log_fn(g, " ");
+	nvgpu_gsp_dbg(g, " ");
 
 	nvgpu_timeout_init_cpu_timer(g, &timeout, timeout_ms);
 

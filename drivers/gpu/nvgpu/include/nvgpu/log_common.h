@@ -88,5 +88,5 @@ enum nvgpu_log_type {
 #define gpu_dbg_nvs		BIT(45) /* NvGPU's NVS logging. */
 #define gpu_dbg_nvs_internal	BIT(46) /* Internal NVS logging. */
 #endif
-
+#define gpu_dbg_gsp   BIT(47) /* GSP Scheduler debugging */
 #endif

@@ -174,7 +174,7 @@ int nvgpu_gsp_process_message(struct gk20a *g)
 	bool read_msg;
 	int status = 0;
 
-	nvgpu_log_fn(g, " ");
+	nvgpu_gsp_dbg(g, " ");
 
 	if (unlikely(!gsp_sched->gsp_ready)) {
 		status = gsp_process_init_msg(gsp_sched, &msg);
