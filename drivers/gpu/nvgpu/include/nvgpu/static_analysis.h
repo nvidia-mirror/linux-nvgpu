@@ -152,15 +152,15 @@ static inline s64 nvgpu_safe_add_s64(s64 sl_a, s64 sl_b)
 
 #define NVGPU_SAFE_ADD_UNSIGNED(a, b)				\
 ({								\
-	typeof(a) _a = (a), _b = (typeof(a))(b), ret = 0U;	\
+	typeof(a) _a = (a), _b = (typeof(a))(b), rt = 0U;	\
 	typeof(_a) max = (typeof(_a))(-1LL);			\
 								\
 	if ((max - _a) < _b) {					\
 		BUG();						\
 	} else {						\
-		ret = _a + _b;					\
+		rt = _a + _b;					\
 	}							\
-	ret;							\
+	rt;							\
 })
 
 /**
@@ -327,15 +327,15 @@ static inline u64 nvgpu_safe_sub_u64(u64 ul_a, u64 ul_b)
 	}
 }
 
-#define NVGPU_SAFE_SUB_UNSIGNED(a, b)				\
+#define NVGPU_SAFE_SUB_UNSIGNED(x, y)				\
 ({								\
-	typeof(a) _a = (a), _b = (typeof(a))(b), ret = 0U;	\
-	if (_a < _b) {						\
+	typeof(x) _x = (x), _y = (typeof(x))(y), rt = 0U;	\
+	if (_x < _y) {						\
 		BUG();						\
 	} else {						\
-		ret = (typeof(_a))(_a - _b);			\
+		rt = (typeof(_x))(_x - _y);			\
 	}							\
-	ret;							\
+	rt;							\
 })
 
 /**

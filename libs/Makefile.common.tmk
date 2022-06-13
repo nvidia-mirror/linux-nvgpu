@@ -70,6 +70,7 @@ _NV_TOOLCHAIN_CFLAGS		+= \
 	-Wmissing-braces -Wpointer-arith -Wundef \
 	-Wconversion -Wsign-conversion \
 	-Wformat-security \
+	-Wshadow \
 	-Wmissing-declarations -Wredundant-decls -Wimplicit-fallthrough
 endif
 

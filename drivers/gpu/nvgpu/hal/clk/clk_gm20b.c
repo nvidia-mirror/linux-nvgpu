@@ -1532,7 +1532,7 @@ void gm20b_suspend_clk_support(struct gk20a *g)
 int gm20b_clk_get_voltage(struct clk_gk20a *clk, u64 *val)
 {
 	struct gk20a *g = clk->g;
-	struct pll_parms *gpc_pll_params = gm20b_get_gpc_pll_parms();
+	struct pll_parms *pll_params = gm20b_get_gpc_pll_parms();
 	u32 det_out;
 	int err;
 
@@ -1549,8 +1549,8 @@ int gm20b_clk_get_voltage(struct clk_gk20a *clk, u64 *val)
 
 	det_out = gk20a_readl(g, trim_sys_gpcpll_cfg3_r());
 	det_out = trim_sys_gpcpll_cfg3_dfs_testout_v(det_out);
-	*val = div64_u64((u64)det_out * (u64)gpc_pll_params->uvdet_slope +
-		(u64)gpc_pll_params->uvdet_offs, 1000ULL);
+	*val = div64_u64((u64)det_out * (u64)pll_params->uvdet_slope +
+		(u64)pll_params->uvdet_offs, 1000ULL);
 
 	nvgpu_mutex_release(&g->clk.clk_mutex);
 

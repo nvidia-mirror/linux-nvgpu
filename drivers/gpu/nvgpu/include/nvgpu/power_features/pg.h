@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,16 +31,16 @@ struct gk20a;
 #ifdef CONFIG_NVGPU_POWER_PG
 #define nvgpu_pg_elpg_protected_call(g, func) \
 	({ \
-		int err = 0; \
-		err = nvgpu_pg_elpg_disable(g);\
-		if (err != 0) {\
+		int rt = 0; \
+		rt = nvgpu_pg_elpg_disable(g);\
+		if (rt != 0) {\
 			(void)nvgpu_pg_elpg_enable(g);\
 		}\
-		if (err == 0) { \
-			err = (func); \
+		if (rt == 0) { \
+			rt = (func); \
 			(void)nvgpu_pg_elpg_enable(g);\
 		} \
-		err; \
+		rt; \
 	})
 
 #define nvgpu_pg_elpg_ms_protected_call(g, func) \
