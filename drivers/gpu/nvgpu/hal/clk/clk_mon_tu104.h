@@ -34,7 +34,7 @@
 /*
  * The Maximum count of clock domains supported
  */
-#define CLK_CLOCK_MON_DOMAIN_COUNT			0x32U
+#define CLK_CLOCK_MON_DOMAIN_COUNT			0x40U
 
 
 struct clk_domain_mon_status {
