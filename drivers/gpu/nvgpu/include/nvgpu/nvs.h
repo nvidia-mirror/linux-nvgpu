@@ -41,6 +41,36 @@ struct gk20a;
 struct nvgpu_nvs_domain_ioctl;
 struct nvgpu_runlist;
 struct nvgpu_runlist_domain;
+struct nvgpu_nvs_ctrl_queue;
+struct nvgpu_nvs_domain_ctrl_fifo;
+
+/* Structure to store user info common to all schedulers */
+struct nvs_domain_ctrl_fifo_user {
+	/*
+	 * Flag to determine whether the user has write access.
+	 * User having write access can update Request/Response buffers.
+	 */
+	bool has_write_access;
+	/*
+	 * PID of the user. Used to prevent a given user from opening
+	 * multiple instances of control-fifo device node.
+	 */
+	int pid;
+	/* Mask of actively used queue */
+	u32 active_used_queues;
+	/*
+	 * Listnode used for keeping references to the user in
+	 * the master struct nvgpu_nvs_domain_ctrl_fifo
+	 */
+	struct nvgpu_list_node sched_ctrl_list;
+};
+
+static inline struct nvs_domain_ctrl_fifo_user *
+nvs_domain_ctrl_fifo_user_from_sched_ctrl_list(struct nvgpu_list_node *node)
+{
+	return (struct nvs_domain_ctrl_fifo_user *)
+		((uintptr_t)node - offsetof(struct nvs_domain_ctrl_fifo_user, sched_ctrl_list));
+};
 
 /*
  * NvGPU KMD domain implementation details for nvsched.
@@ -119,6 +149,23 @@ const char *nvgpu_nvs_domain_get_name(struct nvgpu_nvs_domain *dom);
  */
 #define nvs_dbg(g, fmt, arg...)			\
 	nvgpu_log(g, gpu_dbg_nvs, fmt, ##arg)
+
+struct nvgpu_nvs_domain_ctrl_fifo *nvgpu_nvs_ctrl_fifo_create(struct gk20a *g);
+bool nvgpu_nvs_ctrl_fifo_user_exists(struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl,
+    int pid, bool rw);
+bool nvgpu_nvs_ctrl_fifo_user_is_active(struct nvs_domain_ctrl_fifo_user *user);
+void nvgpu_nvs_ctrl_fifo_add_user(struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl,
+    struct nvs_domain_ctrl_fifo_user *user);
+bool nvgpu_nvs_ctrl_fifo_is_exclusive_user(struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl,
+    struct nvs_domain_ctrl_fifo_user *user);
+void nvgpu_nvs_ctrl_fifo_reset_exclusive_user(
+		struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl, struct nvs_domain_ctrl_fifo_user *user);
+int nvgpu_nvs_ctrl_fifo_reserve_exclusive_user(
+		struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl, struct nvs_domain_ctrl_fifo_user *user);
+void nvgpu_nvs_ctrl_fifo_remove_user(struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl,
+    struct nvs_domain_ctrl_fifo_user *user);
+bool nvgpu_nvs_ctrl_fifo_is_busy(struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl);
+void nvgpu_nvs_ctrl_fifo_destroy(struct gk20a *g);
 
 #else
 static inline int nvgpu_nvs_init(struct gk20a *g)

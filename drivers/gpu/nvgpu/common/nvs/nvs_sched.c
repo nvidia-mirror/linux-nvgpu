@@ -453,6 +453,9 @@ void nvgpu_nvs_remove_support(struct gk20a *g)
 	nvgpu_kfree(g, sched->sched);
 	nvgpu_kfree(g, sched);
 	g->scheduler = NULL;
+
+	nvgpu_nvs_ctrl_fifo_destroy(g);
+
 	nvgpu_mutex_destroy(&g->sched_mutex);
 }
 
@@ -473,6 +476,14 @@ int nvgpu_nvs_open(struct gk20a *g)
 	if (g->scheduler == NULL) {
 		err = -ENOMEM;
 		goto unlock;
+	}
+
+	if (nvgpu_is_enabled(g, NVGPU_SUPPORT_NVS_CTRL_FIFO)) {
+		g->sched_ctrl_fifo = nvgpu_nvs_ctrl_fifo_create(g);
+		if (g->sched_ctrl_fifo == NULL) {
+			err = -ENOMEM;
+			goto unlock;
+		}
 	}
 
 	/* separately allocated to keep the definition hidden from other files */
@@ -510,6 +521,8 @@ unlock:
 			nvgpu_kfree(g, g->scheduler);
 			g->scheduler = NULL;
 		}
+		if (g->sched_ctrl_fifo)
+			nvgpu_nvs_ctrl_fifo_destroy(g);
 	}
 
 	nvgpu_mutex_release(&g->sched_mutex);

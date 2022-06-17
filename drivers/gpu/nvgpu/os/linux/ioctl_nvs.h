@@ -26,4 +26,7 @@ ssize_t nvgpu_nvs_dev_read(struct file *filp, char __user *buf,
 			   size_t size, loff_t *off);
 struct nvgpu_nvs_domain *nvgpu_nvs_domain_get_from_file(int fd);
 
+int     nvgpu_nvs_ctrl_fifo_ops_open(struct inode *inode, struct file *filp);
+int     nvgpu_nvs_ctrl_fifo_ops_release(struct inode *inode, struct file *filp);
+
 #endif

@@ -307,6 +307,8 @@ static struct nvgpu_flags_mapping flags_mapping[] = {
 		NVGPU_SUPPORT_BUFFER_METADATA},
 	{NVGPU_GPU_FLAGS_SUPPORT_NVS,
 		NVGPU_SUPPORT_NVS},
+	{NVGPU_GPU_FLAGS_SUPPORT_NVS_SCHED_CTRL_FIFO,
+		NVGPU_SUPPORT_NVS_CTRL_FIFO},
 };
 
 static u64 nvgpu_ctrl_ioctl_gpu_characteristics_flags(struct gk20a *g)

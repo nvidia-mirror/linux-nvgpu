@@ -221,6 +221,7 @@ struct gk20a;
 	DEFINE_FLAG(NVGPU_SUPPORT_ROP_IN_GPC, "ROP is part of GPC"), \
 	DEFINE_FLAG(NVGPU_SUPPORT_BUFFER_METADATA, "Buffer metadata support"), \
 	DEFINE_FLAG(NVGPU_SUPPORT_NVS, "Domain scheduler support"), \
+	DEFINE_FLAG(NVGPU_SUPPORT_NVS_CTRL_FIFO, "Domain scheduler control support"), \
 	DEFINE_FLAG(NVGPU_SUPPORT_TEGRA_RAW, \
 			"TEGRA_RAW format support"), \
 	DEFINE_FLAG(NVGPU_SUPPORT_EMULATE_MODE, \

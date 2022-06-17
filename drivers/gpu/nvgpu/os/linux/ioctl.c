@@ -162,6 +162,12 @@ static const struct file_operations gk20a_sched_ops = {
 	.read = gk20a_sched_dev_read,
 };
 
+const struct file_operations nvgpu_nvs_ctrl_fifo_ops = {
+	.owner          = THIS_MODULE,
+	.release        = nvgpu_nvs_ctrl_fifo_ops_release,
+	.open           = nvgpu_nvs_ctrl_fifo_ops_open,
+};
+
 static const struct file_operations nvgpu_nvs_ops = {
 	.owner          = THIS_MODULE,
 	.release        = nvgpu_nvs_dev_release,
@@ -198,6 +204,7 @@ static const struct nvgpu_dev_node dev_node_list[] = {
 	{"prof-dev",	&gk20a_prof_dev_ops,	false,	true	},
 	{"sched",	&gk20a_sched_ops,	false,	false	},
 	{"nvsched",	&nvgpu_nvs_ops,		false,	false	},
+	{"nvsched_ctrl_fifo",	&nvgpu_nvs_ctrl_fifo_ops,	false,	false	},
 	{"tsg",		&gk20a_tsg_ops,		false,	false	},
 };
 

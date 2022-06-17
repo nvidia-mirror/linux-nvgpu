@@ -900,6 +900,7 @@ struct gk20a {
 	u32 support_gpu_tools;
 
 #ifdef CONFIG_NVS_PRESENT
+	struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl_fifo;
 	struct nvgpu_nvs_scheduler *scheduler;
 	struct nvgpu_mutex sched_mutex;
 

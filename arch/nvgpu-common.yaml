@@ -214,6 +214,7 @@ nvsched:
   safe: no
   owner: Alex W
   sources: [ common/nvs/nvs_sched.c,
+             common/nvs/nvs_sched_ctrl.c,
              include/external-nvs/impl.h,
              include/external-nvs/types.h,
              include/nvgpu/nvs.h ]

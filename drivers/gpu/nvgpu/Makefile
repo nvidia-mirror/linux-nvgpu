@@ -995,7 +995,8 @@ include $(srctree.nvgpu)/nvsched/Makefile.sources
 nvgpu-y += $(patsubst %.c,../../../nvsched/%.o,$(NVS_SOURCES))
 nvgpu-y += \
 	os/linux/ioctl_nvs.o \
-	common/nvs/nvs_sched.o
+	common/nvs/nvs_sched.o \
+	common/nvs/nvs_sched_ctrl.o
 ccflags-y += \
 	$(patsubst %,-I$(srctree.nvgpu)/nvsched/%,$(NVS_INCLUDE)) \
 	-I$(srctree.nvgpu)/drivers/gpu/nvgpu/include/external-nvs \

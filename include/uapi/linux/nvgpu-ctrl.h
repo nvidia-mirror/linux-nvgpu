@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2021-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -201,6 +201,8 @@ struct nvgpu_gpu_zbc_query_table_args {
 #define NVGPU_GPU_FLAGS_SUPPORT_VAB		(1ULL << 52)
 /* The NVS scheduler interface is usable */
 #define NVGPU_GPU_FLAGS_SUPPORT_NVS		(1ULL << 53)
+/* The NVS control fifo interface is usable */
+#define NVGPU_GPU_FLAGS_SUPPORT_NVS_SCHED_CTRL_FIFO		(1ULL << 54)
 /* SM LRF ECC is enabled */
 #define NVGPU_GPU_FLAGS_ECC_ENABLED_SM_LRF	(1ULL << 60)
 /* SM SHM ECC is enabled */

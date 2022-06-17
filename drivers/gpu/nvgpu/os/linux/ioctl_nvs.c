@@ -21,6 +21,7 @@
 #include <nvgpu/nvs.h>
 #include <nvgpu/gk20a.h>
 #include <nvgpu/nvgpu_init.h>
+#include <nvgpu/os_sched.h>
 #include "os_linux.h"
 
 #include <nvs/sched.h>
@@ -595,3 +596,82 @@ ssize_t nvgpu_nvs_dev_read(struct file *filp, char __user *buf,
 
 	return bytes;
 }
+
+struct nvgpu_nvs_domain_ctrl_fifo_user_linux {
+	struct nvs_domain_ctrl_fifo_user user;
+	struct nvgpu_cdev *cdev;
+};
+
+int nvgpu_nvs_ctrl_fifo_ops_open(struct inode *inode, struct file *filp)
+{
+	struct nvgpu_cdev *cdev;
+	struct gk20a *g;
+	int pid;
+	struct nvgpu_nvs_domain_ctrl_fifo_user_linux *linux_user;
+	bool writable = filp->f_mode & FMODE_WRITE;
+
+	cdev = container_of(inode->i_cdev, struct nvgpu_cdev, cdev);
+	g = nvgpu_get_gk20a_from_cdev(cdev);
+
+	if (!nvgpu_is_enabled(g, NVGPU_SUPPORT_NVS_CTRL_FIFO)) {
+		return -EOPNOTSUPP;
+	}
+
+	pid = nvgpu_current_pid(g);
+	if (nvgpu_nvs_ctrl_fifo_user_exists(g->sched_ctrl_fifo, pid, writable)) {
+		nvgpu_err(g, "User already exists");
+		return -EEXIST;
+	}
+
+	linux_user = nvgpu_kzalloc(g, sizeof(*linux_user));
+	if (linux_user == NULL) {
+		return -ENOMEM;
+	}
+
+	linux_user->cdev = cdev;
+	linux_user->user.pid = pid;
+	if (writable)
+		linux_user->user.has_write_access = true;
+
+	nvgpu_nvs_ctrl_fifo_add_user(g->sched_ctrl_fifo, &linux_user->user);
+
+	filp->private_data = linux_user;
+	nvgpu_get(g);
+
+	return 0;
+}
+
+int nvgpu_nvs_ctrl_fifo_ops_release(struct inode *inode, struct file *filp)
+{
+	struct nvgpu_cdev *cdev;
+	struct gk20a *g;
+	struct nvgpu_nvs_domain_ctrl_fifo_user_linux *linux_user = NULL;
+	int err = 0;
+
+	cdev = container_of(inode->i_cdev, struct nvgpu_cdev, cdev);
+	g = nvgpu_get_gk20a_from_cdev(cdev);
+
+	linux_user = filp->private_data;
+	if (linux_user == NULL) {
+		return -ENODEV;
+	}
+
+	if (nvgpu_nvs_ctrl_fifo_user_is_active(&linux_user->user)) {
+		err = -EBUSY;
+	}
+
+	if (nvgpu_nvs_ctrl_fifo_is_exclusive_user(g->sched_ctrl_fifo, &linux_user->user)) {
+		nvgpu_nvs_ctrl_fifo_reset_exclusive_user(g->sched_ctrl_fifo, &linux_user->user);
+	}
+
+	nvgpu_nvs_ctrl_fifo_remove_user(g->sched_ctrl_fifo, &linux_user->user);
+
+	filp->private_data = NULL;
+
+	nvgpu_kfree(g, linux_user);
+	nvgpu_put(g);
+
+	return err;
+}
+
+extern const struct file_operations nvgpu_nvs_ctrl_fifo_ops;
