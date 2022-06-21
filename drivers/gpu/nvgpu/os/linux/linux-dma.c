@@ -338,6 +338,76 @@ print_dma_err:
 	return err;
 }
 
+int nvgpu_dma_mmap_sys(struct gk20a *g, struct vm_area_struct *vma, struct nvgpu_mem *mem)
+{
+	struct device *d = dev_from_gk20a(g);
+	dma_addr_t iova;
+	unsigned long dma_attrs = 0;
+	int err;
+	unsigned long flags;
+	size_t size;
+	void *cpu_va;
+	struct vm_area_struct *vma_exists;
+
+	if (!nvgpu_mem_is_valid(mem)) {
+		return -EINVAL;
+	}
+
+	if (mem->aperture != APERTURE_SYSMEM) {
+		return -EINVAL;
+	}
+
+	if ((mem->size == 0) || (PAGE_ALIGN(mem->size) != mem->aligned_size)) {
+		return -EINVAL;
+	}
+
+	if ((vma->vm_end <= vma->vm_start) || (vma->vm_end - vma->vm_start > mem->size)) {
+		return -EINVAL;
+	}
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
+	mmap_write_lock(vma->vm_mm);
+#else
+	down_write(&vma->vm_mm->mmap_sem);
+#endif
+
+	vma_exists = find_vma_intersection(vma->vm_mm, vma->vm_start, vma->vm_end);
+	if (vma_exists != NULL) {
+		err = -EEXIST;
+		goto done;
+	}
+
+	size = mem->aligned_size;
+	flags = mem->priv.flags;
+
+	nvgpu_dma_flags_to_attrs(g, &dma_attrs, flags);
+
+	if (nvgpu_nvlink_non_contig(g, flags)) {
+		err = remap_vmalloc_range(vma, mem->cpu_va, vma->vm_pgoff);
+	} else {
+		iova = sg_dma_address(mem->priv.sgt->sgl);
+		if (flags & NVGPU_DMA_NO_KERNEL_MAPPING) {
+			cpu_va = mem->priv.pages;
+		} else {
+			cpu_va = mem->cpu_va;
+		}
+		err = dma_mmap_attrs(d, vma, cpu_va, iova, size, dma_attrs);
+	}
+
+done:
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
+	mmap_write_unlock(vma->vm_mm);
+#else
+	up_write(&vma->vm_mm->mmap_sem);
+#endif
+
+	if (err != 0) {
+		nvgpu_err(g, "failed to map mem into userspace vma");
+	}
+
+	return err;
+}
+
 #if defined(CONFIG_NVGPU_DGPU)
 int nvgpu_dma_alloc_flags_vid_at(struct gk20a *g, unsigned long flags,
 		size_t size, struct nvgpu_mem *mem, u64 at)
