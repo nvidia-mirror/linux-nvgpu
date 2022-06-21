@@ -127,6 +127,7 @@ nvgpu-$(CONFIG_NVGPU_DGPU) += \
 	os/linux/pci.o \
 	os/linux/pci_power.o \
 	os/linux/dmabuf_vidmem.o \
+	os/linux/dmabuf_nvs.o \
 	os/linux/os_ops_gv100.o \
 	os/linux/os_ops_tu104.o \
 	common/sec2/sec2.o \

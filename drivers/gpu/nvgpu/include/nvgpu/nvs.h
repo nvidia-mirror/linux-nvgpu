@@ -31,11 +31,16 @@
 #include <nvgpu/lock.h>
 #include <nvgpu/worker.h>
 #include <nvgpu/timers.h>
+#include <nvgpu/nvgpu_mem.h>
 
 /*
  * Max size we'll parse from an NVS log entry.
  */
 #define NVS_LOG_BUF_SIZE	128
+/*
+ * Keep it to page size for now. Can be updated later.
+ */
+#define NVS_QUEUE_DEFAULT_SIZE (64 * 1024)
 
 struct gk20a;
 struct nvgpu_nvs_domain_ioctl;
@@ -126,6 +131,85 @@ struct nvgpu_nvs_scheduler {
 	struct nvgpu_nvs_domain *shadow_domain;
 };
 
+enum nvgpu_nvs_ctrl_queue_num {
+	NVGPU_NVS_NUM_CONTROL = 0,
+	NVGPU_NVS_NUM_EVENT,
+	NVGPU_NVS_INVALID,
+};
+
+enum nvgpu_nvs_ctrl_queue_direction {
+	NVGPU_NVS_DIR_CLIENT_TO_SCHEDULER = 0,
+	NVGPU_NVS_DIR_SCHEDULER_TO_CLIENT,
+	NVGPU_NVS_DIR_INVALID,
+};
+
+/*
+ * The below definitions mirror the nvgpu-nvs(UAPI)
+ * headers.
+ */
+
+/*
+ * Invalid domain scheduler.
+ * The value of 'domain_scheduler_implementation'
+ * when 'has_domain_scheduler_control_fifo' is 0.
+ */
+#define NVGPU_NVS_DOMAIN_SCHED_INVALID 0U
+/*
+ * CPU based scheduler implementation. Intended use is mainly
+ * for debug and testing purposes. Doesn't meet latency requirements.
+ * Implementation will be supported in the initial versions and eventually
+ * discarded.
+ */
+#define NVGPU_NVS_DOMAIN_SCHED_KMD 1U
+/*
+ * GSP based scheduler implementation that meets latency requirements.
+ * This implementation will eventually replace NVGPU_NVS_DOMAIN_SCHED_KMD.
+ */
+#define NVGPU_NVS_DOMAIN_SCHED_GSP 2U
+
+/* Queue meant for exclusive client write access. This shared queue will be
+ * used for communicating the scheduling metadata between the client(producer)
+ * and scheduler(consumer).
+ */
+#define NVGPU_NVS_CTRL_FIFO_QUEUE_EXCLUSIVE_CLIENT_WRITE 1U
+
+/* Queue meant for exclusive client read access. This shared queue will be
+ * used for communicating the scheduling metadata between the scheduler(producer)
+ * and client(consumer).
+ */
+#define NVGPU_NVS_CTRL_FIFO_QUEUE_EXCLUSIVE_CLIENT_READ 2U
+
+/* Queue meant for generic read access. Clients can subscribe to this read-only
+ * queue for processing events such as recovery, preemption etc.
+ */
+#define NVGPU_NVS_CTRL_FIFO_QUEUE_CLIENT_EVENTS_READ 4U
+
+/*
+ * Direction of the requested queue is from CLIENT(producer)
+ * to SCHEDULER(consumer).
+ */
+#define NVGPU_NVS_CTRL_FIFO_QUEUE_DIRECTION_CLIENT_TO_SCHEDULER 0
+
+/*
+ * Direction of the requested queue is from SCHEDULER(producer)
+ * to CLIENT(consumer).
+ */
+#define NVGPU_NVS_CTRL_FIFO_QUEUE_DIRECTION_SCHEDULER_TO_CLIENT 1
+
+/* Structure to hold control_queues. This can be then passed to GSP or Rm based subscheduler. */
+struct nvgpu_nvs_ctrl_queue {
+	struct nvgpu_mem	mem;
+	struct gk20a		*g;
+	/*
+	 * Filled in by each OS - this holds the necessary data to export this
+	 * buffer to userspace.
+	 */
+	void			*priv;
+	bool			valid;
+	u8				mask;
+	void (*free)(struct gk20a *g, struct nvgpu_nvs_ctrl_queue *queue);
+};
+
 #ifdef CONFIG_NVS_PRESENT
 int nvgpu_nvs_init(struct gk20a *g);
 int nvgpu_nvs_open(struct gk20a *g);
@@ -150,9 +234,14 @@ const char *nvgpu_nvs_domain_get_name(struct nvgpu_nvs_domain *dom);
 #define nvs_dbg(g, fmt, arg...)			\
 	nvgpu_log(g, gpu_dbg_nvs, fmt, ##arg)
 
+void nvgpu_nvs_ctrl_fifo_lock_queues(struct gk20a *g);
+void nvgpu_nvs_ctrl_fifo_unlock_queues(struct gk20a *g);
+
 struct nvgpu_nvs_domain_ctrl_fifo *nvgpu_nvs_ctrl_fifo_create(struct gk20a *g);
 bool nvgpu_nvs_ctrl_fifo_user_exists(struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl,
     int pid, bool rw);
+bool nvgpu_nvs_ctrl_fifo_is_busy(struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl);
+void nvgpu_nvs_ctrl_fifo_destroy(struct gk20a *g);
 bool nvgpu_nvs_ctrl_fifo_user_is_active(struct nvs_domain_ctrl_fifo_user *user);
 void nvgpu_nvs_ctrl_fifo_add_user(struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl,
     struct nvs_domain_ctrl_fifo_user *user);
@@ -163,9 +252,26 @@ void nvgpu_nvs_ctrl_fifo_reset_exclusive_user(
 int nvgpu_nvs_ctrl_fifo_reserve_exclusive_user(
 		struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl, struct nvs_domain_ctrl_fifo_user *user);
 void nvgpu_nvs_ctrl_fifo_remove_user(struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl,
-    struct nvs_domain_ctrl_fifo_user *user);
-bool nvgpu_nvs_ctrl_fifo_is_busy(struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl);
-void nvgpu_nvs_ctrl_fifo_destroy(struct gk20a *g);
+		struct nvs_domain_ctrl_fifo_user *user);
+struct nvgpu_nvs_ctrl_queue *nvgpu_nvs_ctrl_fifo_get_queue(
+		struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl,
+		enum nvgpu_nvs_ctrl_queue_num queue_num,
+		enum nvgpu_nvs_ctrl_queue_direction queue_direction,
+		u8 *mask);
+/* Below methods require nvgpu_nvs_ctrl_fifo_lock_queues() to be held. */
+bool nvgpu_nvs_buffer_is_valid(struct gk20a *g, struct nvgpu_nvs_ctrl_queue *buf);
+int nvgpu_nvs_buffer_alloc(struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl,
+		size_t bytes, u8 mask, struct nvgpu_nvs_ctrl_queue *buf);
+void nvgpu_nvs_buffer_free(struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl,
+		struct nvgpu_nvs_ctrl_queue *buf);
+void nvgpu_nvs_ctrl_fifo_user_subscribe_queue(struct nvs_domain_ctrl_fifo_user *user,
+		struct nvgpu_nvs_ctrl_queue *queue);
+void nvgpu_nvs_ctrl_fifo_user_unsubscribe_queue(struct nvs_domain_ctrl_fifo_user *user,
+		struct nvgpu_nvs_ctrl_queue *queue);
+bool nvgpu_nvs_ctrl_fifo_user_is_subscribed_to_queue(struct nvs_domain_ctrl_fifo_user *user,
+		struct nvgpu_nvs_ctrl_queue *queue);
+void nvgpu_nvs_ctrl_fifo_erase_queue(struct gk20a *g, struct nvgpu_nvs_ctrl_queue *queue);
+void nvgpu_nvs_ctrl_fifo_erase_all_queues(struct gk20a *g);
 
 #else
 static inline int nvgpu_nvs_init(struct gk20a *g)

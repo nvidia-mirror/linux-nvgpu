@@ -15,6 +15,7 @@
 #include <linux/fs.h>
 #include <linux/file.h>
 #include <linux/uaccess.h>
+#include <linux/dma-buf.h>
 
 #include <uapi/linux/nvgpu-nvs.h>
 
@@ -28,6 +29,7 @@
 #include <nvs/domain.h>
 
 #include "ioctl.h"
+#include "dmabuf_nvs.h"
 
 /*
  * OS-specific layer to hold device node mapping for a domain.
@@ -665,6 +667,9 @@ int nvgpu_nvs_ctrl_fifo_ops_release(struct inode *inode, struct file *filp)
 	}
 
 	nvgpu_nvs_ctrl_fifo_remove_user(g->sched_ctrl_fifo, &linux_user->user);
+	if (!nvgpu_nvs_ctrl_fifo_is_busy(g->sched_ctrl_fifo)) {
+		nvgpu_nvs_ctrl_fifo_erase_all_queues(g);
+	}
 
 	filp->private_data = NULL;
 
@@ -675,3 +680,352 @@ int nvgpu_nvs_ctrl_fifo_ops_release(struct inode *inode, struct file *filp)
 }
 
 extern const struct file_operations nvgpu_nvs_ctrl_fifo_ops;
+
+static int nvgpu_nvs_ctrl_fifo_create_queue_verify_flags(struct gk20a *g,
+		struct nvs_domain_ctrl_fifo_user *user,
+		struct nvgpu_nvs_ctrl_fifo_ioctl_create_queue_args *args)
+{
+	int err = 0;
+
+	if (args->reserve0 != 0) {
+		return -EINVAL;
+	}
+
+	if (args->dmabuf_fd != 0) {
+		return -EINVAL;
+	}
+
+	if (args->queue_size != 0) {
+		return -EINVAL;
+	}
+
+	if (args->access_type == NVS_CTRL_FIFO_QUEUE_ACCESS_TYPE_EXCLUSIVE) {
+		if (args->queue_num == 0)
+			return -EINVAL;
+		if (args->direction == 0)
+			return -EINVAL;
+		if (!nvgpu_nvs_ctrl_fifo_is_exclusive_user(g->sched_ctrl_fifo, user)) {
+			err = nvgpu_nvs_ctrl_fifo_reserve_exclusive_user(g->sched_ctrl_fifo, user);
+			if (err != 0) {
+				return err;
+			}
+		}
+	} else {
+		if (args->queue_num != NVS_CTRL_FIFO_QUEUE_NUM_EVENT)
+			return -EINVAL;
+		if (args->direction != NVS_CTRL_FIFO_QUEUE_DIRECTION_SCHEDULER_TO_CLIENT)
+			return -EINVAL;
+	}
+
+	return 0;
+}
+
+static enum nvgpu_nvs_ctrl_queue_num nvgpu_nvs_translate_queue_num(u32 queue_num_arg)
+{
+	enum nvgpu_nvs_ctrl_queue_num num_queue = NVGPU_NVS_INVALID;
+	if (queue_num_arg == NVGPU_NVS_CTRL_FIFO_QUEUE_NUM_CONTROL)
+		num_queue = NVGPU_NVS_NUM_CONTROL;
+	else if (queue_num_arg == NVS_CTRL_FIFO_QUEUE_NUM_EVENT)
+		num_queue = NVGPU_NVS_NUM_EVENT;
+
+	return num_queue;
+}
+
+static enum nvgpu_nvs_ctrl_queue_direction
+	nvgpu_nvs_translate_queue_direction(u32 queue_direction)
+{
+	enum nvgpu_nvs_ctrl_queue_direction direction = NVGPU_NVS_DIR_INVALID;
+	if (queue_direction == NVS_CTRL_FIFO_QUEUE_DIRECTION_CLIENT_TO_SCHEDULER)
+		direction = NVGPU_NVS_DIR_CLIENT_TO_SCHEDULER;
+	else if (queue_direction == NVS_CTRL_FIFO_QUEUE_DIRECTION_SCHEDULER_TO_CLIENT)
+		direction = NVGPU_NVS_DIR_SCHEDULER_TO_CLIENT;
+
+	return direction;
+}
+
+static int nvgpu_nvs_ctrl_fifo_create_queue(struct gk20a *g,
+		struct nvs_domain_ctrl_fifo_user *user,
+		struct nvgpu_nvs_ctrl_fifo_ioctl_create_queue_args *args)
+{
+	enum nvgpu_nvs_ctrl_queue_num num_queue;
+	enum nvgpu_nvs_ctrl_queue_direction queue_direction;
+	struct nvgpu_nvs_ctrl_queue *queue;
+	struct nvgpu_nvs_linux_buf_priv *priv = NULL;
+	int err = 0;
+	int fd;
+	int flag = O_CLOEXEC;
+	bool read_only;
+	size_t queue_size;
+	u8 mask = 0;
+
+	err = nvgpu_nvs_ctrl_fifo_create_queue_verify_flags(g, user, args);
+	if (err != 0) {
+		args->dmabuf_fd = -1;
+		return err;
+	}
+
+	nvgpu_nvs_ctrl_fifo_lock_queues(g);
+
+	num_queue = nvgpu_nvs_translate_queue_num(args->queue_num);
+	queue_direction = nvgpu_nvs_translate_queue_direction(args->direction);
+
+	queue = nvgpu_nvs_ctrl_fifo_get_queue(g->sched_ctrl_fifo, num_queue, queue_direction, &mask);
+	if (queue == NULL) {
+		err = -EOPNOTSUPP;
+		goto fail;
+	}
+
+	read_only = (args->access_type == NVS_CTRL_FIFO_QUEUE_ACCESS_TYPE_EXCLUSIVE) ? false : true;
+	if (read_only) {
+		flag |= O_RDONLY;
+	} else {
+		flag |= O_RDWR;
+	}
+
+	/* Support for Read-Only Observers will be added later */
+	if (read_only) {
+		err = -EOPNOTSUPP;
+		goto fail;
+	}
+
+	if (args->access_type == NVS_CTRL_FIFO_QUEUE_ACCESS_TYPE_EXCLUSIVE) {
+		if (nvgpu_nvs_buffer_is_valid(g, queue)) {
+			err = -EBUSY;
+			goto fail;
+		}
+	}
+
+	/* For event queue, prevent multiple subscription by the same user */
+	if (nvgpu_nvs_ctrl_fifo_user_is_subscribed_to_queue(user, queue)) {
+		err = -EEXIST;
+		goto fail;
+	}
+
+	queue_size = NVS_QUEUE_DEFAULT_SIZE;
+
+	/* Ensure, event queue is constructed only once across all users. */
+	if (!nvgpu_nvs_buffer_is_valid(g, queue)) {
+		err = nvgpu_nvs_get_buf_linux(g, queue, queue_size, mask, read_only);
+		if (err != 0) {
+			goto fail;
+		}
+	}
+
+	priv = queue->priv;
+
+	fd = dma_buf_fd(priv->dmabuf, flag);
+	if (fd < 0) {
+		/* Might have valid user vmas for previous event queue users */
+		if (!nvgpu_nvs_buf_linux_is_mapped(g, queue)) {
+			nvgpu_nvs_ctrl_fifo_erase_queue(g, queue);
+		}
+		err = fd;
+		goto fail;
+	}
+
+	nvgpu_nvs_ctrl_fifo_user_subscribe_queue(user, queue);
+
+	args->dmabuf_fd = fd;
+	/* update the queue size correctly */
+	args->queue_size = queue_size;
+
+	nvgpu_nvs_ctrl_fifo_unlock_queues(g);
+	return 0;
+
+fail:
+	nvgpu_nvs_ctrl_fifo_unlock_queues(g);
+	nvgpu_err(g, "failed");
+
+	/* set dmabuf_fd to -1 for failure exclusively */
+	args->dmabuf_fd = -1;
+
+	return err;
+}
+
+static void nvgpu_nvs_ctrl_fifo_undo_create_queue(struct gk20a *g,
+		struct nvs_domain_ctrl_fifo_user *user,
+		struct nvgpu_nvs_ctrl_fifo_ioctl_create_queue_args *args)
+{
+	enum nvgpu_nvs_ctrl_queue_num num_queue;
+	enum nvgpu_nvs_ctrl_queue_direction queue_direction;
+	struct nvgpu_nvs_ctrl_queue *queue;
+	u8 mask = 0;
+
+	nvgpu_nvs_ctrl_fifo_lock_queues(g);
+
+	num_queue = nvgpu_nvs_translate_queue_num(args->queue_num);
+	queue_direction = nvgpu_nvs_translate_queue_direction(args->direction);
+
+	queue = nvgpu_nvs_ctrl_fifo_get_queue(g->sched_ctrl_fifo, num_queue, queue_direction, &mask);
+	if (queue == NULL) {
+		nvgpu_nvs_ctrl_fifo_unlock_queues(g);
+		return;
+	}
+
+	nvgpu_nvs_ctrl_fifo_user_unsubscribe_queue(user, queue);
+
+	/* For Control Queues, no mappings exist, For Event Queues, mappings might exist */
+	if (nvgpu_nvs_buffer_is_valid(g, queue) && !nvgpu_nvs_buf_linux_is_mapped(g, queue)) {
+		nvgpu_nvs_ctrl_fifo_erase_queue(g, queue);
+	}
+
+	if (args->dmabuf_fd != 0) {
+		put_unused_fd(args->dmabuf_fd);
+		args->dmabuf_fd = 0;
+	}
+
+	nvgpu_nvs_ctrl_fifo_unlock_queues(g);
+}
+
+static int nvgpu_nvs_ctrl_fifo_destroy_queue(struct gk20a *g,
+		struct nvs_domain_ctrl_fifo_user *user,
+		struct nvgpu_nvs_ctrl_fifo_ioctl_release_queue_args *args)
+{
+	enum nvgpu_nvs_ctrl_queue_num num_queue;
+	enum nvgpu_nvs_ctrl_queue_direction queue_direction;
+	struct nvgpu_nvs_ctrl_queue *queue;
+	bool is_exclusive_user;
+	int err = 0;
+	u8 mask = 0;
+
+	if (args->reserve0 != 0) {
+		return -EINVAL;
+	}
+
+	if (args->reserve1 != 0) {
+		return -EINVAL;
+	}
+
+	if (args->reserve2 != 0) {
+		return -EINVAL;
+	}
+
+	num_queue = nvgpu_nvs_translate_queue_num(args->queue_num);
+	queue_direction = nvgpu_nvs_translate_queue_direction(args->direction);
+
+	is_exclusive_user = nvgpu_nvs_ctrl_fifo_is_exclusive_user(g->sched_ctrl_fifo, user);
+	if (!is_exclusive_user) {
+		if ((num_queue == NVGPU_NVS_NUM_CONTROL) ||
+			(queue_direction == NVGPU_NVS_DIR_CLIENT_TO_SCHEDULER)) {
+			return -EPERM;
+		}
+	}
+
+	queue = nvgpu_nvs_ctrl_fifo_get_queue(g->sched_ctrl_fifo, num_queue, queue_direction, &mask);
+	if (queue == NULL) {
+		err = -EOPNOTSUPP;
+		goto fail;
+	}
+
+	nvgpu_nvs_ctrl_fifo_lock_queues(g);
+
+	if (!nvgpu_nvs_ctrl_fifo_user_is_subscribed_to_queue(user, queue)) {
+		err = -EPERM;
+		goto fail;
+	}
+
+	/* For Control Queues, no mappings should exist, For Event Queues, mappings might exist */
+	if (nvgpu_nvs_buffer_is_valid(g, queue)) {
+		if (!nvgpu_nvs_buf_linux_is_mapped(g, queue)) {
+			nvgpu_nvs_ctrl_fifo_erase_queue(g, queue);
+		} else if (is_exclusive_user) {
+			err = -EBUSY;
+			goto fail;
+		}
+	}
+
+	nvgpu_nvs_ctrl_fifo_user_unsubscribe_queue(user, queue);
+
+	nvgpu_nvs_ctrl_fifo_unlock_queues(g);
+
+	return 0;
+
+fail:
+	nvgpu_nvs_ctrl_fifo_unlock_queues(g);
+	nvgpu_err(g, "failed to destroy queue");
+
+	return err;
+}
+
+long nvgpu_nvs_ctrl_fifo_ops_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+{
+	u8 buf[NVGPU_NVS_CTRL_FIFO_IOCTL_MAX_ARG_SIZE] = { 0 };
+	int err = 0;
+	struct nvgpu_nvs_domain_ctrl_fifo_user_linux *linux_user;
+	struct nvs_domain_ctrl_fifo_user *user;
+	struct gk20a *g;
+
+	linux_user = (struct nvgpu_nvs_domain_ctrl_fifo_user_linux *)filp->private_data;
+	if (linux_user == NULL) {
+		return -ENODEV;
+	}
+
+	user = &linux_user->user;
+	g = nvgpu_get_gk20a_from_cdev(linux_user->cdev);
+
+	nvs_dbg(g, "IOC_TYPE: %c", _IOC_TYPE(cmd));
+	nvs_dbg(g, "IOC_NR:   %u", _IOC_NR(cmd));
+	nvs_dbg(g, "IOC_SIZE: %u", _IOC_SIZE(cmd));
+
+	if ((_IOC_TYPE(cmd) != NVGPU_NVS_CTRL_FIFO_IOCTL_MAGIC) ||
+		(_IOC_NR(cmd) == 0) ||
+		(_IOC_NR(cmd) > NVGPU_NVS_CTRL_FIFO_IOCTL_LAST) ||
+		(_IOC_SIZE(cmd) > NVGPU_NVS_CTRL_FIFO_IOCTL_MAX_ARG_SIZE)) {
+		nvs_dbg(g, "-> BAD!!");
+		return -EINVAL;
+	}
+
+	if (_IOC_DIR(cmd) & _IOC_WRITE) {
+		if (copy_from_user(buf, (void __user *)arg, _IOC_SIZE(cmd)))
+			return -EFAULT;
+	}
+
+	err = gk20a_busy(g);
+	if (err != 0) {
+		return err;
+	}
+
+	switch (cmd) {
+	case NVGPU_NVS_CTRL_FIFO_CREATE_QUEUE:
+	{
+		struct nvgpu_nvs_ctrl_fifo_ioctl_create_queue_args *args =
+			(struct nvgpu_nvs_ctrl_fifo_ioctl_create_queue_args *)buf;
+
+		err = nvgpu_nvs_ctrl_fifo_create_queue(g, user, args);
+		if (err)
+			goto done;
+
+		if (copy_to_user((void __user *)arg, buf, _IOC_SIZE(cmd))) {
+			nvgpu_nvs_ctrl_fifo_undo_create_queue(g, user, args);
+			err = -EFAULT;
+			args->dmabuf_fd = -1;
+			goto done;
+		}
+
+		break;
+	}
+	case NVGPU_NVS_CTRL_FIFO_RELEASE_QUEUE:
+	{
+		struct nvgpu_nvs_ctrl_fifo_ioctl_release_queue_args *args =
+			(struct nvgpu_nvs_ctrl_fifo_ioctl_release_queue_args *)buf;
+
+		err = nvgpu_nvs_ctrl_fifo_destroy_queue(g, user, args);
+		if (err)
+			goto done;
+
+		break;
+	}
+	case NVGPU_NVS_CTRL_FIFO_ENABLE_EVENT:
+	{
+		err = -EOPNOTSUPP;
+		goto done;
+	}
+	default:
+		err = -ENOTTY;
+		goto done;
+	}
+
+done:
+	gk20a_idle(g);
+	return err;
+}
