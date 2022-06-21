@@ -755,7 +755,7 @@ struct gk20a_platform ga10b_tegra_platform = {
 	.enable_elpg            = true,
 	.enable_elpg_ms         = false,
 	.can_elpg_init          = true,
-	.enable_aelpg           = false,
+	.enable_aelpg           = true,
 
 	/* power management callbacks */
 	.suspend = ga10b_tegra_suspend,
