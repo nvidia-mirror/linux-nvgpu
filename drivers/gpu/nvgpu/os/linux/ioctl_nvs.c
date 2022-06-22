@@ -700,9 +700,11 @@ static int nvgpu_nvs_ctrl_fifo_create_queue_verify_flags(struct gk20a *g,
 	}
 
 	if (args->access_type == NVS_CTRL_FIFO_QUEUE_ACCESS_TYPE_EXCLUSIVE) {
-		if (args->queue_num == 0)
+		if ((args->queue_num != NVS_CTRL_FIFO_QUEUE_NUM_EVENT)
+				&& (args->queue_num != NVGPU_NVS_CTRL_FIFO_QUEUE_NUM_CONTROL))
 			return -EINVAL;
-		if (args->direction == 0)
+		if ((args->direction != NVS_CTRL_FIFO_QUEUE_DIRECTION_CLIENT_TO_SCHEDULER)
+				&& (args->direction != NVS_CTRL_FIFO_QUEUE_DIRECTION_SCHEDULER_TO_CLIENT))
 			return -EINVAL;
 		if (!nvgpu_nvs_ctrl_fifo_is_exclusive_user(g->sched_ctrl_fifo, user)) {
 			err = nvgpu_nvs_ctrl_fifo_reserve_exclusive_user(g->sched_ctrl_fifo, user);
@@ -710,11 +712,13 @@ static int nvgpu_nvs_ctrl_fifo_create_queue_verify_flags(struct gk20a *g,
 				return err;
 			}
 		}
-	} else {
+	} else if (args->access_type == NVS_CTRL_FIFO_QUEUE_ACCESS_TYPE_NON_EXCLUSIVE) {
 		if (args->queue_num != NVS_CTRL_FIFO_QUEUE_NUM_EVENT)
 			return -EINVAL;
 		if (args->direction != NVS_CTRL_FIFO_QUEUE_DIRECTION_SCHEDULER_TO_CLIENT)
 			return -EINVAL;
+	} else {
+		return -EINVAL;
 	}
 
 	return 0;
@@ -947,6 +951,47 @@ fail:
 	return err;
 }
 
+static u32 nvgpu_nvs_translate_hw_scheduler_impl(struct gk20a *g, uint8_t impl)
+{
+	if (impl == NVGPU_NVS_DOMAIN_SCHED_KMD) {
+		return NVS_DOMAIN_SCHED_KMD;
+	} else if (impl == NVGPU_NVS_DOMAIN_SCHED_GSP) {
+		return NVS_DOMAIN_SCHED_GSP;
+	}
+
+	return NVS_DOMAIN_SCHED_INVALID;
+}
+
+static int nvgpu_nvs_query_scheduler_characteristics(struct gk20a *g,
+		struct nvs_domain_ctrl_fifo_user *user,
+		struct nvgpu_nvs_ctrl_fifo_scheduler_characteristics_args *args)
+{
+	struct nvs_domain_ctrl_fifo_capabilities *capabilities;
+
+	if (args->reserved0 != 0) {
+		return -EINVAL;
+	}
+
+	if (args->reserved1 != 0) {
+		return -EINVAL;
+	}
+
+	if (args->reserved2 != 0ULL) {
+		return -EINVAL;
+	}
+
+	capabilities = nvgpu_nvs_ctrl_fifo_get_capabilities(g->sched_ctrl_fifo);
+	args->domain_scheduler_implementation =
+		nvgpu_nvs_translate_hw_scheduler_impl(g, capabilities->scheduler_implementation_hw);
+	args->available_queues = NVS_CTRL_FIFO_QUEUE_NUM_EVENT;
+
+	if (user->has_write_access) {
+		args->available_queues |= NVGPU_NVS_CTRL_FIFO_QUEUE_NUM_CONTROL;
+	}
+
+	return 0;
+}
+
 long nvgpu_nvs_ctrl_fifo_ops_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
 	u8 buf[NVGPU_NVS_CTRL_FIFO_IOCTL_MAX_ARG_SIZE] = { 0 };
@@ -1019,6 +1064,28 @@ long nvgpu_nvs_ctrl_fifo_ops_ioctl(struct file *filp, unsigned int cmd, unsigned
 	{
 		err = -EOPNOTSUPP;
 		goto done;
+	}
+	case NVGPU_NVS_QUERY_CTRL_FIFO_SCHEDULER_CHARACTERISTICS:
+	{
+		struct nvgpu_nvs_ctrl_fifo_scheduler_characteristics_args *args =
+			(struct nvgpu_nvs_ctrl_fifo_scheduler_characteristics_args *)buf;
+
+		if (!nvgpu_is_enabled(g, NVGPU_SUPPORT_NVS_CTRL_FIFO)) {
+			err = -EOPNOTSUPP;
+			return err;
+		}
+
+		err = nvgpu_nvs_query_scheduler_characteristics(g, user, args);
+		if (err != 0) {
+			return err;
+		}
+
+		if (copy_to_user((void __user *)arg, buf, _IOC_SIZE(cmd))) {
+			err = -EFAULT;
+			goto done;
+		}
+
+		break;
 	}
 	default:
 		err = -ENOTTY;

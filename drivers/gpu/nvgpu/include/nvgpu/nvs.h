@@ -49,6 +49,11 @@ struct nvgpu_runlist_domain;
 struct nvgpu_nvs_ctrl_queue;
 struct nvgpu_nvs_domain_ctrl_fifo;
 
+struct nvs_domain_ctrl_fifo_capabilities {
+	/* Store type of scheduler backend */
+	uint8_t scheduler_implementation_hw;
+};
+
 /* Structure to store user info common to all schedulers */
 struct nvs_domain_ctrl_fifo_user {
 	/*
@@ -63,6 +68,11 @@ struct nvs_domain_ctrl_fifo_user {
 	int pid;
 	/* Mask of actively used queue */
 	u32 active_used_queues;
+
+	/*
+	 * Used to hold the scheduler capabilities.
+	 */
+	struct nvs_domain_ctrl_fifo_capabilities capabilities;
 	/*
 	 * Listnode used for keeping references to the user in
 	 * the master struct nvgpu_nvs_domain_ctrl_fifo
@@ -253,6 +263,8 @@ int nvgpu_nvs_ctrl_fifo_reserve_exclusive_user(
 		struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl, struct nvs_domain_ctrl_fifo_user *user);
 void nvgpu_nvs_ctrl_fifo_remove_user(struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl,
 		struct nvs_domain_ctrl_fifo_user *user);
+struct nvs_domain_ctrl_fifo_capabilities *nvgpu_nvs_ctrl_fifo_get_capabilities(
+		struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl);
 struct nvgpu_nvs_ctrl_queue *nvgpu_nvs_ctrl_fifo_get_queue(
 		struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl,
 		enum nvgpu_nvs_ctrl_queue_num queue_num,

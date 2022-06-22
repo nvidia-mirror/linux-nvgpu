@@ -78,6 +78,8 @@ struct nvgpu_nvs_domain_ctrl_fifo {
 	struct nvgpu_nvs_domain_ctrl_fifo_users users;
 
 	struct nvgpu_nvs_domain_ctrl_fifo_queues queues;
+
+	struct nvs_domain_ctrl_fifo_capabilities capabilities;
 };
 
 void nvgpu_nvs_ctrl_fifo_reset_exclusive_user(
@@ -203,6 +205,8 @@ struct nvgpu_nvs_domain_ctrl_fifo *nvgpu_nvs_ctrl_fifo_create(struct gk20a *g)
 		return NULL;
 	}
 
+	sched->capabilities.scheduler_implementation_hw = NVGPU_NVS_DOMAIN_SCHED_KMD;
+
 	nvgpu_spinlock_init(&sched->users.user_lock);
 	nvgpu_mutex_init(&sched->queues.queue_lock);
 	nvgpu_init_list_node(&sched->users.exclusive_user);
@@ -270,6 +274,12 @@ struct nvgpu_nvs_ctrl_queue *nvgpu_nvs_ctrl_fifo_get_queue(
 	}
 
 	return queue;
+}
+
+struct nvs_domain_ctrl_fifo_capabilities *nvgpu_nvs_ctrl_fifo_get_capabilities(
+		struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl)
+{
+	return &sched_ctrl->capabilities;
 }
 
 bool nvgpu_nvs_buffer_is_valid(struct gk20a *g, struct nvgpu_nvs_ctrl_queue *buf)
