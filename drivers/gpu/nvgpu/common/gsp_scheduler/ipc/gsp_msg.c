@@ -39,20 +39,6 @@ static int gsp_response_handle(struct nvgpu_gsp_sched *gsp_sched,
 				msg, msg->hdr.seq_id);
 }
 
-static int gsp_handle_event(struct nvgpu_gsp_sched *gsp_sched,
-	struct nv_flcn_msg_gsp *msg)
-{
-	int err = 0;
-
-	switch (msg->hdr.unit_id) {
-	default:
-		break;
-	}
-
-	(void)gsp_sched;
-	return err;
-}
-
 static bool gsp_read_message(struct nvgpu_gsp_sched *gsp_sched,
 	u32 queue_id, struct nv_flcn_msg_gsp *msg, int *status)
 {
@@ -194,12 +180,9 @@ int nvgpu_gsp_process_message(struct gk20a *g)
 		nvgpu_info(g, "ctrl_flags = 0x%08x, seq_id = 0x%08x",
 			msg.hdr.ctrl_flags, msg.hdr.seq_id);
 
-		msg.hdr.ctrl_flags &= (u8)~GSP_CMD_FLAGS_MASK;
-
-		if (msg.hdr.ctrl_flags == GSP_CMD_FLAGS_EVENT) {
-			gsp_handle_event(gsp_sched, &msg);
-		} else {
-			gsp_response_handle(gsp_sched, &msg);
+		status = gsp_response_handle(gsp_sched, &msg);
+		if (status != 0) {
+			return status;
 		}
 
 		if (!nvgpu_gsp_queue_is_empty(gsp_sched->queues,
