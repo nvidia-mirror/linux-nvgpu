@@ -807,11 +807,12 @@ int nvgpu_vm_do_init(struct mm_gk20a *mm,
 	/* Initialize the page table data structures. */
 	(void) strncpy(vm->name, name,
 		       min(strlen(name), (size_t)(sizeof(vm->name)-1ULL)));
-	err = nvgpu_gmmu_init_page_table(vm);
-	if (err != 0) {
-		goto clean_up_gpu_vm;
+	if (!g->is_virtual) {
+		err = nvgpu_gmmu_init_page_table(vm);
+		if (err != 0) {
+			goto clean_up_gpu_vm;
+		}
 	}
-
 	err = nvgpu_vm_init_vma(g, vm, user_reserved, kernel_reserved,
 				small_big_split, big_pages, unified_va, name);
 	if (err != 0) {
@@ -984,7 +985,9 @@ static void nvgpu_vm_remove(struct vm_gk20a *vm)
 		nvgpu_alloc_destroy(&vm->user_lp);
 	}
 
-	nvgpu_vm_free_entries(vm, &vm->pdb);
+	if (!g->is_virtual) {
+		nvgpu_vm_free_entries(vm, &vm->pdb);
+	}
 
 	if (g->ops.mm.vm_as_free_share != NULL) {
 		g->ops.mm.vm_as_free_share(vm);

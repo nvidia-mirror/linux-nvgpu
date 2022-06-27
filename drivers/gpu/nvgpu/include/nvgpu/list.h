@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -123,6 +123,36 @@ static inline void nvgpu_list_del(struct nvgpu_list_node *node)
 static inline bool nvgpu_list_empty(struct nvgpu_list_node *head)
 {
 	return head->next == head;
+}
+
+/**
+ * @brief Get the list length.
+ *
+ * Checks if the list pointed by \a head is empty or not.
+ *
+ * @param head [in] Head node of the list to be checked. This
+ *		    performs validation of this parameter.
+ *
+ * @return length of the list.
+ *
+ * @retval 0 if list is empty.
+ * @retval count if list is not empty.
+ */
+static inline unsigned int nvgpu_list_length(struct nvgpu_list_node *head)
+{
+	unsigned int count = 0U;
+	struct nvgpu_list_node *curr_node = head;
+
+	if (curr_node == NULL) {
+		return 0U;
+	}
+
+	do {
+		curr_node = curr_node->next;
+		count++;
+	} while (curr_node != head);
+
+	return count;
 }
 
 /**

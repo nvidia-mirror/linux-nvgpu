@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -142,6 +142,10 @@ int test_sync_init(struct unit_module *m, struct gk20a *g, void *args)
 	ret = nvgpu_get_nvhost_dev(g);
 	if (ret != 0) {
 		unit_return_fail(m, "nvgpu_sync_early_init failed\n");
+	}
+
+	if (nvgpu_pd_cache_init(g) != 0) {
+		unit_return_fail(m, "PD cache initialization failed\n");
 	}
 
 	/*

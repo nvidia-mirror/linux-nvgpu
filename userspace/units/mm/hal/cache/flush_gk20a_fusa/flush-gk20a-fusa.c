@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -185,6 +185,10 @@ int test_env_init_flush_gk20a_fusa(struct unit_module *m, struct gk20a *g,
 	g->log_mask = 0;
 
 	init_platform(m, g, true);
+
+	if (nvgpu_pd_cache_init(g) != 0) {
+		unit_return_fail(m, "PD cache initialization failed\n");
+	}
 
 	if (init_mm(m, g) != 0) {
 		unit_return_fail(m, "nvgpu_init_mm_support failed\n");

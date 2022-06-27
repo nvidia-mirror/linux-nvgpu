@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -937,63 +937,63 @@ static int test_pd_cache_env_init(struct unit_module *m,
 }
 
 struct unit_module_test pd_cache_tests[] = {
-	UNIT_TEST(env_init,				test_pd_cache_env_init, NULL, 0),
-	UNIT_TEST(init,					test_pd_cache_init, NULL, 0),
-	UNIT_TEST(fini,					test_pd_cache_fini, NULL, 0),
+	UNIT_TEST(env_init,				test_pd_cache_env_init, NULL, 2),
+	UNIT_TEST(init,					test_pd_cache_init, NULL, 2),
+	UNIT_TEST(fini,					test_pd_cache_fini, NULL, 2),
 
 	/*
 	 * Requirement verification tests.
 	 */
 	UNIT_TEST_REQ("NVGPU-RQCD-68.C1,2",  PD_CACHE_REQ1_UID, "V4",
-		      valid_alloc,			test_pd_cache_valid_alloc, NULL, 0),
+		      valid_alloc,			test_pd_cache_valid_alloc, NULL, 2),
 	UNIT_TEST_REQ("NVGPU-RQCD-68.C3",    PD_CACHE_REQ1_UID, "V4",
-		      pd_packing,			test_per_pd_size, do_test_pd_cache_packing_size, 0),
+		      pd_packing,			test_per_pd_size, do_test_pd_cache_packing_size, 2),
 	UNIT_TEST_REQ("NVGPU-RQCD-118.C1",   PD_CACHE_REQ2_UID, "V3",
-		      pd_reusability,			test_per_pd_size, do_test_pd_reusability, 0),
+		      pd_reusability,			test_per_pd_size, do_test_pd_reusability, 2),
 	UNIT_TEST_REQ("NVGPU-RQCD-122.C1",   PD_CACHE_REQ3_UID, "V3",
-		      write,				test_pd_write, NULL, 0),
+		      write,				test_pd_write, NULL, 2),
 	UNIT_TEST_REQ("NVGPU-RQCD-123.C1",   PD_CACHE_REQ4_UID, "V2",
-		      gpu_address,			test_gpu_address, NULL, 0),
+		      gpu_address,			test_gpu_address, NULL, 2),
 	UNIT_TEST_REQ("NVGPU-RQCD-126.C1,2", PD_CACHE_REQ5_UID, "V1",
-		      offset_comp,			test_offset_computation, NULL, 0),
+		      offset_comp,			test_offset_computation, NULL, 2),
 	UNIT_TEST_REQ("NVGPU-RQCD-124.C1",   PD_CACHE_REQ6_UID, "V3",
-		      init_deinit,			test_init_deinit, NULL, 0),
+		      init_deinit,			test_init_deinit, NULL, 2),
 	UNIT_TEST_REQ("NVGPU-RQCD-155.C1",   PD_CACHE_REQ7_UID, "V2",
-		      multi_init,			test_init_deinit, NULL, 0),
+		      multi_init,			test_init_deinit, NULL, 2),
 	UNIT_TEST_REQ("NVGPU-RQCD-125.C1",   PD_CACHE_REQ8_UID, "V2",
-		      deinit,				test_init_deinit, NULL, 0),
+		      deinit,				test_init_deinit, NULL, 2),
 
 	/*
 	 * Direct allocs.
 	 */
-	UNIT_TEST(alloc_direct_1xPAGE,			test_pd_cache_alloc_gen, &alloc_direct_1xPAGE, 0),
-	UNIT_TEST(alloc_direct_1024xPAGE,		test_pd_cache_alloc_gen, &alloc_direct_1024xPAGE, 0),
-	UNIT_TEST(alloc_direct_1x16PAGE,		test_pd_cache_alloc_gen, &alloc_direct_1x16PAGE, 0),
-	UNIT_TEST(alloc_direct_1024x16PAGE,		test_pd_cache_alloc_gen, &alloc_direct_1024x16PAGE, 0),
-	UNIT_TEST(alloc_direct_1024xPAGE_x32x24,	test_pd_cache_alloc_gen, &alloc_direct_1024xPAGE_x32x24, 0),
-	UNIT_TEST(alloc_direct_1024xPAGE_x16x4,		test_pd_cache_alloc_gen, &alloc_direct_1024xPAGE_x16x4, 0),
-	UNIT_TEST(alloc_direct_1024xPAGE_x16x15,	test_pd_cache_alloc_gen, &alloc_direct_1024xPAGE_x16x15, 0),
-	UNIT_TEST(alloc_direct_1024xPAGE_x16x1,		test_pd_cache_alloc_gen, &alloc_direct_1024xPAGE_x16x1, 0),
+	UNIT_TEST(alloc_direct_1xPAGE,			test_pd_cache_alloc_gen, &alloc_direct_1xPAGE, 2),
+	UNIT_TEST(alloc_direct_1024xPAGE,		test_pd_cache_alloc_gen, &alloc_direct_1024xPAGE, 2),
+	UNIT_TEST(alloc_direct_1x16PAGE,		test_pd_cache_alloc_gen, &alloc_direct_1x16PAGE, 2),
+	UNIT_TEST(alloc_direct_1024x16PAGE,		test_pd_cache_alloc_gen, &alloc_direct_1024x16PAGE, 2),
+	UNIT_TEST(alloc_direct_1024xPAGE_x32x24,	test_pd_cache_alloc_gen, &alloc_direct_1024xPAGE_x32x24, 2),
+	UNIT_TEST(alloc_direct_1024xPAGE_x16x4,		test_pd_cache_alloc_gen, &alloc_direct_1024xPAGE_x16x4, 2),
+	UNIT_TEST(alloc_direct_1024xPAGE_x16x15,	test_pd_cache_alloc_gen, &alloc_direct_1024xPAGE_x16x15, 2),
+	UNIT_TEST(alloc_direct_1024xPAGE_x16x1,		test_pd_cache_alloc_gen, &alloc_direct_1024xPAGE_x16x1, 2),
 
 	/*
 	 * Cached allocs.
 	 */
-	UNIT_TEST(alloc_1x256B,				test_pd_cache_alloc_gen, &alloc_1x256B, 0),
-	UNIT_TEST(alloc_1x512B,				test_pd_cache_alloc_gen, &alloc_1x512B, 0),
-	UNIT_TEST(alloc_1x1024B,			test_pd_cache_alloc_gen, &alloc_1x1024B, 0),
-	UNIT_TEST(alloc_1x2048B,			test_pd_cache_alloc_gen, &alloc_1x2048B, 0),
-	UNIT_TEST(alloc_1024x256B_x16x15,		test_pd_cache_alloc_gen, &alloc_1024x256B_x16x15, 0),
-	UNIT_TEST(alloc_1024x256B_x16x1,		test_pd_cache_alloc_gen, &alloc_1024x256B_x16x1, 0),
-	UNIT_TEST(alloc_1024x256B_x32x1,		test_pd_cache_alloc_gen, &alloc_1024x256B_x32x1, 0),
-	UNIT_TEST(alloc_1024x256B_x11x3,		test_pd_cache_alloc_gen, &alloc_1024x256B_x11x3, 0),
+	UNIT_TEST(alloc_1x256B,				test_pd_cache_alloc_gen, &alloc_1x256B, 2),
+	UNIT_TEST(alloc_1x512B,				test_pd_cache_alloc_gen, &alloc_1x512B, 2),
+	UNIT_TEST(alloc_1x1024B,			test_pd_cache_alloc_gen, &alloc_1x1024B, 2),
+	UNIT_TEST(alloc_1x2048B,			test_pd_cache_alloc_gen, &alloc_1x2048B, 2),
+	UNIT_TEST(alloc_1024x256B_x16x15,		test_pd_cache_alloc_gen, &alloc_1024x256B_x16x15, 2),
+	UNIT_TEST(alloc_1024x256B_x16x1,		test_pd_cache_alloc_gen, &alloc_1024x256B_x16x1, 2),
+	UNIT_TEST(alloc_1024x256B_x32x1,		test_pd_cache_alloc_gen, &alloc_1024x256B_x32x1, 2),
+	UNIT_TEST(alloc_1024x256B_x11x3,		test_pd_cache_alloc_gen, &alloc_1024x256B_x11x3, 2),
 
 	/*
 	 * Error path testing.
 	 */
-	UNIT_TEST(free_empty,				test_pd_free_empty_pd, NULL, 0),
-	UNIT_TEST(invalid_pd_alloc,			test_pd_alloc_invalid_input, NULL, 0),
-	UNIT_TEST(alloc_direct_oom,			test_pd_alloc_direct_fi, NULL, 0),
-	UNIT_TEST(alloc_oom,				test_pd_alloc_fi, NULL, 0),
+	UNIT_TEST(free_empty,				test_pd_free_empty_pd, NULL, 2),
+	UNIT_TEST(invalid_pd_alloc,			test_pd_alloc_invalid_input, NULL, 2),
+	UNIT_TEST(alloc_direct_oom,			test_pd_alloc_direct_fi, NULL, 2),
+	UNIT_TEST(alloc_oom,				test_pd_alloc_fi, NULL, 2),
 };
 
 UNIT_MODULE(pd_cache, pd_cache_tests, UNIT_PRIO_NVGPU_TEST);

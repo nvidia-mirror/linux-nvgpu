@@ -217,6 +217,9 @@ int test_env_init_mm_mmu_fault_gv11b_fusa(struct unit_module *m,
 	g->log_mask = 0;
 
 	init_platform(m, g, true);
+	if (nvgpu_pd_cache_init(g) != 0) {
+		unit_return_fail(m, "PD cache initialization failed\n");
+	}
 
 	if (init_mm(m, g) != 0) {
 		unit_return_fail(m, "nvgpu_init_mm_support failed\n");

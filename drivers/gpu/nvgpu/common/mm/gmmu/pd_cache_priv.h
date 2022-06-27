@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -161,6 +161,12 @@ struct nvgpu_pd_cache {
 	 * empty nvgpu_pd_mem_entries.
 	 */
 	struct nvgpu_list_node		 partial[NVGPU_PD_CACHE_COUNT];
+
+	/**
+	 * List of nvgpu_pd_mem_entries which are directly allocated by
+	 * dma_alloc APIs.
+	 */
+	struct nvgpu_list_node		 direct;
 
 	/**
 	 * Tree of all allocated struct nvgpu_mem's for fast look up.

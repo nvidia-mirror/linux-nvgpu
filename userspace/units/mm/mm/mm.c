@@ -453,6 +453,9 @@ int test_mm_init_hal(struct unit_module *m, struct gk20a *g, void *args)
 	current_module = m;
 
 	init_platform(m, g, true);
+	if (nvgpu_pd_cache_init(g) != 0) {
+		unit_return_fail(m, "PD cache initialization failed\n");
+	}
 
 	struct nvgpu_os_posix *p = nvgpu_os_posix_from_gk20a(g);
 
@@ -741,7 +744,7 @@ struct unit_module_test nvgpu_mm_mm_tests[] = {
 	UNIT_TEST(init_mm, test_nvgpu_init_mm, NULL, 0),
 	UNIT_TEST(init_mm_hw, test_nvgpu_mm_setup_hw, NULL, 0),
 	UNIT_TEST(suspend, test_mm_suspend, NULL, 0),
-	UNIT_TEST(remove_support, test_mm_remove_mm_support, NULL, 0),
+	UNIT_TEST(remove_support, test_mm_remove_mm_support, NULL, 2),
 	UNIT_TEST(page_sizes, test_mm_page_sizes, NULL, 0),
 	UNIT_TEST(inst_block, test_mm_inst_block, NULL, 0),
 	UNIT_TEST(alloc_inst_block, test_mm_alloc_inst_block, NULL, 0),

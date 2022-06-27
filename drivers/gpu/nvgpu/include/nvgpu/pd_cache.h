@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -130,6 +130,17 @@ void nvgpu_pd_free(struct vm_gk20a *vm, struct nvgpu_gmmu_pd *pd);
  * @retval	-ENOMEM in case of kzalloc failure.
  */
 int  nvgpu_pd_cache_init(struct gk20a *g);
+
+/**
+ * @brief Returns list of all page table memory buffers.
+ *
+ * @param g [in]	       The GPU.
+ * @param no_of_mems [out]     No. of page table memory buffers.
+ *
+ * @return	Pointer to array of struct nvgpu_mem pointers in case of success.
+ * @retval	NULL in case of failure.
+ */
+struct nvgpu_mem **nvgpu_pd_cache_get_nvgpu_mems(struct gk20a *g, uint32_t *no_of_mems);
 
 /**
  * @brief Free the pd_cache tracking stuff allocated by nvgpu_pd_cache_init().

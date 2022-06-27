@@ -147,6 +147,10 @@ int test_ltc_init_support(struct unit_module *m,
 		unit_return_fail(m, "CIC Mon init failed\n");
 	}
 
+	if (nvgpu_pd_cache_init(g) != 0) {
+		unit_return_fail(m, "PD cache initialization failed\n");
+	}
+
 	/*
 	 * Init dependent ECC unit
 	 */

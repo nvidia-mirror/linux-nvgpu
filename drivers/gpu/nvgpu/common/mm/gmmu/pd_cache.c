@@ -125,6 +125,7 @@ int nvgpu_pd_cache_init(struct gk20a *g)
 		nvgpu_init_list_node(&cache->full[i]);
 		nvgpu_init_list_node(&cache->partial[i]);
 	}
+	nvgpu_init_list_node(&cache->direct);
 
 	cache->mem_tree = NULL;
 
@@ -135,6 +136,44 @@ int nvgpu_pd_cache_init(struct gk20a *g)
 	pd_dbg(g, "PD cache initialized!");
 
 	return 0;
+}
+
+struct nvgpu_mem **nvgpu_pd_cache_get_nvgpu_mems(struct gk20a *g, uint32_t *no_of_mems)
+{
+	struct nvgpu_mem **mem_arr;
+	uint32_t count = 0U;
+	u32 i;
+	struct nvgpu_pd_mem_entry *nvgpu_pdmem_entry;
+	struct nvgpu_pd_cache *cache = g->mm.pd_cache;
+
+	for (i = 0U; i < NVGPU_PD_CACHE_COUNT; i++) {
+		count = count + nvgpu_list_length(&cache->full[i]) +
+			nvgpu_list_length(&cache->partial[i]);
+	}
+	count = count + nvgpu_list_length(&cache->direct);
+
+	mem_arr = nvgpu_kzalloc(g, sizeof(*mem_arr) * count);
+	if (mem_arr == NULL) {
+		nvgpu_err(g, "Failed to alloc mem array");
+		return NULL;
+	}
+	*no_of_mems = count;
+	count = 0U;
+	for (i = 0U; i < NVGPU_PD_CACHE_COUNT; i++) {
+		nvgpu_list_for_each_entry(nvgpu_pdmem_entry, &cache->full[i],
+				nvgpu_pd_mem_entry, list_entry) {
+			mem_arr[count++] = &nvgpu_pdmem_entry->mem;
+		}
+		nvgpu_list_for_each_entry(nvgpu_pdmem_entry, &cache->partial[i],
+				nvgpu_pd_mem_entry, list_entry) {
+			mem_arr[count++] = &nvgpu_pdmem_entry->mem;
+		}
+	}
+	nvgpu_list_for_each_entry(nvgpu_pdmem_entry, &cache->direct,
+			nvgpu_pd_mem_entry, list_entry) {
+		mem_arr[count++] = &nvgpu_pdmem_entry->mem;
+	}
+	return mem_arr;
 }
 
 void nvgpu_pd_cache_fini(struct gk20a *g)
@@ -150,30 +189,27 @@ void nvgpu_pd_cache_fini(struct gk20a *g)
 		nvgpu_assert(nvgpu_list_empty(&cache->full[i]));
 		nvgpu_assert(nvgpu_list_empty(&cache->partial[i]));
 	}
+	nvgpu_assert(nvgpu_list_empty(&cache->direct));
 
 	nvgpu_kfree(g, g->mm.pd_cache);
 	g->mm.pd_cache = NULL;
 }
 
-/*
- * This is the simple pass-through for greater than page or page sized PDs.
- *
- * Note: this does not need the cache lock since it does not modify any of the
- * PD cache data structures.
- */
-int nvgpu_pd_cache_alloc_direct(struct gk20a *g,
+static int nvgpu_pd_cache_alloc_direct_locked(struct gk20a *g,
 				       struct nvgpu_gmmu_pd *pd, u32 bytes)
 {
 	int err;
 	unsigned long flags = 0;
+	struct nvgpu_pd_mem_entry *pentry;
+	struct nvgpu_pd_cache *cache = g->mm.pd_cache;
 
-	pd_dbg(g, "PD-Alloc [D] %u bytes", bytes);
-
-	pd->mem = nvgpu_kzalloc(g, sizeof(*pd->mem));
-	if (pd->mem == NULL) {
-		nvgpu_err(g, "OOM allocating nvgpu_mem struct!");
+	pentry = nvgpu_kzalloc(g, sizeof(*pentry));
+	if (pentry == NULL) {
+		nvgpu_err(g, "OOM allocating pentry!");
 		return -ENOMEM;
 	}
+
+	pd_dbg(g, "PD-Alloc [D] %u bytes", bytes);
 
 	/*
 	 * If bytes == NVGPU_CPU_PAGE_SIZE then it's impossible to get a discontiguous DMA
@@ -189,17 +225,41 @@ int nvgpu_pd_cache_alloc_direct(struct gk20a *g,
 		flags = NVGPU_DMA_PHYSICALLY_ADDRESSED;
 	}
 
-	err = nvgpu_dma_alloc_flags(g, flags, bytes, pd->mem);
+	err = nvgpu_dma_alloc_flags(g, flags, bytes, &(pentry->mem));
 	if (err != 0) {
 		nvgpu_err(g, "OOM allocating page directory!");
 		nvgpu_kfree(g, pd->mem);
 		return -ENOMEM;
 	}
 
-	pd->cached = false;
+	nvgpu_list_add(&pentry->list_entry,
+		       &cache->direct);
+	pd->mem = &pentry->mem;
 	pd->mem_offs = 0;
+	pentry->pd_size = bytes;
+	pentry->allocs = 1;
+	pd->cached = true;
+	pentry->tree_entry.key_start = (u64)(uintptr_t)&pentry->mem;
+	nvgpu_rbtree_insert(&pentry->tree_entry, &cache->mem_tree);
 
 	return 0;
+}
+
+/*
+ * This is the simple pass-through for greater than page or page sized PDs.
+ *
+ * Note: this does not need the cache lock since it does not modify any of the
+ * PD cache data structures.
+ */
+int nvgpu_pd_cache_alloc_direct(struct gk20a *g,
+				       struct nvgpu_gmmu_pd *pd, u32 bytes)
+{
+	int ret;
+
+	nvgpu_mutex_acquire(&g->mm.pd_cache->lock);
+	ret = nvgpu_pd_cache_alloc_direct_locked(g, pd, bytes);
+	nvgpu_mutex_release(&g->mm.pd_cache->lock);
+	return ret;
 }
 
 /*
@@ -236,7 +296,7 @@ static int nvgpu_pd_cache_alloc_new(struct gk20a *g,
 		 * allocation may work
 		 */
 		if (err == -ENOMEM) {
-			return nvgpu_pd_cache_alloc_direct(g, pd, bytes);
+			return nvgpu_pd_cache_alloc_direct_locked(g, pd, bytes);
 		}
 		nvgpu_err(g, "Unable to DMA alloc!");
 		return -ENOMEM;
@@ -377,47 +437,35 @@ int nvgpu_pd_alloc(struct vm_gk20a *vm, struct nvgpu_gmmu_pd *pd, u32 bytes)
 	struct gk20a *g = gk20a_from_vm(vm);
 	int err;
 
+	nvgpu_mutex_acquire(&g->mm.pd_cache->lock);
 	/*
 	 * Simple case: PD is bigger than a page so just do a regular DMA
 	 * alloc.
 	 */
 	if (bytes >= NVGPU_PD_CACHE_SIZE) {
-		err = nvgpu_pd_cache_alloc_direct(g, pd, bytes);
+		err = nvgpu_pd_cache_alloc_direct_locked(g, pd, bytes);
 		if (err != 0) {
-			return err;
+			goto release_lock;
 		}
 		pd->pd_size = bytes;
 
-		return 0;
+		goto release_lock;
 	}
 
 	if (g->mm.pd_cache == NULL) {
 		nvgpu_do_assert();
-		return -ENOMEM;
+		err = -ENOMEM;
+		goto release_lock;
 	}
 
-	nvgpu_mutex_acquire(&g->mm.pd_cache->lock);
 	err = nvgpu_pd_cache_alloc(g, g->mm.pd_cache, pd, bytes);
 	if (err == 0) {
 		pd->pd_size = bytes;
 	}
+release_lock:
 	nvgpu_mutex_release(&g->mm.pd_cache->lock);
 
 	return err;
-}
-
-static void nvgpu_pd_cache_free_direct(struct gk20a *g,
-				       struct nvgpu_gmmu_pd *pd)
-{
-	pd_dbg(g, "PD-Free  [D] 0x%p", pd->mem);
-
-	if (pd->mem == NULL) {
-		return;
-	}
-
-	nvgpu_dma_free(g, pd->mem);
-	nvgpu_kfree(g, pd->mem);
-	pd->mem = NULL;
 }
 
 static void nvgpu_pd_cache_free_mem_entry(struct gk20a *g,
@@ -435,7 +483,13 @@ static void nvgpu_pd_cache_do_free(struct gk20a *g,
 				   struct nvgpu_pd_mem_entry *pentry,
 				   struct nvgpu_gmmu_pd *pd)
 {
-	u32 bit = pd->mem_offs / pentry->pd_size;
+	u32 bit;
+
+	if (pd->mem == NULL) {
+		return;
+	}
+
+	bit = pd->mem_offs / pentry->pd_size;
 
 	/* Mark entry as free. */
 	nvgpu_clear_bit(bit, pentry->alloc_map);
@@ -479,34 +533,20 @@ static struct nvgpu_pd_mem_entry *nvgpu_pd_cache_look_up(
 	return nvgpu_pd_mem_entry_from_tree_entry(node);
 }
 
-static void nvgpu_pd_cache_free(struct gk20a *g, struct nvgpu_pd_cache *cache,
-				struct nvgpu_gmmu_pd *pd)
+void nvgpu_pd_free(struct vm_gk20a *vm, struct nvgpu_gmmu_pd *pd)
 {
+	struct gk20a *g = gk20a_from_vm(vm);
 	struct nvgpu_pd_mem_entry *pentry;
 
-	pd_dbg(g, "PD-Free  [C] 0x%p", pd->mem);
-
-	pentry = nvgpu_pd_cache_look_up(cache, pd);
+	nvgpu_mutex_acquire(&g->mm.pd_cache->lock);
+	pentry = nvgpu_pd_cache_look_up(g->mm.pd_cache, pd);
 	if (pentry == NULL) {
+		nvgpu_mutex_release(&g->mm.pd_cache->lock);
 		nvgpu_do_assert_print(g, "Attempting to free non-existent pd");
 		return;
 	}
 
-	nvgpu_pd_cache_do_free(g, cache, pentry, pd);
-}
+	nvgpu_pd_cache_do_free(g, g->mm.pd_cache, pentry, pd);
 
-void nvgpu_pd_free(struct vm_gk20a *vm, struct nvgpu_gmmu_pd *pd)
-{
-	struct gk20a *g = gk20a_from_vm(vm);
-
-	/*
-	 * Simple case: just DMA free.
-	 */
-	if (!pd->cached) {
-		return nvgpu_pd_cache_free_direct(g, pd);
-	}
-
-	nvgpu_mutex_acquire(&g->mm.pd_cache->lock);
-	nvgpu_pd_cache_free(g, g->mm.pd_cache, pd);
 	nvgpu_mutex_release(&g->mm.pd_cache->lock);
 }
