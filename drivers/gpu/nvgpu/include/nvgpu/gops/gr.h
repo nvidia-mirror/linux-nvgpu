@@ -944,6 +944,8 @@ struct gops_gr_config {
 	u32 (*get_gpc_pes_mask)(struct gk20a *g,
 				struct nvgpu_gr_config *config,
 				u32 gpc_index);
+	void (*set_live_pes_mask)(struct gk20a *g,
+				u32 gpc_count);
 	u32 (*get_gpc_rop_mask)(struct gk20a *g,
 				struct nvgpu_gr_config *config,
 				u32 gpc_index);

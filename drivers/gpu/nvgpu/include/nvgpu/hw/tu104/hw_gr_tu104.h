@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -829,6 +829,10 @@
 #define gr_gpc0_ppc0_cbm_beta_steady_state_cb_size_v_f(v)\
 				((U32(v) & 0x3fffffU) << 0U)
 #define gr_gpc0_ppc0_cbm_beta_steady_state_cb_size_v_default_v()   (0x00000700U)
+#define gr_gpc0_swdx_pes_mask_r()                                  (0x005001d0U)
+#define gr_gpc0_gpm_pd_live_physical_pes_r()                       (0x00500c50U)
+#define gr_gpc0_gpm_pd_live_physical_pes_gpc0_gpm_pd_live_physical_pes_mask_f(v)\
+				((U32(v) & 0xfU) << 0U)
 #define gr_gpcs_tpcs_tex_rm_cb_0_r()                               (0x00419e00U)
 #define gr_gpcs_tpcs_tex_rm_cb_0_base_addr_43_12_f(v)\
 				((U32(v) & 0xffffffffU) << 0U)

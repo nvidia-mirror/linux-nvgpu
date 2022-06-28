@@ -459,6 +459,7 @@ static const struct gops_gr_config tu104_ops_gr_config = {
 	.get_tpc_count_in_gpc = gm20b_gr_config_get_tpc_count_in_gpc,
 	.get_pes_tpc_mask = gm20b_gr_config_get_pes_tpc_mask,
 	.get_gpc_pes_mask = gv11b_gr_config_get_gpc_pes_mask,
+	.set_live_pes_mask = gv11b_gr_config_set_live_pes_mask,
 	.get_pd_dist_skip_table_size = gm20b_gr_config_get_pd_dist_skip_table_size,
 	.init_sm_id_table = gv100_gr_config_init_sm_id_table,
 #ifdef CONFIG_NVGPU_GRAPHICS
@@ -1786,6 +1787,7 @@ int tu104_init_hal(struct gk20a *g)
 	nvgpu_set_errata(g, NVGPU_ERRATA_200391931, true);
 	nvgpu_set_errata(g, NVGPU_ERRATA_SYNCPT_INVALID_ID_0, true);
 	nvgpu_set_errata(g, NVGPU_ERRATA_3524791, true);
+	nvgpu_set_errata(g, NVGPU_ERRATA_200075440, true);
 
 	nvgpu_set_enabled(g, NVGPU_SEC_PRIVSECURITY, true);
 	nvgpu_set_enabled(g, NVGPU_SEC_SECUREGPCCS, true);

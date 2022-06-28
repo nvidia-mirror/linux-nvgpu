@@ -528,6 +528,7 @@ static const struct gops_gr_ctxsw_prog ga100_ops_gr_ctxsw_prog = {
 static const struct gops_gr_config ga100_ops_gr_config = {
 	.get_gpc_mask = gm20b_gr_config_get_gpc_mask,
 	.get_gpc_pes_mask = gv11b_gr_config_get_gpc_pes_mask,
+	.set_live_pes_mask = gv11b_gr_config_set_live_pes_mask,
 	.get_gpc_tpc_mask = gm20b_gr_config_get_gpc_tpc_mask,
 	.get_tpc_count_in_gpc = gm20b_gr_config_get_tpc_count_in_gpc,
 	.get_pes_tpc_mask = gm20b_gr_config_get_pes_tpc_mask,
@@ -1864,6 +1865,7 @@ int ga100_init_hal(struct gk20a *g)
 	nvgpu_set_errata(g, NVGPU_ERRATA_200391931, true);
 	nvgpu_set_errata(g, NVGPU_ERRATA_SYNCPT_INVALID_ID_0, true);
 	nvgpu_set_errata(g, NVGPU_ERRATA_2557724, true);
+	nvgpu_set_errata(g, NVGPU_ERRATA_200075440, true);
 
 	if (gops->fuse.fuse_opt_sm_ttu_en(g) != 0U) {
 		nvgpu_set_enabled(g, NVGPU_SUPPORT_SM_TTU, true);

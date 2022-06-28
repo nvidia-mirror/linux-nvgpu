@@ -776,6 +776,10 @@
 #define gr_gpc0_ppc0_cbm_alpha_cb_size_v_default_v()               (0x00000800U)
 #define gr_gpc0_ppc0_cbm_alpha_cb_size_v_granularity_v()           (0x00000020U)
 #define gr_gpc0_ppc0_cbm_alpha_cb_offset_r()                       (0x005030f8U)
+#define gr_gpc0_swdx_pes_mask_r()                                  (0x005001d0U)
+#define gr_gpc0_gpm_pd_live_physical_pes_r()                       (0x00500c50U)
+#define gr_gpc0_gpm_pd_live_physical_pes_gpc0_gpm_pd_live_physical_pes_mask_f(v)\
+				((U32(v) & 0xfU) << 0U)
 #define gr_gpcs_tpcs_tex_m_dbg2_r()                                (0x00419a3cU)
 #define gr_gpc0_ppc0_cbm_beta_steady_state_cb_size_r()             (0x005030f0U)
 #define gr_gpc0_ppc0_cbm_beta_steady_state_cb_size_v_f(v)\

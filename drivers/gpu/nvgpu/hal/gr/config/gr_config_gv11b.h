@@ -30,4 +30,6 @@ struct nvgpu_gr_config;
 
 u32 gv11b_gr_config_get_gpc_pes_mask(struct gk20a *g,
 		struct nvgpu_gr_config *config, u32 gpc_index);
+void gv11b_gr_config_set_live_pes_mask(struct gk20a *g,
+		u32 gpc_count);
 #endif /* NVGPU_GR_CONFIG_GV11B_H */

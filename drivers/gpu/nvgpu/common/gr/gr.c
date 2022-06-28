@@ -864,6 +864,16 @@ static int gr_init_support_impl(struct gk20a *g)
 	}
 
 	/*
+	 * Enable this errata for all the chips from GV11B.
+	 */
+	if (nvgpu_is_errata_present(g, NVGPU_ERRATA_200075440)) {
+		if (g->ops.gr.config.set_live_pes_mask != NULL) {
+			g->ops.gr.config.set_live_pes_mask(g,
+					nvgpu_gr_config_get_gpc_count(gr->config));
+		}
+	}
+
+	/*
 	 * Move sm id programming before loading ctxsw and gpccs firmwares. This
 	 * is the actual sequence expected by ctxsw ucode.
 	 */

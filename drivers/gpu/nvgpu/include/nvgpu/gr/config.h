@@ -34,6 +34,11 @@ struct gk20a;
 struct nvgpu_sm_info;
 struct nvgpu_gr_config;
 
+/*
+ * Number of bits represents a PES Mask.
+ */
+#define NUMBER_OF_BITS_COMPUTE_PES_MASK		4U
+
 /**
  * @brief Initialize GR engine configuration information.
  *

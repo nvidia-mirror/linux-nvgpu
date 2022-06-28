@@ -521,6 +521,7 @@ static const struct gops_gr_config ga10b_ops_gr_config = {
 	.get_gpc_mask = gm20b_gr_config_get_gpc_mask,
 	.get_gpc_tpc_mask = gm20b_gr_config_get_gpc_tpc_mask,
 	.get_gpc_pes_mask = gv11b_gr_config_get_gpc_pes_mask,
+	.set_live_pes_mask = gv11b_gr_config_set_live_pes_mask,
 	.get_gpc_rop_mask = ga10b_gr_config_get_gpc_rop_mask,
 	.get_tpc_count_in_gpc = gm20b_gr_config_get_tpc_count_in_gpc,
 	.get_pes_tpc_mask = gm20b_gr_config_get_pes_tpc_mask,
@@ -1879,6 +1880,7 @@ int ga10b_init_hal(struct gk20a *g)
 	nvgpu_set_errata(g, NVGPU_ERRATA_SYNCPT_INVALID_ID_0, true);
 	nvgpu_set_errata(g, NVGPU_ERRATA_2557724, true);
 	nvgpu_set_errata(g, NVGPU_ERRATA_3524791, true);
+	nvgpu_set_errata(g, NVGPU_ERRATA_200075440, true);
 
 	nvgpu_set_enabled(g, NVGPU_GR_USE_DMA_FOR_FW_BOOTSTRAP, false);
 
