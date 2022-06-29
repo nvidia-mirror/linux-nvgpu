@@ -1498,7 +1498,31 @@ long gk20a_channel_ioctl(struct file *filp,
 				__func__, cmd);
 			break;
 		}
+
+		/* Disable TSG and examine status before unbinding channel */
+		err = nvgpu_channel_disable_tsg(ch->g, ch);
+		if (err) {
+			dev_err(dev,
+				"%s: failed to disable channel/TSG for ioctl cmd: 0x%x",
+				__func__, cmd);
+
+			gk20a_idle(ch->g);
+
+			break;
+		}
+
 		err = nvgpu_preempt_channel(ch->g, ch);
+		if (err)
+			dev_err(dev,
+				"%s: failed to preempt channel for ioctl cmd: 0x%x",
+				__func__, cmd);
+
+		err = nvgpu_channel_enable_tsg(ch->g, ch);
+		if (err)
+			dev_err(dev,
+				"%s: failed to re-enable channel/TSG for ioctl cmd: 0x%x",
+				__func__, cmd);
+
 		gk20a_idle(ch->g);
 		break;
 	case NVGPU_IOCTL_CHANNEL_RESCHEDULE_RUNLIST:
