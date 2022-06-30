@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -41,6 +41,8 @@
 #include "nvgpu-netlist.h"
 
 #define NV_PMC_BOOT_0_ARCHITECTURE_GV110	(0x00000015 << \
+					NVGPU_GPU_ARCHITECTURE_SHIFT)
+#define NV_PMC_BOOT_0_ARCHITECTURE_GA100	(0x00000017 << \
 					NVGPU_GPU_ARCHITECTURE_SHIFT)
 #define NV_PMC_BOOT_0_IMPLEMENTATION_B		0xB
 
@@ -100,9 +102,13 @@ int test_netlist_init_support(struct unit_module *m,
 	(void)nvgpu_posix_register_io(g, &netlist_test_reg_callbacks);
 
 	/*
-	 * HAL init parameters for gv11b
+	 * HAL init parameters for gv11b and ga10b
 	*/
-	g->params.gpu_arch = NV_PMC_BOOT_0_ARCHITECTURE_GV110;
+	if (strcmp(g->name, "ga10b") == 0) {
+		g->params.gpu_arch = NV_PMC_BOOT_0_ARCHITECTURE_GA100;
+	} else {
+		g->params.gpu_arch = NV_PMC_BOOT_0_ARCHITECTURE_GV110;
+	}
 	g->params.gpu_impl = NV_PMC_BOOT_0_IMPLEMENTATION_B;
 
 	/*

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,9 +32,11 @@
 #define FW_MAX_PATH_SIZE 2048U
 
 #if defined(__QNX__)
-#define NVGPU_UNITTEST_UCODE_PATH "/gv11b/"
+#define NVGPU_UNITTEST_UCODE_PATH_GV11B "/gv11b/"
+#define NVGPU_UNITTEST_UCODE_PATH_GA10B "/ga10b/"
 #else
-#define NVGPU_UNITTEST_UCODE_PATH "/firmware/gv11b/"
+#define NVGPU_UNITTEST_UCODE_PATH_GV11B "/firmware/gv11b/"
+#define NVGPU_UNITTEST_UCODE_PATH_GA10B "/firmware/ga10b/"
 #endif
 
 static int nvgpu_ucode_load(struct gk20a *g, const char *path,
@@ -130,14 +132,24 @@ struct nvgpu_firmware *nvgpu_request_firmware(struct gk20a *g,
 
 	full_path_len = strlen(full_path);
 	full_path_len += strlen(fw_name);
-	full_path_len += strlen(NVGPU_UNITTEST_UCODE_PATH);
+
+	if (strcmp(g->name, "ga10b") == 0) {
+		full_path_len += strlen(NVGPU_UNITTEST_UCODE_PATH_GA10B);
+	} else {
+		full_path_len += strlen(NVGPU_UNITTEST_UCODE_PATH_GV11B);
+	}
+
 	if (full_path_len >=  FW_MAX_PATH_SIZE) {
 		nvgpu_err(g, "Invalid MAX_PATH_SIZE %lu %u", full_path_len,
 			FW_MAX_PATH_SIZE);
 		goto err;
 	}
 
-	strcat(full_path, NVGPU_UNITTEST_UCODE_PATH);
+	if (strcmp(g->name, "ga10b") == 0) {
+		strcat(full_path, NVGPU_UNITTEST_UCODE_PATH_GA10B);
+	} else {
+		strcat(full_path, NVGPU_UNITTEST_UCODE_PATH_GV11B);
+	}
 	strcat(full_path, fw_name);
 
 	fw = nvgpu_kzalloc(g, sizeof(*fw));

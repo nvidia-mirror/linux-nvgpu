@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -40,6 +40,8 @@
 
 
 #define NV_PMC_BOOT_0_ARCHITECTURE_GV110	(0x00000015 << \
+						 NVGPU_GPU_ARCHITECTURE_SHIFT)
+#define NV_PMC_BOOT_0_ARCHITECTURE_GA100	(0x00000017 << \
 						 NVGPU_GPU_ARCHITECTURE_SHIFT)
 #define NV_PMC_BOOT_0_IMPLEMENTATION_B		0xB
 
@@ -119,7 +121,11 @@ int test_fuse_device_common_init(struct unit_module *m,
 	g->params.gpu_arch = args->gpu_arch << NVGPU_GPU_ARCHITECTURE_SHIFT;
 	g->params.gpu_impl = args->gpu_impl;
 #else
-	g->params.gpu_arch = NV_PMC_BOOT_0_ARCHITECTURE_GV110;
+	if (strcmp(g->name, "ga10b") == 0) {
+		g->params.gpu_arch = NV_PMC_BOOT_0_ARCHITECTURE_GA100;
+	} else {
+		g->params.gpu_arch = NV_PMC_BOOT_0_ARCHITECTURE_GV110;
+	}
 	g->params.gpu_impl = NV_PMC_BOOT_0_IMPLEMENTATION_B;
 #endif
 

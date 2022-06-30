@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -205,9 +205,14 @@ static int init_acr_falcon_test_env(struct unit_module *m, struct gk20a *g)
 	}
 
 	/*
-	 * HAL init parameters for gv11b
+	 * HAL init parameters for gv11b and ga10b
 	 */
-	g->params.gpu_arch = NV_PMC_BOOT_0_ARCHITECTURE_GV110;
+
+	if (strcmp(g->name, "ga10b") == 0) {
+		g->params.gpu_arch = NV_PMC_BOOT_0_ARCHITECTURE_GA100;
+	} else {
+		g->params.gpu_arch = NV_PMC_BOOT_0_ARCHITECTURE_GV110;
+	}
 	g->params.gpu_impl = NV_PMC_BOOT_0_IMPLEMENTATION_B;
 
 	/*
@@ -653,7 +658,11 @@ int test_acr_construct_execute(struct unit_module *m,
 	 *
 	 * HAL init parameters for gv11b: Correct chip id
 	 */
-	g->params.gpu_arch = NV_PMC_BOOT_0_ARCHITECTURE_GV110;
+	if (strcmp(g->name, "ga10b") == 0) {
+		g->params.gpu_arch = NV_PMC_BOOT_0_ARCHITECTURE_GA100;
+	} else {
+		g->params.gpu_arch = NV_PMC_BOOT_0_ARCHITECTURE_GV110;
+	}
 	g->params.gpu_impl = NV_PMC_BOOT_0_IMPLEMENTATION_B;
 
 	nvgpu_posix_enable_fault_injection(kmem_fi, true, 0);
@@ -813,7 +822,11 @@ int test_acr_prepare_ucode_blob(struct unit_module *m,
 	 *
 	 * HAL init parameters for gv11b: Correct chip id
 	 */
-	g->params.gpu_arch = NV_PMC_BOOT_0_ARCHITECTURE_GV110;
+	if (strcmp(g->name, "ga10b") == 0) {
+		g->params.gpu_arch = NV_PMC_BOOT_0_ARCHITECTURE_GA100;
+	} else {
+		g->params.gpu_arch = NV_PMC_BOOT_0_ARCHITECTURE_GV110;
+	}
 	g->params.gpu_impl = NV_PMC_BOOT_0_IMPLEMENTATION_B;
 
 	nvgpu_posix_enable_fault_injection(kmem_fi, true, 0);
@@ -876,7 +889,11 @@ int test_acr_prepare_ucode_blob(struct unit_module *m,
 	/*
 	 * set back the valid GPU version
 	 */
-	g->params.gpu_arch = NV_PMC_BOOT_0_ARCHITECTURE_GV110;
+	if (strcmp(g->name, "ga10b") == 0) {
+		g->params.gpu_arch = NV_PMC_BOOT_0_ARCHITECTURE_GA100;
+	} else {
+		g->params.gpu_arch = NV_PMC_BOOT_0_ARCHITECTURE_GV110;
+	}
 	g->params.gpu_impl = NV_PMC_BOOT_0_IMPLEMENTATION_B;
 
 	/*
@@ -969,7 +986,11 @@ int test_acr_init(struct unit_module *m,
 	/*
 	 * Case 3: enable debug mode for branch coverage
 	 */
-	g->params.gpu_arch = NV_PMC_BOOT_0_ARCHITECTURE_GV110;
+	if (strcmp(g->name, "ga10b") == 0) {
+		g->params.gpu_arch = NV_PMC_BOOT_0_ARCHITECTURE_GA100;
+	} else {
+		g->params.gpu_arch = NV_PMC_BOOT_0_ARCHITECTURE_GV110;
+	}
 	g->params.gpu_impl = NV_PMC_BOOT_0_IMPLEMENTATION_B;
 	g->acr = NULL;
 	debug_mode_enable = pwr_pmu_scpctl_stat_debug_mode_m();
@@ -986,7 +1007,11 @@ int test_acr_init(struct unit_module *m,
 	/*
 	 * HAL init parameters for gv11b
 	 */
-	g->params.gpu_arch = NV_PMC_BOOT_0_ARCHITECTURE_GV110;
+	if (strcmp(g->name, "ga10b") == 0) {
+		g->params.gpu_arch = NV_PMC_BOOT_0_ARCHITECTURE_GA100;
+	} else {
+		g->params.gpu_arch = NV_PMC_BOOT_0_ARCHITECTURE_GV110;
+	}
 	g->params.gpu_impl = NV_PMC_BOOT_0_IMPLEMENTATION_B;
 	nvgpu_posix_io_writel_reg_space(g, pwr_pmu_scpctl_stat_r(), 0x0);
 	g->acr = NULL;
