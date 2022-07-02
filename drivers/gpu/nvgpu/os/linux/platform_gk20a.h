@@ -342,6 +342,9 @@ struct gk20a_platform {
 
 	/* synchronized access to platform->clk_get_freqs */
 	struct nvgpu_mutex clk_get_freq_lock;
+
+	/* synchronized access to platform->clks */
+	struct nvgpu_mutex clks_lock;
 };
 
 static inline struct gk20a_platform *gk20a_get_platform(
