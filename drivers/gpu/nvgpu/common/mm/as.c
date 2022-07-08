@@ -1,7 +1,7 @@
 /*
  * GK20A Address Spaces
  *
- * Copyright (c) 2011-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,32 +32,28 @@
 
 #define VM_NAME_PREFIX	"as_"
 
-/* dumb allocator... */
-static int generate_as_share_id(struct gk20a_as *as)
+static nvgpu_atomic_t unique_share_id = NVGPU_ATOMIC_INIT(0);
+/*
+ * Generate unique id by doing atomic increment on unique_share_id.
+ */
+static int generate_unique_share_id(void)
 {
-	struct gk20a *g = gk20a_from_as(as);
+	int ret = 0;
 
-	nvgpu_log_fn(g, " ");
-	as->last_share_id = nvgpu_safe_add_s32(as->last_share_id, 1);
-	return as->last_share_id;
+	ret = nvgpu_atomic_inc_return(&unique_share_id);
+	if (ret == 0) {
+		nvgpu_err(NULL, "incrementing share_id overflow");
+	}
+
+	return ret;
 }
-/* still dumb */
-static void release_as_share_id(struct gk20a_as_share *as_share)
-{
-	struct gk20a *g = gk20a_from_as(as_share->as);
-
-	nvgpu_log_fn(g, " ");
-	return;
-}
-
 /* address space interfaces for the gk20a module */
 static int gk20a_vm_alloc_share(struct gk20a_as_share *as_share,
 				u32 big_page_size, u32 flags,
 				u64 va_range_start, u64 va_range_end,
 				u64 va_range_split)
 {
-	struct gk20a_as *as = as_share->as;
-	struct gk20a *g = gk20a_from_as(as);
+	struct gk20a *g = as_share->g;
 	struct mm_gk20a *mm = &g->mm;
 	struct vm_gk20a *vm;
 	char name[NVGPU_VM_NAME_LEN] = VM_NAME_PREFIX;
@@ -171,8 +167,8 @@ int gk20a_as_alloc_share(struct gk20a *g,
 		return -ENOMEM;
 	}
 
-	as_share->as = &g->as;
-	as_share->id = generate_as_share_id(as_share->as);
+	as_share->g = g;
+	as_share->id = generate_unique_share_id();
 
 	/* this will set as_share->vm. */
 	err = gk20a_busy(g);
@@ -232,14 +228,8 @@ int gk20a_as_release_share(struct gk20a_as_share *as_share)
 	gk20a_idle(g);
 
 release_fail:
-	release_as_share_id(as_share);
 	nvgpu_put(g);
 	nvgpu_kfree(g, as_share);
 
 	return err;
-}
-
-struct gk20a *gk20a_from_as(struct gk20a_as *as)
-{
-	return (struct gk20a *)((uintptr_t)as - offsetof(struct gk20a, as));
 }

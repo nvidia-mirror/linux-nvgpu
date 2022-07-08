@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -119,7 +119,7 @@ int test_init_mm(struct unit_module *m, struct gk20a *g, void *args);
  * Test Type: Feature
  *
  * Targets: gk20a_as_alloc_share, gk20a_as_release_share,
- * gk20a_vm_release_share, gk20a_from_as
+ * gk20a_vm_release_share
  *
  * Input:
  * - The test_init_mm must have been executed
@@ -152,25 +152,5 @@ int test_init_mm(struct unit_module *m, struct gk20a *g, void *args);
  * otherwise.
  */
 int test_as_alloc_share(struct unit_module *m, struct gk20a *g, void *args);
-
-/**
- * Test specification for: test_gk20a_from_as
- *
- * Description: Simple test to check gk20a_from_as.
- *
- * Test Type: Feature
- *
- * Targets: gk20a_from_as
- *
- * Input: None
- *
- * Steps:
- * - Call gk20a_from_as with an 'as' pointer and ensure it returns a
- *   pointer on g.
- *
- * Output: Returns PASS if the steps above were executed successfully. FAIL
- * otherwise.
- */
-int test_gk20a_from_as(struct unit_module *m, struct gk20a *g, void *args);
 
 #endif /* UNIT_MM_AS_H */

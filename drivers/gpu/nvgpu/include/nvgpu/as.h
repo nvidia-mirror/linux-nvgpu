@@ -1,7 +1,7 @@
 /*
  * GK20A Address Spaces
  *
- * Copyright (c) 2011-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,23 +30,13 @@ struct vm_gk20a;
 struct gk20a;
 
 /**
- * Basic structure to identify an address space (AS).
- */
-struct gk20a_as {
-	/**
-	 * Incrementing id to identify the AS, dummy allocator for now.
-	 */
-	int last_share_id;
-};
-
-/**
  * Basic structure to share an AS.
  */
 struct gk20a_as_share {
 	/**
 	 * The AS to share.
 	 */
-	struct gk20a_as *as;
+	struct gk20a *g;
 
 	/**
 	 * The VM used by the AS.
@@ -144,15 +134,4 @@ int gk20a_as_alloc_share(struct gk20a *g, u32 big_page_size,
 			u64 va_range_end, u64 va_range_split,
 			struct gk20a_as_share **out);
 
-/**
- * @brief Retrieve the instance of gk20a from a gk20a_as instance.
- *
- * @param as [in] The address space
- *
- * Given an instance of gk20a_as, retrieve a pointer to the underlying gk20a
- * instance.
- *
- * @return pointer to the underlying GPU (gk20a).
- */
-struct gk20a *gk20a_from_as(struct gk20a_as *as);
 #endif /* NVGPU_AS_H */

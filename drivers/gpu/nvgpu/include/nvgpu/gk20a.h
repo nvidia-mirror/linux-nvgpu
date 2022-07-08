@@ -693,9 +693,6 @@ struct gk20a {
 	u32 pg_ms_gating_cnt;
 #endif
 
-	/** GPU address-space identifier. */
-	struct gk20a_as as;
-
 	/** The HAL function pointers */
 	struct gpu_ops ops;
 

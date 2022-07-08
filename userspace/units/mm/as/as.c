@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -268,33 +268,6 @@ int test_as_alloc_share(struct unit_module *m, struct gk20a *g, void *args)
 	return UNIT_SUCCESS;
 }
 
-int test_gk20a_from_as(struct unit_module *m, struct gk20a *g, void *args)
-{
-	int ret = UNIT_FAIL;
-	struct gk20a_as_share *out;
-	int err;
-
-	err = gk20a_as_alloc_share(g, SZ_64K, NVGPU_AS_ALLOC_USERSPACE_MANAGED,
-			(SZ_64K << 10), (1ULL << 37),
-			nvgpu_gmmu_va_small_page_limit(), &out);
-	if (err != 0) {
-		unit_return_fail(m, "gk20a_as_alloc_share failed err=%d\n",
-			err);
-	}
-
-	if (g != gk20a_from_as(out->as)) {
-		unit_err(m, "ptr mismatch in gk20a_from_as\n");
-		goto exit;
-	}
-
-	ret = UNIT_SUCCESS;
-
-exit:
-	gk20a_as_release_share(out);
-
-	return ret;
-}
-
 struct unit_module_test nvgpu_mm_as_tests[] = {
 	UNIT_TEST(init, test_init_mm, NULL, 0),
 	UNIT_TEST(as_alloc_share_64k_um_as_fail, test_as_alloc_share,
@@ -304,20 +277,19 @@ struct unit_module_test nvgpu_mm_as_tests[] = {
 	UNIT_TEST(as_alloc_share_64k_um_busy_fail_1, test_as_alloc_share,
 		(void *) &test_64k_user_managed_busy_fail_1, 0),
 	UNIT_TEST(as_alloc_share_64k_um_busy_fail_2, test_as_alloc_share,
-		(void *) &test_64k_user_managed_busy_fail_2, 0),
+		(void *) &test_64k_user_managed_busy_fail_2, 2),
 	UNIT_TEST(as_alloc_share_64k_um, test_as_alloc_share,
-		(void *) &test_64k_user_managed, 0),
+		(void *) &test_64k_user_managed, 2),
 	UNIT_TEST(as_alloc_share_0k_um, test_as_alloc_share,
-		(void *) &test_0k_user_managed, 0),
+		(void *) &test_0k_user_managed, 2),
 	UNIT_TEST(as_alloc_share_einval_um, test_as_alloc_share,
 		(void *) &test_einval_user_managed, 0),
 	UNIT_TEST(as_alloc_share_notp2_um, test_as_alloc_share,
 		(void *) &test_notp2_user_managed, 0),
 	UNIT_TEST(as_alloc_share_uva, test_as_alloc_share,
-		(void *) &test_64k_unified_va, 0),
+		(void *) &test_64k_unified_va, 2),
 	UNIT_TEST(as_alloc_share_uva_enabled, test_as_alloc_share,
-		(void *) &test_64k_unified_va_enabled, 0),
-	UNIT_TEST(gk20a_from_as, test_gk20a_from_as, NULL, 0),
+		(void *) &test_64k_unified_va_enabled, 2),
 };
 
 UNIT_MODULE(mm.as, nvgpu_mm_as_tests, UNIT_PRIO_NVGPU_TEST);

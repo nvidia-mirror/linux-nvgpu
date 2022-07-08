@@ -1,7 +1,7 @@
 /*
  * GK20A Address Spaces
  *
- * Copyright (c) 2011-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -457,7 +457,7 @@ long gk20a_as_dev_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
 	int err = 0;
 	struct gk20a_as_share *as_share = filp->private_data;
-	struct gk20a *g = gk20a_from_as(as_share->as);
+	struct gk20a *g = as_share->g;
 	bool always_copy_to_user = false;
 	u8 buf[NVGPU_AS_IOCTL_MAX_ARG_SIZE];
 
