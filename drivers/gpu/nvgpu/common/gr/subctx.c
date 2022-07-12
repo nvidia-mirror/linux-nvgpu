@@ -143,7 +143,7 @@ void nvgpu_gr_subctx_set_preemption_buffer_va(struct gk20a *g,
 #endif /* CONFIG_NVGPU_GFXP */
 
 #ifdef CONFIG_NVGPU_DEBUGGER
-void nvgpu_gr_subctx_set_hwpm_mode(struct gk20a *g,
+void nvgpu_gr_subctx_set_hwpm_ptr(struct gk20a *g,
 	struct nvgpu_gr_subctx *subctx, struct nvgpu_gr_ctx *gr_ctx)
 {
 	g->ops.gr.ctxsw_prog.set_pm_ptr(g, &subctx->ctx_header,

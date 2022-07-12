@@ -128,25 +128,18 @@ int gr_gk20a_update_hwpm_ctxsw_mode(struct gk20a *g,
 		goto out;
 	}
 
-	nvgpu_rwsem_down_read(&tsg->ch_list_lock);
+	nvgpu_gr_ctx_set_hwpm_pm_mode(g, gr_ctx);
 
-	nvgpu_list_for_each_entry(ch, &tsg->ch_list, nvgpu_channel, ch_entry) {
-		if (ch->subctx != NULL) {
-			err = nvgpu_gr_ctx_set_hwpm_mode(g, gr_ctx, false);
-			if (err != 0) {
-				nvgpu_err(g, "chid: %d set_hwpm_mode failed",
-					ch->chid);
-				ret = err;
-				continue;
-			}
-			nvgpu_gr_subctx_set_hwpm_mode(g, ch->subctx, gr_ctx);
-		} else {
-			ret = nvgpu_gr_ctx_set_hwpm_mode(g, gr_ctx, true);
-			break;
+	if (nvgpu_is_enabled(g, NVGPU_SUPPORT_TSG_SUBCONTEXTS)) {
+		nvgpu_rwsem_down_read(&tsg->ch_list_lock);
+		nvgpu_list_for_each_entry(ch, &tsg->ch_list,
+					  nvgpu_channel, ch_entry) {
+			nvgpu_gr_subctx_set_hwpm_ptr(g, ch->subctx, gr_ctx);
 		}
+		nvgpu_rwsem_up_read(&tsg->ch_list_lock);
+	} else {
+		nvgpu_gr_ctx_set_hwpm_ptr(g, gr_ctx);
 	}
-
-	nvgpu_rwsem_up_read(&tsg->ch_list_lock);
 
 out:
 	g->ops.tsg.enable(tsg);
@@ -662,8 +655,7 @@ int gr_gk20a_ctx_patch_smpc(struct gk20a *g,
 				nvgpu_gr_ctx_patch_write(g, gr_ctx,
 							 addr, data, true);
 
-				nvgpu_gr_ctx_set_patch_ctx(g, gr_ctx,
-						true);
+				nvgpu_gr_ctx_set_patch_ctx(g, gr_ctx);
 
 				/* we're not caching these on cpu side,
 				   but later watch for it */

@@ -977,15 +977,13 @@ void nvgpu_gr_ctx_reset_patch_count(struct gk20a *g,
 	}
 }
 
-void nvgpu_gr_ctx_set_patch_ctx(struct gk20a *g, struct nvgpu_gr_ctx *gr_ctx,
-	bool set_patch_addr)
+void nvgpu_gr_ctx_set_patch_ctx(struct gk20a *g, struct nvgpu_gr_ctx *gr_ctx)
 {
 	g->ops.gr.ctxsw_prog.set_patch_count(g, &gr_ctx->mem,
 		gr_ctx->patch_ctx.data_count);
-	if (set_patch_addr) {
-		g->ops.gr.ctxsw_prog.set_patch_addr(g, &gr_ctx->mem,
-			gr_ctx->patch_ctx.mem.gpu_va);
-	}
+
+	g->ops.gr.ctxsw_prog.set_patch_addr(g, &gr_ctx->mem,
+		gr_ctx->patch_ctx.mem.gpu_va);
 }
 
 int nvgpu_gr_ctx_alloc_pm_ctx(struct gk20a *g,
@@ -1160,16 +1158,15 @@ int nvgpu_gr_ctx_prepare_hwpm_mode(struct gk20a *g, struct nvgpu_gr_ctx *gr_ctx,
 	return ret;
 }
 
-int nvgpu_gr_ctx_set_hwpm_mode(struct gk20a *g, struct nvgpu_gr_ctx *gr_ctx,
-	bool set_pm_ptr)
+void nvgpu_gr_ctx_set_hwpm_pm_mode(struct gk20a *g, struct nvgpu_gr_ctx *gr_ctx)
 {
 	g->ops.gr.ctxsw_prog.set_pm_mode(g, &gr_ctx->mem,
 			gr_ctx->pm_ctx.pm_mode);
-	if (set_pm_ptr) {
-		g->ops.gr.ctxsw_prog.set_pm_ptr(g, &gr_ctx->mem,
-			gr_ctx->pm_ctx.gpu_va);
-	}
+}
 
-	return 0;
+void nvgpu_gr_ctx_set_hwpm_ptr(struct gk20a *g, struct nvgpu_gr_ctx *gr_ctx)
+{
+	g->ops.gr.ctxsw_prog.set_pm_ptr(g, &gr_ctx->mem,
+		gr_ctx->pm_ctx.gpu_va);
 }
 #endif /* CONFIG_NVGPU_DEBUGGER */
