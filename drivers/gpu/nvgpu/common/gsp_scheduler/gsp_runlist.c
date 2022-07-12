@@ -147,12 +147,11 @@ static int gsp_get_async_ce(struct gk20a *g, struct nvgpu_device *device,
 	return 0;
 }
 
-static void gsp_get_device_info(struct gk20a *g, u8 device_id,
-		struct nvgpu_gsp_device_info *dev_info,
+static void gsp_get_device_info(struct gk20a *g, struct nvgpu_gsp_device_info *dev_info,
 		const struct nvgpu_device *device)
 {
 	/* copy domain info into cmd buffer */
-	dev_info->device_id = device_id;
+	dev_info->device_id = nvgpu_safe_cast_u32_to_u8(device->engine_id);
 	dev_info->is_engine = true;
 	dev_info->engine_type = device->type;
 	dev_info->engine_id = device->engine_id;
@@ -165,7 +164,7 @@ static void gsp_get_device_info(struct gk20a *g, u8 device_id,
 }
 
 static int gsp_sched_send_devices_info(struct gk20a *g,
-		u8 device_id, const struct nvgpu_device *device)
+		 const struct nvgpu_device *device)
 {
 	struct nv_flcn_cmd_gsp cmd = { };
 	int err = 0;
@@ -173,7 +172,7 @@ static int gsp_sched_send_devices_info(struct gk20a *g,
 	nvgpu_gsp_dbg(g, " ");
 
 	/* copy domain info into cmd buffer */
-	gsp_get_device_info(g, device_id, &cmd.cmd.device, device);
+	gsp_get_device_info(g, &cmd.cmd.device, device);
 
 	err = gsp_send_cmd_and_wait_for_ack(g, &cmd,
 		NV_GSP_UNIT_DEVICES_INFO, sizeof(struct nvgpu_gsp_device_info));
@@ -185,37 +184,33 @@ int nvgpu_gsp_sched_send_devices_info(struct gk20a *g)
 {
 	const struct nvgpu_device *gr_dev = NULL;
 	struct nvgpu_device ce_dev = { };
-	u8 instance = 0;
 	int err = 0;
+	u8 engine_instance = 0;
+	for (engine_instance = 0; engine_instance < GSP_SCHED_ENGINE_INSTANCE; engine_instance++) {
+		// handling GR engine
+		gr_dev = nvgpu_device_get(g, NVGPU_DEVTYPE_GRAPHICS, engine_instance);
+		if (gr_dev == NULL) {
+			err = -ENXIO;
+			nvgpu_err(g, " Get GR device info failed ID: %d", engine_instance);
+			goto exit;
+		}
+		err = gsp_sched_send_devices_info(g, gr_dev);
+		if (err != 0) {
+			nvgpu_err(g, "Sending GR engine info failed ID: %d", engine_instance);
+			goto exit;
+		}
 
-	/*
-	 * Only GR0 is supported
-	 */
-	gr_dev = nvgpu_device_get(g, NVGPU_DEVTYPE_GRAPHICS, instance);
-	if (gr_dev == NULL) {
-		nvgpu_err(g, "Get GR0 device info failed");
-		goto exit;
-	}
-	err = gsp_sched_send_devices_info(g,
-			GSP_SCHED_GR0_DEVICE_ID, gr_dev);
-	if (err != 0) {
-		nvgpu_err(g, "send GR0 device info failed");
-		goto exit;
-	}
-
-	/*
-	 * Only Async CE0 is supported
-	 */
-	err = gsp_get_async_ce(g, &ce_dev, instance);
-	if (err != 0) {
-		nvgpu_err(g, "Get Async CE0 device info failed");
-		goto exit;
-	}
-	err = gsp_sched_send_devices_info(g,
-			GSP_SCHED_ASYNC_CE0_DEVICE_ID, &ce_dev);
-	if (err != 0) {
-		nvgpu_err(g, "send Async CE0 device info failed");
-		goto exit;
+		// handling Async engine
+		err = gsp_get_async_ce(g, &ce_dev, engine_instance);
+		if (err != 0) {
+			nvgpu_err(g, "Getting Async engine failed ID: %d", engine_instance);
+			goto exit;
+		}
+		err = gsp_sched_send_devices_info(g, &ce_dev);
+		if (err != 0) {
+			nvgpu_err(g, "Sending Async engin info failed ID: %d", engine_instance);
+			goto exit;
+		}
 	}
 
 exit:

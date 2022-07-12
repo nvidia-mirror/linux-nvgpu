@@ -39,7 +39,12 @@
 #include <nvgpu/pmu/mutex.h>
 #endif
 #include <nvgpu/nvgpu_init.h>
-
+#ifdef CONFIG_NVGPU_GSP_SCHEDULER
+#include <nvgpu/gsp_sched.h>
+#endif
+#ifdef CONFIG_NVS_PRESENT
+#include <nvgpu/nvs.h>
+#endif
 void nvgpu_runlist_lock_active_runlists(struct gk20a *g)
 {
 	struct nvgpu_fifo *f = &g->fifo;
@@ -1338,4 +1343,54 @@ void nvgpu_runlist_unlock_runlists(struct gk20a *g, u32 runlists_mask)
 			nvgpu_mutex_release(&runlist->runlist_lock);
 		}
 	}
+}
+
+s32 nvgpu_runlist_get_runlist_info(struct gk20a *g, u32 rl_index, u32 *runlist_id,
+		u8 *device_id)
+{
+	struct nvgpu_fifo *f = &g->fifo;
+	s32 err = 0;
+	u32 device_id_u32 = 0;
+	struct nvgpu_runlist *runlist = &f->active_runlists[rl_index];
+
+	err = (s32)(nvgpu_runlist_get_device_id(g, runlist, &device_id_u32));
+	if (err != 0) {
+		nvgpu_err(g, "error in getting device ID");
+		goto exit;
+	}
+
+	*device_id = nvgpu_safe_cast_u32_to_u8(device_id_u32);
+	*runlist_id = runlist->id;
+exit:
+	return err;
+}
+
+s32 nvgpu_runlist_get_device_id(struct gk20a *g, struct nvgpu_runlist *rl, u32 *device_id)
+{
+	u8 dev;
+	s32 err = 0;
+
+	for (dev = 0; dev < (u8)(RLENG_PER_RUNLIST_SIZE); dev++) {
+		u32 rl_pribase =rl->rl_dev_list[dev]->rl_pri_base;
+		if (rl->runlist_pri_base == rl_pribase) {
+			*device_id = rl->rl_dev_list[dev]->engine_id;
+			goto exit;
+		}
+	}
+
+	err = (s32)(-EINVAL);
+	nvgpu_err(g, "Get device ID failed:");
+exit:
+	return err;
+}
+
+u32 nvgpu_runlist_get_num_runlists(struct gk20a *g)
+{
+	struct nvgpu_fifo f = g->fifo;
+	return f.num_runlists;
+}
+
+struct nvgpu_runlist_domain *nvgpu_runlist_get_shadow_domain(struct gk20a *g)
+{
+	return g->fifo.active_runlists[0].shadow_rl_domain;
 }

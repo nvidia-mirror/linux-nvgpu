@@ -39,7 +39,12 @@ struct nvgpu_tsg;
 struct nvgpu_fifo;
 struct nvgpu_channel;
 struct nvgpu_device;
-
+#ifdef CONFIG_NVGPU_GSP_SCHEDULER
+struct nvgpu_gsp_domain_info;
+#endif
+#ifdef CONFIG_NVS_PRESENT
+struct nvgpu_nvs_domain;
+#endif
 /** @cond DOXYGEN_SHOULD_SKIP_THIS */
 struct nvgpu_pbdma_info;
 
@@ -510,4 +515,10 @@ void nvgpu_runlist_init_enginfo(struct gk20a *g, struct nvgpu_fifo *f);
 #define rl_dbg(g, fmt, arg...)			\
 	nvgpu_log(g, gpu_dbg_runlists, "RL | " fmt, ##arg)
 
+/* function to get the runlist info for gsp */
+s32 nvgpu_runlist_get_device_id(struct gk20a *g, struct nvgpu_runlist *rl, u32 *device_id);
+s32 nvgpu_runlist_get_runlist_info(struct gk20a *g, u32 rl_index, u32 *runlist_id,
+		u8 *device_id);
+u32 nvgpu_runlist_get_num_runlists(struct gk20a *g);
+struct nvgpu_runlist_domain *nvgpu_runlist_get_shadow_domain(struct gk20a *g);
 #endif /* NVGPU_RUNLIST_H */

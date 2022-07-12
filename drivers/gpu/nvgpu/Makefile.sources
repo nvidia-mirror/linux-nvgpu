@@ -203,7 +203,8 @@ srcs += common/gsp/gsp_init.c \
 	common/gsp_scheduler/ipc/gsp_msg.c \
 	common/gsp_scheduler/gsp_scheduler.c \
 	common/gsp_scheduler/gsp_runlist.c \
-	common/gsp_scheduler/gsp_ctrl_fifo.c
+	common/gsp_scheduler/gsp_ctrl_fifo.c \
+	common/gsp_scheduler/gsp_nvs.c
 endif
 
 ifeq ($(CONFIG_NVGPU_GSP_STRESS_TEST),1)

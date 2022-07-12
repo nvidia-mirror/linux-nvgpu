@@ -24,13 +24,13 @@
 #define GSP_SCHED_H
 struct gk20a;
 struct nvgpu_gsp_sched;
-
+struct nvgpu_runlist;
 /*
  * Scheduler shall support only two engines with two runlists per domain.
  * 1. GR0
  * 2. Async CE0
  */
-#define TOTAL_NO_OF_RUNLISTS 2U
+#define TOTAL_NO_OF_RUNLISTS 4U
 
 struct nvgpu_gsp_runlist_info {
 	/*
@@ -117,4 +117,9 @@ int nvgpu_gsp_sched_query_active_domain(struct gk20a *g, u32 *active_domain);
 int nvgpu_gsp_sched_query_no_of_domains(struct gk20a *g, u32 *no_of_domains);
 int nvgpu_gsp_sched_start(struct gk20a *g);
 int nvgpu_gsp_sched_stop(struct gk20a *g);
+/*  functions to get nvs scheduler and runlist domains info to gsp */
+int nvgpu_gsp_nvs_add_domain(struct gk20a *g, u64 nvgpu_domain_id);
+int nvgpu_gsp_nvs_delete_domain(struct gk20a *g, u64 nvgpu_domain_id);
+int nvgpu_gsp_nvs_update_runlist(struct gk20a *g, const char *name,struct nvgpu_runlist *rl);
+int nvgpu_gps_sched_update_runlist(struct gk20a *g, struct nvgpu_runlist *rl);
 #endif /* GSP_SCHED_H */

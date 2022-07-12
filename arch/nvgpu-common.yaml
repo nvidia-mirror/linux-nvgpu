@@ -337,6 +337,7 @@ gsp_sched:
              common/gsp_scheduler/ipc/gsp_msg.h,
              common/gsp_scheduler/gsp_scheduler.c,
              common/gsp_scheduler/gsp_scheduler.h,
+             common/gsp_scheduler/gsp_nvs.c,
              common/gsp_scheduler/gsp_runlist.c,
              common/gsp_scheduler/gsp_runlist.h,
              common/gsp_scheduler/gsp_ctrl_fifo.c,

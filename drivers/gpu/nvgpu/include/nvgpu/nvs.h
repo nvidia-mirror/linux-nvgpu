@@ -48,6 +48,7 @@ struct nvgpu_runlist;
 struct nvgpu_runlist_domain;
 struct nvgpu_nvs_ctrl_queue;
 struct nvgpu_nvs_domain_ctrl_fifo;
+struct nvgpu_nvs_domain;
 
 struct nvs_domain_ctrl_fifo_capabilities {
 	/* Store type of scheduler backend */
@@ -296,6 +297,9 @@ bool nvgpu_nvs_ctrl_fifo_user_is_subscribed_to_queue(struct nvs_domain_ctrl_fifo
 		struct nvgpu_nvs_ctrl_queue *queue);
 void nvgpu_nvs_ctrl_fifo_erase_queue(struct gk20a *g, struct nvgpu_nvs_ctrl_queue *queue);
 void nvgpu_nvs_ctrl_fifo_erase_all_queues(struct gk20a *g);
+struct nvgpu_nvs_domain *
+nvgpu_nvs_get_shadow_domain_locked(struct gk20a *g);
+struct nvgpu_nvs_domain *nvgpu_nvs_domain_by_id_locked(struct gk20a *g, u64 domain_id);
 
 #else
 
@@ -340,6 +344,24 @@ static inline const char *nvgpu_nvs_domain_get_name(struct nvgpu_nvs_domain *dom
 	(void)dom;
 	return NULL;
 }
+static inline struct nvgpu_nvs_domain *
+nvgpu_nvs_get_shadow_domain_locked(struct gk20a *g)
+{
+	(void)g;
+	return NULL;
+}
+static inline struct nvgpu_nvs_domain *nvgpu_nvs_domain_by_id_locked(struct gk20a *g, u64 domain_id)
+{
+	(void)g;
+	return NULL;
+	(void)domain_id;
+}
 #endif
 
+#ifdef CONFIG_NVGPU_GSP_SCHEDULER
+s32 nvgpu_nvs_gsp_get_runlist_domain_info(struct gk20a *g, u64 nvgpu_domain_id, u32 *num_entries,
+	u64 *runlist_iova, u32 *aperture, u32 index);
+s32 nvgpu_nvs_get_gsp_domain_info(struct gk20a *g, u64 nvgpu_domain_id,
+		u32 *domain_id, u32 *timeslice_ns);
+#endif
 #endif

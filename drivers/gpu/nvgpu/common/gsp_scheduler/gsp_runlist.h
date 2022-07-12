@@ -23,9 +23,7 @@
 #ifndef NVGPU_GSP_RUNLIST
 #define NVGPU_GSP_RUNLIST
 
-#define GSP_SCHED_GR0_DEVICE_ID			0U
-#define GSP_SCHED_ASYNC_CE0_DEVICE_ID	1U
-
+#define GSP_SCHED_ENGINE_INSTANCE		2U
 struct nv_flcn_cmd_gsp;
 struct gk20a;
 struct nvgpu_gsp_device_info {

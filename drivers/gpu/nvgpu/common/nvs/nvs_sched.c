@@ -30,6 +30,9 @@
 #include <nvgpu/runlist.h>
 #include <nvgpu/kref.h>
 
+#ifdef CONFIG_NVGPU_GSP_SCHEDULER
+#include <nvgpu/gsp_sched.h>
+#endif
 static struct nvs_sched_ops nvgpu_nvs_ops = {
 	.preempt = NULL,
 	.recover = NULL,
@@ -60,10 +63,6 @@ struct nvgpu_nvs_worker_item {
 	struct nvgpu_list_node list;
 	nvgpu_atomic_t state;
 };
-
-
-static struct nvgpu_nvs_domain *
-nvgpu_nvs_domain_by_id_locked(struct gk20a *g, u64 domain_id);
 
 static inline struct nvgpu_nvs_worker_item *
 nvgpu_nvs_worker_item_from_worker_item(struct nvgpu_list_node *node)
@@ -836,7 +835,7 @@ unlock:
 	return err;
 }
 
-static struct nvgpu_nvs_domain *
+struct nvgpu_nvs_domain *
 nvgpu_nvs_domain_by_id_locked(struct gk20a *g, u64 domain_id)
 {
 	struct nvgpu_nvs_scheduler *sched = g->scheduler;
@@ -851,8 +850,14 @@ nvgpu_nvs_domain_by_id_locked(struct gk20a *g, u64 domain_id)
 			return nvgpu_dom;
 		}
 	}
-
+	
 	return NULL;
+}
+
+struct nvgpu_nvs_domain *
+nvgpu_nvs_get_shadow_domain_locked(struct gk20a *g)
+{
+	return g->scheduler->shadow_domain;
 }
 
 struct nvgpu_nvs_domain *
@@ -1037,3 +1042,69 @@ void nvgpu_nvs_print_domain(struct gk20a *g, struct nvgpu_nvs_domain *domain)
 	nvs_dbg(g, "  preempt grace: %llu ns", nvs_dom->preempt_grace_ns);
 	nvs_dbg(g, "  domain ID:     %llu", domain->id);
 }
+
+#ifdef CONFIG_NVGPU_GSP_SCHEDULER
+s32 nvgpu_nvs_gsp_get_runlist_domain_info(struct gk20a *g, u64 nvgpu_domain_id,
+		u32 *num_entries, u64 *runlist_iova, u32 *aperture, u32 index)
+{
+	struct nvgpu_runlist_domain *domain;
+	struct nvgpu_nvs_domain *nvgpu_domain;
+	s32 err = 0;
+
+	if (nvgpu_domain_id == (u64)(SHADOW_DOMAIN_ID)) {
+		nvgpu_domain = nvgpu_nvs_get_shadow_domain_locked(g);
+		if (nvgpu_domain == NULL) {
+			nvgpu_err(g, "gsp nvgpu_domain is NULL");
+			err = -ENXIO;
+			goto exit;
+		}
+
+		domain = nvgpu_runlist_get_shadow_domain(g);
+	} else {
+		nvgpu_domain = nvgpu_nvs_domain_by_id_locked(g, nvgpu_domain_id);
+		if (nvgpu_domain == NULL) {
+			nvgpu_err(g, "gsp nvgpu_domain is NULL");
+			err = -ENXIO;
+			goto exit;
+		}
+
+		domain = nvgpu_domain->rl_domains[index];
+	}
+
+	if (domain == NULL) {
+		nvgpu_err(g, "gsp runlist domain is NULL");
+		err = -ENXIO;
+		goto exit;
+	}
+
+	*runlist_iova = nvgpu_mem_get_addr(g, &domain->mem_hw->mem);
+	*aperture = g->ops.runlist.get_runlist_aperture(g, &domain->mem_hw->mem);
+	*num_entries = domain->mem_hw->count;
+exit:
+	return err;
+}
+
+s32 nvgpu_nvs_get_gsp_domain_info(struct gk20a *g, u64 nvgpu_domain_id,
+		u32 *domain_id, u32 *timeslice_ns)
+{
+	struct nvgpu_nvs_domain *nvgpu_domain;
+    s32 err = 0;
+
+    if (nvgpu_domain_id == SHADOW_DOMAIN_ID) {
+        nvgpu_domain = nvgpu_nvs_get_shadow_domain_locked(g);
+    } else {
+        nvgpu_domain = nvgpu_nvs_domain_by_id_locked(g, nvgpu_domain_id);
+    }
+
+    if (nvgpu_domain == NULL) {
+        nvgpu_err(g, "gsp nvgpu_domain is NULL");
+        err = -ENXIO;
+		goto exit;
+    }
+	*domain_id = u64_lo32(nvgpu_domain->id);
+	*timeslice_ns = nvgpu_safe_cast_u64_to_u32(
+			nvgpu_domain->parent->timeslice_ns);
+exit:
+	return err;
+}
+#endif

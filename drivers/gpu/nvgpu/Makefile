@@ -444,7 +444,8 @@ nvgpu-$(CONFIG_NVGPU_GSP_SCHEDULER) += \
 	common/gsp_scheduler/ipc/gsp_msg.o \
 	common/gsp_scheduler/gsp_scheduler.o \
 	common/gsp_scheduler/gsp_runlist.o \
-	common/gsp_scheduler/gsp_ctrl_fifo.o
+	common/gsp_scheduler/gsp_ctrl_fifo.o \
+	common/gsp_scheduler/gsp_nvs.o
 endif
 
 ifeq ($(CONFIG_NVGPU_GSP_STRESS_TEST),y)
