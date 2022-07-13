@@ -530,8 +530,8 @@ static int devinit_get_pwr_policy_table(struct gk20a *g,
 	int status = 0;
 	u8 *ptr = NULL;
 	struct pmu_board_obj *obj_tmp;
-	struct pwr_policy_3x_header_struct *packed_hdr;
-	struct pwr_policy_3x_header_unpacked hdr;
+	struct pwr_policy_3x_header_struct packed_hdr = { 0 };
+	struct pwr_policy_3x_header_unpacked hdr = { 0 };
 	u32 index;
 	u32 obj_index = 0;
 	size_t pwr_policy_size;
@@ -549,41 +549,41 @@ static int devinit_get_pwr_policy_table(struct gk20a *g,
 		goto done;
 	}
 
-	packed_hdr = (struct pwr_policy_3x_header_struct *)ptr;
+	nvgpu_memcpy((u8 *)&packed_hdr, ptr, VBIOS_POWER_POLICY_3X_HEADER_SIZE_25);
 
-	if (packed_hdr->version !=
+	if (packed_hdr.version !=
 			VBIOS_POWER_POLICY_VERSION_3X) {
 		status = -EINVAL;
 		goto done;
 	}
 
-	if (packed_hdr->header_size <
+	if (packed_hdr.header_size <
 			VBIOS_POWER_POLICY_3X_HEADER_SIZE_25) {
 		status = -EINVAL;
 		goto done;
 	}
 
-	if (packed_hdr->table_entry_size <
+	if (packed_hdr.table_entry_size <
 			VBIOS_POWER_POLICY_3X_ENTRY_SIZE_2E) {
 		status = -EINVAL;
 		goto done;
 	}
 
 	/* unpack power policy table header */
-	devinit_unpack_pwr_policy_header(&hdr, packed_hdr);
+	devinit_unpack_pwr_policy_header(&hdr, &packed_hdr);
 
 	ptr += (u32)hdr.header_size;
 
 	for (index = 0; index < hdr.num_table_entries; index++) {
 
-		struct pwr_policy_3x_entry_struct *packed_entry;
+		struct pwr_policy_3x_entry_struct packed_entry = { 0 };
 		struct pwr_policy_3x_entry_unpacked entry;
 
 		u8 class_type;
 
-		packed_entry = (struct pwr_policy_3x_entry_struct *)ptr;
+		nvgpu_memcpy((u8 *)&packed_entry, ptr, hdr.table_entry_size);
 
-		class_type = BIOS_GET_FIELD(u8, packed_entry->flags0,
+		class_type = BIOS_GET_FIELD(u8, packed_entry.flags0,
 				NV_VBIOS_POWER_POLICY_3X_ENTRY_FLAGS0_CLASS);
 
 		if (class_type != NV_VBIOS_POWER_POLICY_3X_ENTRY_FLAGS0_CLASS_HW_THRESHOLD) {
@@ -592,7 +592,7 @@ static int devinit_get_pwr_policy_table(struct gk20a *g,
 		}
 
 		/* unpack power policy table entry */
-		devinit_unpack_pwr_policy_entry(&entry, packed_entry);
+		devinit_unpack_pwr_policy_entry(&entry, &packed_entry);
 
 		ppwrpolicyobjs->version =
 				CTRL_PMGR_PWR_POLICY_TABLE_VERSION_3X;
