@@ -440,7 +440,7 @@ void nvgpu_runlist_swap_mem(struct gk20a *g, struct nvgpu_runlist_domain *domain
 	 * mem becomes the previously scheduled buffer and it can be modified once
 	 * the runlist lock is released.
 	 */
-	rl_dbg(g, "Swapping mem for rl domain[%s]", domain->name);
+	rl_dbg(g, "Swapping mem for rl domain[%llu]", domain->domain_id);
 
 	mem_tmp = domain->mem;
 	domain->mem = domain->mem_hw;
@@ -452,8 +452,8 @@ static int nvgpu_runlist_domain_actual_submit(struct gk20a *g, struct nvgpu_runl
 {
 	int ret = 0;
 
-	rl_dbg(g, "Runlist[%u]: submitting domain %s",
-		rl->id, rl->domain->name);
+	rl_dbg(g, "Runlist[%u]: submitting domain[%llu]",
+		rl->id, rl->domain->domain_id);
 
 	if (swap_buffer) {
 		nvgpu_runlist_swap_mem(g, rl->domain);
@@ -483,8 +483,8 @@ static int nvgpu_runlist_update_mem_locked(struct gk20a *g, struct nvgpu_runlist
 	int ret = 0;
 	bool add_entries;
 
-	rl_dbg(g, "updating runlist[%u], domain[%s], channel = [%u], op = %s",
-		rl->id, domain->name,
+	rl_dbg(g, "updating runlist[%u], domain[%llu], channel = [%u], op = %s",
+		rl->id, domain->domain_id,
 		ch == NULL ? NVGPU_INVALID_CHANNEL_ID : ch->chid,
 		add ? "add" : "remove");
 
@@ -673,8 +673,8 @@ static int runlist_submit_powered(struct gk20a *g, struct nvgpu_runlist *runlist
 
 	runlist->domain = next_domain;
 
-	rl_dbg(g, "Runlist[%u]: switching to domain %s",
-		runlist->id, next_domain->name);
+	rl_dbg(g, "Runlist[%u]: switching to domain %llu",
+		runlist->id, next_domain->domain_id);
 
 	err = nvgpu_runlist_domain_actual_submit(g, runlist, swap_buffer, wait_for_finish);
 
@@ -686,8 +686,8 @@ static int runlist_select_and_submit(struct gk20a *g, struct nvgpu_runlist *runl
 {
 	int err;
 
-	rl_dbg(g, "Runlist[%u]: switching to domain %s",
-	       runlist->id, next_domain->name);
+	rl_dbg(g, "Runlist[%u]: switching to domain %llu",
+	       runlist->id, next_domain->domain_id);
 
 	runlist->domain = next_domain;
 
@@ -783,7 +783,7 @@ void nvgpu_runlist_tick(struct gk20a *g, struct nvgpu_runlist_domain **rl_domain
 		runlist = &f->active_runlists[i];
 		err = runlist_switch_domain_and_submit(g, runlist, rl_domain[i]);
 		if (err != 0) {
-			nvgpu_err(g, "Failed to schedule domain [%s]", rl_domain[i]->name);
+			nvgpu_err(g, "Failed to schedule domain [%llu]", rl_domain[i]->domain_id);
 		}
 	}
 }
@@ -1114,7 +1114,7 @@ void nvgpu_runlist_link_domain(struct nvgpu_runlist *runlist,
 }
 
 struct nvgpu_runlist_domain *nvgpu_runlist_domain_alloc(struct gk20a *g,
-		const char *name)
+		u64 domain_id)
 {
 	struct nvgpu_runlist_domain *domain = nvgpu_kzalloc(g, sizeof(*domain));
 	struct nvgpu_fifo *f = &g->fifo;
@@ -1125,7 +1125,7 @@ struct nvgpu_runlist_domain *nvgpu_runlist_domain_alloc(struct gk20a *g,
 		return NULL;
 	}
 
-	(void)strncpy(domain->name, name, sizeof(domain->name) - 1U);
+	domain->domain_id = domain_id;
 
 	domain->mem = init_rl_mem(g, (u32)runlist_size);
 	if (domain->mem == NULL) {
@@ -1166,7 +1166,7 @@ free_domain:
 }
 
 struct nvgpu_runlist_domain *nvgpu_rl_domain_get(struct gk20a *g, u32 runlist_id,
-						 const char *name)
+						 u64 domain_id)
 {
 	struct nvgpu_fifo *f = &g->fifo;
 	struct nvgpu_runlist *runlist = f->runlists[runlist_id];
@@ -1174,7 +1174,7 @@ struct nvgpu_runlist_domain *nvgpu_rl_domain_get(struct gk20a *g, u32 runlist_id
 
 	nvgpu_list_for_each_entry(domain, &runlist->user_rl_domains, nvgpu_runlist_domain,
 				  domains_list) {
-		if (strcmp(domain->name, name) == 0) {
+		if (domain->domain_id == domain_id) {
 			return domain;
 		}
 	}
@@ -1232,7 +1232,7 @@ static int nvgpu_runlist_alloc_shadow_rl_domain(struct gk20a *g)
 	for (i = 0; i < g->fifo.num_runlists; i++) {
 		struct nvgpu_runlist *runlist = &f->active_runlists[i];
 
-		runlist->shadow_rl_domain = nvgpu_runlist_domain_alloc(g, SHADOW_DOMAIN_NAME);
+		runlist->shadow_rl_domain = nvgpu_runlist_domain_alloc(g, SHADOW_DOMAIN_ID);
 		if (runlist->shadow_rl_domain == NULL) {
 			nvgpu_err(g, "memory allocation failed");
 			/*
@@ -1242,8 +1242,8 @@ static int nvgpu_runlist_alloc_shadow_rl_domain(struct gk20a *g)
 			return -ENOMEM;
 		}
 
-		rl_dbg(g, "Allocated default domain for runlist[%u]: %s", runlist->id,
-			runlist->shadow_rl_domain->name);
+		rl_dbg(g, "Allocated default domain for runlist[%u]: %llu", runlist->id,
+			runlist->shadow_rl_domain->domain_id);
 
 		runlist->domain = runlist->shadow_rl_domain;
 	}

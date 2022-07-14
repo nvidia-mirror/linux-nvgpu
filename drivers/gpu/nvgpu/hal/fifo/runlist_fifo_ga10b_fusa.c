@@ -72,7 +72,7 @@ void ga10b_runlist_hw_submit(struct gk20a *g, struct nvgpu_runlist *runlist)
 			runlist_submit_base_hi_ptr_hi_f(runlist_iova_hi));
 	}
 
-	rl_dbg(g, "Submitting domain[%s], mem=0x%16llx", runlist->domain->name,
+	rl_dbg(g, "Submitting domain[%llu], mem=0x%16llx", runlist->domain->domain_id,
 		(u64)nvgpu_mem_get_addr(g, &runlist->domain->mem_hw->mem));
 
 	/* TODO offset in runlist support */

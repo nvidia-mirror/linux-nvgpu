@@ -57,6 +57,10 @@ struct nvgpu_nvs_worker_item {
 	nvgpu_atomic_t state;
 };
 
+
+static struct nvgpu_nvs_domain *
+nvgpu_nvs_domain_by_id_locked(struct gk20a *g, u64 domain_id);
+
 static inline struct nvgpu_nvs_worker_item *
 nvgpu_nvs_worker_item_from_worker_item(struct nvgpu_list_node *node)
 {
@@ -131,6 +135,7 @@ static void nvgpu_nvs_worker_wakeup_process_item(struct nvgpu_list_node *work_it
 	struct gk20a *g = work->g;
 	int ret = 0;
 	struct nvgpu_nvs_scheduler *sched = g->scheduler;
+	struct nvgpu_nvs_domain *nvgpu_nvs_domain;
 	struct nvs_domain *nvs_domain;
 	struct nvgpu_runlist *runlist = work->rl;
 	struct nvgpu_runlist_domain *rl_domain = work->rl_domain;
@@ -140,14 +145,16 @@ static void nvgpu_nvs_worker_wakeup_process_item(struct nvgpu_list_node *work_it
 	if (rl_domain == NULL) {
 		nvs_domain = sched->shadow_domain->parent;
 		rl_domain = runlist->shadow_rl_domain;
-	} else if (strcmp(rl_domain->name, SHADOW_DOMAIN_NAME) == 0) {
+	} else if (rl_domain->domain_id == SHADOW_DOMAIN_ID) {
 		nvs_domain = sched->shadow_domain->parent;
 	} else {
-		nvs_domain = nvs_domain_by_name(sched->sched, rl_domain->name);
-		if (nvs_domain == NULL) {
-			nvgpu_err(g, "Unable to find domain[%s]", rl_domain->name);
+		nvgpu_nvs_domain = nvgpu_nvs_domain_by_id_locked(g, rl_domain->domain_id);
+		if (nvgpu_nvs_domain == NULL) {
+			nvgpu_err(g, "Unable to find domain[%llu]", rl_domain->domain_id);
 			ret = -EINVAL;
 			goto done;
+		} else {
+			nvs_domain = nvgpu_nvs_domain->parent;
 		}
 	}
 
@@ -499,11 +506,9 @@ int nvgpu_nvs_open(struct gk20a *g)
 		goto unlock;
 	}
 
-	if (nvgpu_rl_domain_get(g, 0, SHADOW_DOMAIN_NAME) == NULL) {
-		err = nvgpu_nvs_gen_shadow_domain(g);
-		if (err != 0) {
-			goto unlock;
-		}
+	err = nvgpu_nvs_gen_shadow_domain(g);
+	if (err != 0) {
+		goto unlock;
 	}
 
 	err = nvgpu_nvs_worker_init(g);
@@ -539,14 +544,14 @@ static u64 nvgpu_nvs_new_id(struct gk20a *g)
 }
 
 static int nvgpu_nvs_create_rl_domain_mem(struct gk20a *g,
-		struct nvgpu_nvs_domain *domain, const char *name)
+		struct nvgpu_nvs_domain *domain)
 {
 	struct nvgpu_fifo *f = &g->fifo;
 	u32 i, j;
 	int err = 0;
 
 	for (i = 0U; i < f->num_runlists; i++) {
-		domain->rl_domains[i] = nvgpu_runlist_domain_alloc(g, name);
+		domain->rl_domains[i] = nvgpu_runlist_domain_alloc(g, domain->id);
 		if (domain->rl_domains[i] == NULL) {
 			err = -ENOMEM;
 			break;
@@ -599,7 +604,7 @@ int nvgpu_nvs_add_domain(struct gk20a *g, const char *name, u64 timeslice,
 		goto unlock;
 	}
 
-	err = nvgpu_nvs_create_rl_domain_mem(g, nvgpu_dom, name);
+	err = nvgpu_nvs_create_rl_domain_mem(g, nvgpu_dom);
 	if (err != 0) {
 		nvs_domain_destroy(sched->sched, nvgpu_dom->parent);
 		nvgpu_kfree(g, nvgpu_dom->rl_domains);
@@ -622,7 +627,7 @@ unlock:
 	return err;
 }
 
-struct nvgpu_nvs_domain *
+static struct nvgpu_nvs_domain *
 nvgpu_nvs_domain_by_id_locked(struct gk20a *g, u64 domain_id)
 {
 	struct nvgpu_nvs_scheduler *sched = g->scheduler;

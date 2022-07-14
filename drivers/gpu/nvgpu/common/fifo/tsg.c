@@ -112,13 +112,13 @@ int nvgpu_tsg_bind_channel(struct nvgpu_tsg *tsg, struct nvgpu_channel *ch)
 		tsg->runlist = ch->runlist;
 		if (tsg->rl_domain != NULL) {
 			/*
-			 * The rl domain identifier is stashed in tsg->rl_domain->name
+			 * The rl domain identifier is stashed in tsg->rl_domain->domain_id
 			 * when the tsg is bound to a domain, but at that point there
 			 * are no channels yet to describe which runlist id should be
 			 * used. Now we know.
 			 */
 			tsg->rl_domain = nvgpu_rl_domain_get(g, tsg->runlist->id,
-				tsg->rl_domain->name);
+				tsg->rl_domain->domain_id);
 			WARN_ON(tsg->rl_domain == NULL);
 		}
 	} else {
@@ -175,9 +175,9 @@ int nvgpu_tsg_bind_domain(struct nvgpu_tsg *tsg, struct nvgpu_nvs_domain *nnvs_d
 	 * The domain ptr will get updated with the right id once the runlist
 	 * gets specified based on the first channel.
 	 */
-	rl_domain = nvgpu_rl_domain_get(g, 0, name);
+	rl_domain = nvgpu_rl_domain_get(g, 0, nnvs_domain->id);
 	if (rl_domain == NULL) {
-		nvgpu_err(g, "rl domain not found (%s)", name);
+		nvgpu_err(g, "rl domain not found (%s) having Id[%llu]", name, nnvs_domain->id);
 		/*
 		 * This shouldn't happen because the nvs domain guarantees RL domains.
 		 *

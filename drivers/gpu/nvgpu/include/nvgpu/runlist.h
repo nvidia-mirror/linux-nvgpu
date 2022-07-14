@@ -78,6 +78,7 @@ struct nvgpu_pbdma_info;
 #define NVGPU_INVALID_RUNLIST_ID		U32_MAX
 
 #define SHADOW_DOMAIN_NAME "(shadow)"
+#define SHADOW_DOMAIN_ID U64_MAX
 
 /*
  * Updates to this memory are still serialized by the runlist lock.
@@ -122,7 +123,7 @@ struct nvgpu_runlist_domain {
 	/**
 	 * Placeholder for metadata that will come in further patches.
 	 */
-	char name[32];
+	u64 domain_id;
 	/**
 	 * All created domains are tracked in a list.
 	 *
@@ -201,7 +202,7 @@ struct nvgpu_runlist {
 
 bool nvgpu_rl_domain_exists(struct gk20a *g, const char *name);
 struct nvgpu_runlist_domain *nvgpu_runlist_domain_alloc(struct gk20a *g,
-		const char *name);
+		u64 domain_id);
 void nvgpu_runlist_domain_free(struct gk20a *g,
 		struct nvgpu_runlist_domain *domain);
 void nvgpu_runlist_swap_mem(struct gk20a *g, struct nvgpu_runlist_domain *domain);
@@ -210,7 +211,7 @@ void nvgpu_runlist_link_domain(struct nvgpu_runlist *runlist,
 void nvgpu_runlist_unlink_domain(struct nvgpu_runlist *runlist,
 		struct nvgpu_runlist_domain *domain);
 struct nvgpu_runlist_domain *nvgpu_rl_domain_get(struct gk20a *g, u32 runlist_id,
-						 const char *name);
+						 u64 domain_id);
 
 /**
  * @brief Schedule runlist domain
