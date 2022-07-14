@@ -786,20 +786,15 @@ static int nvgpu_nvs_ctrl_fifo_create_queue(struct gk20a *g,
 		flag |= O_RDWR;
 	}
 
-	/* Support for Read-Only Observers will be added later */
-	if (read_only) {
-		err = -EOPNOTSUPP;
-		goto fail;
-	}
-
 	if (args->access_type == NVS_CTRL_FIFO_QUEUE_ACCESS_TYPE_EXCLUSIVE) {
-		if (nvgpu_nvs_buffer_is_valid(g, queue)) {
+		/* Observers are not supported for Control Queues, So ensure, buffer is invalid */
+		if (nvgpu_nvs_buffer_is_valid(g, queue) && (num_queue == NVGPU_NVS_NUM_CONTROL)) {
 			err = -EBUSY;
 			goto fail;
 		}
 	}
 
-	/* For event queue, prevent multiple subscription by the same user */
+	/* Prevent multiple subscription by the same user. */
 	if (nvgpu_nvs_ctrl_fifo_user_is_subscribed_to_queue(user, queue)) {
 		err = -EEXIST;
 		goto fail;
@@ -807,20 +802,39 @@ static int nvgpu_nvs_ctrl_fifo_create_queue(struct gk20a *g,
 
 	queue_size = NVS_QUEUE_DEFAULT_SIZE;
 
-	/* Ensure, event queue is constructed only once across all users. */
+	/* Exclusive User or First Observer */
 	if (!nvgpu_nvs_buffer_is_valid(g, queue)) {
-		err = nvgpu_nvs_get_buf_linux(g, queue, queue_size, mask, read_only);
-		if (err != 0) {
-			goto fail;
-		}
+		err = nvgpu_nvs_alloc_and_get_buf(g, queue, queue_size, mask, read_only);
+	} else {
+		/* User is not already subscribed.
+		 * Other observers or (Exclusive User & Event Queue).
+		 */
+		err = nvgpu_nvs_get_buf(g, queue, read_only);
 	}
+
+	if (err != 0) {
+		goto fail;
+	}
+
+	/* At this point
+	 * 1) dma_mapping exists
+	 * 2) An instance of struct dma_buf * exists in priv->dmabuf_temp
+	 */
 
 	priv = queue->priv;
 
-	fd = dma_buf_fd(priv->dmabuf, flag);
+	fd = dma_buf_fd(priv->dmabuf_temp, flag);
 	if (fd < 0) {
-		/* Might have valid user vmas for previous event queue users */
-		if (!nvgpu_nvs_buf_linux_is_mapped(g, queue)) {
+		/* Release the dmabuf pointer here */
+		dma_buf_put(priv->dmabuf_temp);
+		priv->dmabuf_temp = NULL;
+
+		/* Erase mapping for num_queues = NVGPU_NVS_NUM_CONTROL,
+		 * For num_queues = NVGPU_NVS_NUM_EVENT, erase only if
+		 * underlying backing buffer is not already being used.
+		 */
+		if ((num_queue == NVGPU_NVS_NUM_CONTROL) ||
+				!nvgpu_nvs_ctrl_fifo_queue_has_subscribed_users(queue)) {
 			nvgpu_nvs_ctrl_fifo_erase_queue(g, queue);
 		}
 		err = fd;
@@ -853,6 +867,7 @@ static void nvgpu_nvs_ctrl_fifo_undo_create_queue(struct gk20a *g,
 	enum nvgpu_nvs_ctrl_queue_num num_queue;
 	enum nvgpu_nvs_ctrl_queue_direction queue_direction;
 	struct nvgpu_nvs_ctrl_queue *queue;
+	struct nvgpu_nvs_linux_buf_priv *priv;
 	u8 mask = 0;
 
 	nvgpu_nvs_ctrl_fifo_lock_queues(g);
@@ -866,17 +881,24 @@ static void nvgpu_nvs_ctrl_fifo_undo_create_queue(struct gk20a *g,
 		return;
 	}
 
+	priv = (struct nvgpu_nvs_linux_buf_priv *)queue->priv;
+
 	nvgpu_nvs_ctrl_fifo_user_unsubscribe_queue(user, queue);
 
-	/* For Control Queues, no mappings exist, For Event Queues, mappings might exist */
-	if (nvgpu_nvs_buffer_is_valid(g, queue) && !nvgpu_nvs_buf_linux_is_mapped(g, queue)) {
+	/* put the dma_buf here */
+	dma_buf_put(priv->dmabuf_temp);
+	priv->dmabuf_temp = NULL;
+
+	/* Control queues has no other subscribed users,
+	 * Event queue might have other subscribed users.
+	 */
+	if (nvgpu_nvs_buffer_is_valid(g, queue) &&
+			!nvgpu_nvs_ctrl_fifo_queue_has_subscribed_users(queue)) {
 		nvgpu_nvs_ctrl_fifo_erase_queue(g, queue);
 	}
 
-	if (args->dmabuf_fd != 0) {
-		put_unused_fd(args->dmabuf_fd);
-		args->dmabuf_fd = 0;
-	}
+	put_unused_fd(args->dmabuf_fd);
+	args->dmabuf_fd = 0;
 
 	nvgpu_nvs_ctrl_fifo_unlock_queues(g);
 }
@@ -928,11 +950,17 @@ static int nvgpu_nvs_ctrl_fifo_destroy_queue(struct gk20a *g,
 		goto fail;
 	}
 
-	/* For Control Queues, no mappings should exist, For Event Queues, mappings might exist */
-	if (nvgpu_nvs_buffer_is_valid(g, queue)) {
+	/* For Event Queues, don't erase even if the buffer
+	 * is currently not mapped. There might be some observers
+	 * who has acquired the dma_bufs but hasn't mapped yet.
+	 * Erase the queue only when the last user is removed.
+	 *
+	 * For Control Queues, no mappings should exist
+	 */
+	if (num_queue == NVGPU_NVS_NUM_CONTROL) {
 		if (!nvgpu_nvs_buf_linux_is_mapped(g, queue)) {
 			nvgpu_nvs_ctrl_fifo_erase_queue(g, queue);
-		} else if (is_exclusive_user) {
+		} else {
 			err = -EBUSY;
 			goto fail;
 		}
@@ -1044,6 +1072,7 @@ long nvgpu_nvs_ctrl_fifo_ops_ioctl(struct file *filp, unsigned int cmd, unsigned
 			nvgpu_nvs_ctrl_fifo_undo_create_queue(g, user, args);
 			err = -EFAULT;
 			args->dmabuf_fd = -1;
+			args->queue_size = 0;
 			goto done;
 		}
 

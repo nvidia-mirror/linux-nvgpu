@@ -217,6 +217,7 @@ struct nvgpu_nvs_ctrl_queue {
 	void			*priv;
 	bool			valid;
 	u8				mask;
+	u8				ref;
 	void (*free)(struct gk20a *g, struct nvgpu_nvs_ctrl_queue *queue);
 };
 
@@ -276,6 +277,7 @@ int nvgpu_nvs_buffer_alloc(struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl,
 		size_t bytes, u8 mask, struct nvgpu_nvs_ctrl_queue *buf);
 void nvgpu_nvs_buffer_free(struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl,
 		struct nvgpu_nvs_ctrl_queue *buf);
+bool nvgpu_nvs_ctrl_fifo_queue_has_subscribed_users(struct nvgpu_nvs_ctrl_queue *queue);
 void nvgpu_nvs_ctrl_fifo_user_subscribe_queue(struct nvs_domain_ctrl_fifo_user *user,
 		struct nvgpu_nvs_ctrl_queue *queue);
 void nvgpu_nvs_ctrl_fifo_user_unsubscribe_queue(struct nvs_domain_ctrl_fifo_user *user,

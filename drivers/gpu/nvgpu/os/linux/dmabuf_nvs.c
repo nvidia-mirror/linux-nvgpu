@@ -84,7 +84,7 @@ static int nvs_release_user_mappings_locked(struct gk20a *g, struct nvgpu_nvs_li
 		struct vm_area_struct *vma = current_entry->vma;
 
 		zap_vma_entries(g, vma);
-		linux_buf->ref--;
+		linux_buf->mapped_ref--;
 	}
 
 	return err;
@@ -99,7 +99,7 @@ static void nvs_vma_close(struct vm_area_struct *vma)
 
 	nvgpu_nvs_ctrl_fifo_lock_queues(g);
 
-	linux_buf->ref--;
+	linux_buf->mapped_ref--;
 	nvgpu_list_del(&vma_metadata->node);
 
 	/* This VMA is freed now and points to invalid ptes */
@@ -146,7 +146,7 @@ static int nvgpu_nvs_buf_mmap(struct dma_buf *dmabuf, struct vm_area_struct *vma
 	vma->vm_flags |= VM_DONTCOPY | VM_DONTEXPAND | VM_NORESERVE |
 		VM_DONTDUMP;
 
-	if (linux_buf->read_only) {
+	if (buf->mask == NVGPU_NVS_CTRL_FIFO_QUEUE_CLIENT_EVENTS_READ) {
 		vma->vm_flags |= VM_SHARED;
 	}
 
@@ -170,7 +170,7 @@ static int nvgpu_nvs_buf_mmap(struct dma_buf *dmabuf, struct vm_area_struct *vma
 	vma_metadata->buf = buf;
 	nvgpu_init_list_node(&vma_metadata->node);
 
-	linux_buf->ref++;
+	linux_buf->mapped_ref++;
 	nvgpu_list_add_tail(&vma_metadata->node, &linux_buf->list_mapped_user_vmas);
 
 	vma->vm_private_data = vma_metadata;
@@ -220,8 +220,6 @@ static void nvgpu_nvs_destroy_buf_linux_locked(struct gk20a *g, struct nvgpu_nvs
 
 	nvs_release_user_mappings_locked(g, priv);
 
-	dma_buf_put(priv->dmabuf);
-
 	nvgpu_nvs_buffer_free(sched_ctrl, buf);
 	nvgpu_kfree(g, priv);
 
@@ -234,12 +232,41 @@ bool nvgpu_nvs_buf_linux_is_mapped(struct gk20a *g, struct nvgpu_nvs_ctrl_queue 
 	struct nvgpu_nvs_linux_buf_priv *priv = NULL;
 
 	priv = (struct nvgpu_nvs_linux_buf_priv *)buf->priv;
-	is_mapped = (priv->ref != 0U);
+	is_mapped = (priv->mapped_ref != 0U);
 
 	return is_mapped;
 }
 
-int nvgpu_nvs_get_buf_linux(struct gk20a *g, struct nvgpu_nvs_ctrl_queue *buf,
+int nvgpu_nvs_get_buf(struct gk20a *g, struct nvgpu_nvs_ctrl_queue *buf,
+		bool read_only)
+{
+	struct nvgpu_nvs_linux_buf_priv *priv;
+	int err;
+
+	/*
+	 * This ref is released when the dma_buf is closed.
+	 */
+	if (!nvgpu_get(g))
+		return -ENODEV;
+
+	priv = (struct nvgpu_nvs_linux_buf_priv *)buf->priv;
+
+	priv->dmabuf_temp = nvgpu_nvs_buf_export_dmabuf(buf, read_only);
+	if (IS_ERR(priv->dmabuf_temp)) {
+		nvgpu_err(g, "Unable to export dma buf");
+		err = PTR_ERR(priv->dmabuf_temp);
+		priv->dmabuf_temp = NULL;
+		goto fail;
+	}
+
+	return 0;
+fail:
+	nvgpu_put(g);
+
+	return err;
+}
+
+int nvgpu_nvs_alloc_and_get_buf(struct gk20a *g, struct nvgpu_nvs_ctrl_queue *buf,
 		size_t bytes, u8 mask, bool read_only)
 {
 	struct nvgpu_nvs_linux_buf_priv *priv;
@@ -261,7 +288,6 @@ int nvgpu_nvs_get_buf_linux(struct gk20a *g, struct nvgpu_nvs_ctrl_queue *buf,
 	}
 
 	nvgpu_init_list_node(&priv->list_mapped_user_vmas);
-	priv->read_only = read_only;
 
 	err = nvgpu_nvs_buffer_alloc(sched_ctrl, bytes, mask, buf);
 	if (err != 0) {
@@ -269,10 +295,11 @@ int nvgpu_nvs_get_buf_linux(struct gk20a *g, struct nvgpu_nvs_ctrl_queue *buf,
 		goto fail;
 	}
 
-	priv->dmabuf = nvgpu_nvs_buf_export_dmabuf(buf, read_only);
-	if (IS_ERR(priv->dmabuf)) {
+	priv->dmabuf_temp = nvgpu_nvs_buf_export_dmabuf(buf, read_only);
+	if (IS_ERR(priv->dmabuf_temp)) {
 		nvgpu_err(g, "Unable to export dma buf");
-		err = PTR_ERR(priv->dmabuf);
+		err = PTR_ERR(priv->dmabuf_temp);
+		priv->dmabuf_temp = NULL;
 		goto fail;
 	}
 

@@ -340,15 +340,22 @@ void nvgpu_nvs_ctrl_fifo_unlock_queues(struct gk20a *g)
 	nvgpu_mutex_release(&sched_ctrl->queues.queue_lock);
 }
 
+bool nvgpu_nvs_ctrl_fifo_queue_has_subscribed_users(struct nvgpu_nvs_ctrl_queue *queue)
+{
+	return queue->ref != 0;
+}
+
 void nvgpu_nvs_ctrl_fifo_user_subscribe_queue(struct nvs_domain_ctrl_fifo_user *user,
 		struct nvgpu_nvs_ctrl_queue *queue)
 {
 	user->active_used_queues |= queue->mask;
+	queue->ref++;
 }
 void nvgpu_nvs_ctrl_fifo_user_unsubscribe_queue(struct nvs_domain_ctrl_fifo_user *user,
 		struct nvgpu_nvs_ctrl_queue *queue)
 {
 	user->active_used_queues &= ~queue->mask;
+	queue->ref--;
 }
 bool nvgpu_nvs_ctrl_fifo_user_is_subscribed_to_queue(struct nvs_domain_ctrl_fifo_user *user,
 		struct nvgpu_nvs_ctrl_queue *queue)

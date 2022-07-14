@@ -24,17 +24,23 @@ struct dma_buf;
 struct gk20a;
 
 struct nvgpu_nvs_linux_buf_priv {
-	struct dma_buf	*dmabuf;
+	/* This is used to temporarily contain the dmabuf for handling failure */
+	struct dma_buf	*dmabuf_temp;
 	bool read_only;
-	u32 ref;
+	u32 mapped_ref;
+
 	struct nvgpu_list_node list_mapped_user_vmas;
 };
 
 struct nvgpu_nvs_domain_ctrl_fifo_user_vma {
+	bool read_only;
 	struct nvgpu_nvs_ctrl_queue *buf;
 	struct vm_area_struct *vma;
 	struct nvgpu_list_node node;
 };
+
+int nvgpu_nvs_get_buf(struct gk20a *g, struct nvgpu_nvs_ctrl_queue *buf,
+		bool read_only);
 
 /**
  * @brief Construct a buffer for use as a shared message passing
@@ -52,7 +58,7 @@ struct nvgpu_nvs_domain_ctrl_fifo_user_vma {
  * @param read_only Indicates whether a read-only buffer is requested.
  * @return int 0 on success, else fail.
  */
-int nvgpu_nvs_get_buf_linux(struct gk20a *g, struct nvgpu_nvs_ctrl_queue *buf,
+int nvgpu_nvs_alloc_and_get_buf(struct gk20a *g, struct nvgpu_nvs_ctrl_queue *buf,
 		size_t bytes, u8 mask, bool read_only);
 
 /**
