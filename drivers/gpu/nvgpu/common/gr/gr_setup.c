@@ -267,6 +267,8 @@ int nvgpu_gr_setup_alloc_obj_ctx(struct nvgpu_channel *c, u32 class_num,
 	}
 #endif
 
+	nvgpu_gr_ctx_mark_ctx_initialized(gr_ctx);
+
 	nvgpu_mutex_release(&tsg->ctx_init_lock);
 
 	nvgpu_log(g, gpu_dbg_fn | gpu_dbg_gr, "done");

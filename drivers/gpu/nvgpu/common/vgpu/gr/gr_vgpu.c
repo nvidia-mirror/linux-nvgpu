@@ -233,7 +233,9 @@ int vgpu_gr_alloc_obj_ctx(struct nvgpu_channel  *c, u32 class_num, u32 flags)
 
 	err = vgpu_comm_sendrecv(&msg, sizeof(msg), sizeof(msg));
 	err = err ? err : msg.ret;
-	if (err) {
+	if (err == 0) {
+		nvgpu_gr_ctx_mark_ctx_initialized(gr_ctx);
+	} else {
 		nvgpu_err(g, "alloc obj ctx failed err %d", err);
 	}
 	return err;

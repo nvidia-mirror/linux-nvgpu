@@ -530,6 +530,28 @@ void nvgpu_gr_ctx_set_tsgid(struct nvgpu_gr_ctx *gr_ctx, u32 tsgid);
  */
 u32 nvgpu_gr_ctx_get_tsgid(struct nvgpu_gr_ctx *gr_ctx);
 
+/**
+ * @brief Mark graphics context initialized.
+ *
+ * @param gr_ctx [in]          Pointer to graphics context struct.
+ *
+ * This function will mark obj_ctx initialized for the gr_ctx by
+ * setting ctx_initialized to true.
+ */
+void nvgpu_gr_ctx_mark_ctx_initialized(struct nvgpu_gr_ctx *gr_ctx);
+
+/**
+ * @brief Get ctx_initialized stored in graphics context structure.
+ *
+ * @param gr_ctx [in]          Pointer to graphics context struct.
+ *
+ * This function will return ctx_initialized stored in #nvgpu_gr_ctx
+ * structure.
+ *
+ * @return ctx initialization status.
+ */
+bool nvgpu_gr_ctx_get_ctx_initialized(struct nvgpu_gr_ctx *gr_ctx);
+
 #ifdef CONFIG_NVGPU_CILP
 bool nvgpu_gr_ctx_get_cilp_preempt_pending(struct nvgpu_gr_ctx *gr_ctx);
 

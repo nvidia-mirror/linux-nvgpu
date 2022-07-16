@@ -563,6 +563,16 @@ u32 nvgpu_gr_ctx_get_tsgid(struct nvgpu_gr_ctx *gr_ctx)
 	return gr_ctx->tsgid;
 }
 
+void nvgpu_gr_ctx_mark_ctx_initialized(struct nvgpu_gr_ctx *gr_ctx)
+{
+	gr_ctx->ctx_initialized = true;
+}
+
+bool nvgpu_gr_ctx_get_ctx_initialized(struct nvgpu_gr_ctx *gr_ctx)
+{
+	return gr_ctx->ctx_initialized;
+}
+
 #ifdef CONFIG_NVGPU_GRAPHICS
 void nvgpu_gr_ctx_init_graphics_preemption_mode(struct nvgpu_gr_ctx *gr_ctx,
 	u32 graphics_preempt_mode)

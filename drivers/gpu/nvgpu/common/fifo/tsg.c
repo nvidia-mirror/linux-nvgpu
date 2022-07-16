@@ -968,6 +968,7 @@ static struct nvgpu_tsg *tsg_gk20a_from_ref(struct nvgpu_ref *ref)
 void nvgpu_tsg_release(struct nvgpu_ref *ref)
 {
 	struct nvgpu_tsg *tsg = tsg_gk20a_from_ref(ref);
+	struct nvgpu_gr_ctx *gr_ctx = tsg->gr_ctx;
 	struct gk20a *g = tsg->g;
 	int err;
 
@@ -977,8 +978,8 @@ void nvgpu_tsg_release(struct nvgpu_ref *ref)
 		return;
 	}
 
-	if ((tsg->gr_ctx != NULL) && (tsg->vm != NULL)) {
-		g->ops.gr.setup.free_gr_ctx(g, tsg->gr_ctx);
+	if ((gr_ctx != NULL) && nvgpu_gr_ctx_get_ctx_initialized(gr_ctx)) {
+		g->ops.gr.setup.free_gr_ctx(g, gr_ctx);
 	}
 
 #ifdef CONFIG_NVGPU_CHANNEL_TSG_CONTROL

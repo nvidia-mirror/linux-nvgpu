@@ -149,6 +149,8 @@ struct nvgpu_gr_ctx {
 	 */
 	u32 tsgid;
 
+	bool ctx_initialized;
+
 #ifdef CONFIG_NVGPU_SM_DIVERSITY
 	/** SM diversity configuration offset.
 	 * It is valid only if NVGPU_SUPPORT_SM_DIVERSITY support is true.
