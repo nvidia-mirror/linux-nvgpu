@@ -347,13 +347,13 @@ int nvgpu_tsg_unbind_channel(struct nvgpu_tsg *tsg, struct nvgpu_channel *ch,
 			 */
 			(void) nvgpu_channel_mark_error(g, ch);
 			nvgpu_err(g, "unbind hal failed, err=%d", err);
-			goto fail;
+			nvgpu_tsg_abort(g, tsg, true);
 		}
 	}
 
 	nvgpu_ref_put(&tsg->refcount, nvgpu_tsg_release);
 
-	return 0;
+	return err;
 
 fail_common:
 	if (g->ops.tsg.unbind_channel != NULL) {
@@ -362,7 +362,7 @@ fail_common:
 			nvgpu_err(g, "unbind hal failed, err=%d", unbind_err);
 		}
 	}
-fail:
+
 	nvgpu_err(g, "Channel %d unbind failed, tearing down TSG %d",
 		ch->chid, tsg->tsgid);
 
@@ -399,6 +399,7 @@ fail:
 	nvgpu_rwsem_down_write(&tsg->ch_list_lock);
 	nvgpu_list_del(&ch->ch_entry);
 	ch->tsgid = NVGPU_INVALID_TSG_ID;
+	tsg->ch_count = nvgpu_safe_sub_u32(tsg->ch_count, 1U);
 	nvgpu_rwsem_up_write(&tsg->ch_list_lock);
 
 	nvgpu_ref_put(&tsg->refcount, nvgpu_tsg_release);

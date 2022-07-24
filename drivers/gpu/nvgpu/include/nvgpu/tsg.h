@@ -456,6 +456,7 @@ struct nvgpu_tsg *nvgpu_tsg_check_and_get_from_id(struct gk20a *g, u32 tsgid);
  *  - Call #nvgpu_channel_update_runlist to remove the channel from the runlist.
  *  - Acquire #nvgpu_tsg.ch_list_lock of the tsg and delete channel from
  *    #nvgpu_tsg.ch_list.
+ *  - Remove channel from TSG's channel list.
  *  - Set #nvgpu_channel.tsgid to #NVGPU_INVALID_TSG_ID
  *  - Release #nvgpu_tsg.ch_list_lock of the tsg.
  * Call non NULL HAL to unbind channel from the tsg. This HAL is vgpu specific
