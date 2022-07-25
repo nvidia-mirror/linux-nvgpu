@@ -53,7 +53,7 @@ static int ga10b_pmu_pg_pre_init(struct gk20a *g, struct nvgpu_pmu *pmu)
 		sizeof(struct pmu_rpc_struct_lpwr_loading_pre_init));
 
 	rpc.arch_sf_support_mask = NV_PMU_ARCH_FEATURE_SUPPORT_MASK;
-	rpc.base_period_ms = NV_PMU_BASE_SAMPLING_PERIOD_MS;
+	rpc.base_period_ms = NV_PMU_PG_AP_BASE_PERIOD_MS;
 	rpc.b_no_pstate_vbios = true;
 
 	/* Initialize LPWR GR and MS grp data for GRAPHICS and MS_LTC engine */

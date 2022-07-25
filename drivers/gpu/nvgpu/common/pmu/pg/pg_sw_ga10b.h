@@ -29,7 +29,6 @@ struct gk20a;
 
 #define NV_PMU_SUB_FEATURE_SUPPORT_MASK		0xf84
 #define NV_PMU_ARCH_FEATURE_SUPPORT_MASK	0x1B3
-#define NV_PMU_BASE_SAMPLING_PERIOD_MS		0xFFFF
 
 /*
 * Brief Identifier for each Lpwr Group Ctrl ids
