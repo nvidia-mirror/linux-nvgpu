@@ -117,6 +117,25 @@ static u64 nvgpu_nvs_tick(struct gk20a *g)
 		nvs_next = sched->shadow_domain->parent;
 	}
 
+	if (nvs_next->priv == domain) {
+		/*
+		 * This entire thread is going to be changed soon.
+		 * The above check ensures that there are no other domain,
+		 * besides the active domain. So, its safe to simply return here.
+		 * Any active domain updates shall are taken care of during
+		 * nvgpu_nvs_worker_wakeup_process_item().
+		 *
+		 * This is a temporary hack for legacy cases where we donot have
+		 * any active domains available. This needs to be relooked at
+		 * during implementation of manual mode.
+		 *
+		 * A better fix is to ensure this thread is suspended during Railgate.
+		 */
+		timeslice = nvs_next->timeslice_ns;
+		nvgpu_mutex_release(&g->sched_mutex);
+		return timeslice;
+	}
+
 	timeslice = nvs_next->timeslice_ns;
 	nvgpu_domain_next = nvs_next->priv;
 
