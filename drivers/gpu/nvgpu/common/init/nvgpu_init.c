@@ -895,7 +895,6 @@ int nvgpu_finalize_poweron(struct gk20a *g)
 
 		NVGPU_INIT_TABLE_ENTRY(g->ops.mm.init_mm_support, NO_FLAG),
 		NVGPU_INIT_TABLE_ENTRY(g->ops.fifo.fifo_init_support, NO_FLAG),
-		NVGPU_INIT_TABLE_ENTRY(nvgpu_nvs_init, NO_FLAG),
 		NVGPU_INIT_TABLE_ENTRY(g->ops.therm.elcg_init_idle_filters,
 				       NO_FLAG),
 		NVGPU_INIT_TABLE_ENTRY(&nvgpu_netlist_init_ctx_vars, NO_FLAG),
@@ -982,6 +981,7 @@ int nvgpu_finalize_poweron(struct gk20a *g)
 		NVGPU_INIT_TABLE_ENTRY(g->ops.pmu.pmu_restore_golden_img_state,
 				       NO_FLAG),
 #endif
+		NVGPU_INIT_TABLE_ENTRY(nvgpu_nvs_init, NO_FLAG),
 		NVGPU_INIT_TABLE_ENTRY(g->ops.channel.resume_all_serviceable_ch,
 				       NO_FLAG),
 #ifndef CONFIG_NVGPU_DGPU

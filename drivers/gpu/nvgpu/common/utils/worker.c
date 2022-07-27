@@ -24,6 +24,7 @@
 #include <nvgpu/bug.h>
 #include <nvgpu/worker.h>
 #include <nvgpu/string.h>
+#include <nvgpu/thread.h>
 
 static void nvgpu_worker_pre_process(struct nvgpu_worker *worker)
 {
@@ -210,6 +211,51 @@ static int nvgpu_worker_start(struct nvgpu_worker *worker)
 	return err;
 }
 
+static s32 nvgpu_worker_priority_start(struct nvgpu_worker *worker,
+		int priority)
+{
+	s32 err = 0;
+
+	if (nvgpu_thread_is_running(&worker->poll_task)) {
+		return err;
+	}
+
+	nvgpu_mutex_acquire(&worker->start_lock);
+
+	/*
+	 * Mutexes have implicit barriers, so there is no risk of a thread
+	 * having a stale copy of the poll_task variable as the call to
+	 * thread_is_running is volatile
+	 */
+
+	if (nvgpu_thread_is_running(&worker->poll_task)) {
+		nvgpu_mutex_release(&worker->start_lock);
+		return err;
+	}
+
+/*
+ * HVRTOS, doesn't support dynamic threads, currently, HVRTOS
+ * has a dumb implementation of nvgpu_thread_create(), use that instead
+ * of creating a new API.
+ */
+#ifndef NVGPU_HVRTOS
+	err = nvgpu_thread_create_priority(&worker->poll_task, worker,
+			nvgpu_worker_poll_work, priority, worker->thread_name);
+#else
+	(void)priority;
+	err = nvgpu_thread_create(&worker->poll_task, worker,
+			nvgpu_worker_poll_work, worker->thread_name);
+#endif
+	if (err != 0) {
+		nvgpu_err(worker->g,
+			  "failed to create priority worker poller thread %s err %d",
+			  worker->thread_name, err);
+	}
+
+	nvgpu_mutex_release(&worker->start_lock);
+	return err;
+}
+
 bool nvgpu_worker_should_stop(struct nvgpu_worker *worker)
 {
 	return nvgpu_thread_should_stop(&worker->poll_task);
@@ -274,11 +320,9 @@ void nvgpu_worker_init_name(struct nvgpu_worker *worker,
 	(void) strncat(worker->thread_name, gpu_name, num_free_chars);
 }
 
-int nvgpu_worker_init(struct gk20a *g, struct nvgpu_worker *worker,
-	const struct nvgpu_worker_ops *worker_ops)
+static void nvgpu_worker_init_common(struct gk20a *g,
+	struct nvgpu_worker *worker, const struct nvgpu_worker_ops *worker_ops)
 {
-	int err;
-
 	worker->g = g;
 	nvgpu_atomic_set(&worker->put, 0);
 	(void) nvgpu_cond_init(&worker->wq);
@@ -287,8 +331,32 @@ int nvgpu_worker_init(struct gk20a *g, struct nvgpu_worker *worker,
 	nvgpu_mutex_init(&worker->start_lock);
 
 	worker->ops = worker_ops;
+}
+
+int nvgpu_worker_init(struct gk20a *g, struct nvgpu_worker *worker,
+	const struct nvgpu_worker_ops *worker_ops)
+{
+	int err;
+
+	nvgpu_worker_init_common(g, worker, worker_ops);
 
 	err = nvgpu_worker_start(worker);
+	if (err != 0) {
+		nvgpu_err(g, "failed to start worker poller thread %s",
+				worker->thread_name);
+		return err;
+	}
+	return 0;
+}
+
+int nvgpu_priority_worker_init(struct gk20a *g, struct nvgpu_worker *worker,
+	int priority, const struct nvgpu_worker_ops *worker_ops)
+{
+	int err;
+
+	nvgpu_worker_init_common(g, worker, worker_ops);
+
+	err = nvgpu_worker_priority_start(worker, priority);
 	if (err != 0) {
 		nvgpu_err(g, "failed to start worker poller thread %s",
 				worker->thread_name);

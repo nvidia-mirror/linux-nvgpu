@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -15,6 +15,8 @@
  */
 
 #include <linux/kthread.h>
+#include <linux/sched.h>
+#include <linux/version.h>
 
 #include <nvgpu/thread.h>
 #include <nvgpu/timers.h>
@@ -55,6 +57,47 @@ int nvgpu_thread_create(struct nvgpu_thread *thread,
 	wake_up_process(task);
 	return 0;
 };
+
+int nvgpu_thread_create_priority(struct nvgpu_thread *thread,
+			void *data, int (*threadfn)(void *data),
+			int priority, const char *name)
+{
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 9, 0)
+	struct sched_param sparam = {0};
+#endif
+
+	struct task_struct *task = kthread_create(nvgpu_thread_proxy,
+			thread, name);
+	if (IS_ERR(task))
+		return PTR_ERR(task);
+
+	if (priority > 1) {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 9, 0)
+		/* Higher priority tasks are run in threaded interrupt priority level */
+		sched_set_fifo(task);
+#else
+		sparam.sched_priority = MAX_RT_PRIO / 2;
+		sched_setscheduler(task, SCHED_FIFO, &sparam);
+#endif
+	} else {
+		/* Only cares about setting a priority higher than normal,
+		 * Lower than threaded interrupt priority but higher than normal.
+		 */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 9, 0)
+		sched_set_fifo_low(task);
+#else
+		sparam.sched_priority = 1;
+		sched_setscheduler(task, SCHED_FIFO, &sparam);
+#endif
+	}
+
+	thread->task = task;
+	thread->fn = threadfn;
+	thread->data = data;
+	nvgpu_atomic_set(&thread->running, true);
+	wake_up_process(task);
+	return 0;
+}
 
 void nvgpu_thread_stop(struct nvgpu_thread *thread)
 {

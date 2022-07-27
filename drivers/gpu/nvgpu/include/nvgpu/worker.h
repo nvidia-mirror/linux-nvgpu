@@ -311,6 +311,9 @@ void nvgpu_worker_init_name(struct nvgpu_worker *worker,
 int nvgpu_worker_init(struct gk20a *g, struct nvgpu_worker *worker,
 		const struct nvgpu_worker_ops *worker_ops);
 
+int nvgpu_priority_worker_init(struct gk20a *g, struct nvgpu_worker *worker,
+	int priority, const struct nvgpu_worker_ops *worker_ops);
+
 /**
  * @brief Stop the background thread associated with the worker.
  *

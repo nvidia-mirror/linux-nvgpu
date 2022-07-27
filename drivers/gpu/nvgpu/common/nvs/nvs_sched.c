@@ -423,7 +423,19 @@ static int nvgpu_nvs_worker_init(struct gk20a *g)
 
 	nvgpu_worker_init_name(worker, "nvgpu_nvs", g->name);
 
+#ifdef __KERNEL__
+	/* Scheduler a worker thread with RR priority of 1 for Linux.
+	 * Linux uses CFS scheduling class by default for all kernel threads.
+	 * CFS prioritizes threads that have executed for the least amount
+	 * of time and as a result other higher priority kernel threads
+	 * can get delayed.
+	 * Using a RT priority of 1 for linux, ensures that this thread
+	 * always executes before other regular kernel threads.
+	 */
+	err = nvgpu_priority_worker_init(g, worker, 1, &nvs_worker_ops);
+#else
 	err = nvgpu_worker_init(g, worker, &nvs_worker_ops);
+#endif
 	if (err != 0) {
 		/* Ensure that scheduler thread is started as soon as possible to handle
 		 * minimal uptime for applications.
