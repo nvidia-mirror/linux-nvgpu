@@ -28,6 +28,7 @@
 #include <nvgpu/pmu/pmuif/acr.h>
 #include <nvgpu/pmu/pmuif/pmgr.h>
 #include <nvgpu/pmu/pmuif/rpc.h>
+#include <nvgpu/pmu/seq.h>
 
 struct gk20a;
 struct pmu_payload;
@@ -35,9 +36,6 @@ struct nvgpu_pmu;
 struct pmu_msg;
 struct pmu_sequence;
 struct falcon_payload_alloc;
-
-typedef void (*pmu_callback)(struct gk20a *g, struct pmu_msg *msg, void *param,
-		u32 status);
 
 struct pmu_cmd {
 	struct pmu_hdr hdr;

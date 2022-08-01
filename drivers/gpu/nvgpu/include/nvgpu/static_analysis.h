@@ -816,7 +816,7 @@ static inline s32 nvgpu_safe_cast_s64_to_s32(s64 sl_a)
  * not possible, then the CERT-C violations due to unaligned access need to be
  * fixed.
  */
-#if !defined(__ARM_FEATURE_UNALIGNED)
+#if defined(CONFIG_NVGPU_BUILD_CONFIGURATION_IS_SAFETY) && !defined(__ARM_FEATURE_UNALIGNED)
 #error "__ARM_FEATURE_UNALIGNED not defined. Check static_analysis.h"
 #endif
 

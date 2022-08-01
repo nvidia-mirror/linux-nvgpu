@@ -93,7 +93,7 @@ typedef struct nvgpu_posix_atomic64 {
 									\
 		NVGPU_COV_WHITELIST_BLOCK_BEGIN(deviate, 1,		\
 			NVGPU_MISRA(Rule, 10_3), "TID 374")		\
-		tmp = (typeof((v)->v))atomic_fetch_add(&((v)->v), (i));	\
+		tmp = (typeof(tmp))atomic_fetch_add(&((v)->v), (i));	\
 		NVGPU_COV_WHITELIST_BLOCK_END(NVGPU_MISRA(Rule, 10_3))	\
 		tmp = __builtin_choose_expr(				\
 				IS_SIGNED_LONG_TYPE(i),			\
@@ -116,7 +116,7 @@ typedef struct nvgpu_posix_atomic64 {
 									\
 		NVGPU_COV_WHITELIST_BLOCK_BEGIN(deviate, 1,		\
 			NVGPU_MISRA(Rule, 10_3), "TID 374")        	\
-		tmp = (typeof((v)->v))atomic_fetch_sub(&((v)->v), (i));	\
+		tmp = (typeof(tmp))atomic_fetch_sub(&((v)->v), (i));	\
 		NVGPU_COV_WHITELIST_BLOCK_END(NVGPU_MISRA(Rule, 10_3))	\
 		tmp = __builtin_choose_expr(				\
 				IS_SIGNED_LONG_TYPE(i),			\
