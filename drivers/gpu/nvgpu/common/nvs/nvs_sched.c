@@ -34,6 +34,9 @@ static struct nvs_sched_ops nvgpu_nvs_ops = {
 	.recover = NULL,
 };
 
+#ifndef NSEC_PER_MSEC
+#define NSEC_PER_MSEC 1000000U
+#endif
 /*
  * TODO: make use of worker items when
  * 1) the active domain gets modified
@@ -321,7 +324,7 @@ static void nvgpu_nvs_worker_wakeup_post_process(struct nvgpu_worker *worker)
 
 		if (next_timeout_ns != 0U) {
 			nvs_worker->current_timeout =
-				(next_timeout_ns + NSEC_PER_MSEC - 1) / NSEC_PER_MSEC;
+				(next_timeout_ns + NSEC_PER_MSEC - 1U) / NSEC_PER_MSEC;
 		}
 
 		nvgpu_timeout_init_cpu_timer_sw(g, &nvs_worker->timeout,

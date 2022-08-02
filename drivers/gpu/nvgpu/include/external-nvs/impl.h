@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2021-2022 NVIDIA Corporation.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -42,7 +42,7 @@
 
 #define nvs_log(sched, fmt, args...)				\
 	nvgpu_log((struct gk20a *)(sched)->priv,		\
-		  gpu_dbg_nvs_internal, (fmt), ##args)
+		  gpu_dbg_nvs_internal, fmt, ##args)
 
 
 #endif
