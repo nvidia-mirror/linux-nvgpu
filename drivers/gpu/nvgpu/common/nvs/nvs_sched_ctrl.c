@@ -120,6 +120,7 @@ bool nvgpu_nvs_ctrl_fifo_user_exists(struct nvgpu_nvs_domain_ctrl_fifo *sched_ct
 	bool user_exists = false;
 	struct nvs_domain_ctrl_fifo_user *user;
 
+	(void)rw;
 	nvgpu_spinlock_acquire(&sched_ctrl->users.user_lock);
 
 	nvgpu_list_for_each_entry(user, &sched_ctrl->users.list_non_exclusive_user,
@@ -284,6 +285,8 @@ struct nvs_domain_ctrl_fifo_capabilities *nvgpu_nvs_ctrl_fifo_get_capabilities(
 
 bool nvgpu_nvs_buffer_is_valid(struct gk20a *g, struct nvgpu_nvs_ctrl_queue *buf)
 {
+	(void)g;
+
 	return buf->valid;
 }
 
@@ -354,7 +357,7 @@ void nvgpu_nvs_ctrl_fifo_user_subscribe_queue(struct nvs_domain_ctrl_fifo_user *
 void nvgpu_nvs_ctrl_fifo_user_unsubscribe_queue(struct nvs_domain_ctrl_fifo_user *user,
 		struct nvgpu_nvs_ctrl_queue *queue)
 {
-	user->active_used_queues &= ~queue->mask;
+	user->active_used_queues &= ~((u32)queue->mask);
 	queue->ref--;
 }
 bool nvgpu_nvs_ctrl_fifo_user_is_subscribed_to_queue(struct nvs_domain_ctrl_fifo_user *user,

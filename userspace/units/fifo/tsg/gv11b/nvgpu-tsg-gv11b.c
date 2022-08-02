@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -443,13 +443,13 @@ done:
 
 struct unit_module_test nvgpu_tsg_gv11b_tests[] = {
 	UNIT_TEST(init_support, test_fifo_init_support, &unit_ctx, 0),
-	UNIT_TEST(gv11b_tsg_enable, test_gv11b_tsg_enable, &unit_ctx, 0),
+	UNIT_TEST(gv11b_tsg_enable, test_gv11b_tsg_enable, &unit_ctx, 2),
 	UNIT_TEST(gv11b_tsg_init_eng_method_buffers, \
 			test_gv11b_tsg_init_eng_method_buffers, &unit_ctx, 0),
 	UNIT_TEST(gv11b_tsg_bind_channel_eng_method_buffers,
-			test_gv11b_tsg_bind_channel_eng_method_buffers, &unit_ctx, 0),
+			test_gv11b_tsg_bind_channel_eng_method_buffers, &unit_ctx, 2),
 	UNIT_TEST(gv11b_tsg_unbind_channel_check_eng_faulted, \
-			test_gv11b_tsg_unbind_channel_check_eng_faulted, &unit_ctx, 0),
+			test_gv11b_tsg_unbind_channel_check_eng_faulted, &unit_ctx, 2),
 	UNIT_TEST(remove_support, test_fifo_remove_support, &unit_ctx, 0),
 };
 

@@ -21,7 +21,7 @@
  */
 
 #include <nvs/log.h>
-#include <nvs/sched.h>
+#include <nvs/nvs_sched.h>
 #include <nvgpu/types.h>
 
 #include <nvgpu/nvs.h>
@@ -320,11 +320,12 @@ static void nvgpu_nvs_worker_wakeup_post_process(struct nvgpu_worker *worker)
 		nvgpu_nvs_worker_from_worker(worker);
 
 	if (nvgpu_timeout_peek_expired(&nvs_worker->timeout)) {
-		u32 next_timeout_ns = nvgpu_nvs_tick(g);
+		u64 next_timeout_ns = nvgpu_nvs_tick(g);
+		u64 timeout = next_timeout_ns + NSEC_PER_MSEC - 1U;
 
 		if (next_timeout_ns != 0U) {
 			nvs_worker->current_timeout =
-				(next_timeout_ns + NSEC_PER_MSEC - 1U) / NSEC_PER_MSEC;
+				nvgpu_safe_cast_u64_to_u32(timeout / NSEC_PER_MSEC);
 		}
 
 		nvgpu_timeout_init_cpu_timer_sw(g, &nvs_worker->timeout,
@@ -713,7 +714,8 @@ unlock:
  */
 static u64 nvgpu_nvs_new_id(struct gk20a *g)
 {
-	return nvgpu_atomic64_inc_return(&g->scheduler->id_counter);
+	return nvgpu_safe_cast_s64_to_u64(
+		nvgpu_atomic64_inc_return(&g->scheduler->id_counter));
 }
 
 static int nvgpu_nvs_create_rl_domain_mem(struct gk20a *g,

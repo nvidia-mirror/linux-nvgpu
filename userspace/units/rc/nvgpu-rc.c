@@ -596,7 +596,7 @@ struct unit_module_test nvgpu_rc_tests[] = {
 	UNIT_TEST(rc_mmu_fault, test_rc_mmu_fault, NULL, 0),
 	UNIT_TEST(rc_mmu_fault_bvec, test_rc_mmu_fault_bvec, NULL, 0),
 	UNIT_TEST(rc_pbdma_fault, test_rc_pbdma_fault, NULL, 0),
-	UNIT_TEST(rc_deinit, test_rc_deinit, NULL, 0),
+	UNIT_TEST(rc_deinit, test_rc_deinit, NULL, 2),
 };
 
 UNIT_MODULE(nvgpu-rc, nvgpu_rc_tests, UNIT_PRIO_NVGPU_TEST);

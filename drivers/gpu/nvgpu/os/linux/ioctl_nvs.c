@@ -25,7 +25,7 @@
 #include <nvgpu/os_sched.h>
 #include "os_linux.h"
 
-#include <nvs/sched.h>
+#include <nvs/nvs_sched.h>
 #include <nvs/domain.h>
 
 #include "ioctl.h"

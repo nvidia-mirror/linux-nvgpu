@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2021-2022 NVIDIA Corporation.  All rights reserved.
  *
  * NVIDIA Corporation and its licensors retain all intellectual property
  * and proprietary rights in and to this software, related documentation
@@ -9,7 +9,7 @@
  */
 
 #include <nvs/log.h>
-#include <nvs/sched.h>
+#include <nvs/nvs_sched.h>
 #include <nvs/impl-internal.h>
 
 #define LOG_INC(value, max)			\

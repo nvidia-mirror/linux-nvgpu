@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2021-2022 NVIDIA Corporation.  All rights reserved.
  *
  * NVIDIA Corporation and its licensors retain all intellectual property
  * and proprietary rights in and to this software, related documentation
@@ -44,7 +44,7 @@ struct nvs_sched;
  * is 8 byte aligned.
  */
 struct nvs_log_event {
-	u64		timestamp;
+	s64		timestamp;
 	u32		data;
 	enum nvs_event	event;
 };
@@ -59,7 +59,7 @@ struct nvs_log_buffer {
 	u32			 get;
 	u32			 put;
 
-	u64			 ts_offset;
+	s64			 ts_offset;
 };
 
 int  nvs_log_init(struct nvs_sched *sched);

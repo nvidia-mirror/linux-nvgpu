@@ -9,7 +9,7 @@
  */
 
 #include <nvs/log.h>
-#include <nvs/sched.h>
+#include <nvs/nvs_sched.h>
 #include <nvs/domain.h>
 
 /*
