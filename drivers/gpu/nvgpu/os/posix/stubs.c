@@ -63,4 +63,9 @@ int nvgpu_cic_mon_reg_errinj_cb(struct gk20a *g)
 	(void)g;
 	return 0;
 }
+
+int nvgpu_cic_mon_dereg_errinj_cb(void)
+{
+	return 0;
+}
 #endif

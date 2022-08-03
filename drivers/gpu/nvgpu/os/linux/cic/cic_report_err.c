@@ -106,12 +106,10 @@ int nvgpu_cic_mon_report_err_safety_services(struct gk20a *g, u32 err_id)
 }
 
 #ifdef CONFIG_NVGPU_FSI_ERR_INJECTION
-static struct gk20a *g_err_inj;
-
 static int nvgpu_cic_mon_inject_err_fsi(uint32_t inst_id,
-				struct epl_error_report_frame err_rpt_frame)
+		struct epl_error_report_frame err_rpt_frame, void *data)
 {
-	struct gk20a *g = g_err_inj;
+	struct gk20a *g = (struct gk20a *)data;
 	int err = 0;
 
 	/* Sanity check reporter_id */
@@ -143,9 +141,15 @@ int nvgpu_cic_mon_reg_errinj_cb(struct gk20a *g)
 	hsierrrpt_ipid_t ip_id = IP_GPU;
 	unsigned int inst_id = 0U;
 
-	/* Save NvGPU context which can be used during error injection */
-	g_err_inj = g;
+	/* Send NvGPU context which can be used during error injection */
+	return  hsierrrpt_reg_cb(ip_id, inst_id, nvgpu_cic_mon_inject_err_fsi, g);
+}
 
-	return  hsierrrpt_reg_cb(ip_id, inst_id, nvgpu_cic_mon_inject_err_fsi);
+int nvgpu_cic_mon_dereg_errinj_cb(void)
+{
+	hsierrrpt_ipid_t ip_id = IP_GPU;
+	unsigned int inst_id = 0U;
+
+	return  hsierrrpt_dereg_cb(ip_id, inst_id);
 }
 #endif

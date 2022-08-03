@@ -99,6 +99,20 @@ int nvgpu_cic_mon_remove(struct gk20a *g)
 {
 	struct nvgpu_cic_mon *cic_mon;
 
+#ifdef CONFIG_NVGPU_FSI_ERR_INJECTION
+	int err = nvgpu_cic_mon_dereg_errinj_cb();
+
+	if (err != 0) {
+		nvgpu_err(g,
+			"Err inj callback de-registration failed: %d",
+			err);
+		/* Continue CIC remove despite err inj utility
+		 * de-registration failure, as the err inj support
+		 * is meant only for debug purposes.
+		 */
+	}
+#endif
+
 	cic_mon = g->cic_mon;
 
 	if (cic_mon == NULL) {
