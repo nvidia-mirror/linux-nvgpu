@@ -185,12 +185,14 @@ u32 nvgpu_cic_mon_intr_stall_isr(struct gk20a *g)
 
 void nvgpu_cic_mon_intr_stall_handle(struct gk20a *g)
 {
+	nvgpu_mutex_acquire(&g->mc.intr_thread_mutex);
 	g->ops.mc.isr_stall(g);
 
 	/* sync handled irq counter before re-enabling interrupts */
 	nvgpu_cic_rm_set_irq_stall(g, 0);
 
 	nvgpu_cic_mon_intr_stall_resume(g);
+	nvgpu_mutex_release(&g->mc.intr_thread_mutex);
 
 	(void)nvgpu_cic_rm_broadcast_last_irq_stall(g);
 }

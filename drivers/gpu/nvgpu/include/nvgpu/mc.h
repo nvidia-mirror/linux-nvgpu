@@ -188,6 +188,8 @@ struct nvgpu_intr_unit_info {
 struct nvgpu_mc {
 	/** Lock to access the MC interrupt registers. */
 	struct nvgpu_spinlock intr_lock;
+	/** Lock to synchronise between stall interrupt threads. */
+	struct nvgpu_mutex intr_thread_mutex;
 
 	/** Lock to access the MC unit registers. */
 	struct nvgpu_spinlock enable_lock;
