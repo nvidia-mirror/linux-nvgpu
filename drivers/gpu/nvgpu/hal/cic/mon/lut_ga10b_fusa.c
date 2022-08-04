@@ -113,7 +113,7 @@ struct nvgpu_err_hw_module ga10b_err_lut[] = {
 					INJECT_SW,
 					NULL, NULL,
 					NULL, NULL, 0, 0),
-			GPU_NONCRITERR("pfifo_ctxsw_timeout",
+			GPU_CRITERR("pfifo_ctxsw_timeout",
 					GPU_HOST_PFIFO_CTXSW_TIMEOUT_ERROR,
 					INJECT_SW,
 					NULL, NULL,
