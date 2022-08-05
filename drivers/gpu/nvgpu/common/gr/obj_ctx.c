@@ -20,6 +20,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#include <nvgpu/class.h>
 #include <nvgpu/gk20a.h>
 #include <nvgpu/log.h>
 #include <nvgpu/io.h>
@@ -37,8 +38,13 @@
 #include <nvgpu/netlist.h>
 #include <nvgpu/gr/gr_falcon.h>
 #include <nvgpu/gr/fs_state.h>
+#include <nvgpu/gr/gr_utils.h>
+#include <nvgpu/engines.h>
+#include <nvgpu/nvgpu_init.h>
 #include <nvgpu/power_features/cg.h>
 #include <nvgpu/static_analysis.h>
+#include <nvgpu/tsg.h>
+#include <nvgpu/vm.h>
 
 #include "obj_ctx_priv.h"
 
@@ -728,8 +734,6 @@ int nvgpu_gr_obj_ctx_alloc_golden_ctx_image(struct gk20a *g,
 	 * channel initializes golden image, driver needs to prevent multiple
 	 * channels from initializing golden ctx at the same time
 	 */
-	nvgpu_mutex_acquire(&golden_image->ctx_mutex);
-
 	if (golden_image->ready) {
 		nvgpu_log(g, gpu_dbg_gr, "golden image already saved");
 		goto clean_up;
@@ -784,7 +788,6 @@ clean_up:
 		nvgpu_log(g, gpu_dbg_fn | gpu_dbg_gr, "done");
 	}
 
-	nvgpu_mutex_release(&golden_image->ctx_mutex);
 	return err;
 }
 
@@ -852,6 +855,130 @@ static int nvgpu_gr_obj_ctx_alloc_buffers(struct gk20a *g,
 
 	nvgpu_log(g, gpu_dbg_gr, "done");
 
+	return err;
+}
+
+int nvgpu_gr_obj_ctx_init_golden_context_image(struct gk20a *g)
+{
+	struct nvgpu_gr_obj_ctx_golden_image *golden_image =
+					nvgpu_gr_get_golden_image_ptr(g);
+	struct nvgpu_setup_bind_args setup_bind_args;
+	struct nvgpu_channel *veid0_ch;
+	u64 user_size, kernel_size;
+	struct nvgpu_tsg *tsg;
+	struct vm_gk20a *vm;
+	u32 big_page_size;
+	u32 obj_class;
+	int err = 0;
+
+	err = gk20a_busy(g);
+	if (err != 0) {
+		nvgpu_err(g, "failed to power on, %d", err);
+		return err;
+	}
+
+	nvgpu_mutex_acquire(&golden_image->ctx_mutex);
+
+	if (golden_image->ready) {
+		goto out;
+	}
+
+	big_page_size = g->ops.mm.gmmu.get_default_big_page_size();
+
+	/* allocate a tsg */
+	tsg = nvgpu_tsg_open(g, 0);
+	if (tsg == NULL) {
+		nvgpu_err(g, "tsg not available");
+		err = -ENOMEM;
+		goto out;
+	}
+
+	/* allocate a VM */
+	g->ops.mm.get_default_va_sizes(NULL, &user_size, &kernel_size);
+	vm = nvgpu_vm_init(g, big_page_size,
+				U64(big_page_size) << U64(10),
+				nvgpu_safe_sub_u64(user_size,
+					U64(big_page_size) << U64(10)),
+				kernel_size,
+				0ULL,
+				false, false, false, "golden_context");
+	if (vm == NULL) {
+		nvgpu_err(g, "vm init failed");
+		err = -ENOMEM;
+		goto out_release_tsg;
+	}
+
+	/* allocate veid0 channel by specifying GR runlist id */
+	veid0_ch = nvgpu_channel_open_new(g, nvgpu_engine_get_gr_runlist_id(g),
+				true, 0, 0);
+	if (veid0_ch == NULL) {
+		nvgpu_err(g, "channel not available");
+		err = -ENOMEM;
+		goto out_release_vm;
+	}
+
+	veid0_ch->golden_ctx_init_ch = true;
+
+	/* bind the channel to the vm */
+	err = g->ops.mm.vm_bind_channel(vm, veid0_ch);
+	if (err != 0) {
+		nvgpu_err(g, "could not bind vm");
+		goto out_release_ch;
+	}
+
+	/* bind the channel to the tsg */
+	err = nvgpu_tsg_bind_channel(tsg, veid0_ch);
+	if (err != 0) {
+		nvgpu_err(g, "unable to bind to tsg");
+		goto out_release_ch;
+	}
+
+	setup_bind_args.num_gpfifo_entries = 1024;
+	setup_bind_args.num_inflight_jobs = 0;
+ #ifdef CONFIG_NVGPU_KERNEL_MODE_SUBMIT
+	setup_bind_args.flags = 0;
+ #else
+	/*
+	 * Usermode gpfifo and userd buffers are just allocated here but they
+	 * are not used for submitting any work. Since these buffers are
+	 * nvgpu allocated ones, we don't specify userd_dmabuf_fd and
+	 * gpfifo_dmabuf_fd here.
+	 */
+	setup_bind_args.flags = NVGPU_SETUP_BIND_FLAGS_USERMODE_SUPPORT;
+ #endif
+	err = nvgpu_channel_setup_bind(veid0_ch, &setup_bind_args);
+	if (err != 0) {
+		nvgpu_err(g, "unable to setup and bind channel");
+		goto out_release_ch;
+	}
+
+#ifdef CONFIG_NVGPU_HAL_NON_FUSA
+	obj_class = MAXWELL_B;
+#else
+	obj_class = VOLTA_A;
+#endif
+
+	/* allocate obj_ctx to initialize golden image */
+	err = g->ops.gr.setup.alloc_obj_ctx(veid0_ch, obj_class, 0U);
+	if (err != 0) {
+		nvgpu_err(g, "unable to alloc obj_ctx");
+		goto out_release_ch;
+	}
+
+	/* This state update is needed for vGPU case */
+	golden_image->ready = true;
+
+	nvgpu_log(g, gpu_dbg_gr, "Golden context image initialized!");
+
+out_release_ch:
+	nvgpu_channel_close(veid0_ch);
+out_release_vm:
+	nvgpu_vm_put(vm);
+out_release_tsg:
+	nvgpu_ref_put(&tsg->refcount, nvgpu_tsg_release);
+out:
+	nvgpu_mutex_release(&golden_image->ctx_mutex);
+	gk20a_idle(g);
 	return err;
 }
 

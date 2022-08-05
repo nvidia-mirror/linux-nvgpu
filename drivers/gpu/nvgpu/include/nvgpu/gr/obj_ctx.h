@@ -159,6 +159,31 @@ void nvgpu_gr_obj_ctx_commit_global_ctx_buffers(struct gk20a *g,
 	struct nvgpu_gr_ctx_mappings *mappings, bool patch);
 
 /**
+ * @brief Allocate and setup object context s/w image for VEID0 GPU channel.
+ *        This will initialize the golden context image.
+ *
+ * @param g [in]		Pointer to GPU driver struct.
+ *
+ * This function allocates and sets up object context for VEID0 GPU channel
+ * in order to initialize golden image.
+ *
+ * The steps include:
+ *
+ * - Allocate a TSG.
+ * - Allocate a VM.
+ * - Allocate GR/VEID0 channel.
+ * - Bind the channel to VM.
+ * - Bind the channel to TSG.
+ * - Setup and bind the channel.
+ * - Allocate object context for the channel. This will initialize the
+ *   golden image.
+ * - Close the channel.
+ *
+ * @return 0 in case of success, < 0 in case of failure.
+ */
+int nvgpu_gr_obj_ctx_init_golden_context_image(struct gk20a *g);
+
+/**
  * @brief Allocate golden context image.
  *
  * @param g [in]			Pointer to GPU driver struct.

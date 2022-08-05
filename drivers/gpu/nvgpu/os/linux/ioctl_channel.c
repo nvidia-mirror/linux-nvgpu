@@ -983,6 +983,19 @@ static u32 nvgpu_obj_ctx_user_flags_to_common_flags(u32 user_flags)
 static int nvgpu_ioctl_channel_alloc_obj_ctx(struct nvgpu_channel *ch,
 	u32 class_num, u32 user_flags)
 {
+	struct gk20a *g = ch->g;
+	int err;
+
+	/*
+	 * Allocate VEID0 channel and initialize the golden context image.
+	 */
+	err = nvgpu_gr_obj_ctx_init_golden_context_image(g);
+	if (err != 0) {
+		nvgpu_err(g, "golden context image init failed (%d).",
+			  err);
+		return -ENOSYS;
+	}
+
 	return ch->g->ops.gr.setup.alloc_obj_ctx(ch, class_num,
 			nvgpu_obj_ctx_user_flags_to_common_flags(user_flags));
 }

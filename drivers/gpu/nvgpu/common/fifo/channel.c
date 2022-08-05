@@ -1283,6 +1283,7 @@ struct nvgpu_channel *nvgpu_channel_open_new(struct gk20a *g,
 	ch->obj_class = 0;
 	ch->subctx_id = 0;
 	ch->runqueue_sel = 0;
+	ch->golden_ctx_init_ch = false;
 
 	ch->mmu_nack_handled = false;
 

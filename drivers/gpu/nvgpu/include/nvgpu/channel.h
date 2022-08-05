@@ -543,6 +543,11 @@ struct nvgpu_channel {
 	 * Host methods on its pushbuffer.
 	 */
 	bool is_privileged_channel;
+
+	/**
+	 * nvgpu created channel to initialize the golden context image.
+	 */
+	bool golden_ctx_init_ch;
 #ifdef CONFIG_NVGPU_DEBUGGER
 	/**
 	 * MMU Debugger Mode is enabled for this channel if refcnt > 0

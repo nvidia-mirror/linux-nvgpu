@@ -447,11 +447,6 @@ int gr_gk20a_get_ctx_buffer_offsets(struct gk20a *g,
 		return -EINVAL;
 	}
 
-	if (!nvgpu_gr_obj_ctx_is_golden_image_ready(gr->golden_image)) {
-		nvgpu_log_fn(g, "no context switch header info to work with");
-		return -ENODEV;
-	}
-
 	priv_registers = nvgpu_kzalloc(g, sizeof(u32) * potential_offsets);
 	if (priv_registers == NULL) {
 		nvgpu_log_fn(g, "failed alloc for potential_offsets=%d", potential_offsets);
@@ -525,11 +520,6 @@ int gr_gk20a_get_pm_ctx_buffer_offsets(struct gk20a *g,
 	/* implementation is crossed-up if either of these happen */
 	if (max_offsets > potential_offsets) {
 		return -EINVAL;
-	}
-
-	if (!nvgpu_gr_obj_ctx_is_golden_image_ready(gr->golden_image)) {
-		nvgpu_log_fn(g, "no context switch header info to work with");
-		return -ENODEV;
 	}
 
 	priv_registers = nvgpu_kzalloc(g, sizeof(u32) * potential_offsets);
@@ -1509,6 +1499,16 @@ static int gr_exec_ctx_ops(struct nvgpu_tsg *tsg,
 			if ((ctx_ops[i].type == REGOP(TYPE_GLOBAL)) ||
 			    (((pass == 0) && reg_op_is_read(ctx_ops[i].op)) ||
 			     ((pass == 1) && !reg_op_is_read(ctx_ops[i].op)))) {
+				continue;
+			}
+
+			if (!nvgpu_gr_obj_ctx_is_golden_image_ready(
+						gr->golden_image)) {
+				nvgpu_err(g, "no context switch header info to "
+					"work with");
+				ctx_ops[i].status =
+					REGOP(STATUS_INVALID_OFFSET);
+				err = -ENODEV;
 				continue;
 			}
 
