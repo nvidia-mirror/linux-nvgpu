@@ -339,6 +339,8 @@ gsp_sched:
              common/gsp_scheduler/gsp_scheduler.h,
              common/gsp_scheduler/gsp_runlist.c,
              common/gsp_scheduler/gsp_runlist.h,
+             common/gsp_scheduler/gsp_ctrl_fifo.c,
+             common/gsp_scheduler/gsp_ctrl_fifo.h,
              include/nvgpu/gsp_sched.h ]
 
 gsp_test:

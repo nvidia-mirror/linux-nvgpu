@@ -87,6 +87,10 @@ static void gsp_handle_cmd_ack(struct gk20a *g, struct nv_flcn_msg_gsp *msg,
 		g->gsp_sched->active_domain = msg->msg.active_domain.active_domain;
 		*command_ack = true;
 		break;
+	case NV_GSP_UNIT_CONTROL_INFO_SEND:
+		nvgpu_gsp_dbg(g, "Reply to NV_GSP_UNIT_CONTROL_INFO_SEND");
+		*command_ack = true;
+		break;
 	default:
 		nvgpu_err(g, "Un-handled response from GSP");
 		*command_ack = false;
@@ -96,7 +100,7 @@ static void gsp_handle_cmd_ack(struct gk20a *g, struct nv_flcn_msg_gsp *msg,
 	(void)status;
 }
 
-static int gsp_send_cmd_and_wait_for_ack(struct gk20a *g,
+int gsp_send_cmd_and_wait_for_ack(struct gk20a *g,
 		struct nv_flcn_cmd_gsp *cmd, u32 unit_id, u32 size)
 {
 	bool command_ack = false;

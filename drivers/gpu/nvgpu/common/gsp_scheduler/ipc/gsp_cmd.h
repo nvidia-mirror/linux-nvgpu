@@ -27,6 +27,7 @@
 #include <nvgpu/gsp_sched.h>
 #include "../gsp_runlist.h"
 #include "gsp_seq.h"
+#include "common/gsp_scheduler/gsp_ctrl_fifo.h"
 
 struct gk20a;
 
@@ -47,7 +48,8 @@ struct gk20a;
 #define NV_GSP_UNIT_STOP_SCHEDULER		0x0AU
 #define NV_GSP_UNIT_QUERY_NO_OF_DOMAINS	0x0BU
 #define NV_GSP_UNIT_QUERY_ACTIVE_DOMAIN	0X0CU
-#define NV_GSP_UNIT_END					0x0DU
+#define NV_GSP_UNIT_CONTROL_INFO_SEND	0X0DU
+#define NV_GSP_UNIT_END					0x0EU
 
 #define GSP_MSG_HDR_SIZE	U32(sizeof(struct gsp_hdr))
 #define GSP_CMD_HDR_SIZE	U32(sizeof(struct gsp_hdr))
@@ -66,6 +68,7 @@ struct nv_flcn_cmd_gsp {
 		struct nvgpu_gsp_device_info device;
 		struct nvgpu_gsp_runlist_info runlist;
 		struct nvgpu_gsp_domain_info domain;
+		struct nvgpu_gsp_ctrl_fifo_info ctrl_fifo;
 	} cmd;
 };
 

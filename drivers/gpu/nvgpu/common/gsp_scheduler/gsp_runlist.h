@@ -26,7 +26,8 @@
 #define GSP_SCHED_GR0_DEVICE_ID			0U
 #define GSP_SCHED_ASYNC_CE0_DEVICE_ID	1U
 
-
+struct nv_flcn_cmd_gsp;
+struct gk20a;
 struct nvgpu_gsp_device_info {
 	/*
 	 * Device index
@@ -71,4 +72,6 @@ struct nvgpu_gsp_domain_id {
 	 */
 	u32 domain_id;
 };
+int gsp_send_cmd_and_wait_for_ack(struct gk20a *g,
+		struct nv_flcn_cmd_gsp *cmd, u32 unit_id, u32 size);
 #endif // NVGPU_GSP_RUNLIST
