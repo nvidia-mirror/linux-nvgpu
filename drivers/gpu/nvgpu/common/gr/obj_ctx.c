@@ -459,7 +459,7 @@ void nvgpu_gr_obj_ctx_commit_global_ctx_buffers(struct gk20a *g,
 	nvgpu_log(g, gpu_dbg_fn | gpu_dbg_gr, " ");
 
 	if (patch) {
-		nvgpu_gr_ctx_patch_write_begin(g, gr_ctx, false);
+		nvgpu_gr_ctx_patch_write_begin(g, gr_ctx, true);
 	}
 
 	/*
@@ -547,7 +547,7 @@ commit_sm_id:
 
 out:
 	if (patch) {
-		nvgpu_gr_ctx_patch_write_end(g, gr_ctx, false);
+		nvgpu_gr_ctx_patch_write_end(g, gr_ctx, true);
 	}
 
 	nvgpu_log(g, gpu_dbg_fn | gpu_dbg_gr, "done");
