@@ -136,19 +136,18 @@ struct nvgpu_runlist_domain {
 	/** Bitmap of active TSGs in the runlist domain. One bit per tsgid. */
 	unsigned long *active_tsgs;
 
+	/* This lock is used to explicitely protect mem and mem_hw.
+	 * There is a need to access control the two buffers as long as NVS
+	 * thread is available. This can be removed once KMD has completely
+	 * switched to GSP.
+	 */
+	struct nvgpu_spinlock lock;
+
 	/** Runlist buffer free to use in sw. Swapped with another mem on next load. */
 	struct nvgpu_runlist_mem *mem;
 
 	/** Currently active buffer submitted for hardware. */
 	struct nvgpu_runlist_mem *mem_hw;
-
-	/**
-	 * When a channel is removed or added, this value is set to true.
-	 * When this rl domain is scheduled to be submitted to the h/w,
-	 * swap mem and mem_hw and submit mem_hw and then its value is
-	 * set to false.
-	 */
-	nvgpu_atomic_t pending_update;
 };
 
 struct nvgpu_runlist {
@@ -225,8 +224,7 @@ struct nvgpu_runlist_domain *nvgpu_rl_domain_get(struct gk20a *g, u32 runlist_id
  * Submit next_domain if there is a pending update.
  */
 int nvgpu_rl_domain_sync_submit(struct gk20a *g, struct nvgpu_runlist *runlist,
-		struct nvgpu_runlist_domain *next_domain, bool swap_buffers,
-		bool wait_for_finish);
+		struct nvgpu_runlist_domain *next_domain, bool wait_for_finish);
 
 static inline struct nvgpu_runlist_domain *
 nvgpu_runlist_domain_from_domains_list(struct nvgpu_list_node *node)

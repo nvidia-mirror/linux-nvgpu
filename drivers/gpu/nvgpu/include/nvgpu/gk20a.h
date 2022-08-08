@@ -912,8 +912,7 @@ struct gk20a {
 	 * Must hold runlist lock while invoking this interface.
 	 */
 	int (*nvs_worker_submit)(struct gk20a *g, struct nvgpu_runlist *rl,
-		struct nvgpu_runlist_domain *rl_domain, bool swap_buffer,
-			bool wait_for_finish);
+		struct nvgpu_runlist_domain *rl_domain, bool wait_for_finish);
 #endif
 
 #ifdef CONFIG_NVGPU_ENABLE_MISC_EC

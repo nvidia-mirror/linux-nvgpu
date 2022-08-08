@@ -49,7 +49,6 @@ struct nvgpu_nvs_worker_item {
 	struct nvgpu_runlist *rl;
 	struct nvgpu_runlist_domain *rl_domain;
 	struct nvgpu_cond cond;
-	bool swap_buffer;
 	bool wait_for_finish;
 	bool locked;
 	int status;
@@ -83,7 +82,7 @@ static void nvgpu_nvs_worker_poll_init(struct nvgpu_worker *worker)
 	/* 100 ms is a nice arbitrary timeout for default status */
 	nvs_worker->current_timeout = 100;
 	nvgpu_timeout_init_cpu_timer_sw(worker->g, &nvs_worker->timeout,
-			nvs_worker->current_timeout);
+		nvs_worker->current_timeout);
 
 	nvgpu_atomic_set(&nvs_worker->nvs_sched_state, NVS_WORKER_STATE_RUNNING);
 
@@ -120,13 +119,12 @@ static u64 nvgpu_nvs_tick(struct gk20a *g)
 		nvs_next = sched->shadow_domain->parent;
 	}
 
-
 	if (nvs_next->priv == sched->shadow_domain) {
 		/*
 		 * This entire thread is going to be changed soon.
 		 * The above check ensures that there are no other domain,
-		 * besides the active domain. So, its safe to simply return here.
-		 * Any active domain updates shall are taken care of during
+		 * besides the shadow domain. So, its safe to simply return here.
+		 * Any shadow domain updates shall are taken care of during
 		 * nvgpu_nvs_worker_wakeup_process_item().
 		 *
 		 * This is a temporary hack for legacy cases where we donot have
@@ -181,30 +179,26 @@ static void nvgpu_nvs_worker_wakeup_process_item(struct nvgpu_list_node *work_it
 		}
 	}
 
+	nvs_dbg(g, "Thread sync started");
+
 	if (sched->active_domain == nvs_domain->priv) {
 		/* Instantly switch domain and force runlist updates */
-		ret = nvgpu_rl_domain_sync_submit(g, runlist, rl_domain, work->swap_buffer, work->wait_for_finish);
+		ret = nvgpu_rl_domain_sync_submit(g, runlist, rl_domain, work->wait_for_finish);
+		nvs_dbg(g, "Active thread updated");
 	} else {
-		/* Swap buffers here even if its deferred for correctness */
-		if (work->swap_buffer) {
-			nvgpu_runlist_swap_mem(g, rl_domain);
-		}
 		ret = 1;
 	}
-
-	nvs_dbg(g, " ");
 
 done:
 	nvgpu_mutex_release(&g->sched_mutex);
 	work->status = ret;
-	nvgpu_atomic_set(&work->state, 1);
+	(void)nvgpu_atomic_xchg(&work->state, 1);
 	/* Wakeup threads waiting on runlist submit */
 	nvgpu_cond_signal(&work->cond);
 }
 
 static int nvgpu_nvs_worker_submit(struct gk20a *g, struct nvgpu_runlist *rl,
-		struct nvgpu_runlist_domain *rl_domain, bool swap_buffer,
-		bool wait_for_finish)
+		struct nvgpu_runlist_domain *rl_domain, bool wait_for_finish)
 {
 	struct nvgpu_nvs_scheduler *sched = g->scheduler;
 	struct nvgpu_nvs_worker *worker = &sched->worker;
@@ -229,7 +223,6 @@ static int nvgpu_nvs_worker_submit(struct gk20a *g, struct nvgpu_runlist *rl,
 	work->rl_domain = rl_domain;
 	nvgpu_cond_init(&work->cond);
 	nvgpu_init_list_node(&work->list);
-	work->swap_buffer = swap_buffer;
 	work->wait_for_finish = wait_for_finish;
 	nvgpu_atomic_set(&work->state, 0);
 
@@ -392,6 +385,7 @@ void nvgpu_nvs_worker_resume(struct gk20a *g)
 
 	if (nvs_worker_state == NVS_WORKER_STATE_PAUSED) {
 		nvs_dbg(g, "Waiting for nvs thread to be resumed");
+
 		/* wakeup worker forcibly. */
 		nvgpu_cond_signal_interruptible(&worker->wq);
 
@@ -683,6 +677,9 @@ int nvgpu_nvs_open(struct gk20a *g)
 	if (err != 0) {
 		goto unlock;
 	}
+
+	/* Ensure all the previous writes are seen */
+	nvgpu_wmb();
 
 	err = nvgpu_nvs_worker_init(g);
 	if (err != 0) {

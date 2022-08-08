@@ -31,7 +31,9 @@
 #include <nvgpu/bug.h>
 #include <nvgpu/dma.h>
 #include <nvgpu/rc.h>
+#include <nvgpu/barrier.h>
 #include <nvgpu/string.h>
+#include <nvgpu/lock.h>
 #include <nvgpu/static_analysis.h>
 #ifdef CONFIG_NVGPU_LS_PMU
 #include <nvgpu/pmu/mutex.h>
@@ -442,37 +444,37 @@ void nvgpu_runlist_swap_mem(struct gk20a *g, struct nvgpu_runlist_domain *domain
 	 */
 	rl_dbg(g, "Swapping mem for rl domain[%llu]", domain->domain_id);
 
+	nvgpu_spinlock_acquire(&domain->lock);
+
 	mem_tmp = domain->mem;
 	domain->mem = domain->mem_hw;
 	domain->mem_hw = mem_tmp;
+
+	nvgpu_spinlock_release(&domain->lock);
 }
 
 static int nvgpu_runlist_domain_actual_submit(struct gk20a *g, struct nvgpu_runlist *rl,
-		bool swap_buffer, bool wait_for_finish)
+		bool wait_for_finish)
 {
 	int ret = 0;
 
 	rl_dbg(g, "Runlist[%u]: submitting domain[%llu]",
 		rl->id, rl->domain->domain_id);
 
-	if (swap_buffer) {
-		nvgpu_runlist_swap_mem(g, rl->domain);
-	}
+	/* Here, its essential to synchronize between hw_submit
+	 * and domain mem swaps.
+	 */
+	nvgpu_spinlock_acquire(&rl->domain->lock);
+	g->ops.runlist.hw_submit(g, rl);
+	nvgpu_spinlock_release(&rl->domain->lock);
 
-	nvgpu_atomic_set(&rl->domain->pending_update, 0);
+	if (wait_for_finish) {
+		ret = g->ops.runlist.wait_pending(g, rl);
+		if (ret == -ETIMEDOUT) {
+			nvgpu_err(g, "runlist %d update timeout", rl->id);
+			/* trigger runlist update timeout recovery */
+			return ret;
 
-	/* No submit exists for VGPU */
-	if (g->ops.runlist.hw_submit != NULL) {
-		g->ops.runlist.hw_submit(g, rl);
-
-		if (wait_for_finish) {
-			ret = g->ops.runlist.wait_pending(g, rl);
-			if (ret == -ETIMEDOUT) {
-				nvgpu_err(g, "runlist %d update timeout", rl->id);
-				/* trigger runlist update timeout recovery */
-				return ret;
-
-			}
 		}
 	}
 
@@ -511,8 +513,6 @@ static int nvgpu_runlist_update_mem_locked(struct gk20a *g, struct nvgpu_runlist
 		return ret;
 	}
 
-	nvgpu_atomic_set(&domain->pending_update, 1);
-
 	return ret;
 }
 
@@ -544,6 +544,8 @@ int nvgpu_runlist_update_locked(struct gk20a *g, struct nvgpu_runlist *rl,
 		return ret;
 	}
 
+	nvgpu_runlist_swap_mem(g, domain);
+
 	return ret;
 }
 
@@ -570,12 +572,10 @@ int nvgpu_runlist_reschedule(struct nvgpu_channel *ch, bool preempt_next,
 		g, g->pmu, PMU_MUTEX_ID_FIFO, &token);
 #endif
 
-	nvgpu_atomic_set(&runlist->domain->pending_update, 1);
-
 #ifdef CONFIG_NVS_PRESENT
-	ret = g->nvs_worker_submit(g, runlist, runlist->domain, false, wait_preempt);
+	ret = g->nvs_worker_submit(g, runlist, runlist->domain, wait_preempt);
 #else
-	ret = nvgpu_rl_domain_sync_submit(g, runlist, runlist->domain, false, wait_preempt);
+	ret = nvgpu_rl_domain_sync_submit(g, runlist, runlist->domain, wait_preempt);
 #endif
 	if (ret != 0) {
 		if (ret == 1) {
@@ -639,9 +639,9 @@ static int nvgpu_runlist_do_update(struct gk20a *g, struct nvgpu_runlist *rl,
 	ret = nvgpu_runlist_update_locked(g, rl, domain, ch, add, wait_for_finish);
 	if (ret == 0) {
 	#ifdef CONFIG_NVS_PRESENT
-		ret = g->nvs_worker_submit(g, rl, domain, true, wait_for_finish);
+		ret = g->nvs_worker_submit(g, rl, domain, wait_for_finish);
 	#else
-		ret = nvgpu_rl_domain_sync_submit(g, rl, domain, true, wait_for_finish);
+		ret = nvgpu_rl_domain_sync_submit(g, rl, domain, wait_for_finish);
 	#endif
 		/* Deferred Update */
 		if (ret == 1) {
@@ -669,8 +669,7 @@ static int nvgpu_runlist_do_update(struct gk20a *g, struct nvgpu_runlist *rl,
  * This is expected to be called only when device is powered on.
  */
 static int runlist_submit_powered(struct gk20a *g, struct nvgpu_runlist *runlist,
-		struct nvgpu_runlist_domain *next_domain, bool swap_buffer,
-			bool wait_for_finish)
+		struct nvgpu_runlist_domain *next_domain, bool wait_for_finish)
 {
 	int err;
 
@@ -679,14 +678,13 @@ static int runlist_submit_powered(struct gk20a *g, struct nvgpu_runlist *runlist
 	rl_dbg(g, "Runlist[%u]: switching to domain %llu",
 		runlist->id, next_domain->domain_id);
 
-	err = nvgpu_runlist_domain_actual_submit(g, runlist, swap_buffer, wait_for_finish);
+	err = nvgpu_runlist_domain_actual_submit(g, runlist, wait_for_finish);
 
 	return err;
 }
 
 int nvgpu_rl_domain_sync_submit(struct gk20a *g, struct nvgpu_runlist *runlist,
-		struct nvgpu_runlist_domain *next_domain, bool swap_buffers,
-			bool wait_for_finish)
+		struct nvgpu_runlist_domain *next_domain, bool wait_for_finish)
 {
 	int err = 0;
 
@@ -694,10 +692,7 @@ int nvgpu_rl_domain_sync_submit(struct gk20a *g, struct nvgpu_runlist *runlist,
 		next_domain = runlist->shadow_rl_domain;
 	}
 
-	if (nvgpu_atomic_read(&next_domain->pending_update) == 1) {
-		err = runlist_submit_powered(g, runlist, next_domain, swap_buffers,
-			wait_for_finish);
-	}
+	err = runlist_submit_powered(g, runlist, next_domain, wait_for_finish);
 
 	return err;
 }
@@ -706,30 +701,8 @@ static int runlist_switch_domain_and_submit(struct gk20a *g,
 		struct nvgpu_runlist *runlist, struct nvgpu_runlist_domain *rl_domain)
 {
 	int ret = 0;
-	struct nvgpu_runlist_domain *prev_rl_domain = runlist->domain;
 
-	/* If no user domains exist, submit the shadow_rl_domain if
-	 * pending is set to true. When the last user domain is removed,
-	 * shadow_rl_domain will have pending_update set to true.
-	 * Eventually, this logic will change. For manual mode, this needs
-	 * to be submitted irrespective of the status of pending_update.
-	 */
-	if (nvgpu_list_empty(&runlist->user_rl_domains)) {
-		if (nvgpu_atomic_read(&rl_domain->pending_update) == 0) {
-			return 0;
-		}
-	} else {
-		/* If only one user domain exists, return if no pending
-		 * update exists.
-		 */
-		if (prev_rl_domain == rl_domain) {
-			if (nvgpu_atomic_read(&prev_rl_domain->pending_update) == 0) {
-				return 0;
-			}
-		}
-	}
-
-	ret = runlist_submit_powered(g, runlist, rl_domain, false, false);
+	ret = runlist_submit_powered(g, runlist, rl_domain, false);
 
 	return ret;
 }
@@ -1116,7 +1089,7 @@ struct nvgpu_runlist_domain *nvgpu_runlist_domain_alloc(struct gk20a *g,
 		goto free_active_channels;
 	}
 
-	nvgpu_atomic_set(&domain->pending_update, 0);
+	nvgpu_spinlock_init(&domain->lock);
 
 	return domain;
 free_active_channels:
