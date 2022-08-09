@@ -288,6 +288,19 @@ struct gops_mc {
 	void (*elpg_enable)(struct gk20a *g);
 	bool (*intr_get_unit_info)(struct gk20a *g, u32 unit);
 
+	/**
+	 * @brief To bring dummy GR1 engine out of reset in GA10X_NEXT.
+	 *
+	 * @param g [in]		The GPU driver struct.
+	 * @param devtype [in]		Type of device.
+	 * @param enable [in]		Action to perform.
+	 *
+	 * This function is invoked to disable and enable the GR1 as part of
+	 * SW reset for GA10X_NEXT.
+	 *
+	 */
+	void (*gr1_out_of_reset)(struct gk20a *g, u32 devtype, bool enable);
+
 	/** @endcond DOXYGEN_SHOULD_SKIP_THIS */
 };
 

@@ -35,6 +35,8 @@ struct gk20a;
 
 /** @cond DOXYGEN_SHOULD_SKIP_THIS */
 #define ERRATA_FLAGS_NEXT						\
+	/* GA10X_NEXT */					\
+	DEFINE_ERRATA(NVGPU_ERRATA_3690950, "GA10X_NEXT", "Get GR1 out of reset"),
 /** @endcond DOXYGEN_SHOULD_SKIP_THIS */
 
 /*

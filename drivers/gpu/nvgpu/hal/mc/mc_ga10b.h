@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,6 +30,8 @@
 
 struct gk20a;
 
+int ga10b_mc_poll_device_enable(struct gk20a *g, u32 reg_idx,
+			u32 poll_val);
 int ga10b_mc_enable_units(struct gk20a *g, u32 units, bool enable);
 int ga10b_mc_enable_dev(struct gk20a *g, const struct nvgpu_device *dev,
 			bool enable);

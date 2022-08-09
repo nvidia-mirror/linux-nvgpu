@@ -30,6 +30,7 @@
 #include <nvgpu/engines.h>
 #include <nvgpu/device.h>
 #include <nvgpu/fbp.h>
+#include <nvgpu/errata.h>
 
 int nvgpu_init_gr_manager(struct gk20a *g)
 {
@@ -211,6 +212,15 @@ int nvgpu_init_gr_manager(struct gk20a *g)
 			 */
 			if (g->mig.usable_gr_syspipe_instance_id[0U] ==
 						gr_dev->inst_id) {
+				/*
+				 * Enable this errata for chip GA10X_NEXT.
+				 */
+				if (nvgpu_is_errata_present(g, NVGPU_ERRATA_3690950)) {
+					if (g->ops.mc.gr1_out_of_reset != NULL) {
+						g->ops.mc.gr1_out_of_reset(g, gr_dev->type, true);
+					}
+				}
+
 				continue;
 			}
 
