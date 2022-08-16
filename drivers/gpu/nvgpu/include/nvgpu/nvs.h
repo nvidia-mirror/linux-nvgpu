@@ -125,9 +125,15 @@ struct nvgpu_nvs_domain {
 	struct nvgpu_runlist_domain **rl_domains;
 };
 
+#define NVS_WORKER_STATE_STOPPED 0
+#define NVS_WORKER_STATE_RUNNING 1
+#define NVS_WORKER_STATE_SHOULD_PAUSE 2
+#define NVS_WORKER_STATE_PAUSED 3
+#define NVS_WORKER_STATE_SHOULD_RESUME 4
+
 struct nvgpu_nvs_worker {
-	nvgpu_atomic_t nvs_sched_init;
-	struct nvgpu_cond wq_init;
+	nvgpu_atomic_t nvs_sched_state;
+	struct nvgpu_cond wq_request;
 	struct nvgpu_worker worker;
 	struct nvgpu_timeout timeout;
 	u32 current_timeout;
@@ -248,6 +254,8 @@ const char *nvgpu_nvs_domain_get_name(struct nvgpu_nvs_domain *dom);
 void nvgpu_nvs_ctrl_fifo_lock_queues(struct gk20a *g);
 void nvgpu_nvs_ctrl_fifo_unlock_queues(struct gk20a *g);
 
+void nvgpu_nvs_worker_pause(struct gk20a *g);
+void nvgpu_nvs_worker_resume(struct gk20a *g);
 struct nvgpu_nvs_domain_ctrl_fifo *nvgpu_nvs_ctrl_fifo_create(struct gk20a *g);
 bool nvgpu_nvs_ctrl_fifo_user_exists(struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl,
     int pid, bool rw);
@@ -288,6 +296,18 @@ void nvgpu_nvs_ctrl_fifo_erase_queue(struct gk20a *g, struct nvgpu_nvs_ctrl_queu
 void nvgpu_nvs_ctrl_fifo_erase_all_queues(struct gk20a *g);
 
 #else
+
+
+static inline void nvgpu_nvs_worker_pause(struct gk20a *g)
+{
+	(void)g;
+}
+
+static inline void nvgpu_nvs_worker_resume(struct gk20a *g)
+{
+	(void)g;
+}
+
 static inline int nvgpu_nvs_init(struct gk20a *g)
 {
 	(void)g;

@@ -461,15 +461,18 @@ static int nvgpu_runlist_domain_actual_submit(struct gk20a *g, struct nvgpu_runl
 
 	nvgpu_atomic_set(&rl->domain->pending_update, 0);
 
-	g->ops.runlist.hw_submit(g, rl);
+	/* No submit exists for VGPU */
+	if (g->ops.runlist.hw_submit != NULL) {
+		g->ops.runlist.hw_submit(g, rl);
 
-	if (wait_for_finish) {
-		ret = g->ops.runlist.wait_pending(g, rl);
-		if (ret == -ETIMEDOUT) {
-			nvgpu_err(g, "runlist %d update timeout", rl->id);
-			/* trigger runlist update timeout recovery */
-			return ret;
+		if (wait_for_finish) {
+			ret = g->ops.runlist.wait_pending(g, rl);
+			if (ret == -ETIMEDOUT) {
+				nvgpu_err(g, "runlist %d update timeout", rl->id);
+				/* trigger runlist update timeout recovery */
+				return ret;
 
+			}
 		}
 	}
 
@@ -681,44 +684,6 @@ static int runlist_submit_powered(struct gk20a *g, struct nvgpu_runlist *runlist
 	return err;
 }
 
-static int runlist_select_and_submit(struct gk20a *g, struct nvgpu_runlist *runlist,
-		struct nvgpu_runlist_domain *next_domain, bool wait_for_finish)
-{
-	int err;
-
-	rl_dbg(g, "Runlist[%u]: switching to domain %llu",
-	       runlist->id, next_domain->domain_id);
-
-	runlist->domain = next_domain;
-
-	gk20a_busy_noresume(g);
-	if (nvgpu_is_powered_off(g)) {
-		rl_dbg(g, "Runlist[%u]: power is off, skip submit",
-				runlist->id);
-		gk20a_idle_nosuspend(g);
-		return 0;
-	}
-
-	err = gk20a_busy(g);
-	gk20a_idle_nosuspend(g);
-
-	if (err != 0) {
-		nvgpu_err(g, "failed to hold power for runlist submit");
-		/*
-		 * probably shutting down though, so don't bother propagating
-		 * the error. Power is already on when the domain scheduler is
-		 * actually in use.
-		 */
-		return err;
-	}
-
-	err = runlist_submit_powered(g, runlist, next_domain, false, wait_for_finish);
-
-	gk20a_idle(g);
-
-	return err;
-}
-
 int nvgpu_rl_domain_sync_submit(struct gk20a *g, struct nvgpu_runlist *runlist,
 		struct nvgpu_runlist_domain *next_domain, bool swap_buffers,
 			bool wait_for_finish)
@@ -764,7 +729,7 @@ static int runlist_switch_domain_and_submit(struct gk20a *g,
 		}
 	}
 
-	ret = runlist_select_and_submit(g, runlist, rl_domain, false);
+	ret = runlist_submit_powered(g, runlist, rl_domain, false, false);
 
 	return ret;
 }

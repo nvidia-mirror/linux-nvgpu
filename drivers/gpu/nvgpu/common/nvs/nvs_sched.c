@@ -85,8 +85,11 @@ static void nvgpu_nvs_worker_poll_init(struct nvgpu_worker *worker)
 	nvgpu_timeout_init_cpu_timer_sw(worker->g, &nvs_worker->timeout,
 			nvs_worker->current_timeout);
 
-	nvgpu_atomic_set(&nvs_worker->nvs_sched_init, 1);
-	nvgpu_cond_signal(&nvs_worker->worker.wq);
+	nvgpu_atomic_set(&nvs_worker->nvs_sched_state, NVS_WORKER_STATE_RUNNING);
+
+	/* Atomic Set() and Read() operations donot have implicit barriers */
+	nvgpu_wmb();
+	nvgpu_cond_signal(&nvs_worker->wq_request);
 }
 
 static u32 nvgpu_nvs_worker_wakeup_timeout(struct nvgpu_worker *worker)
@@ -117,7 +120,8 @@ static u64 nvgpu_nvs_tick(struct gk20a *g)
 		nvs_next = sched->shadow_domain->parent;
 	}
 
-	if (nvs_next->priv == domain) {
+
+	if (nvs_next->priv == sched->shadow_domain) {
 		/*
 		 * This entire thread is going to be changed soon.
 		 * The above check ensures that there are no other domain,
@@ -236,7 +240,10 @@ static int nvgpu_nvs_worker_submit(struct gk20a *g, struct nvgpu_runlist *rl,
 		goto fail;
 	}
 
-	nvs_dbg(g, " ");
+	/* Add a barrier here to ensure that worker thread is interrupted
+	 * before waiting on the condition below
+	 */
+	nvgpu_mb();
 
 	ret = NVGPU_COND_WAIT(&work->cond, nvgpu_atomic_read(&work->state) == 1, 0U);
 	if (ret != 0) {
@@ -257,6 +264,59 @@ free_domain:
 	return ret;
 }
 
+static bool nvgpu_nvs_worker_wakeup_condition(struct nvgpu_worker *worker)
+{
+	struct nvgpu_nvs_worker *nvs_worker =
+		nvgpu_nvs_worker_from_worker(worker);
+	struct gk20a *g = worker->g;
+	int nvs_worker_state;
+
+	nvs_worker_state = nvgpu_atomic_read(&nvs_worker->nvs_sched_state);
+
+	if (nvs_worker_state == NVS_WORKER_STATE_SHOULD_RESUME) {
+		/* Set the state to running. Worker will automatically update the timeout
+		 * in the subsequent if block as previous timeout is 0.
+		 */
+		nvgpu_atomic_set(&nvs_worker->nvs_sched_state, NVS_WORKER_STATE_RUNNING);
+
+		/* Atomic set donot have an implicit barrier.
+		 * Ensure, that value is updated before invoking signal below.
+		 */
+		nvgpu_wmb();
+		/* Signal waiting threads about resume */
+		nvgpu_cond_signal(&nvs_worker->wq_request);
+
+		nvs_dbg(g, "nvs set for resume");
+	} else if (nvs_worker_state == NVS_WORKER_STATE_SHOULD_PAUSE) {
+		return true;
+	}
+
+	return false;
+}
+
+static void nvgpu_nvs_handle_pause_requests(struct nvgpu_worker *worker)
+{
+	struct gk20a *g = worker->g;
+	struct nvgpu_nvs_worker *nvs_worker =
+		nvgpu_nvs_worker_from_worker(worker);
+	int nvs_worker_state = nvgpu_atomic_read(&nvs_worker->nvs_sched_state);
+
+	if (nvs_worker_state == NVS_WORKER_STATE_SHOULD_PAUSE) {
+		nvgpu_atomic_set(&nvs_worker->nvs_sched_state, NVS_WORKER_STATE_PAUSED);
+		/* Set the worker->timeout to 0, to allow the worker thread to sleep infinitely. */
+		nvgpu_timeout_init_cpu_timer_sw(g, &nvs_worker->timeout, 0);
+
+		/* Atomic_Set doesn't have an implicit barrier.
+		 * Ensure, that value is updated before invoking signal below.
+		 */
+		nvgpu_wmb();
+		/* Wakeup user threads waiting for pause state */
+		nvgpu_cond_signal(&nvs_worker->wq_request);
+
+		nvs_dbg(g, "nvs set for pause");
+	}
+}
+
 static void nvgpu_nvs_worker_wakeup_post_process(struct nvgpu_worker *worker)
 {
 	struct gk20a *g = worker->g;
@@ -274,14 +334,79 @@ static void nvgpu_nvs_worker_wakeup_post_process(struct nvgpu_worker *worker)
 		nvgpu_timeout_init_cpu_timer_sw(g, &nvs_worker->timeout,
 				nvs_worker->current_timeout);
 	}
+
+	nvgpu_nvs_handle_pause_requests(worker);
 }
 
 static const struct nvgpu_worker_ops nvs_worker_ops = {
 	.pre_process = nvgpu_nvs_worker_poll_init,
+	.wakeup_condition = nvgpu_nvs_worker_wakeup_condition,
 	.wakeup_timeout = nvgpu_nvs_worker_wakeup_timeout,
 	.wakeup_process_item = nvgpu_nvs_worker_wakeup_process_item,
 	.wakeup_post_process = nvgpu_nvs_worker_wakeup_post_process,
 };
+
+void nvgpu_nvs_worker_pause(struct gk20a *g)
+{
+	struct nvgpu_worker *worker = &g->scheduler->worker.worker;
+	struct nvgpu_nvs_worker *nvs_worker = &g->scheduler->worker;
+	int nvs_worker_state;
+
+	if (g->is_virtual) {
+		return;
+	}
+
+	nvs_worker_state = nvgpu_atomic_cmpxchg(&nvs_worker->nvs_sched_state,
+			NVS_WORKER_STATE_RUNNING, NVS_WORKER_STATE_SHOULD_PAUSE);
+
+	if (nvs_worker_state == NVS_WORKER_STATE_RUNNING) {
+		nvs_dbg(g, "Setting thread state to sleep.");
+		/* wakeup worker forcibly. */
+		nvgpu_cond_signal_interruptible(&worker->wq);
+
+		/* Ensure signal has happened before waiting */
+		nvgpu_mb();
+
+		NVGPU_COND_WAIT(&nvs_worker->wq_request,
+			nvgpu_atomic_read(
+				&nvs_worker->nvs_sched_state) == NVS_WORKER_STATE_PAUSED, 0);
+
+		nvs_dbg(g, "Thread is paused");
+	} else {
+		nvs_dbg(g, "Thread state is not running.");
+	}
+}
+
+void nvgpu_nvs_worker_resume(struct gk20a *g)
+{
+	struct nvgpu_worker *worker = &g->scheduler->worker.worker;
+	struct nvgpu_nvs_worker *nvs_worker = &g->scheduler->worker;
+	int nvs_worker_state;
+
+	if (g->is_virtual) {
+		return;
+	}
+
+	nvs_worker_state = nvgpu_atomic_cmpxchg(&nvs_worker->nvs_sched_state,
+			NVS_WORKER_STATE_PAUSED, NVS_WORKER_STATE_SHOULD_RESUME);
+
+	if (nvs_worker_state == NVS_WORKER_STATE_PAUSED) {
+		nvs_dbg(g, "Waiting for nvs thread to be resumed");
+		/* wakeup worker forcibly. */
+		nvgpu_cond_signal_interruptible(&worker->wq);
+
+		/* Ensure signal has happened before waiting */
+		nvgpu_mb();
+
+		NVGPU_COND_WAIT(&nvs_worker->wq_request,
+			nvgpu_atomic_read(
+				&nvs_worker->nvs_sched_state) == NVS_WORKER_STATE_RUNNING, 0);
+
+		nvs_dbg(g, "Thread resumed");
+	} else {
+		nvs_dbg(g, "Thread not paused");
+	}
+}
 
 static int nvgpu_nvs_worker_init(struct gk20a *g)
 {
@@ -289,8 +414,12 @@ static int nvgpu_nvs_worker_init(struct gk20a *g)
 	struct nvgpu_worker *worker = &g->scheduler->worker.worker;
 	struct nvgpu_nvs_worker *nvs_worker = &g->scheduler->worker;
 
-	nvgpu_cond_init(&nvs_worker->wq_init);
-	nvgpu_atomic_set(&nvs_worker->nvs_sched_init, 0);
+	if (g->is_virtual) {
+		return 0;
+	}
+
+	nvgpu_cond_init(&nvs_worker->wq_request);
+	(void)nvgpu_atomic_xchg(&nvs_worker->nvs_sched_state, NVS_WORKER_STATE_STOPPED);
 
 	nvgpu_worker_init_name(worker, "nvgpu_nvs", g->name);
 
@@ -299,11 +428,15 @@ static int nvgpu_nvs_worker_init(struct gk20a *g)
 		/* Ensure that scheduler thread is started as soon as possible to handle
 		 * minimal uptime for applications.
 		 */
-		err = NVGPU_COND_WAIT(&nvs_worker->worker.wq,
-				nvgpu_atomic_read(&nvs_worker->nvs_sched_init) == 1, 0);
+		err = NVGPU_COND_WAIT(&nvs_worker->wq_request,
+				nvgpu_atomic_read(
+					&nvs_worker->nvs_sched_state) == NVS_WORKER_STATE_RUNNING,
+					0);
 		if (err != 0) {
 			nvgpu_err(g, "Interrupted while waiting for scheduler thread");
 		}
+
+		nvs_dbg(g, "Thread started");
 	}
 
 	return err;
@@ -314,10 +447,14 @@ static void nvgpu_nvs_worker_deinit(struct gk20a *g)
 	struct nvgpu_worker *worker = &g->scheduler->worker.worker;
 	struct nvgpu_nvs_worker *nvs_worker = &g->scheduler->worker;
 
+	if (g->is_virtual) {
+		return;
+	}
+
 	nvgpu_worker_deinit(worker);
 
-	nvgpu_atomic_set(&nvs_worker->nvs_sched_init, 0);
-	nvgpu_cond_destroy(&nvs_worker->wq_init);
+	nvgpu_atomic_set(&nvs_worker->nvs_sched_state, NVS_WORKER_STATE_STOPPED);
+	nvgpu_cond_destroy(&nvs_worker->wq_request);
 
 	nvs_dbg(g, "NVS worker suspended");
 }
@@ -495,7 +632,9 @@ int nvgpu_nvs_open(struct gk20a *g)
 
 	if (g->scheduler != NULL) {
 		/* resuming from railgate */
-		goto unlock;
+		nvgpu_mutex_release(&g->sched_mutex);
+		nvgpu_nvs_worker_resume(g);
+		return err;
 	}
 
 	g->scheduler = nvgpu_kzalloc(g, sizeof(*g->scheduler));
@@ -524,6 +663,9 @@ int nvgpu_nvs_open(struct gk20a *g)
 	if (err != 0) {
 		goto unlock;
 	}
+
+	/* Ensure all the previous writes are seen */
+	nvgpu_wmb();
 
 	err = nvgpu_nvs_gen_shadow_domain(g);
 	if (err != 0) {

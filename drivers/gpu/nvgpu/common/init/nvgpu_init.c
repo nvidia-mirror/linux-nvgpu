@@ -313,6 +313,9 @@ int nvgpu_prepare_poweroff(struct gk20a *g)
 		}
 	}
 
+	/* Ensure that thread is paused before Engines suspend below */
+	nvgpu_nvs_worker_pause(g);
+
 #ifdef CONFIG_NVGPU_LS_PMU
 	/* disable elpg before gr or fifo suspend */
 	if (g->support_ls_pmu) {
