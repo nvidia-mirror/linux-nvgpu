@@ -216,15 +216,19 @@ u32 nvgpu_pmu_get_ss_msg_fbq_element_offset(struct gk20a *g,
 
 void nvgpu_pmu_ss_fbq_flush(struct gk20a *g, struct nvgpu_pmu *pmu)
 {
-	nvgpu_memset(g, nvgpu_pmu_super_surface_mem(g,
-			pmu, pmu->super_surface),
-			(u64)offsetof(struct super_surface, fbq.cmd_queues),
-			0x00, sizeof(struct nv_pmu_fbq_cmd_queues));
+	if (pmu->super_surface != NULL) {
+		if (nvgpu_mem_is_valid(nvgpu_pmu_super_surface_mem(g, pmu, pmu->super_surface))) {
+			nvgpu_memset(g, nvgpu_pmu_super_surface_mem(g,
+					pmu, pmu->super_surface),
+					(u64)offsetof(struct super_surface, fbq.cmd_queues),
+					0x00, sizeof(struct nv_pmu_fbq_cmd_queues));
 
-	nvgpu_memset(g, nvgpu_pmu_super_surface_mem(g,
-			pmu, pmu->super_surface),
-			(u64)offsetof(struct super_surface, fbq.msg_queue),
-			0x00, sizeof(struct nv_pmu_fbq_msg_queue));
+			nvgpu_memset(g, nvgpu_pmu_super_surface_mem(g,
+					pmu, pmu->super_surface),
+					(u64)offsetof(struct super_surface, fbq.msg_queue),
+					0x00, sizeof(struct nv_pmu_fbq_msg_queue));
+		}
+	}
 }
 
 void nvgpu_pmu_super_surface_deinit(struct gk20a *g, struct nvgpu_pmu *pmu,
