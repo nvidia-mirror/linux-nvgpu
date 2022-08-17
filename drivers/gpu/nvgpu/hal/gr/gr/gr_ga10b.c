@@ -1127,9 +1127,14 @@ int ga10b_gr_set_sched_wait_for_errbar(struct gk20a *g,
 	struct nvgpu_tsg *tsg = nvgpu_tsg_from_ch(ch);
 	u32 flags = NVGPU_REG_OP_FLAG_MODE_ALL_OR_NONE;
 
-	err = gr_gk20a_exec_ctx_ops(tsg, &ctx_ops, 1, 1, 0, &flags);
-	if (err != 0) {
-		nvgpu_err(g, "update implicit ERRBAR failed");
+	if (tsg != NULL) {
+		err = gr_gk20a_exec_ctx_ops(tsg, &ctx_ops, 1, 1, 0, &flags);
+		if (err != 0) {
+			nvgpu_err(g, "update implicit ERRBAR failed");
+		}
+	} else {
+		nvgpu_err(g, "chid: %d is not bound to tsg", ch->chid);
+		return -EINVAL;
 	}
 	return err;
 }
