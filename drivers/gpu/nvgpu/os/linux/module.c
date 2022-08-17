@@ -1943,6 +1943,7 @@ int nvgpu_remove(struct device *dev)
 
 	nvgpu_log_fn(g, " ");
 
+	nvgpu_start_gpu_idle(g);
 	err = nvgpu_quiesce(g);
 	WARN(err, "gpu failed to idle during driver removal");
 
