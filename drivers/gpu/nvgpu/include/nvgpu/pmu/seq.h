@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -93,6 +93,8 @@ struct pmu_sequences {
 };
 
 void nvgpu_pmu_sequences_sw_setup(struct gk20a *g, struct nvgpu_pmu *pmu,
+	struct pmu_sequences *sequences);
+void nvgpu_pmu_sequences_cleanup(struct gk20a *g, struct nvgpu_pmu *pmu,
 	struct pmu_sequences *sequences);
 int nvgpu_pmu_sequences_init(struct gk20a *g, struct nvgpu_pmu *pmu,
 	struct pmu_sequences **sequences_p);

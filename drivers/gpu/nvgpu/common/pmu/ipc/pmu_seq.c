@@ -49,6 +49,28 @@ void nvgpu_pmu_sequences_sw_setup(struct gk20a *g, struct nvgpu_pmu *pmu,
 	}
 }
 
+void nvgpu_pmu_sequences_cleanup(struct gk20a *g, struct nvgpu_pmu *pmu,
+	struct pmu_sequences *sequences)
+{
+	u32 i;
+
+	(void)pmu;
+
+	nvgpu_log_fn(g, " ");
+
+	if (sequences == NULL) {
+		return;
+	}
+
+	for (i = 0; i < PMU_MAX_NUM_SEQUENCES; i++) {
+		if (sequences->seq[i].cb_params != NULL) {
+			nvgpu_info(g, "seq id-%d Free CBP ", sequences->seq[i].id);
+			nvgpu_kfree(g, sequences->seq[i].cb_params);
+			sequences->seq[i].cb_params	= NULL;
+		}
+	}
+}
+
 int nvgpu_pmu_sequences_init(struct gk20a *g, struct nvgpu_pmu *pmu,
 	struct pmu_sequences **sequences_p)
 {

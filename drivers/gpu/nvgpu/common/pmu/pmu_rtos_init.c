@@ -123,6 +123,8 @@ int nvgpu_pmu_destroy(struct gk20a *g, struct nvgpu_pmu *pmu)
 		nvgpu_pmu_ss_fbq_flush(g, pmu);
 	}
 
+	nvgpu_pmu_sequences_cleanup(g, pmu, pmu->sequences);
+
 	nvgpu_pmu_fw_state_change(g, pmu, PMU_FW_STATE_OFF, false);
 	nvgpu_pmu_set_fw_ready(g, pmu, false);
 	nvgpu_pmu_lsfm_clean(g, pmu, pmu->lsfm);
