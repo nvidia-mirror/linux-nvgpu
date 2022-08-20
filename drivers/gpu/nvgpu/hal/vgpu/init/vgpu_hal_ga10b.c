@@ -518,6 +518,7 @@ static const struct gops_gr vgpu_ga10b_ops_gr = {
 	.get_offset_in_gpccs_segment = gr_gk20a_get_offset_in_gpccs_segment,
 	.set_debug_mode = gm20b_gr_set_debug_mode,
 	.set_mmu_debug_mode = vgpu_gr_set_mmu_debug_mode,
+	.set_sched_wait_for_errbar = ga10b_gr_set_sched_wait_for_errbar,
 #endif
 };
 
@@ -1236,6 +1237,7 @@ int vgpu_ga10b_init_hal(struct gk20a *g)
 #endif
 #ifdef CONFIG_NVGPU_DEBUGGER
 	nvgpu_set_enabled(g, NVGPU_L2_MAX_WAYS_EVICT_LAST_ENABLED, true);
+	nvgpu_set_enabled(g, NVGPU_SCHED_EXIT_WAIT_FOR_ERRBAR_SUPPORTED, true);
 #endif
 
 	g->name = "ga10b";

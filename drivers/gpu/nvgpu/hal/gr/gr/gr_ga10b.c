@@ -1128,7 +1128,7 @@ int ga10b_gr_set_sched_wait_for_errbar(struct gk20a *g,
 	u32 flags = NVGPU_REG_OP_FLAG_MODE_ALL_OR_NONE;
 
 	if (tsg != NULL) {
-		err = gr_gk20a_exec_ctx_ops(tsg, &ctx_ops, 1, 1, 0, &flags);
+		err = g->ops.regops.exec_regops(g, tsg, &ctx_ops, 1, 1, 0, &flags);
 		if (err != 0) {
 			nvgpu_err(g, "update implicit ERRBAR failed");
 		}
