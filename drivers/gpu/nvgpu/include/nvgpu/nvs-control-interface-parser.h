@@ -32,6 +32,8 @@
 
 #include <nvgpu/types.h>
 
+#define NVS_DOMAIN_MSG_TYPE_CTRL_SWITCH_DOMAIN_STATUS_FAIL 1
+
 struct gk20a;
 struct nvs_domain_message;
 struct nvs_domain_msg_fifo_control;

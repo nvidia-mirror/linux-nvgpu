@@ -538,3 +538,169 @@ void nvgpu_nvs_ctrl_fifo_erase_queue(struct gk20a *g, struct nvgpu_nvs_ctrl_queu
 		queue->free(g, queue);
 	}
 }
+
+#ifdef CONFIG_NVS_KMD_BACKEND
+static int nvgpu_nvs_ctrl_fifo_scheduler_process_caps_request(struct gk20a *g,
+		struct nvs_control_fifo_receiver * const send_queue_receiver,
+		struct nvs_control_fifo_sender * const receiver_queue_sender)
+{
+	int result;
+
+	struct nvs_domain_msg_ctrl_get_caps_req *request =
+		(struct nvs_domain_msg_ctrl_get_caps_req *)send_queue_receiver->internal_buffer;
+	struct nvs_domain_msg_ctrl_get_caps_resp *response =
+		(struct nvs_domain_msg_ctrl_get_caps_resp *)receiver_queue_sender->internal_buffer;
+
+	(void)g;
+
+	if (request->client_version_major == NVS_DOMAIN_SCHED_VERSION_MAJOR
+			&& request->client_version_minor == NVS_DOMAIN_SCHED_VERSION_MINOR
+			&& request->client_version_patch == NVS_DOMAIN_SCHED_VERSION_PATCH) {
+		result = 0;
+		response->sched_version_major = NVS_DOMAIN_SCHED_VERSION_MAJOR;
+		response->sched_version_minor = NVS_DOMAIN_SCHED_VERSION_MINOR;
+		response->sched_version_patch = NVS_DOMAIN_SCHED_VERSION_PATCH;
+		response->client_version_status = NVS_DOMAIN_MSG_CTRL_GET_CAPS_RESP_CLIENT_VERSION_STATUS_OK;
+	} else {
+		result = 1;
+		response->client_version_status =
+			NVS_DOMAIN_MSG_CTRL_GET_CAPS_RESP_CLIENT_VERSION_STATUS_FAILED;
+	}
+
+	return result;
+}
+
+static int nvgpu_nvs_ctrl_fifo_scheduler_process_erroneous_request(struct gk20a *g,
+		struct nvs_control_fifo_receiver * const send_queue_receiver,
+		struct nvs_control_fifo_sender * const receiver_queue_sender)
+{
+	struct nvs_domain_msg_ctrl_error_resp *error_response =
+		(struct nvs_domain_msg_ctrl_error_resp *)receiver_queue_sender->internal_buffer;
+
+	(void)g;
+	(void)send_queue_receiver;
+	error_response->error_code = NVS_DOMAIN_MSG_CTRL_ERROR_UNHANDLED_MESSAGE;
+
+	return 0;
+}
+
+static int nvgpu_nvs_ctrl_fifo_scheduler_process_switch_request(struct gk20a *g,
+		struct nvs_control_fifo_receiver * const send_queue_receiver,
+		struct nvs_control_fifo_sender * const receiver_queue_sender)
+{
+	int result = 0;
+	struct nvs_domain *nvs_domain = NULL;
+	struct nvgpu_nvs_domain *nvgpu_nvs_domain = NULL;
+	struct nvgpu_nvs_scheduler *sched = g->scheduler;
+	s64 start_time, end_time;
+	s64 duration;
+	u64 domain_id;
+
+	struct nvs_domain_msg_ctrl_switch_domain_req *request =
+		(struct nvs_domain_msg_ctrl_switch_domain_req *)send_queue_receiver->internal_buffer;
+	struct nvs_domain_msg_ctrl_switch_domain_resp *response =
+		(struct nvs_domain_msg_ctrl_switch_domain_resp *)receiver_queue_sender->internal_buffer;
+
+	domain_id = request->domain_id;
+
+	if (domain_id == NVS_DOMAIN_CTRL_DOMAIN_ID_ALL) {
+		nvgpu_nvs_domain = sched->shadow_domain;
+	} else {
+		nvgpu_nvs_domain = nvgpu_nvs_domain_by_id_locked(g, domain_id);
+	}
+
+	if (nvgpu_nvs_domain == NULL) {
+		nvgpu_err(g, "Unable to find domain[%llu]", domain_id);
+		result = -EINVAL;
+		response->status = NVS_DOMAIN_MSG_TYPE_CTRL_SWITCH_DOMAIN_STATUS_FAIL;
+	} else {
+		nvs_domain = (struct nvs_domain *)nvgpu_nvs_domain->parent;
+
+		start_time = nvgpu_current_time_ns();
+		result = nvgpu_runlist_tick(g, nvgpu_nvs_domain->rl_domains, nvs_domain->preempt_grace_ns);
+		end_time = nvgpu_current_time_ns();
+
+		if (result == 0) {
+			/* Change active domain here. Any runlist pending writes depend upon this.*/
+			sched->active_domain = nvgpu_nvs_domain;
+			duration = nvgpu_safe_sub_s64(end_time, start_time);
+			response->status = NVS_DOMAIN_MSG_TYPE_CTRL_SWITCH_DOMAIN_STATUS_SUCCESS;
+			response->switch_ns = nvgpu_safe_cast_s64_to_u64(duration);
+		} else {
+			response->status = NVS_DOMAIN_MSG_TYPE_CTRL_SWITCH_DOMAIN_STATUS_FAIL;
+		}
+	}
+
+	return result;
+}
+
+static int nvgpu_nvs_ctrl_fifo_scheduler_process_receiver(struct gk20a *g,
+		struct nvs_control_fifo_receiver * const send_queue_receiver,
+		struct nvs_control_fifo_sender * const receiver_queue_sender)
+{
+	int result = 0;
+
+	if (send_queue_receiver->msg_type == NVS_DOMAIN_MSG_TYPE_CTRL_GET_CAPS_INFO) {
+		result = nvgpu_nvs_ctrl_fifo_scheduler_process_caps_request(g,
+			send_queue_receiver, receiver_queue_sender);
+	} else if (send_queue_receiver->msg_type == NVS_DOMAIN_MSG_TYPE_CTRL_SWITCH_DOMAIN) {
+		result = nvgpu_nvs_ctrl_fifo_scheduler_process_switch_request(g,
+			send_queue_receiver, receiver_queue_sender);
+	} else {
+		result = nvgpu_nvs_ctrl_fifo_scheduler_process_erroneous_request(g,
+			send_queue_receiver, receiver_queue_sender);
+		send_queue_receiver->msg_type = NVS_DOMAIN_MSG_TYPE_CTRL_ERROR;
+	}
+
+	return result;
+}
+
+int nvgpu_nvs_ctrl_fifo_scheduler_handle_requests(struct gk20a *g)
+{
+	int ret = 0;
+	struct nvs_control_fifo_receiver * const send_queue_receiver =
+		nvgpu_nvs_domain_ctrl_fifo_get_receiver(g);
+	struct nvs_control_fifo_sender * const receiver_queue_sender =
+		nvgpu_nvs_domain_ctrl_fifo_get_sender(g);
+
+	/* Take a lock here to ensure, the queues are not messed with anywhere
+	 * as long as the queue read is in progress.
+	 */
+	nvgpu_mutex_acquire(&g->sched_mutex);
+
+	if (send_queue_receiver == NULL) {
+		nvgpu_mutex_release(&g->sched_mutex);
+		return 0;
+	}
+
+	if (nvs_control_fifo_receiver_can_read(send_queue_receiver) == 0) {
+		nvs_control_fifo_read_message(send_queue_receiver);
+		ret = nvgpu_nvs_ctrl_fifo_scheduler_process_receiver(g, send_queue_receiver,
+			receiver_queue_sender);
+
+		if (ret != 0) {
+			nvgpu_err(g, "error occured when reading from the SEND control-queue");
+		}
+
+		if (receiver_queue_sender != NULL) {
+			ret = nvs_control_fifo_sender_can_write(receiver_queue_sender);
+			if (ret == -EAGAIN) {
+				nvs_control_fifo_sender_out_of_space(receiver_queue_sender);
+				nvgpu_err(g, "error occured due to lack of space for RECEIVE control-queue");
+			} else {
+				nvs_control_fifo_sender_write_message(receiver_queue_sender,
+					send_queue_receiver->msg_type, send_queue_receiver->msg_sequence,
+						nvgpu_safe_cast_s64_to_u64(nvgpu_current_time_ns()));
+			}
+		}
+	}
+
+	/*
+	 * Release the lock here.
+	 */
+	nvgpu_mutex_release(&g->sched_mutex);
+
+	return ret;
+}
+#endif /* CONFIG_NVS_KMD_BACKEND */
+

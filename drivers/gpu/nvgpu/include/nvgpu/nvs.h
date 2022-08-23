@@ -295,6 +295,7 @@ void nvgpu_nvs_domain_ctrl_fifo_set_receiver(struct gk20a *g,
 		struct nvs_control_fifo_receiver *receiver);
 void nvgpu_nvs_domain_ctrl_fifo_set_sender(struct gk20a *g,
 		struct nvs_control_fifo_sender *sender);
+int nvgpu_nvs_ctrl_fifo_scheduler_handle_requests(struct gk20a *g);
 #endif
 
 /* Below methods require nvgpu_nvs_ctrl_fifo_lock_queues() to be held. */

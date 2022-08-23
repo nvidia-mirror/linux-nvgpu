@@ -345,7 +345,7 @@ static void nvgpu_nvs_handle_pause_requests(struct nvgpu_worker *worker)
 	}
 }
 
-static void nvgpu_nvs_worker_wakeup_post_process(struct nvgpu_worker *worker)
+static void nvgpu_nvs_worker_multi_domain_process(struct nvgpu_worker *worker)
 {
 	struct gk20a *g = worker->g;
 	struct nvgpu_nvs_worker *nvs_worker =
@@ -362,6 +362,15 @@ static void nvgpu_nvs_worker_wakeup_post_process(struct nvgpu_worker *worker)
 
 		nvgpu_timeout_init_cpu_timer_sw(g, &nvs_worker->timeout,
 				nvs_worker->current_timeout);
+	}
+}
+
+static void nvgpu_nvs_worker_wakeup_post_process(struct nvgpu_worker *worker)
+{
+	if (nvgpu_nvs_ctrl_fifo_is_enabled(worker->g)) {
+		nvgpu_nvs_ctrl_fifo_scheduler_handle_requests(worker->g);
+	} else {
+		nvgpu_nvs_worker_multi_domain_process(worker);
 	}
 
 	nvgpu_nvs_handle_pause_requests(worker);
