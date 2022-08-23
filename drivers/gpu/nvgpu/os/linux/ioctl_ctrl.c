@@ -78,7 +78,6 @@
 	(u32) ((a * 0x10C8ULL) >> 32) : (u16) ((u32) a/MHZ))
 #define MHZ_TO_HZ(a) ((u64)a * MHZ)
 
-extern const struct file_operations gk20a_as_ops;
 extern const struct file_operations gk20a_tsg_ops;
 
 struct gk20a_ctrl_priv {

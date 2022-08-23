@@ -223,6 +223,193 @@ struct nvgpu_tsg *nvgpu_tsg_get_from_id(struct gk20a *g, u32 tsgid)
 }
 
 /*
+ * Synchronous subcontext. Subcontext of this type may hold the
+ * graphics channel, and multiple copy engine and compute channels.
+ */
+#define NVGPU_TSG_SUBCONTEXT_TYPE_SYNC               (0x0U)
+
+/*
+ * Asynchronous subcontext. Asynchronous subcontext is for compute
+ * and copy engine channels only.
+ */
+#define NVGPU_TSG_SUBCONTEXT_TYPE_ASYNC              (0x1U)
+
+#define MAX_SYNC_SUBCONTEXTS	1U
+
+static int nvgpu_tsg_create_sync_subcontext(struct gk20a *g,
+				struct nvgpu_tsg *tsg, u32 *veid)
+{
+	if (tsg->sync_veid) {
+		nvgpu_err(g, "SYNC VEID not available");
+		return -ENOSPC;
+	}
+
+	tsg->sync_veid = true;
+
+	*veid = 0U;
+
+	return 0;
+}
+
+static int nvgpu_tsg_create_async_subcontext(struct gk20a *g,
+				struct nvgpu_tsg *tsg, u32 max_subctx_count,
+				u32 *veid)
+{
+	u32 max_async_subcontexts = max_subctx_count - MAX_SYNC_SUBCONTEXTS;
+	int err;
+	u32 idx;
+
+	idx = nvgpu_safe_cast_u64_to_u32(
+			find_first_zero_bit(tsg->async_veids,
+					    max_async_subcontexts));
+
+	if (idx == max_async_subcontexts) {
+		nvgpu_log_info(g, "ASYNC VEID not available");
+		err = nvgpu_tsg_create_sync_subcontext(g, tsg, veid);
+		if (err != 0) {
+			nvgpu_err(g, "ASYNC & SYNC VEIDs not available");
+			return err;
+		}
+	} else {
+		nvgpu_set_bit(idx, tsg->async_veids);
+		/* ASYNC VEIDs start from 1. */
+		*veid = idx + MAX_SYNC_SUBCONTEXTS;
+	}
+
+	return 0;
+}
+
+int nvgpu_tsg_create_subcontext(struct gk20a *g, struct nvgpu_tsg *tsg,
+				u32 type, struct vm_gk20a *vm,
+				u32 max_subctx_count, u32 *veid)
+{
+	int err;
+
+	nvgpu_mutex_acquire(&tsg->veid_alloc_lock);
+
+	if (type == NVGPU_TSG_SUBCONTEXT_TYPE_SYNC) {
+		err = nvgpu_tsg_create_sync_subcontext(g, tsg, veid);
+		if (err != 0) {
+			nvgpu_err(g, "Sync VEID not available");
+			nvgpu_mutex_release(&tsg->veid_alloc_lock);
+			return err;
+		}
+	}
+
+	if (type == NVGPU_TSG_SUBCONTEXT_TYPE_ASYNC) {
+		err = nvgpu_tsg_create_async_subcontext(g, tsg,
+						max_subctx_count, veid);
+		if (err != 0) {
+			nvgpu_err(g, "Async/Sync VEID not available");
+			nvgpu_mutex_release(&tsg->veid_alloc_lock);
+			return err;
+		}
+	}
+
+	if (tsg->subctx_vms[*veid] == NULL) {
+		tsg->subctx_vms[*veid] = vm;
+	}
+
+	nvgpu_mutex_release(&tsg->veid_alloc_lock);
+
+	nvgpu_log_info(g, "Allocated VEID %u", *veid);
+
+	return 0;
+}
+
+int nvgpu_tsg_delete_subcontext(struct gk20a *g, struct nvgpu_tsg *tsg,
+				u32 max_subctx_count, u32 veid)
+{
+	if (veid >= max_subctx_count) {
+		nvgpu_err(g, "Invalid VEID specified %u", veid);
+		return -EINVAL;
+	}
+
+	nvgpu_mutex_acquire(&tsg->veid_alloc_lock);
+
+	if (veid == 0U) {
+		if (!tsg->sync_veid) {
+			nvgpu_err(g, "VEID 0 not allocated");
+			nvgpu_mutex_release(&tsg->veid_alloc_lock);
+			return -EINVAL;
+		}
+
+		tsg->sync_veid = false;
+		tsg->subctx_vms[veid] = NULL;
+	} else {
+		if (!nvgpu_test_bit(veid - MAX_SYNC_SUBCONTEXTS, tsg->async_veids)) {
+			nvgpu_err(g, "VEID %u not allocated", veid);
+			nvgpu_mutex_release(&tsg->veid_alloc_lock);
+			return -EINVAL;
+		}
+		nvgpu_clear_bit(veid - MAX_SYNC_SUBCONTEXTS, tsg->async_veids);
+		tsg->subctx_vms[veid - MAX_SYNC_SUBCONTEXTS] = NULL;
+	}
+
+	nvgpu_mutex_release(&tsg->veid_alloc_lock);
+
+	nvgpu_log_info(g, "Freed VEID %u", veid);
+
+	return 0;
+}
+
+int nvgpu_tsg_create_sync_subcontext_internal(struct gk20a *g,
+			struct nvgpu_tsg *tsg, struct nvgpu_channel *ch)
+{
+	u32 subctx_id = 0U;
+	int err;
+
+	if (!nvgpu_is_enabled(g, NVGPU_SUPPORT_TSG_SUBCONTEXTS)) {
+		return 0;
+	}
+
+	nvgpu_mutex_acquire(&tsg->veid_alloc_lock);
+
+	subctx_id = ch->subctx_id;
+
+	/*
+	 * If this is first channel created without creating subcontext,
+	 * then this channel is using subcontext with VEID 0 by default.
+	 * Set subctx_vm and reserve the VEID0.
+	 */
+	if ((subctx_id == 0U) &&  (tsg->subctx_vms[0] == NULL)) {
+		err = nvgpu_tsg_create_sync_subcontext(g, tsg, &subctx_id);
+		if (err != 0) {
+			nvgpu_err(g, "SYNC VEID not available");
+			nvgpu_mutex_release(&tsg->veid_alloc_lock);
+			return err;
+		}
+
+		tsg->subctx_vms[0] = ch->vm;
+	}
+
+	nvgpu_mutex_release(&tsg->veid_alloc_lock);
+
+	return 0;
+}
+
+int nvgpu_tsg_validate_ch_subctx_vm(struct gk20a *g,
+			struct nvgpu_tsg *tsg, struct nvgpu_channel *ch)
+{
+	int err = 0;
+
+	if (!nvgpu_is_enabled(g, NVGPU_SUPPORT_TSG_SUBCONTEXTS)) {
+		return 0;
+	}
+
+	nvgpu_mutex_acquire(&tsg->veid_alloc_lock);
+
+	if (ch->vm != tsg->subctx_vms[ch->subctx_id]) {
+		nvgpu_err(g, "channel VM does not match with subcontext VM");
+		err = -EINVAL;
+	}
+
+	nvgpu_mutex_release(&tsg->veid_alloc_lock);
+
+	return err;
+}
+
+/*
  * API to mark channel as part of TSG
  *
  * Note that channel is not runnable when we bind it to TSG
@@ -654,6 +841,7 @@ static void nvgpu_tsg_destroy(struct nvgpu_tsg *tsg)
 	nvgpu_mutex_destroy(&tsg->event_id_list_lock);
 #endif
 	nvgpu_mutex_destroy(&tsg->ctx_init_lock);
+	nvgpu_mutex_destroy(&tsg->veid_alloc_lock);
 }
 
 #ifdef CONFIG_NVGPU_CHANNEL_TSG_CONTROL
@@ -708,6 +896,7 @@ static void nvgpu_tsg_init_support(struct gk20a *g, u32 tsgid)
 	nvgpu_init_list_node(&tsg->gr_ctx_mappings_list);
 	nvgpu_rwsem_init(&tsg->ch_list_lock);
 	nvgpu_mutex_init(&tsg->ctx_init_lock);
+	nvgpu_mutex_init(&tsg->veid_alloc_lock);
 
 #ifdef CONFIG_NVGPU_CHANNEL_TSG_CONTROL
 	nvgpu_init_list_node(&tsg->event_id_list);
@@ -1039,6 +1228,55 @@ static struct nvgpu_tsg *nvgpu_tsg_acquire_unused_tsg(struct nvgpu_fifo *f)
 	return tsg;
 }
 
+static int nvgpu_tsg_alloc_veid_state(struct gk20a *g, struct nvgpu_tsg *tsg)
+{
+	u32 max_async_subcontexts;
+	u32 max_subctx_count;
+
+	if (!nvgpu_is_enabled(g, NVGPU_SUPPORT_TSG_SUBCONTEXTS)) {
+		return 0;
+	}
+
+	tsg->sync_veid = false;
+
+	max_subctx_count = g->ops.gr.init.get_max_subctx_count();
+	max_async_subcontexts = max_subctx_count - MAX_SYNC_SUBCONTEXTS;
+
+	tsg->async_veids = nvgpu_kzalloc(g,
+				BITS_TO_LONGS(max_async_subcontexts) *
+				sizeof(unsigned long));
+	if (tsg->async_veids == NULL) {
+		nvgpu_err(g, "async veids bitmap alloc failed");
+		return -ENOMEM;
+	}
+
+	tsg->subctx_vms = nvgpu_kzalloc(g,
+				sizeof(struct vm_gk20a *) * max_subctx_count);
+	if (tsg->subctx_vms == NULL) {
+		nvgpu_err(g, "subctx vms alloc failed");
+		nvgpu_kfree(g, tsg->async_veids);
+		tsg->async_veids = NULL;
+		return -ENOMEM;
+	}
+
+	return 0;
+}
+
+static void nvgpu_tsg_free_veid_state(struct gk20a *g, struct nvgpu_tsg *tsg)
+{
+	if (!nvgpu_is_enabled(g, NVGPU_SUPPORT_TSG_SUBCONTEXTS)) {
+		return;
+	}
+
+	nvgpu_kfree(g, tsg->subctx_vms);
+	tsg->subctx_vms = NULL;
+
+	nvgpu_kfree(g, tsg->async_veids);
+	tsg->async_veids = NULL;
+
+	tsg->sync_veid = false;
+}
+
 int nvgpu_tsg_open_common(struct gk20a *g, struct nvgpu_tsg *tsg, pid_t pid)
 {
 	u32 no_of_sm = g->ops.gr.init.get_no_of_sm(g);
@@ -1084,6 +1322,12 @@ int nvgpu_tsg_open_common(struct gk20a *g, struct nvgpu_tsg *tsg, pid_t pid)
 				  tsg->tsgid, err);
 			goto clean_up;
 		}
+	}
+
+	err = nvgpu_tsg_alloc_veid_state(g, tsg);
+	if (err != 0) {
+		nvgpu_err(g, "VEID sw state alloc failed %d", err);
+		goto clean_up;
 	}
 
 #ifdef CONFIG_NVGPU_SM_DIVERSITY
@@ -1145,6 +1389,8 @@ void nvgpu_tsg_release_common(struct gk20a *g, struct nvgpu_tsg *tsg)
 	if (g->ops.tsg.release != NULL) {
 		g->ops.tsg.release(tsg);
 	}
+
+	nvgpu_tsg_free_veid_state(g, tsg);
 
 	nvgpu_free_gr_ctx_struct(g, tsg->gr_ctx);
 	tsg->gr_ctx = NULL;

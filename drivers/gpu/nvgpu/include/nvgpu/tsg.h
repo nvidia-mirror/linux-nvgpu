@@ -127,6 +127,35 @@ struct nvgpu_tsg {
 	 */
 	struct nvgpu_list_node subctx_list;
 
+	/**
+	 * Mutex to synchronize VEID allocation and free. It is also used to
+	 * access/modify #subctx_vms.
+	 */
+	struct nvgpu_mutex veid_alloc_lock;
+
+	/*
+	 * Set to true if SYNC VEID is allocated to the userspace. When user
+	 * requests for a subcontext of type NVGPU_TSG_SUBCONTEXT_TYPE_SYNC
+	 * this is set to true if not already set. When user requests
+	 * for a subcontext of type NVGPU_TSG_SUBCONTEXT_TYPE_ASYNC this
+	 * is set to true if not already set and if all ASYNC veids
+	 * are allocated already.
+	 */
+	bool sync_veid;
+
+	/*
+	 * This is bitmap of ASYNC VEIDs allocated to the userspace. When user
+	 * requests for a subcontext of type NVGPU_TSG_SUBCONTEXT_TYPE_ASYNC
+	 * a bit is set from this bitmap if available.
+	 */
+	unsigned long *async_veids;
+
+	/*
+	 * VM associated with subcontexts. Currently only single VM
+	 * association is supported.
+	 */
+	struct vm_gk20a **subctx_vms;
+
 	/** List of channels bound to this TSG. */
 	struct nvgpu_list_node ch_list;
 #ifdef CONFIG_NVGPU_CHANNEL_TSG_CONTROL
@@ -245,6 +274,88 @@ struct nvgpu_tsg {
 	struct nvgpu_profiler_object *prof;
 #endif
 };
+
+/**
+ * @brief Allocate subcontext VEID within a TSG.
+ *
+ * @param g [in]		The GPU driver struct.
+ * @param tsg [in]		Pointer to TSG struct.
+ * @param type [in]		Type of subcontext.
+ * @param vm [in]		Pointer to virtual memory struct.
+ * @param max_subctx_count [in] Maximum subcontexts supported for the
+ *                              gpu instance.
+ * @param veid [out]		VEID allocated.
+ *
+ * - Validate the VM. Since single VM supported for a TSG now, if
+ *   different VM is specified than already assigned to the TSG
+ *   then return -EINVAL.
+ * - If sync subcontext requested, allocate if available and set the
+ *   flag #sync_veid.
+ * - If async subcontext requested, allocate if available from the
+ *   bitmap #async_veids. If async VEIDs are not available and sync
+ *   VEID is available then allocate sync subcontext by setting the
+ *   flag #sync_veid.
+ *
+ * @return 0 in case of success, < 0 in case of failure.
+ * @retval -EINVAL if invalid VM.
+ * @retval -ENOSPC if VEIDs not available.
+ */
+int nvgpu_tsg_create_subcontext(struct gk20a *g, struct nvgpu_tsg *tsg,
+				u32 type, struct vm_gk20a *vm,
+				u32 max_subctx_count, u32 *veid);
+
+/**
+ * @brief Free subcontext VEID from a TSG
+ *
+ * @param g [in]		The GPU driver struct.
+ * @param tsg [in]		Pointer to TSG struct.
+ * @param max_subctx_count [in] Maximum subcontexts supported for the
+ *                              gpu instance.
+ * @param veid [in]		VEID to be freed.
+ *
+ * - Validate #veid. If invalid, return -EINVAL.
+ * - Else free the VEID by resetting either #sync_veid or bit from #async_veids
+ *   if allocated. If not allocated, return -EINVAL.
+ *
+ * @return 0 in case of success, < 0 in case of failure.
+ * @retval -EINVAL if veid is invalid.
+ */
+int nvgpu_tsg_delete_subcontext(struct gk20a *g, struct nvgpu_tsg *tsg,
+				u32 max_subctx_count, u32 veid);
+
+/**
+ * @brief Mark sync subctx created if channel is opened with implicit subctx.
+ *
+ * @param g [in]		The GPU driver struct.
+ * @param tsg [in]		Pointer to TSG struct.
+ * @param ch [in]		Pointer to Channel struct.
+ *
+ * - If this is first channel created without creating subcontext,
+ *   then this channel is using subcontext with VEID 0 by default.
+ *   Set subctx_vms and reserve the VEID0.
+ *
+ * @return 0 in case of success, < 0 in case of failure.
+ */
+int nvgpu_tsg_create_sync_subcontext_internal(struct gk20a *g,
+			struct nvgpu_tsg *tsg, struct nvgpu_channel *ch);
+
+/**
+ * @brief Validate the VM associated with the Channel and TSG subcontexts.
+ *
+ * @param g [in]		The GPU driver struct.
+ * @param tsg [in]		Pointer to TSG struct.
+ * @param ch [in]		Pointer to Channel struct.
+ *
+ * - If this is first channel created without creating subcontext,
+ *   then this channel is using subcontext with VEID 0 by default.
+ *   Set subctx_vms and reserve the VEID0.
+ * - If channel VM does not match subcontext VM return -EINVAL.
+ *
+ * @return 0 in case of success, < 0 in case of failure.
+ * @retval -EINVAL if invalid VM.
+ */
+int nvgpu_tsg_validate_ch_subctx_vm(struct gk20a *g,
+			struct nvgpu_tsg *tsg, struct nvgpu_channel *ch);
 
 /**
  * @brief Initialize given TSG
@@ -371,6 +482,7 @@ void nvgpu_tsg_disable(struct nvgpu_tsg *tsg);
  * @param ch [in]		Pointer to Channel struct.
  *
  * - Make sure channel is not already bound to a TSG.
+ * - Make sure channel VM matches the subcontext VM.
  * - Make sure channel is not part of any runlists.
  * - If channel had ASYNC subctx id, then set runqueue selector to 1.
  * - Set runlist id of TSG to channel's runlist_id if runlist_id of TSG

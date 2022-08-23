@@ -40,6 +40,7 @@
 
 #include "platform_gk20a.h"
 #include "ioctl_tsg.h"
+#include "ioctl_as.h"
 #include "ioctl_channel.h"
 #include "ioctl_nvs.h"
 #include "ioctl.h"
@@ -82,6 +83,18 @@ static int nvgpu_tsg_bind_channel_fd(struct nvgpu_tsg *tsg, int ch_fd)
 	ch = nvgpu_channel_get_from_file(ch_fd);
 	if (!ch)
 		return -EINVAL;
+
+	err = nvgpu_tsg_create_sync_subcontext_internal(ch->g, tsg, ch);
+	if (err != 0) {
+		nvgpu_err(ch->g, "sync subctx created failed %d", err);
+		return err;
+	}
+
+	err = nvgpu_tsg_validate_ch_subctx_vm(ch->g, tsg, ch);
+	if (err != 0) {
+		nvgpu_err(ch->g, "channel/subctx VM mismatch");
+		return err;
+	}
 
 	err = nvgpu_tsg_bind_channel(tsg, ch);
 
@@ -136,6 +149,18 @@ static int gk20a_tsg_ioctl_bind_channel_ex(struct gk20a *g,
 	/* Use runqueue selector 1 for all ASYNC ids */
 	if (ch->subctx_id > CHANNEL_INFO_VEID0)
 		ch->runqueue_sel = 1;
+
+	err = nvgpu_tsg_create_sync_subcontext_internal(g, tsg, ch);
+	if (err != 0) {
+		nvgpu_err(ch->g, "sync subctx created failed %d", err);
+		goto ch_put;
+	}
+
+	err = nvgpu_tsg_validate_ch_subctx_vm(g, tsg, ch);
+	if (err != 0) {
+		nvgpu_err(g, "channel/subctx VM mismatch");
+		goto ch_put;
+	}
 
 	err = nvgpu_tsg_bind_channel(tsg, ch);
 ch_put:
@@ -749,6 +774,70 @@ static int nvgpu_gpu_ioctl_set_l2_sector_promotion(struct gk20a *g,
 	return err;
 }
 
+static int nvgpu_tsg_ioctl_create_subcontext(struct gk20a *g,
+		u32 gpu_instance_id, struct nvgpu_tsg *tsg,
+		struct nvgpu_tsg_create_subcontext_args *args)
+{
+	u32 max_subctx_count;
+	struct vm_gk20a *vm;
+	u32 veid;
+	int err;
+
+	if (!nvgpu_is_enabled(g, NVGPU_SUPPORT_TSG_SUBCONTEXTS)) {
+		return 0;
+	}
+
+	if (args->type != NVGPU_TSG_SUBCONTEXT_TYPE_SYNC &&
+	    args->type != NVGPU_TSG_SUBCONTEXT_TYPE_ASYNC) {
+		nvgpu_err(g, "Invalid subcontext type %u", args->type);
+		return -EINVAL;
+	}
+
+	vm = nvgpu_vm_get_from_file(args->as_fd);
+	if (vm == NULL) {
+		nvgpu_err(g, "Invalid VM (fd = %d) specified for subcontext",
+			  args->as_fd);
+		return -EINVAL;
+	}
+
+	max_subctx_count = nvgpu_grmgr_get_gpu_instance_max_veid_count(g, gpu_instance_id);
+
+	err = nvgpu_tsg_create_subcontext(g, tsg, args->type, vm,
+					  max_subctx_count, &veid);
+	if (err != 0) {
+		nvgpu_err(g, "Create subcontext failed %d", err);
+		nvgpu_vm_put(vm);
+		return err;
+	}
+
+	nvgpu_vm_put(vm);
+
+	args->veid = veid;
+
+	return 0;
+}
+
+static int nvgpu_tsg_ioctl_delete_subcontext(struct gk20a *g,
+		u32 gpu_instance_id, struct nvgpu_tsg *tsg,
+		struct nvgpu_tsg_delete_subcontext_args *args)
+{
+	u32 max_subctx_count;
+	int err;
+
+	if (!nvgpu_is_enabled(g, NVGPU_SUPPORT_TSG_SUBCONTEXTS)) {
+		return 0;
+	}
+
+	max_subctx_count = nvgpu_grmgr_get_gpu_instance_max_veid_count(g, gpu_instance_id);
+
+	err = nvgpu_tsg_delete_subcontext(g, tsg, max_subctx_count, args->veid);
+	if (err != 0) {
+		nvgpu_err(g, "Delete subcontext failed %d", err);
+	}
+
+	return err;
+}
+
 long nvgpu_ioctl_tsg_dev_ioctl(struct file *filp, unsigned int cmd,
 			     unsigned long arg)
 {
@@ -952,6 +1041,18 @@ long nvgpu_ioctl_tsg_dev_ioctl(struct file *filp, unsigned int cmd,
 		break;
 		}
 
+	case NVGPU_TSG_IOCTL_CREATE_SUBCONTEXT:
+		{
+		err = nvgpu_tsg_ioctl_create_subcontext(g, gpu_instance_id, tsg,
+				(struct nvgpu_tsg_create_subcontext_args *)buf);
+		break;
+		}
+	case NVGPU_TSG_IOCTL_DELETE_SUBCONTEXT:
+		{
+		err = nvgpu_tsg_ioctl_delete_subcontext(g, gpu_instance_id, tsg,
+				(struct nvgpu_tsg_delete_subcontext_args *)buf);
+		break;
+		}
 	default:
 		nvgpu_err(g, "unrecognized tsg gpu ioctl cmd: 0x%x",
 			   cmd);

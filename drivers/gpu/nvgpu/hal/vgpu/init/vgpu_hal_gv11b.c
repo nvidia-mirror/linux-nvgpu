@@ -407,6 +407,7 @@ static const struct gops_gr_init vgpu_gv11b_ops_gr_init = {
 	.commit_global_cb_manager = gp10b_gr_init_commit_global_cb_manager,
 	.get_ctx_attrib_cb_size = gp10b_gr_init_get_ctx_attrib_cb_size,
 	.commit_cbes_reserve = gv11b_gr_init_commit_cbes_reserve,
+	.get_max_subctx_count = gv11b_gr_init_get_max_subctx_count,
 	.detect_sm_arch = vgpu_gr_detect_sm_arch,
 	.get_supported__preemption_modes = gp10b_gr_init_get_supported_preemption_modes,
 	.get_default_preemption_modes = gp10b_gr_init_get_default_preemption_modes,

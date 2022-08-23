@@ -16,6 +16,7 @@
 #include <linux/cdev.h>
 #include <linux/uaccess.h>
 #include <linux/fs.h>
+#include <linux/file.h>
 #include <nvgpu/trace.h>
 
 #include <uapi/linux/nvgpu.h>
@@ -451,6 +452,31 @@ int gk20a_as_dev_release(struct inode *inode, struct file *filp)
 		return 0;
 
 	return gk20a_as_release_share(as_share);
+}
+
+/*
+ * This returns the AS with a reference. The caller must
+ * nvgpu_vm_put() the ref back after use.
+ *
+ * NULL is returned if the AS was not found.
+ */
+struct vm_gk20a *nvgpu_vm_get_from_file(int fd)
+{
+	struct gk20a_as_share *as_share;
+	struct file *f = fget(fd);
+
+	if (!f)
+		return NULL;
+
+	if (f->f_op != &gk20a_as_ops) {
+		fput(f);
+		return NULL;
+	}
+
+	as_share = (struct gk20a_as_share *)f->private_data;
+	nvgpu_vm_get(as_share->vm);
+	fput(f);
+	return as_share->vm;
 }
 
 long gk20a_as_dev_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
