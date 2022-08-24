@@ -453,11 +453,31 @@ void nvgpu_runlist_swap_mem(struct gk20a *g, struct nvgpu_runlist_domain *domain
 	nvgpu_spinlock_release(&domain->lock);
 }
 
-static int nvgpu_runlist_domain_actual_submit(struct gk20a *g, struct nvgpu_runlist *rl,
-		bool wait_for_finish)
+int nvgpu_runlist_wait_pending_legacy(struct gk20a *g, struct nvgpu_runlist *rl)
 {
-	int ret = 0;
+	struct nvgpu_timeout timeout;
+	u32 delay = POLL_DELAY_MIN_US;
+	int ret;
 
+	nvgpu_timeout_init_cpu_timer(g, &timeout, nvgpu_get_poll_timeout(g));
+
+	ret = -ETIMEDOUT;
+	do {
+		if (g->ops.runlist.check_pending(g, rl) == 0) {
+			ret = 0;
+			break;
+		}
+
+		/* Avoid sleeping */
+		nvgpu_usleep_range(delay, delay * 2U);
+		delay = min_t(u32, delay << 1, POLL_DELAY_MAX_US);
+	} while (nvgpu_timeout_expired(&timeout) == 0);
+
+	return ret;
+}
+
+static void nvgpu_runlist_domain_actual_submit(struct gk20a *g, struct nvgpu_runlist *rl)
+{
 	rl_dbg(g, "Runlist[%u]: submitting domain[%llu]",
 		rl->id, rl->domain->domain_id);
 
@@ -467,18 +487,6 @@ static int nvgpu_runlist_domain_actual_submit(struct gk20a *g, struct nvgpu_runl
 	nvgpu_spinlock_acquire(&rl->domain->lock);
 	g->ops.runlist.hw_submit(g, rl);
 	nvgpu_spinlock_release(&rl->domain->lock);
-
-	if (wait_for_finish) {
-		ret = g->ops.runlist.wait_pending(g, rl);
-		if (ret == -ETIMEDOUT) {
-			nvgpu_err(g, "runlist %d update timeout", rl->id);
-			/* trigger runlist update timeout recovery */
-			return ret;
-
-		}
-	}
-
-	return ret;
 }
 
 static int nvgpu_runlist_update_mem_locked(struct gk20a *g, struct nvgpu_runlist *rl,
@@ -594,7 +602,7 @@ int nvgpu_runlist_reschedule(struct nvgpu_channel *ch, bool preempt_next,
 		}
 	}
 
-	if (g->ops.runlist.wait_pending(g, runlist) != 0) {
+	if (nvgpu_runlist_wait_pending_legacy(g, runlist) != 0) {
 		nvgpu_err(g, "wait pending failed for runlist %u",
 				runlist->id);
 	}
@@ -668,19 +676,15 @@ static int nvgpu_runlist_do_update(struct gk20a *g, struct nvgpu_runlist *rl,
 /*
  * This is expected to be called only when device is powered on.
  */
-static int runlist_submit_powered(struct gk20a *g, struct nvgpu_runlist *runlist,
-		struct nvgpu_runlist_domain *next_domain, bool wait_for_finish)
+static void runlist_submit_powered(struct gk20a *g, struct nvgpu_runlist *runlist,
+		struct nvgpu_runlist_domain *next_domain)
 {
-	int err;
-
 	runlist->domain = next_domain;
 
 	rl_dbg(g, "Runlist[%u]: switching to domain %llu",
 		runlist->id, next_domain->domain_id);
 
-	err = nvgpu_runlist_domain_actual_submit(g, runlist, wait_for_finish);
-
-	return err;
+	nvgpu_runlist_domain_actual_submit(g, runlist);
 }
 
 int nvgpu_rl_domain_sync_submit(struct gk20a *g, struct nvgpu_runlist *runlist,
@@ -692,26 +696,28 @@ int nvgpu_rl_domain_sync_submit(struct gk20a *g, struct nvgpu_runlist *runlist,
 		next_domain = runlist->shadow_rl_domain;
 	}
 
-	err = runlist_submit_powered(g, runlist, next_domain, wait_for_finish);
+	runlist_submit_powered(g, runlist, next_domain);
+	if (wait_for_finish) {
+		err = nvgpu_runlist_wait_pending_legacy(g, runlist);
+		if (err != 0) {
+			nvgpu_err(g, "runlist %d update timeout", runlist->id);
+			/* trigger runlist update timeout recovery */
+			return err;
+		}
+	}
 
 	return err;
 }
 
-static int runlist_switch_domain_and_submit(struct gk20a *g,
-		struct nvgpu_runlist *runlist, struct nvgpu_runlist_domain *rl_domain)
-{
-	int ret = 0;
-
-	ret = runlist_submit_powered(g, runlist, rl_domain, false);
-
-	return ret;
-}
-
-void nvgpu_runlist_tick(struct gk20a *g, struct nvgpu_runlist_domain **rl_domain)
+int nvgpu_runlist_tick(struct gk20a *g, struct nvgpu_runlist_domain **rl_domain,
+	u64 preempt_grace_ns)
 {
 	struct nvgpu_fifo *f = &g->fifo;
 	u32 i;
-	int err = 0;
+	int ret = 0;
+	int err = -ETIMEDOUT;
+	u64 start_time = nvgpu_safe_cast_s64_to_u64(nvgpu_current_time_ns());
+	u64 current_time;
 
 	rl_dbg(g, "domain tick");
 
@@ -719,11 +725,23 @@ void nvgpu_runlist_tick(struct gk20a *g, struct nvgpu_runlist_domain **rl_domain
 		struct nvgpu_runlist *runlist;
 
 		runlist = &f->active_runlists[i];
-		err = runlist_switch_domain_and_submit(g, runlist, rl_domain[i]);
-		if (err != 0) {
-			nvgpu_err(g, "Failed to schedule domain [%llu]", rl_domain[i]->domain_id);
-		}
+		runlist_submit_powered(g, runlist, rl_domain[i]);
+
+		do {
+			ret = g->ops.runlist.check_pending(g, runlist);
+			if (ret == 0) {
+				break;
+			}
+			current_time = nvgpu_safe_cast_s64_to_u64(nvgpu_current_time_ns());
+		} while ((preempt_grace_ns == 0ULL)
+			|| (nvgpu_safe_sub_u64(current_time, start_time) <= preempt_grace_ns));
 	}
+
+	if (i == f->num_runlists) {
+		err = 0;
+	}
+
+	return err;
 }
 
 int nvgpu_runlist_update(struct gk20a *g, struct nvgpu_runlist *rl,

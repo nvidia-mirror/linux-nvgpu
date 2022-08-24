@@ -177,22 +177,22 @@ int test_gk20a_runlist_wait_pending(struct unit_module *m,
 
 	/* no wait */
 	ctx->count = 0;
-	err = gk20a_runlist_wait_pending(g, runlist);
+	err = nvgpu_runlist_wait_pending_legacy(g, runlist);
 	unit_assert(err == 0, goto done);
 
 	/* 1 loop */
 	ctx->count = 1;
-	err = gk20a_runlist_wait_pending(g, runlist);
+	err = nvgpu_runlist_wait_pending_legacy(g, runlist);
 	unit_assert(err == 0, goto done);
 
 	/* 2 loops */
 	ctx->count = 2;
-	err = gk20a_runlist_wait_pending(g, runlist);
+	err = nvgpu_runlist_wait_pending_legacy(g, runlist);
 	unit_assert(err == 0, goto done);
 
 	/* timeout  */
 	ctx->count = U32_MAX;
-	err = gk20a_runlist_wait_pending(g, runlist);
+	err = nvgpu_runlist_wait_pending_legacy(g, runlist);
 	unit_assert(err == -ETIMEDOUT, goto done);
 
 	ret = UNIT_SUCCESS;
@@ -235,7 +235,7 @@ struct unit_module_test nvgpu_runlist_gk20a_tests[] = {
 	UNIT_TEST(init_support, test_fifo_init_support, NULL, 0),
 	UNIT_TEST(length_max, test_gk20a_runlist_length_max, NULL, 0),
 	UNIT_TEST(hw_submit, test_gk20a_runlist_hw_submit, NULL, 0),
-	UNIT_TEST(wait_pending, test_gk20a_runlist_wait_pending, NULL, 0),
+	UNIT_TEST(check_pending, test_gk20a_runlist_wait_pending, NULL, 0),
 	UNIT_TEST(write_state, test_gk20a_runlist_write_state, NULL, 0),
 	UNIT_TEST(remove_support, test_fifo_remove_support, NULL, 0),
 };

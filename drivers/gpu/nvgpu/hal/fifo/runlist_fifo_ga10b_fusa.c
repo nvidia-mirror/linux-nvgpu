@@ -81,25 +81,14 @@ void ga10b_runlist_hw_submit(struct gk20a *g, struct nvgpu_runlist *runlist)
 			runlist_submit_length_f(runlist->domain->mem_hw->count));
 }
 
-int ga10b_runlist_wait_pending(struct gk20a *g, struct nvgpu_runlist *runlist)
+int ga10b_runlist_check_pending(struct gk20a *g, struct nvgpu_runlist *runlist)
 {
-	struct nvgpu_timeout timeout;
-	u32 delay = POLL_DELAY_MIN_US;
-	int ret;
+	int ret = 1;
 
-	nvgpu_timeout_init_cpu_timer(g, &timeout, nvgpu_get_poll_timeout(g));
-
-	ret = -ETIMEDOUT;
-	do {
-		if ((nvgpu_runlist_readl(g, runlist, runlist_submit_info_r()) &
+	if ((nvgpu_runlist_readl(g, runlist, runlist_submit_info_r()) &
 			runlist_submit_info_pending_true_f()) == 0U) {
-			ret = 0;
-			break;
-		}
-
-		nvgpu_usleep_range(delay, delay * 2U);
-		delay = min_t(u32, delay << 1, POLL_DELAY_MAX_US);
-	} while (nvgpu_timeout_expired(&timeout) == 0);
+		ret = 0;
+	}
 
 	return ret;
 }

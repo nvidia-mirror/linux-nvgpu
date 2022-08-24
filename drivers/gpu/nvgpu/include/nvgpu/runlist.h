@@ -198,7 +198,7 @@ struct nvgpu_runlist {
 	const struct nvgpu_device *rl_dev_list[RLENG_PER_RUNLIST_SIZE];
 	/** @endcond DOXYGEN_SHOULD_SKIP_THIS */
 };
-
+int nvgpu_runlist_wait_pending_legacy(struct gk20a *g, struct nvgpu_runlist *rl);
 bool nvgpu_rl_domain_exists(struct gk20a *g, const char *name);
 struct nvgpu_runlist_domain *nvgpu_runlist_domain_alloc(struct gk20a *g,
 		u64 domain_id);
@@ -233,7 +233,20 @@ nvgpu_runlist_domain_from_domains_list(struct nvgpu_list_node *node)
 	((uintptr_t)node - offsetof(struct nvgpu_runlist_domain, domains_list));
 }
 
-void nvgpu_runlist_tick(struct gk20a *g, struct nvgpu_runlist_domain **rl_domain);
+/**
+ * @brief Submit the nvgpu_runlist_domain instance corresponding to a given domain.
+ *
+ * Attempts to switch all the rl_domains and wait appropriately. If preempt_grace_ns
+ * equals 0, the attempt continues infinitely, otherwise it would timeout if the
+ * total time exceeds preempt_grace_ns.
+ *
+ * @param g			Global gk20a struct
+ * @param rl_domain	> Actual array of rl domain thats meant to be scheduled.
+ * @param preempt_grace_ns	-> Max Grace Period for Domain switches.
+ * @return int 0 if domain switch was successful, else -ETIMEDOUT
+ */
+int nvgpu_runlist_tick(struct gk20a *g, struct nvgpu_runlist_domain **rl_domain,
+	u64 preempt_grace_ns);
 
 /**
  * @brief Rebuild runlist

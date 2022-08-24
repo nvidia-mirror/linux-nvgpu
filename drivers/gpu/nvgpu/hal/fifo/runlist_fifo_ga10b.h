@@ -33,7 +33,7 @@ struct nvgpu_runlist;
 u32 ga10b_runlist_count_max(struct gk20a *g);
 u32 ga10b_runlist_length_max(struct gk20a *g);
 void ga10b_runlist_hw_submit(struct gk20a *g, struct nvgpu_runlist *runlist);
-int ga10b_runlist_wait_pending(struct gk20a *g, struct nvgpu_runlist *runlist);
+int ga10b_runlist_check_pending(struct gk20a *g, struct nvgpu_runlist *runlist);
 void ga10b_runlist_write_state(struct gk20a *g, u32 runlists_mask,
 				u32 runlist_state);
 u32 ga10b_get_runlist_aperture(struct gk20a *g, struct nvgpu_runlist *runlist);

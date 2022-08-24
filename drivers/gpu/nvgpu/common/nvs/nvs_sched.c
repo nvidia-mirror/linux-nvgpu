@@ -144,7 +144,7 @@ static u64 nvgpu_nvs_tick(struct gk20a *g)
 	timeslice = nvs_next->timeslice_ns;
 	nvgpu_domain_next = nvs_next->priv;
 
-	nvgpu_runlist_tick(g, nvgpu_domain_next->rl_domains);
+	(void)nvgpu_runlist_tick(g, nvgpu_domain_next->rl_domains, 0ULL);
 	sched->active_domain = nvs_next->priv;
 
 	nvgpu_mutex_release(&g->sched_mutex);

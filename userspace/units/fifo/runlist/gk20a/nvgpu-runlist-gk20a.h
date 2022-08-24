@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -76,28 +76,28 @@ int test_gk20a_runlist_hw_submit(struct unit_module *m,
 /**
  * Test specification for: test_gk20a_runlist_wait_pending
  *
- * Description: Branch coverage for gk20a_runlist_wait_pending
+ * Description: Branch coverage for nvgpu_runlist_wait_pending_legacy
  *
  * Test Type: Feature
  *
- * Targets: gops_runlist.wait_pending, gk20a_runlist_wait_pending
+ * Targets: gops_runlist.check_pending, nvgpu_runlist_wait_pending_legacy
  *
  * Input: test_fifo_init_support() run for this GPU
  *
  * Steps:
  * - Check case where runlist is not pending (not wait).
  *   - Set register to indicate that runlist is NOT pending.
- *   - Call gk20a_runlist_wait_pending.
+ *   - Call nvgpu_runlist_wait_pending_legacy.
  * - Check case where some polling is needed until runlist is not pending:
  *   - Install register IO callbacks in order to control
  *     value read from fifo_eng_runlist_r register.
  *   - Configure callback to clear pending bit after one nvgpu_readl.
- *   - Call gk20a_runlist_wait_pending.
+ *   - Call nvgpu_runlist_wait_pending_legacy.
  *   - Configure callback to clear pending bit after two nvgpu_readl.
- *   - Call gk20a_runlist_wait_pending.
+ *   - Call nvgpu_runlist_wait_pending_legacy.
  * - Check case where polling times out:
  *   - Set register to indicate that runlist is pending.
- *   - Call gk20a_runlist_wait_pending.
+ *   - Call nvgpu_runlist_wait_pending_legacy.
  *
  * Output: Returns PASS if all branches gave expected results. FAIL otherwise.
  */
