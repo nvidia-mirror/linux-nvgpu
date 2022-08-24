@@ -1951,6 +1951,11 @@ int ga10b_init_hal(struct gk20a *g)
 	}
 
 	/*
+	 * enable GSP VM for gsp scheduler firmware
+	 */
+	nvgpu_set_enabled(g, NVGPU_SUPPORT_GSP_VM, true);
+
+	/*
 	 * ga10b bypasses the IOMMU since it uses a special nvlink path to
 	 * memory.
 	 */

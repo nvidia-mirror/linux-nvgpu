@@ -198,6 +198,11 @@ int nvgpu_gsp_sched_bootstrap_ns(struct gk20a *g)
 		goto de_init;
 	}
 
+	/* setup gsp ctx instance */
+	if (g->ops.gsp.falcon_setup_boot_config != NULL) {
+		g->ops.gsp.falcon_setup_boot_config(g);
+	}
+
 	status = gsp_sched_wait_for_init(g, gsp_sched, GSP_WAIT_TIME_MS);
 	if (status != 0) {
 		nvgpu_err(g, "gsp wait for basic init failed ");

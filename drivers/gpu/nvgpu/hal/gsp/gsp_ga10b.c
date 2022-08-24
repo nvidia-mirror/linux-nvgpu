@@ -470,25 +470,24 @@ int ga10b_gsp_flcn_copy_from_emem(struct gk20a *g,
 
 void ga10b_gsp_flcn_setup_boot_config(struct gk20a *g)
 {
+	struct mm_gk20a *mm = &g->mm;
+	u32 inst_block_ptr;
+
 	nvgpu_log_fn(g, " ");
 
-	/* setup apertures - virtual */
-	gk20a_writel(g, pgsp_fbif_transcfg_r(GK20A_PMU_DMAIDX_UCODE),
-			pgsp_fbif_transcfg_mem_type_physical_f() |
-			pgsp_fbif_transcfg_target_local_fb_f());
-	gk20a_writel(g, pgsp_fbif_transcfg_r(GK20A_PMU_DMAIDX_VIRT),
-			pgsp_fbif_transcfg_mem_type_virtual_f());
-	/* setup apertures - physical */
-	gk20a_writel(g, pgsp_fbif_transcfg_r(GK20A_PMU_DMAIDX_PHYS_VID),
-			pgsp_fbif_transcfg_mem_type_physical_f() |
-			pgsp_fbif_transcfg_target_local_fb_f());
-	gk20a_writel(g, pgsp_fbif_transcfg_r(GK20A_PMU_DMAIDX_PHYS_SYS_COH),
-			pgsp_fbif_transcfg_mem_type_physical_f() |
-			pgsp_fbif_transcfg_target_coherent_sysmem_f());
-	gk20a_writel(g, pgsp_fbif_transcfg_r(GK20A_PMU_DMAIDX_PHYS_SYS_NCOH),
-			pgsp_fbif_transcfg_mem_type_physical_f() |
-			pgsp_fbif_transcfg_target_noncoherent_sysmem_f());
+	/*
+	 * The instance block address to write is the lower 32-bits of the 4K-
+	 * aligned physical instance block address.
+	 */
+	inst_block_ptr = nvgpu_inst_block_ptr(g, &mm->gsp.inst_block);
 
+	gk20a_writel(g, pgsp_falcon_nxtctx_r(),
+		pgsp_falcon_nxtctx_ctxptr_f(inst_block_ptr) |
+		pgsp_falcon_nxtctx_ctxvalid_f(1) |
+		nvgpu_aperture_mask(g, &mm->gsp.inst_block,
+			pgsp_falcon_nxtctx_ctxtgt_sys_ncoh_f(),
+			pgsp_falcon_nxtctx_ctxtgt_sys_coh_f(),
+			pgsp_falcon_nxtctx_ctxtgt_fb_f()));
 }
 
 int ga10b_gsp_queue_head(struct gk20a *g, u32 queue_id, u32 queue_index,

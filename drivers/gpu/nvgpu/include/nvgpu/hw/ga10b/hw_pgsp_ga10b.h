@@ -172,4 +172,10 @@
 #define pgsp_falcon_ecc_status_uncorrected_err_emem_m()       (U32(0x1U) << 13U)
 #define pgsp_falcon_ecc_status_uncorrected_err_dcls_m()       (U32(0x1U) << 11U)
 #define pgsp_falcon_ecc_status_uncorrected_err_reg_m()        (U32(0x1U) << 12U)
+#define pgsp_falcon_nxtctx_r()                                     (0x00110054U)
+#define pgsp_falcon_nxtctx_ctxptr_f(v)             ((U32(v) & 0xfffffffU) << 0U)
+#define pgsp_falcon_nxtctx_ctxtgt_fb_f()                                  (0x0U)
+#define pgsp_falcon_nxtctx_ctxtgt_sys_coh_f()                      (0x20000000U)
+#define pgsp_falcon_nxtctx_ctxtgt_sys_ncoh_f()                     (0x30000000U)
+#define pgsp_falcon_nxtctx_ctxvalid_f(v)                ((U32(v) & 0x1U) << 30U)
 #endif
