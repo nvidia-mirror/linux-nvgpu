@@ -114,7 +114,7 @@ int gv11b_fifo_preempt_poll_pbdma(struct gk20a *g, u32 tsgid,
 			if (loop_count >= PREEMPT_PENDING_POLL_PRE_SI_RETRIES) {
 				nvgpu_err(g, "preempt pbdma retries: %u",
 					loop_count);
-				break;
+				return ret;
 			}
 			loop_count++;
 		}
@@ -134,7 +134,7 @@ int gv11b_fifo_preempt_poll_pbdma(struct gk20a *g, u32 tsgid,
 		ret = g->ops.pbdma.handle_intr(g, pbdma_id, false);
 		if (ret != 0) {
 			nvgpu_err(g, "pbdma intr failed id: %u %d", pbdma_id, ret);
-			break;
+			return ret;
 		}
 
 		g->ops.pbdma_status.read_pbdma_status_info(g,
