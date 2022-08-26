@@ -18,7 +18,7 @@
 
 #if defined(__cplusplus)
 #include <cstdint>
-#else
+#elif !defined(__KERNEL__)
 #include <stdint.h>
 #endif
 
