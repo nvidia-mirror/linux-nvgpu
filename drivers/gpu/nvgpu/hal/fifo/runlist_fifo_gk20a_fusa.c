@@ -58,7 +58,7 @@ void gk20a_runlist_hw_submit(struct gk20a *g, struct nvgpu_runlist *runlist)
 		     fifo_runlist_engine_f(runlist->id) |
 		     fifo_eng_runlist_length_f(runlist->domain->mem_hw->count));
 
-       nvgpu_spinlock_release(&g->fifo.runlist_submit_lock);
+	nvgpu_spinlock_release(&g->fifo.runlist_submit_lock);
 }
 
 int gk20a_runlist_check_pending(struct gk20a *g, struct nvgpu_runlist *runlist)

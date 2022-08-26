@@ -38,9 +38,11 @@ CORE_OUT=$(OUT)/nvgpu_unit_core
 
 # Nvgpu driver code.
 NVGPU_SRC=$(TWD)/../drivers/gpu/nvgpu
+NVGPU_NVS_SRC=$(TWD)/../nvsched
 # Nvgpu-next driver code.
 NVGPU_NEXT_SRC=$(TWD)/../../nvgpu-next/drivers/gpu/nvgpu
 NVGPU_OUT=$(OUT)/libnvgpu
+
 
 # Unit tests themselves.
 UNIT_SRC=$(TWD)/units
@@ -49,6 +51,8 @@ UNIT_OUT=$(OUT)/units
 INCLUDES= 				\
 	-I$(NVGPU_SRC)			\
 	-I$(NVGPU_SRC)/include		\
+	-I$(NVGPU_NVS_SRC)/include \
+	-I$(NVGPU_SRC)/include/external-nvs \
 	-I$(NVGPU_NEXT_SRC)		\
 	-I$(NVGPU_NEXT_SRC)/include	\
 	-I$(TWD)/../include		\
@@ -96,8 +100,8 @@ CFLAGS   += -Wno-unknown-pragmas
 CONFIGS  += -DNV_IS_COVERITY
 endif
 
-# Source files. We expect $(OBJS) and $(HEADERS) to get filled in here.
 include Makefile.sources
+# Source files. We expect $(OBJS) and $(HEADERS) to get filled in here.
 
 all: $(OUT)/nvgpu_unit $(UNITS)
 
@@ -120,10 +124,16 @@ $(OUT)/nvgpu_unit: $(OUT)/libnvgpu-drv-igpu.so $(CORE_OBJS)
 		-o $(OUT)/nvgpu_unit $(CORE_OBJS) $(LIB_PATHS) $(LIBS)
 
 $(OUT)/libnvgpu-drv-igpu.so: $(OBJS)
-	$(CC) -shared -Wl,--no-undefined -o $(OUT)/libnvgpu-drv-igpu.so $(OBJS) -lgcov -rdynamic -lpthread
+	$(CC) -shared -Wl,--no-undefined -o $(OUT)/libnvgpu-drv-igpu.so $(OBJS) -lgcov -rdynamic -lpthread -lrt
 
 # Default build target for all the nvgpu driver object files we want to build in
 # userspace. These get bundled into libnvgpu-drv-igpu.so.
+$(NVGPU_OUT)/%.o : $(NVGPU_NVS_SRC)/%.c $(HEADERS)
+	@if [ ! -d $(dir $@) ] ; then \
+		mkdir -p $(dir $@) ; \
+	fi
+	$(CC) --coverage $(CFLAGS) -c -o $@ $<
+
 $(NVGPU_OUT)/%.o : $(NVGPU_SRC)/%.c $(HEADERS)
 	@if [ ! -d $(dir $@) ] ; then \
 		mkdir -p $(dir $@) ; \

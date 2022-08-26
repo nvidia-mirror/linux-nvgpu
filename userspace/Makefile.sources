@@ -22,8 +22,9 @@
 
 include $(NVGPU_SRC)/Makefile.sources
 include $(NVGPU_NEXT_SRC)/Makefile.sources
+include $(NVGPU_NVS_SRC)/Makefile.sources
 
-OBJS := $(srcs:%.c=$(NVGPU_OUT)/%.o) $(srcs_next:%.c=$(NVGPU_OUT)/%.o)
+OBJS := $(srcs:%.c=$(NVGPU_OUT)/%.o) $(srcs_next:%.c=$(NVGPU_OUT)/%.o) $(NVS_SOURCES:%.c=$(NVGPU_OUT)/%.o)
 
 HEADERS :=	\
 	$(NVGPU_SRC)/include/nvgpu/*.h		\
@@ -158,4 +159,5 @@ UNITS :=				\
 	$(UNIT_SRC)/rc                  \
 	$(UNIT_SRC)/sync		\
 	$(UNIT_SRC)/ecc			\
-	$(UNIT_SRC)/io
+	$(UNIT_SRC)/io			\
+	$(UNIT_SRC)/nvs

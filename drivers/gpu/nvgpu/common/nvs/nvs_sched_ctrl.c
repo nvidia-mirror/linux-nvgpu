@@ -666,6 +666,7 @@ int nvgpu_nvs_ctrl_fifo_scheduler_handle_requests(struct gk20a *g)
 	/* Take a lock here to ensure, the queues are not messed with anywhere
 	 * as long as the queue read is in progress.
 	 */
+
 	nvgpu_mutex_acquire(&g->sched_mutex);
 
 	if (send_queue_receiver == NULL) {
@@ -691,10 +692,10 @@ int nvgpu_nvs_ctrl_fifo_scheduler_handle_requests(struct gk20a *g)
 				nvs_control_fifo_sender_write_message(receiver_queue_sender,
 					send_queue_receiver->msg_type, send_queue_receiver->msg_sequence,
 						nvgpu_safe_cast_s64_to_u64(nvgpu_current_time_ns()));
+				nvs_dbg(g, " ");
 			}
 		}
 	}
-
 	/*
 	 * Release the lock here.
 	 */

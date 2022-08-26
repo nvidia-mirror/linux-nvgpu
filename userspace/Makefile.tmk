@@ -34,6 +34,7 @@ NVGPU_UNIT_COMMON_SRCS		:= \
                                 src/exec.c \
                                 src/utils.c
 NVGPU_UNIT_COMMON_INCLUDES	:= \
+                                ../nvsched/include \
                                 include \
                                 ../drivers/gpu/nvgpu \
                                 ../drivers/gpu/nvgpu/include

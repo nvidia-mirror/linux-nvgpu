@@ -731,7 +731,7 @@ int nvgpu_runlist_tick(struct gk20a *g, struct nvgpu_runlist_domain **rl_domain,
 	int ret = 0;
 	int err = -ETIMEDOUT;
 	u64 start_time = nvgpu_safe_cast_s64_to_u64(nvgpu_current_time_ns());
-	u64 current_time;
+	u64 current_time = start_time;
 
 	rl_dbg(g, "domain tick");
 
@@ -744,6 +744,7 @@ int nvgpu_runlist_tick(struct gk20a *g, struct nvgpu_runlist_domain **rl_domain,
 		do {
 			ret = g->ops.runlist.check_pending(g, runlist);
 			if (ret == 0) {
+				err = 0;
 				break;
 			}
 			current_time = nvgpu_safe_cast_s64_to_u64(nvgpu_current_time_ns());
@@ -751,9 +752,7 @@ int nvgpu_runlist_tick(struct gk20a *g, struct nvgpu_runlist_domain **rl_domain,
 			|| (nvgpu_safe_sub_u64(current_time, start_time) <= preempt_grace_ns));
 	}
 
-	if (i == f->num_runlists) {
-		err = 0;
-	}
+	rl_dbg(g, "%llu - %llu", nvgpu_safe_sub_u64(current_time, start_time), preempt_grace_ns);
 
 	return err;
 }

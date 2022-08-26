@@ -43,6 +43,7 @@ static struct nvs_sched_ops nvgpu_nvs_ops = {
 #ifndef NSEC_PER_MSEC
 #define NSEC_PER_MSEC 1000000U
 #endif
+
 /*
  * TODO: make use of worker items when
  * 1) the active domain gets modified
@@ -699,6 +700,9 @@ int nvgpu_nvs_open(struct gk20a *g)
 		err = -ENOMEM;
 		goto unlock;
 	}
+
+	nvgpu_atomic64_set(&g->scheduler->id_counter, 0);
+	nvgpu_smp_wmb();
 
 	if (nvgpu_is_enabled(g, NVGPU_SUPPORT_NVS_CTRL_FIFO)) {
 		g->sched_ctrl_fifo = nvgpu_nvs_ctrl_fifo_create(g);

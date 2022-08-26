@@ -160,6 +160,7 @@ NV_REPOSITORY_COMPONENTS += userspace/units/rc
 NV_REPOSITORY_COMPONENTS += userspace/units/sync
 NV_REPOSITORY_COMPONENTS += userspace/units/ecc
 NV_REPOSITORY_COMPONENTS += userspace/units/io
+NV_REPOSITORY_COMPONENTS += userspace/units/nvs
 endif
 endif
 
