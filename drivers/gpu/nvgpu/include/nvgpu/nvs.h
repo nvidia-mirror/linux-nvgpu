@@ -32,6 +32,7 @@
 #include <nvgpu/worker.h>
 #include <nvgpu/timers.h>
 #include <nvgpu/nvgpu_mem.h>
+#include <nvgpu/nvs-control-interface-parser.h>
 
 /*
  * Max size we'll parse from an NVS log entry.
@@ -260,6 +261,7 @@ void nvgpu_nvs_worker_pause(struct gk20a *g);
 void nvgpu_nvs_worker_resume(struct gk20a *g);
 #endif
 
+bool nvgpu_nvs_ctrl_fifo_is_enabled(struct gk20a *g);
 struct nvgpu_nvs_domain_ctrl_fifo *nvgpu_nvs_ctrl_fifo_create(struct gk20a *g);
 bool nvgpu_nvs_ctrl_fifo_user_exists(struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl,
     int pid, bool rw);
@@ -285,6 +287,16 @@ struct nvgpu_nvs_ctrl_queue *nvgpu_nvs_ctrl_fifo_get_queue(
 		enum nvgpu_nvs_ctrl_queue_num queue_num,
 		enum nvgpu_nvs_ctrl_queue_direction queue_direction,
 		u8 *mask);
+
+#ifdef CONFIG_NVS_KMD_BACKEND
+struct nvs_control_fifo_receiver *nvgpu_nvs_domain_ctrl_fifo_get_receiver(struct gk20a *g);
+struct nvs_control_fifo_sender *nvgpu_nvs_domain_ctrl_fifo_get_sender(struct gk20a *g);
+void nvgpu_nvs_domain_ctrl_fifo_set_receiver(struct gk20a *g,
+		struct nvs_control_fifo_receiver *receiver);
+void nvgpu_nvs_domain_ctrl_fifo_set_sender(struct gk20a *g,
+		struct nvs_control_fifo_sender *sender);
+#endif
+
 /* Below methods require nvgpu_nvs_ctrl_fifo_lock_queues() to be held. */
 bool nvgpu_nvs_buffer_is_valid(struct gk20a *g, struct nvgpu_nvs_ctrl_queue *buf);
 int nvgpu_nvs_buffer_alloc(struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl,

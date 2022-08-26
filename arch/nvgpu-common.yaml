@@ -215,6 +215,8 @@ nvsched:
   owner: Alex W
   sources: [ common/nvs/nvs_sched.c,
              common/nvs/nvs_sched_ctrl.c,
+             common/nvs/nvs-control-interface-parser.c,
+             include/nvgpu/nvs-control-interface-parser.h,
              include/external-nvs/impl.h,
              include/external-nvs/types.h,
              include/nvgpu/nvs.h ]

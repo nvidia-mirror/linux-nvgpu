@@ -1002,6 +1002,11 @@ nvgpu-y += \
 	os/linux/ioctl_nvs.o \
 	common/nvs/nvs_sched.o \
 	common/nvs/nvs_sched_ctrl.o
+
+ifeq ($(CONFIG_NVS_KMD_BACKEND), y)
+nvgpu-y += common/nvs/nvs-control-interface-parser.o
+endif
+
 ccflags-y += \
 	$(patsubst %,-I$(srctree.nvgpu)/nvsched/%,$(NVS_INCLUDE)) \
 	-I$(srctree.nvgpu)/drivers/gpu/nvgpu/include/external-nvs \

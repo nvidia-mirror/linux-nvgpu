@@ -124,6 +124,7 @@ const char *nvs_log_event_string(enum nvs_event ev)
 	case NVS_EV_CREATE_SCHED:  return "Create scheduler";
 	case NVS_EV_CREATE_DOMAIN: return "Create domain";
 	case NVS_EV_REMOVE_DOMAIN: return "Remove domain";
+	case NVS_EV_CTRL_QUEUE:    return "Control Queue";
 	case NVS_EV_MAX:           return "Invalid MAX event";
 	}
 

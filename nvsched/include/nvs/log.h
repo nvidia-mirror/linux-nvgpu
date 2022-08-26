@@ -34,6 +34,7 @@ enum nvs_event {
 	NVS_EV_CREATE_SCHED,
 	NVS_EV_CREATE_DOMAIN,
 	NVS_EV_REMOVE_DOMAIN,
+	NVS_EV_CTRL_QUEUE,
 	NVS_EV_MAX = 0xffffffff /* Force to 32 bit enum size. */
 };
 

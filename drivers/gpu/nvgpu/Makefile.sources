@@ -192,6 +192,9 @@ endif
 ifeq ($(CONFIG_NVS_PRESENT),1)
 srcs += common/nvs/nvs_sched_ctrl.c \
 	common/nvs/nvs_sched.c
+ifeq ($(CONFIG_NVS_KMD_BACKEND),1)
+srcs += common/nvs/nvs-control-interface-parser.c
+endif
 endif
 
 ifeq ($(CONFIG_NVGPU_GSP_SCHEDULER),1)

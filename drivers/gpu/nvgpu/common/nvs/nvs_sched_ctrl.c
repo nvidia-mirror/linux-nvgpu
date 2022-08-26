@@ -27,6 +27,7 @@
 #include <nvgpu/gk20a.h>
 #include <nvgpu/list.h>
 #include <nvgpu/dma.h>
+#include <nvgpu/runlist.h>
 #include <nvgpu/nvgpu_init.h>
 
 struct nvgpu_nvs_domain_ctrl_fifo_users {
@@ -48,6 +49,12 @@ struct nvgpu_nvs_domain_ctrl_fifo_queues {
 	 * and queried by the scheduler(GET).
 	 */
 	struct nvgpu_nvs_ctrl_queue send;
+
+	/*
+	 * This contains the APIs required for reading the send queue.
+	 */
+	struct nvs_control_fifo_receiver *send_queue_receiver;
+
 	/*
 	 * receive indicates a buffer having data(PUT) written by scheduler
 	 * and queried by the userspace client(GET).
@@ -55,12 +62,16 @@ struct nvgpu_nvs_domain_ctrl_fifo_queues {
 	struct nvgpu_nvs_ctrl_queue receive;
 
 	/*
+	 * This contains the APIs required for writing the receive queue.
+	 */
+	struct nvs_control_fifo_sender *receiver_queue_sender;
+
+	/*
 	 * event indicates a buffer that is subscribed to by userspace clients to
 	 * receive events. This buffer is Read-Only for the users and only scheduler can
 	 * write to it.
 	 */
 	struct nvgpu_nvs_ctrl_queue event;
-
 	/*
 	 * Global mutex for coarse grained access control
 	 * of all Queues for all UMD interfaces. e.g. IOCTL/devctls
@@ -217,6 +228,72 @@ struct nvgpu_nvs_domain_ctrl_fifo *nvgpu_nvs_ctrl_fifo_create(struct gk20a *g)
 	return sched;
 }
 
+
+void nvgpu_nvs_domain_ctrl_fifo_set_receiver(struct gk20a *g,
+		struct nvs_control_fifo_receiver *receiver)
+{
+	struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl = g->sched_ctrl_fifo;
+
+	if (sched_ctrl == NULL) {
+		return;
+	}
+
+	sched_ctrl->queues.send_queue_receiver = receiver;
+
+	nvgpu_smp_wmb();
+}
+
+void nvgpu_nvs_domain_ctrl_fifo_set_sender(struct gk20a *g,
+		struct nvs_control_fifo_sender *sender)
+{
+	struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl = g->sched_ctrl_fifo;
+
+	if (sched_ctrl == NULL) {
+		return;
+	}
+
+	sched_ctrl->queues.receiver_queue_sender = sender;
+
+	nvgpu_smp_wmb();
+}
+
+struct nvs_control_fifo_receiver *nvgpu_nvs_domain_ctrl_fifo_get_receiver(struct gk20a *g)
+{
+	struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl = g->sched_ctrl_fifo;
+
+	if (sched_ctrl == NULL) {
+		return NULL;
+	}
+
+	nvgpu_smp_rmb();
+
+	return sched_ctrl->queues.send_queue_receiver;
+}
+
+struct nvs_control_fifo_sender *nvgpu_nvs_domain_ctrl_fifo_get_sender(struct gk20a *g)
+{
+	struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl = g->sched_ctrl_fifo;
+
+	if (sched_ctrl == NULL) {
+		return NULL;
+	}
+
+	nvgpu_smp_rmb();
+
+	return sched_ctrl->queues.receiver_queue_sender;
+}
+
+bool nvgpu_nvs_ctrl_fifo_is_enabled(struct gk20a *g)
+{
+	struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl = g->sched_ctrl_fifo;
+
+	if (sched_ctrl == NULL) {
+		return false;
+	}
+
+	return nvgpu_nvs_ctrl_fifo_is_busy(sched_ctrl);
+}
+
 void nvgpu_nvs_ctrl_fifo_idle(struct gk20a *g)
 {
 	struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl = g->sched_ctrl_fifo;
@@ -327,6 +404,10 @@ int nvgpu_nvs_buffer_alloc(struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl,
 	int err;
 	struct gk20a *g = sched_ctrl->g;
 	struct vm_gk20a *system_vm = g->mm.pmu.vm;
+#ifdef CONFIG_NVS_KMD_BACKEND
+	struct nvs_control_fifo_receiver *send_queue_receiver;
+	struct nvs_control_fifo_sender *receiver_queue_sender;
+#endif
 
 	(void)memset(buf, 0, sizeof(*buf));
 	buf->g = g;
@@ -336,6 +417,24 @@ int nvgpu_nvs_buffer_alloc(struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl,
 		nvgpu_err(g, "failed to allocate memory for dma");
 		goto fail;
 	}
+
+#ifdef CONFIG_NVS_KMD_BACKEND
+	if (mask == NVGPU_NVS_CTRL_FIFO_QUEUE_EXCLUSIVE_CLIENT_WRITE) {
+		send_queue_receiver = nvs_control_fifo_receiver_initialize(g,
+			(struct nvs_domain_msg_fifo * const)buf->mem.cpu_va, bytes);
+		if (send_queue_receiver == NULL) {
+			goto fail;
+		}
+		nvgpu_nvs_domain_ctrl_fifo_set_receiver(g, send_queue_receiver);
+	} else if (mask == NVGPU_NVS_CTRL_FIFO_QUEUE_EXCLUSIVE_CLIENT_READ) {
+		receiver_queue_sender = nvs_control_fifo_sender_initialize(g,
+			(struct nvs_domain_msg_fifo *)buf->mem.cpu_va, bytes);
+		if (receiver_queue_sender == NULL) {
+			goto fail;
+		}
+		nvgpu_nvs_domain_ctrl_fifo_set_sender(g, receiver_queue_sender);
+	}
+#endif
 
 	buf->valid = true;
 	buf->mask = mask;
@@ -353,6 +452,21 @@ void nvgpu_nvs_buffer_free(struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl,
 {
 	struct gk20a *g = sched_ctrl->g;
 	struct vm_gk20a *system_vm = g->mm.pmu.vm;
+	u8 mask = buf->mask;
+#ifdef CONFIG_NVS_KMD_BACKEND
+	struct nvs_control_fifo_receiver * const send_queue_receiver =
+		nvgpu_nvs_domain_ctrl_fifo_get_receiver(g);
+	struct nvs_control_fifo_sender * const receiver_queue_sender =
+		nvgpu_nvs_domain_ctrl_fifo_get_sender(g);
+
+	if (mask == NVGPU_NVS_CTRL_FIFO_QUEUE_EXCLUSIVE_CLIENT_WRITE) {
+		nvgpu_nvs_domain_ctrl_fifo_set_receiver(g, NULL);
+		nvs_control_fifo_receiver_exit(g, send_queue_receiver);
+	} else if (mask == NVGPU_NVS_CTRL_FIFO_QUEUE_EXCLUSIVE_CLIENT_READ) {
+		nvgpu_nvs_domain_ctrl_fifo_set_sender(g, NULL);
+		nvs_control_fifo_sender_exit(g, receiver_queue_sender);
+	}
+#endif
 
 	if (nvgpu_mem_is_valid(&buf->mem)) {
 		nvgpu_dma_unmap_free(system_vm, &buf->mem);
