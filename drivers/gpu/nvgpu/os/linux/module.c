@@ -1429,6 +1429,11 @@ static int gk20a_pm_suspend(struct device *dev)
 	 */
 	nvgpu_channel_deterministic_idle(g);
 
+#ifdef CONFIG_NVS_PRESENT
+	/* Release the busy() lock taken here if control-fifo is enabled */
+	nvgpu_nvs_ctrl_fifo_idle(g);
+#endif
+
 	/* check and wait until GPU is idle (with a timeout) */
 	do {
 		nvgpu_usleep_range(1000, 1100);
@@ -1467,6 +1472,10 @@ static int gk20a_pm_suspend(struct device *dev)
 fail_suspend:
 	gk20a_pm_runtime_resume(dev);
 fail_idle:
+#ifdef CONFIG_NVS_PRESENT
+	/* Re-Acquire the busy() lock taken here if control-fifo is enabled */
+	nvgpu_nvs_ctrl_fifo_unidle(g);
+#endif
 	nvgpu_channel_deterministic_unidle(g);
 	return ret;
 }
@@ -1509,6 +1518,10 @@ static int gk20a_pm_resume(struct device *dev)
 
 	g->suspended = false;
 
+#ifdef CONFIG_NVS_PRESENT
+	/* Re-Acquire the busy() lock taken here if control-fifo is enabled */
+	nvgpu_nvs_ctrl_fifo_unidle(g);
+#endif
 	nvgpu_channel_deterministic_unidle(g);
 
 	return ret;

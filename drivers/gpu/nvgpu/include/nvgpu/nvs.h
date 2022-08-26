@@ -259,6 +259,8 @@ void nvgpu_nvs_worker_resume(struct gk20a *g);
 struct nvgpu_nvs_domain_ctrl_fifo *nvgpu_nvs_ctrl_fifo_create(struct gk20a *g);
 bool nvgpu_nvs_ctrl_fifo_user_exists(struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl,
     int pid, bool rw);
+void nvgpu_nvs_ctrl_fifo_idle(struct gk20a *g);
+void nvgpu_nvs_ctrl_fifo_unidle(struct gk20a *g);
 bool nvgpu_nvs_ctrl_fifo_is_busy(struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl);
 void nvgpu_nvs_ctrl_fifo_destroy(struct gk20a *g);
 bool nvgpu_nvs_ctrl_fifo_user_is_active(struct nvs_domain_ctrl_fifo_user *user);

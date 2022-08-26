@@ -609,24 +609,34 @@ int nvgpu_nvs_ctrl_fifo_ops_open(struct inode *inode, struct file *filp)
 	struct nvgpu_cdev *cdev;
 	struct gk20a *g;
 	int pid;
+	int err = 0;
 	struct nvgpu_nvs_domain_ctrl_fifo_user_linux *linux_user;
 	bool writable = filp->f_mode & FMODE_WRITE;
 
 	cdev = container_of(inode->i_cdev, struct nvgpu_cdev, cdev);
 	g = nvgpu_get_gk20a_from_cdev(cdev);
 
+	err = gk20a_busy(g);
+	if (err != 0) {
+		nvgpu_err(g, "Unable to power on the device");
+		return err;
+	}
+
 	if (!nvgpu_is_enabled(g, NVGPU_SUPPORT_NVS_CTRL_FIFO)) {
+		gk20a_idle(g);
 		return -EOPNOTSUPP;
 	}
 
 	pid = nvgpu_current_pid(g);
 	if (nvgpu_nvs_ctrl_fifo_user_exists(g->sched_ctrl_fifo, pid, writable)) {
 		nvgpu_err(g, "User already exists");
+		gk20a_idle(g);
 		return -EEXIST;
 	}
 
 	linux_user = nvgpu_kzalloc(g, sizeof(*linux_user));
 	if (linux_user == NULL) {
+		gk20a_idle(g);
 		return -ENOMEM;
 	}
 
@@ -638,7 +648,6 @@ int nvgpu_nvs_ctrl_fifo_ops_open(struct inode *inode, struct file *filp)
 	nvgpu_nvs_ctrl_fifo_add_user(g->sched_ctrl_fifo, &linux_user->user);
 
 	filp->private_data = linux_user;
-	nvgpu_get(g);
 
 	return 0;
 }
@@ -660,6 +669,7 @@ int nvgpu_nvs_ctrl_fifo_ops_release(struct inode *inode, struct file *filp)
 
 	if (nvgpu_nvs_ctrl_fifo_user_is_active(&linux_user->user)) {
 		err = -EBUSY;
+		return err;
 	}
 
 	if (nvgpu_nvs_ctrl_fifo_is_exclusive_user(g->sched_ctrl_fifo, &linux_user->user)) {
@@ -674,7 +684,7 @@ int nvgpu_nvs_ctrl_fifo_ops_release(struct inode *inode, struct file *filp)
 	filp->private_data = NULL;
 
 	nvgpu_kfree(g, linux_user);
-	nvgpu_put(g);
+	gk20a_idle(g);
 
 	return err;
 }

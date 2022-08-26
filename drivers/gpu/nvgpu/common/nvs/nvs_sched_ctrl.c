@@ -27,6 +27,7 @@
 #include <nvgpu/gk20a.h>
 #include <nvgpu/list.h>
 #include <nvgpu/dma.h>
+#include <nvgpu/nvgpu_init.h>
 
 struct nvgpu_nvs_domain_ctrl_fifo_users {
 	/* Flag to reserve exclusive user */
@@ -214,6 +215,36 @@ struct nvgpu_nvs_domain_ctrl_fifo *nvgpu_nvs_ctrl_fifo_create(struct gk20a *g)
 	nvgpu_init_list_node(&sched->users.list_non_exclusive_user);
 
 	return sched;
+}
+
+void nvgpu_nvs_ctrl_fifo_idle(struct gk20a *g)
+{
+	struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl = g->sched_ctrl_fifo;
+
+	if (sched_ctrl == NULL) {
+		return;
+	}
+
+	if (nvgpu_nvs_ctrl_fifo_is_busy(sched_ctrl)) {
+		gk20a_idle(g);
+	}
+}
+
+void nvgpu_nvs_ctrl_fifo_unidle(struct gk20a *g)
+{
+	struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl = g->sched_ctrl_fifo;
+	int err;
+
+	if (sched_ctrl == NULL) {
+		return;
+	}
+
+	if (nvgpu_nvs_ctrl_fifo_is_busy(sched_ctrl)) {
+		err = gk20a_busy(g);
+		if (err != 0) {
+			nvgpu_err(g, "cannot busy() again!");
+		}
+	}
 }
 
 bool nvgpu_nvs_ctrl_fifo_is_busy(struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl)
