@@ -206,7 +206,7 @@ struct nvgpu_nvs_domain_ctrl_fifo *nvgpu_nvs_ctrl_fifo_create(struct gk20a *g)
 	if (sched == NULL) {
 		return NULL;
 	}
-
+	sched->g = g;
 	sched->capabilities.scheduler_implementation_hw = NVGPU_NVS_DOMAIN_SCHED_KMD;
 
 	nvgpu_spinlock_init(&sched->users.user_lock);
