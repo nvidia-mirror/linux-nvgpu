@@ -434,7 +434,7 @@ static int nvgpu_nvs_worker_init(struct gk20a *g)
 #else
 	err = nvgpu_worker_init(g, worker, &nvs_worker_ops);
 #endif
-	if (err != 0) {
+	if (err == 0) {
 		/* Ensure that scheduler thread is started as soon as possible to handle
 		 * minimal uptime for applications.
 		 */
