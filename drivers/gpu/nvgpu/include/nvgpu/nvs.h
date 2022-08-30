@@ -255,8 +255,11 @@ const char *nvgpu_nvs_domain_get_name(struct nvgpu_nvs_domain *dom);
 void nvgpu_nvs_ctrl_fifo_lock_queues(struct gk20a *g);
 void nvgpu_nvs_ctrl_fifo_unlock_queues(struct gk20a *g);
 
+#ifdef CONFIG_NVS_KMD_BACKEND
 void nvgpu_nvs_worker_pause(struct gk20a *g);
 void nvgpu_nvs_worker_resume(struct gk20a *g);
+#endif
+
 struct nvgpu_nvs_domain_ctrl_fifo *nvgpu_nvs_ctrl_fifo_create(struct gk20a *g);
 bool nvgpu_nvs_ctrl_fifo_user_exists(struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl,
     int pid, bool rw);
@@ -302,17 +305,6 @@ nvgpu_nvs_get_shadow_domain_locked(struct gk20a *g);
 struct nvgpu_nvs_domain *nvgpu_nvs_domain_by_id_locked(struct gk20a *g, u64 domain_id);
 
 #else
-
-
-static inline void nvgpu_nvs_worker_pause(struct gk20a *g)
-{
-	(void)g;
-}
-
-static inline void nvgpu_nvs_worker_resume(struct gk20a *g)
-{
-	(void)g;
-}
 
 static inline int nvgpu_nvs_init(struct gk20a *g)
 {

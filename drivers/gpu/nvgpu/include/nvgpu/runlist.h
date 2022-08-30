@@ -217,6 +217,13 @@ void nvgpu_runlist_unlink_domain(struct nvgpu_runlist *runlist,
 struct nvgpu_runlist_domain *nvgpu_rl_domain_get(struct gk20a *g, u32 runlist_id,
 						 u64 domain_id);
 
+static inline struct nvgpu_runlist_domain *
+nvgpu_runlist_domain_from_domains_list(struct nvgpu_list_node *node)
+{
+	return (struct nvgpu_runlist_domain *)
+	((uintptr_t)node - offsetof(struct nvgpu_runlist_domain, domains_list));
+}
+
 /**
  * @brief Schedule runlist domain
  *
@@ -231,12 +238,7 @@ struct nvgpu_runlist_domain *nvgpu_rl_domain_get(struct gk20a *g, u32 runlist_id
 int nvgpu_rl_domain_sync_submit(struct gk20a *g, struct nvgpu_runlist *runlist,
 		struct nvgpu_runlist_domain *next_domain, bool wait_for_finish);
 
-static inline struct nvgpu_runlist_domain *
-nvgpu_runlist_domain_from_domains_list(struct nvgpu_list_node *node)
-{
-	return (struct nvgpu_runlist_domain *)
-	((uintptr_t)node - offsetof(struct nvgpu_runlist_domain, domains_list));
-}
+#ifdef CONFIG_NVS_KMD_BACKEND
 
 /**
  * @brief Submit the nvgpu_runlist_domain instance corresponding to a given domain.
@@ -252,6 +254,7 @@ nvgpu_runlist_domain_from_domains_list(struct nvgpu_list_node *node)
  */
 int nvgpu_runlist_tick(struct gk20a *g, struct nvgpu_runlist_domain **rl_domain,
 	u64 preempt_grace_ns);
+#endif
 
 /**
  * @brief Rebuild runlist

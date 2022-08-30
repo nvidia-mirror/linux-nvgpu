@@ -481,19 +481,6 @@ int nvgpu_runlist_wait_pending_legacy(struct gk20a *g, struct nvgpu_runlist *rl)
 	return ret;
 }
 
-static void nvgpu_runlist_domain_actual_submit(struct gk20a *g, struct nvgpu_runlist *rl)
-{
-	rl_dbg(g, "Runlist[%u]: submitting domain[%llu]",
-		rl->id, rl->domain->domain_id);
-
-	/* Here, its essential to synchronize between hw_submit
-	 * and domain mem swaps.
-	 */
-	nvgpu_spinlock_acquire(&rl->domain->lock);
-	g->ops.runlist.hw_submit(g, rl);
-	nvgpu_spinlock_release(&rl->domain->lock);
-}
-
 static int nvgpu_runlist_update_mem_locked(struct gk20a *g, struct nvgpu_runlist *rl,
 				struct nvgpu_runlist_domain *domain,
 				struct nvgpu_channel *ch, bool add, bool can_update_tsg_state)
@@ -575,6 +562,9 @@ int nvgpu_runlist_reschedule(struct nvgpu_channel *ch, bool preempt_next,
 #endif
 	int ret = 0;
 
+	(void)wait_preempt;
+	(void)preempt_next;
+
 	runlist = ch->runlist;
 	if (nvgpu_mutex_tryacquire(&runlist->runlist_lock) == 0) {
 		return -EBUSY;
@@ -585,17 +575,20 @@ int nvgpu_runlist_reschedule(struct nvgpu_channel *ch, bool preempt_next,
 		g, g->pmu, PMU_MUTEX_ID_FIFO, &token);
 #endif
 
-#ifdef CONFIG_NVS_PRESENT
+#if defined(CONFIG_NVS_KMD_BACKEND)
 	ret = g->nvs_worker_submit(g, runlist, runlist->domain, wait_preempt);
-#else
-	ret = nvgpu_rl_domain_sync_submit(g, runlist, runlist->domain, wait_preempt);
-#endif
-	if (ret != 0) {
-		if (ret == 1) {
-			ret = 0;
-		}
+	if (ret == 1) {
+		ret = 0;
+	} else if (ret != 0) {
 		goto done;
 	}
+#else
+	ret = nvgpu_rl_domain_sync_submit(g, runlist, runlist->domain, wait_preempt);
+	if (ret != 0) {
+		nvgpu_err(g, "failed to submit runlist domain [%llu]", runlist->domain->domain_id);
+		goto done;
+	}
+#endif
 
 	/* Acquiring runlist lock above guarantees that the current
 	 * domain won't be switched.
@@ -611,6 +604,7 @@ int nvgpu_runlist_reschedule(struct nvgpu_channel *ch, bool preempt_next,
 		nvgpu_err(g, "wait pending failed for runlist %u",
 				runlist->id);
 	}
+
 done:
 #ifdef CONFIG_NVGPU_LS_PMU
 	if (mutex_ret == 0) {
@@ -651,16 +645,17 @@ static int nvgpu_runlist_do_update(struct gk20a *g, struct nvgpu_runlist *rl,
 #endif
 	ret = nvgpu_runlist_update_locked(g, rl, domain, ch, add, wait_for_finish);
 	if (ret == 0) {
-	#ifdef CONFIG_NVS_PRESENT
+#if defined(CONFIG_NVS_KMD_BACKEND)
 		ret = g->nvs_worker_submit(g, rl, domain, wait_for_finish);
-	#else
-		ret = nvgpu_rl_domain_sync_submit(g, rl, domain, wait_for_finish);
-	#endif
 		/* Deferred Update */
 		if (ret == 1) {
 			ret = 0;
 		}
+#else
+		ret = nvgpu_rl_domain_sync_submit(g, rl, domain, wait_for_finish);
+#endif
 	}
+
 #ifdef CONFIG_NVGPU_LS_PMU
 	if (mutex_ret == 0) {
 		if (nvgpu_pmu_lock_release(g, g->pmu,
@@ -676,6 +671,19 @@ static int nvgpu_runlist_do_update(struct gk20a *g, struct nvgpu_runlist *rl,
 	}
 
 	return ret;
+}
+
+static void nvgpu_runlist_domain_actual_submit(struct gk20a *g, struct nvgpu_runlist *rl)
+{
+	rl_dbg(g, "Runlist[%u]: submitting domain[%llu]",
+		rl->id, rl->domain->domain_id);
+
+	/* Here, its essential to synchronize between hw_submit
+	 * and domain mem swaps.
+	 */
+	nvgpu_spinlock_acquire(&rl->domain->lock);
+	g->ops.runlist.hw_submit(g, rl);
+	nvgpu_spinlock_release(&rl->domain->lock);
 }
 
 /*
@@ -714,6 +722,7 @@ int nvgpu_rl_domain_sync_submit(struct gk20a *g, struct nvgpu_runlist *runlist,
 	return err;
 }
 
+#ifdef CONFIG_NVS_KMD_BACKEND
 int nvgpu_runlist_tick(struct gk20a *g, struct nvgpu_runlist_domain **rl_domain,
 	u64 preempt_grace_ns)
 {
@@ -748,6 +757,7 @@ int nvgpu_runlist_tick(struct gk20a *g, struct nvgpu_runlist_domain **rl_domain,
 
 	return err;
 }
+#endif
 
 int nvgpu_runlist_update(struct gk20a *g, struct nvgpu_runlist *rl,
 			 struct nvgpu_channel *ch,

@@ -120,20 +120,22 @@ static void gv11b_fifo_locked_abort_runlist_active_tsgs(struct gk20a *g,
 			err = nvgpu_runlist_update_locked(g,
 				runlist, runlist->domain, NULL, false, false);
 			if (err != 0) {
-				nvgpu_err(g, "runlist id %d is not cleaned up",
-					runlist->id);
+				nvgpu_err(g, "runlist id %d is not cleaned up", runlist->id);
 			}
-#ifdef CONFIG_NVS_PRESENT
+#if defined(CONFIG_NVS_KMD_BACKEND)
 			/* Special case. Submit the recovery runlist now */
 			err = g->nvs_worker_submit(g, runlist, runlist->domain, false);
+			if (err == 1) {
+				err = 0;
+			} else if (err != 0) {
+				nvgpu_err(g, "runlist id %d is not cleaned up", runlist->id);
+			}
 #else
 			err = nvgpu_rl_domain_sync_submit(g, runlist, runlist->domain, false);
-#endif
-			if (err != 0 && err != 1) {
-				nvgpu_err(g, "runlist id %d is not cleaned up",
-					runlist->id);
+			if (err != 0) {
+				nvgpu_err(g, "runlist id %d is not cleaned up", runlist->id);
 			}
-
+#endif
 			nvgpu_tsg_abort(g, tsg, false);
 
 			nvgpu_log(g, gpu_dbg_info, "aborted tsg id %lu", tsgid);

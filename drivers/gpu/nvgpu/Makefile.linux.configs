@@ -3,6 +3,7 @@ CONFIG_GK20A := m
 
 # Enable the nv_sched build.
 CONFIG_NVS_PRESENT := y
+CONFIG_NVS_KMD_BACKEND := y
 
 # Enable GK20A PMU features.
 CONFIG_GK20A_PMU := y
@@ -307,6 +308,9 @@ ccflags-y += -DCONFIG_NVGPU_GSP_STRESS_TEST
 endif
 ifeq ($(CONFIG_NVS_PRESENT),y)
 ccflags-y += -DCONFIG_NVS_PRESENT
+endif
+ifeq ($(CONFIG_NVS_KMD_BACKEND),y)
+ccflags-y += -DCONFIG_NVS_KMD_BACKEND
 endif
 ifeq ($(CONFIG_NVGPU_IVM_BUILD),y)
 ccflags-y += -DCONFIG_NVGPU_IVM_BUILD

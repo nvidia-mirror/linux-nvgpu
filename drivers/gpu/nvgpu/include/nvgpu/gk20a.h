@@ -901,6 +901,7 @@ struct gk20a {
 	struct nvgpu_nvs_scheduler *scheduler;
 	struct nvgpu_mutex sched_mutex;
 
+#ifdef CONFIG_NVS_KMD_BACKEND
 	/**
 	 * A global interface to notify NVS thread about a domain
 	 * modification. Wakes up the worker thread to process domain
@@ -913,6 +914,7 @@ struct gk20a {
 	 */
 	int (*nvs_worker_submit)(struct gk20a *g, struct nvgpu_runlist *rl,
 		struct nvgpu_runlist_domain *rl_domain, bool wait_for_finish);
+#endif
 #endif
 
 #ifdef CONFIG_NVGPU_ENABLE_MISC_EC
