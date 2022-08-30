@@ -24,6 +24,7 @@
 
 #include <unit/unit.h>
 #include <unit/io.h>
+#include <unit/utils.h>
 
 #include <nvgpu/types.h>
 #include <nvgpu/gk20a.h>
@@ -43,10 +44,15 @@
 #include <nvgpu/posix/kmem.h>
 #include <nvgpu/posix/dma.h>
 #include <nvgpu/posix/posix-fault-injection.h>
+#include <nvgpu/string.h>
+#include <nvgpu/gr/subctx.h>
 
 #include "common/gr/gr_priv.h"
 #include "common/gr/obj_ctx_priv.h"
 #include "common/gr/ctx_priv.h"
+#include "common/gr/ctx_mappings_priv.h"
+#include "common/fifo/tsg_subctx_priv.h"
+#include "common/gr/subctx_priv.h"
 
 #include "../nvgpu-gr.h"
 #include "nvgpu-gr-setup.h"
@@ -75,6 +81,11 @@ static struct nvgpu_channel *gr_setup_ch;
 static struct nvgpu_tsg *gr_setup_tsg;
 static struct gr_gops_org gr_setup_gops;
 
+static struct nvgpu_channel **subctx_chs;
+static struct gk20a_as_share **subctx_as_shares;
+static struct nvgpu_tsg *subctx_tsg;
+static struct gk20a_as_share *shared_subctx_as_share;
+
 static bool stub_class_is_valid(u32 class_num)
 {
 	return true;
@@ -83,11 +94,6 @@ static bool stub_class_is_valid(u32 class_num)
 static bool stub_class_is_valid_compute(u32 class_num)
 {
 	return true;
-}
-
-static u32 stub_channel_count(struct gk20a *g)
-{
-	return 4;
 }
 
 static int stub_runlist_update(struct gk20a *g,
@@ -243,6 +249,322 @@ ch_cleanup:
 
 ch_alloc_end:
 	return (err == 0) ? UNIT_SUCCESS: UNIT_FAIL;
+}
+
+static int gr_test_setup_free_subctx_ch_tsg(struct unit_module *m,
+					 struct gk20a *g)
+{
+	u32 max_subctx_count = g->ops.gr.init.get_max_subctx_count();
+	u32 i;
+
+	for (i = 0; i < max_subctx_count; i++) {
+		if (subctx_chs[i] != NULL) {
+			nvgpu_channel_close(subctx_chs[i]);
+			subctx_chs[i] = NULL;
+		}
+
+		if (subctx_as_shares && subctx_as_shares[i]) {
+			gk20a_as_release_share(subctx_as_shares[i]);
+			subctx_as_shares[i] = NULL;
+		}
+	}
+
+	nvgpu_kfree(g, subctx_chs);
+	subctx_chs = NULL;
+
+	if (shared_subctx_as_share) {
+		gk20a_as_release_share(shared_subctx_as_share);
+		shared_subctx_as_share = NULL;
+	}
+
+	if (!nvgpu_list_empty(&subctx_tsg->gr_ctx_mappings_list)) {
+		unit_err(m, "mappings not freed");
+		return UNIT_FAIL;
+	}
+
+	if (subctx_tsg != NULL) {
+		nvgpu_ref_put(&subctx_tsg->refcount, nvgpu_tsg_release);
+		subctx_tsg = NULL;
+	}
+
+	nvgpu_kfree(g, subctx_as_shares);
+	subctx_as_shares = NULL;
+
+	return UNIT_SUCCESS;
+}
+
+static int gr_test_setup_allocate_subctx_ch_tsg(struct unit_module *m,
+					 struct gk20a *g, bool shared_vm)
+{
+	u32 max_subctx_count = g->ops.gr.init.get_max_subctx_count();
+	u32 tsgid = getpid();
+	struct nvgpu_channel *ch = NULL;
+	struct nvgpu_tsg *tsg = NULL;
+	struct gk20a_as_share *as_share = NULL;
+	int err;
+	u32 i;
+
+	subctx_chs = (struct nvgpu_channel **)nvgpu_kzalloc(g,
+				sizeof(struct nvgpu_channel *) * max_subctx_count);
+	if (subctx_chs == NULL) {
+		unit_err(m, "failed to alloc subctx chs\n");
+		goto cleanup;
+	}
+
+	subctx_as_shares = (struct gk20a_as_share **)nvgpu_kzalloc(g,
+				sizeof(struct gk20a_as_share *) * max_subctx_count);
+	if (subctx_as_shares == NULL) {
+		unit_err(m, "failed to alloc subctx as shares\n");
+		goto cleanup;
+	}
+
+	tsg = nvgpu_tsg_open(g, tsgid);
+	if (tsg == NULL) {
+		unit_err(m, "failed tsg open\n");
+		goto cleanup;
+	}
+
+	subctx_tsg = tsg;
+
+	if (shared_vm) {
+		err = gk20a_as_alloc_share(g,
+			0U, NVGPU_AS_ALLOC_UNIFIED_VA,
+			U64(SZ_4K) << U64(10),
+			(1ULL << 37), 0ULL, &as_share);
+		if (err != 0) {
+			unit_err(m, "failed vm memory alloc\n");
+			goto tsg_cleanup;
+		}
+
+		shared_subctx_as_share = as_share;
+	}
+
+	for (i = 0; i < max_subctx_count; i++) {
+		ch = nvgpu_channel_open_new(g, NVGPU_INVALID_RUNLIST_ID,
+					false, tsgid, tsgid);
+		if (ch == NULL) {
+			unit_err(m, "failed channel open\n");
+			goto ch_cleanup;
+		}
+
+		subctx_chs[i] = ch;
+
+		if (shared_vm) {
+			as_share = shared_subctx_as_share;
+		} else {
+			err = gk20a_as_alloc_share(g,
+				0U, NVGPU_AS_ALLOC_UNIFIED_VA,
+				U64(SZ_4K) << U64(10),
+				(1ULL << 37), 0ULL, &subctx_as_shares[i]);
+			if (err != 0) {
+				unit_err(m, "failed vm memory alloc\n");
+				goto ch_cleanup;
+			}
+
+			as_share = subctx_as_shares[i];
+		}
+
+		err = g->ops.mm.vm_bind_channel(as_share->vm, ch);
+		if (err != 0) {
+			unit_err(m, "failed vm binding to ch\n");
+			goto ch_cleanup;
+		}
+
+		ch->subctx_id = i;
+
+		err = nvgpu_tsg_bind_channel(tsg, ch);
+		if (err != 0) {
+			unit_err(m, "failed tsg channel bind\n");
+			goto ch_cleanup;
+		}
+
+		err = g->ops.gr.setup.alloc_obj_ctx(ch, VOLTA_COMPUTE_A, 0);
+		if (err != 0) {
+			unit_err(m, "setup alloc obj_ctx failed\n");
+			goto ch_cleanup;
+		}
+	}
+
+	goto ch_alloc_end;
+
+ch_cleanup:
+	gr_test_setup_free_subctx_ch_tsg(m, g);
+	goto ch_alloc_end;
+
+tsg_cleanup:
+	if (subctx_tsg != NULL) {
+		nvgpu_ref_put(&subctx_tsg->refcount, nvgpu_tsg_release);
+		subctx_tsg = NULL;
+	}
+
+cleanup:
+	nvgpu_kfree(g, subctx_as_shares);
+	nvgpu_kfree(g, subctx_chs);
+
+ch_alloc_end:
+	return (err == 0) ? UNIT_SUCCESS : UNIT_FAIL;
+}
+
+static int gr_test_setup_compare_mappings(struct unit_module *m,
+				struct nvgpu_gr_ctx_mappings *veid0_mappings,
+				struct nvgpu_gr_ctx_mappings *mappings)
+{
+	if (nvgpu_memcmp((u8 *)&veid0_mappings->ctx_buffer_va,
+			 (u8 *)&mappings->ctx_buffer_va,
+			 NVGPU_GR_CTX_COUNT * sizeof(u64)) != 0) {
+		unit_err(m, "ctx buffer va mismatch\n");
+		return UNIT_FAIL;
+	}
+
+	if (nvgpu_memcmp((u8 *)&veid0_mappings->global_ctx_buffer_va,
+			 (u8 *)&mappings->global_ctx_buffer_va,
+			 NVGPU_GR_GLOBAL_CTX_VA_COUNT * sizeof(u64)) != 0) {
+		unit_err(m, "global ctx buffer va mismatch\n");
+		return UNIT_FAIL;
+	}
+
+	return UNIT_SUCCESS;
+}
+
+static int gr_test_setup_compare_ctx_headers(struct unit_module *m,
+				struct gk20a *g,
+				struct nvgpu_mem *veid0_subctx_header,
+				struct nvgpu_mem *subctx_header)
+{
+	u32 size = g->ops.gr.ctxsw_prog.hw_get_fecs_header_size();
+	u8 *header1 = NULL;
+	u8 *header2 = NULL;
+	int ret = 0;
+
+	header1 = (u8 *) nvgpu_kzalloc(g, size);
+	if (header1 == NULL) {
+		unit_err(m, "header1 allocation failed");
+		return UNIT_FAIL;
+	}
+
+	header2 = (u8 *) nvgpu_kzalloc(g, size);
+	if (header2 == NULL) {
+		unit_err(m, "header2 allocation failed");
+		ret = UNIT_FAIL;
+		goto out;
+	}
+
+	nvgpu_mem_rd_n(g, veid0_subctx_header, 0, (void *)header1, size);
+	nvgpu_mem_rd_n(g, subctx_header, 0, (void *)header2, size);
+
+	if (nvgpu_memcmp(header1, header2, size) != 0) {
+		unit_err(m, "subctx header mismatch\n");
+		ret = UNIT_FAIL;
+		goto out;
+	}
+
+out:
+	nvgpu_kfree(g, header1);
+	nvgpu_kfree(g, header2);
+	return ret;
+}
+
+static inline struct nvgpu_gr_ctx_mappings *
+nvgpu_gr_ctx_mappings_from_tsg_entry(struct nvgpu_list_node *node)
+{
+	return (struct nvgpu_gr_ctx_mappings *)
+	   ((uintptr_t)node - offsetof(struct nvgpu_gr_ctx_mappings, tsg_entry));
+};
+
+static inline struct nvgpu_tsg_subctx *
+nvgpu_tsg_subctx_from_tsg_entry(struct nvgpu_list_node *node)
+{
+	return (struct nvgpu_tsg_subctx *)
+	   ((uintptr_t)node - offsetof(struct nvgpu_tsg_subctx, tsg_entry));
+};
+
+int test_gr_validate_subctx_gr_ctx_buffers(struct unit_module *m,
+					 struct gk20a *g, void *args)
+{
+	u32 max_subctx_count = g->ops.gr.init.get_max_subctx_count();
+	struct nvgpu_gr_ctx_mappings *veid0_mappings;
+	struct nvgpu_tsg_subctx *subctx;
+	struct nvgpu_mem *ctxheader1;
+	struct nvgpu_mem *ctxheader2;
+	bool shared_vm = true;
+	u32 close_ch;
+	int err;
+
+	err = gr_test_setup_allocate_subctx_ch_tsg(m, g, shared_vm);
+	if (err != 0) {
+		unit_return_fail(m, "alloc setup subctx channels failed\n");
+	}
+
+	/*
+	 * Close any random Async channel to check that it does not change the
+	 * state of other channels/subcontexts.
+	 */
+	srand(time(0));
+	close_ch = get_random_u32(1, max_subctx_count - 1U);
+	nvgpu_channel_close(subctx_chs[close_ch]);
+	subctx_chs[close_ch] = NULL;
+
+	if (nvgpu_list_first_entry(&subctx_tsg->gr_ctx_mappings_list, nvgpu_gr_ctx_mappings,
+				   tsg_entry) !=
+	    nvgpu_list_last_entry(&subctx_tsg->gr_ctx_mappings_list, nvgpu_gr_ctx_mappings,
+				   tsg_entry)) {
+		unit_err(m, "Only single element should be present in the"
+			 "gr_ctx_mappings_list");
+		err = -EINVAL;
+		goto out;
+	}
+
+	veid0_mappings = subctx_chs[0]->subctx->gr_subctx->mappings;
+	if (veid0_mappings == NULL) {
+		unit_err(m, "veid0 mappings not initialized\n");
+		err = -EINVAL;
+		goto out;
+	}
+
+	if ((veid0_mappings->global_ctx_buffer_va[NVGPU_GR_GLOBAL_CTX_CIRCULAR_VA] == 0ULL) ||
+	    (veid0_mappings->global_ctx_buffer_va[NVGPU_GR_GLOBAL_CTX_PAGEPOOL_VA] == 0ULL) ||
+	    (veid0_mappings->global_ctx_buffer_va[NVGPU_GR_GLOBAL_CTX_ATTRIBUTE_VA] == 0ULL)) {
+		unit_err(m, "Global ctx buffers not mapped for VEID0");
+		err = -EINVAL;
+		goto out;
+	}
+
+	ctxheader1 = nvgpu_gr_subctx_get_ctx_header(subctx_chs[0]->subctx->gr_subctx);
+
+	nvgpu_list_for_each_entry(subctx, &subctx_tsg->subctx_list,
+				  nvgpu_tsg_subctx, tsg_entry) {
+		if (subctx->gr_subctx == NULL) {
+			unit_err(m, "gr_subctx not initialized\n");
+			err = -EINVAL;
+			goto out;
+		}
+
+		if (subctx->subctx_id == CHANNEL_INFO_VEID0) {
+			continue;
+		}
+
+		err = gr_test_setup_compare_mappings(m, veid0_mappings,
+				subctx->gr_subctx->mappings);
+		if (err != 0) {
+			unit_err(m, "gr ctx mapping not valid\n");
+			err = -EINVAL;
+			goto out;
+		}
+
+		ctxheader2 = nvgpu_gr_subctx_get_ctx_header(subctx->gr_subctx);
+
+		err = gr_test_setup_compare_ctx_headers(m, g, ctxheader1, ctxheader2);
+		if (err != 0) {
+			unit_err(m, "gr subctx headers not valid\n");
+			err = -EINVAL;
+			goto out;
+		}
+	}
+
+out:
+	err = gr_test_setup_free_subctx_ch_tsg(m, g);
+
+	return (err == 0) ? UNIT_SUCCESS : UNIT_FAIL;
 }
 
 static void gr_setup_restore_valid_ops(struct gk20a *g)
@@ -704,7 +1026,6 @@ int test_gr_setup_alloc_obj_ctx(struct unit_module *m,
 	nvgpu_posix_io_writel_reg_space(g, gr_fecs_current_ctx_r(),
 							tsgid);
 
-	g->ops.channel.count = stub_channel_count;
 	g->ops.runlist.update = stub_runlist_update;
 
 	/* Save valid gops */
@@ -812,6 +1133,8 @@ int test_gr_setup_alloc_obj_ctx(struct unit_module *m,
 struct unit_module_test nvgpu_gr_setup_tests[] = {
 	UNIT_TEST(gr_setup_setup, test_gr_init_setup_ready, NULL, 0),
 	UNIT_TEST(gr_setup_alloc_obj_ctx, test_gr_setup_alloc_obj_ctx, NULL, 0),
+	UNIT_TEST(gr_setup_subctx_gr_ctx_buffers,
+			test_gr_validate_subctx_gr_ctx_buffers, NULL, 0),
 	UNIT_TEST(gr_setup_set_preemption_mode,
 			test_gr_setup_set_preemption_mode, NULL, 0),
 	UNIT_TEST(gr_setup_preemption_mode_errors,
