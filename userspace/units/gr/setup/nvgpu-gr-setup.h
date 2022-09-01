@@ -158,6 +158,72 @@ int test_gr_validate_subctx_gr_ctx_buffers(struct unit_module *m,
 					 struct gk20a *g, void *args);
 
 /**
+ * Test specification for: test_gr_validate_multi_as_subctx_gr_ctx_buffers.
+ *
+ * Description: This test helps to verify common.gr ctx buffers setup when
+ *              channels are created and closed for multiple address spaces.
+ *
+ * Test Type: Feature
+ *
+ * Targets: nvgpu_gr_setup_alloc_obj_ctx,
+ *          nvgpu_gr_obj_ctx_alloc,
+ *          nvgpu_gr_ctx_alloc_or_get_mappings
+ *          nvgpu_gr_ctx_get_mappings
+ *          nvgpu_gr_ctx_get_ctx_mapping_flags
+ *          nvgpu_gr_ctx_init_ctx_buffers_mapping_flags
+ *          nvgpu_gr_ctx_free_mappings
+ *          nvgpu_gr_ctx_mappings_create
+ *          nvgpu_gr_ctx_mappings_free
+ *          nvgpu_gr_ctx_mappings_map_gr_ctx_buffers
+ *          nvgpu_gr_ctx_unmap_buffers
+ *          nvgpu_gr_ctx_mappings_get_ctx_va
+ *          nvgpu_gr_ctx_get_ctx_mem,
+ *          nvgpu_gr_ctx_mappings_get_global_ctx_va,
+ *          gops_gr_setup.alloc_obj_ctx,
+ *          nvgpu_tsg_subctx_bind_channel
+ *          nvgpu_tsg_subctx_unbind_channel
+ *          nvgpu_tsg_subctx_alloc_gr_subctx
+ *          nvgpu_tsg_subctx_setup_subctx_header
+ *          nvgpu_tsg_subctx_get_gr_subctx
+ *          nvgpu_tsg_subctx_get_id
+ *          nvgpu_tsg_subctx_alloc_or_get_mappings
+ *
+ * Input: #test_gr_init_setup_ready must have been executed successfully.
+ *
+ * Steps:
+ * -  Allocate a TSG.
+ * -  Allocate maximum supported subcontext channels.
+ * -  Allocate VM per channel.
+ * -  Bind the channels to respective VM and TSG.
+ * -  Call g->ops.gr.setup.alloc_obj_ctx for all channels.
+ * -  Close one of the Async channels. This should not change the gr ctx buffers
+ *    setup for other channels/subcontexts.
+ * -  Get the nvgpu_gr_ctx_mappings struct for VEID0.
+ * -  Verify that there are more than one entry in gr ctx buffer mappings list.
+ * -  Verify that global ctx buffers mapped for VEID0.
+ * -  For each of the ASYNC subcontext channels,
+ *    - Compare the gr ctx buffer mappings as:
+ *      - Verify that TSG ctx and patch buffer phys addr programmed is same.
+ *      - Verify that global ctx buffers are not mapped.
+ *      - Verify that global ctx priv access map buffer phys addr programmed is same.
+ * -  Get the physical address of TSG ctx, patch, priv_access_map buffers
+ *    from VEID0 mappings.
+ * -  Close VEID0 channel. This should not change the gr ctx buffers
+ *    setup for other channels/subcontexts.
+ * -  For each of the ASYNC subcontext channels,
+ *    - Compare the gr ctx buffer mappings as:
+ *      - Verify that TSG ctx and patch buffer phys addr programmed is same.
+ *      - Verify that global ctx priv access map buffer phys addr programmed is same.
+ * -  Free the channels and verify mappings list in TSG is empty.
+ * -  Free the TSG and address spaces.
+ *
+ * Output: Returns PASS if the steps above were executed successfully. FAIL
+ * otherwise.
+ */
+int test_gr_validate_multi_as_subctx_gr_ctx_buffers(struct unit_module *m,
+					 struct gk20a *g, void *args);
+
+/**
  * Test specification for: test_gr_setup_set_preemption_mode.
  *
  * Description: This test helps to verify set_preemption_mode.

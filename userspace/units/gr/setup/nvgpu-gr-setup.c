@@ -54,6 +54,8 @@
 #include "common/fifo/tsg_subctx_priv.h"
 #include "common/gr/subctx_priv.h"
 
+#include <nvgpu/hw/gv11b/hw_gmmu_gv11b.h>
+
 #include "../nvgpu-gr.h"
 #include "nvgpu-gr-setup.h"
 
@@ -563,6 +565,296 @@ int test_gr_validate_subctx_gr_ctx_buffers(struct unit_module *m,
 
 out:
 	err = gr_test_setup_free_subctx_ch_tsg(m, g);
+
+	return (err == 0) ? UNIT_SUCCESS : UNIT_FAIL;
+}
+
+static u64 pte_get_phys_addr(u32 *pte)
+{
+	u64 addr_bits = ((u64) (pte[1] & 0x00FFFFFF)) << 32;
+
+	addr_bits |= (u64) (pte[0] & ~0xFF);
+	addr_bits >>= 8;
+	return (addr_bits << gmmu_new_pde_address_shift_v());
+}
+
+static inline bool pte_is_valid(u32 *pte)
+{
+	return ((pte[0] & gmmu_new_pte_valid_true_f()) != 0U);
+}
+
+static int get_phys_addr(struct unit_module *m, struct gk20a *g,
+			 struct vm_gk20a *vm, u64 gpu_va, u64 *phys_addr)
+{
+	u32 pte[2];
+	int ret;
+
+	/*
+	 * Based on the virtual address returned, lookup the corresponding PTE
+	 */
+	ret = nvgpu_get_pte(g, vm, gpu_va, pte);
+	if (ret != 0) {
+		unit_err(m, "PTE lookup failed\n");
+		return UNIT_FAIL;
+	}
+
+	/* Check if PTE is valid */
+	if (!pte_is_valid(pte)) {
+		unit_err(m, "Invalid PTE!\n");
+		return UNIT_FAIL;
+	}
+
+	*phys_addr = pte_get_phys_addr(pte);
+
+	return UNIT_SUCCESS;
+}
+
+static int compare_phys_addr(struct unit_module *m, struct gk20a *g,
+			     struct vm_gk20a *vm1, u64 gpu_va1,
+			     struct vm_gk20a *vm2, u64 gpu_va2)
+{
+	u64 pa1 = 0ULL;
+	u64 pa2 = 0ULL;
+	int err;
+
+	err = get_phys_addr(m, g, vm1, gpu_va1, &pa1);
+	if (err != 0) {
+		unit_err(m, "get_phys_addr failed");
+		return err;
+	}
+
+	err = get_phys_addr(m, g, vm2, gpu_va2, &pa2);
+	if (err != 0) {
+		unit_err(m, "veid0 get_phys_addr failed");
+		return err;
+	}
+
+	if (pa1 != pa2) {
+		unit_err(m, "physical addr mismatch pa1: %llx pa2: %llx",
+			 pa1, pa2);
+		return UNIT_FAIL;
+	}
+
+	return UNIT_SUCCESS;
+}
+
+static int compare_phys_addr2(struct unit_module *m, struct gk20a *g,
+			     struct vm_gk20a *vm1, u64 gpu_va1,
+			     u64 pa2)
+{
+	u64 pa1 = 0ULL;
+	int err;
+
+	err = get_phys_addr(m, g, vm1, gpu_va1, &pa1);
+	if (err != 0) {
+		unit_err(m, "get_phys_addr failed");
+		return err;
+	}
+
+	if (pa1 != pa2) {
+		unit_err(m, "physical addr mismatch pa1: %llx pa2: %llx",
+			 pa1, pa2);
+		return UNIT_FAIL;
+	}
+
+	return UNIT_SUCCESS;
+}
+
+static int gr_test_setup_compare_multi_as_mappings(struct unit_module *m,
+				struct nvgpu_gr_ctx_mappings *veid0_mappings,
+				struct nvgpu_gr_ctx_mappings *mappings)
+{
+	struct gk20a *g = veid0_mappings->tsg->g;
+	int err;
+
+	err = compare_phys_addr(m, g, veid0_mappings->vm,
+			veid0_mappings->ctx_buffer_va[NVGPU_GR_CTX_CTX],
+			mappings->vm,
+			mappings->ctx_buffer_va[NVGPU_GR_CTX_CTX]);
+	if (err != 0) {
+		unit_err(m, "gr ctx buffer va mismatch\n");
+		return UNIT_FAIL;
+	}
+
+	err = compare_phys_addr(m, g, veid0_mappings->vm,
+			veid0_mappings->ctx_buffer_va[NVGPU_GR_CTX_PATCH_CTX],
+			mappings->vm,
+			mappings->ctx_buffer_va[NVGPU_GR_CTX_PATCH_CTX]);
+	if (err != 0) {
+		unit_err(m, "patch ctx buffer va mismatch\n");
+		return UNIT_FAIL;
+	}
+
+	if ((mappings->global_ctx_buffer_va[NVGPU_GR_GLOBAL_CTX_CIRCULAR_VA] != 0ULL) ||
+	    (mappings->global_ctx_buffer_va[NVGPU_GR_GLOBAL_CTX_PAGEPOOL_VA] != 0ULL) ||
+	    (mappings->global_ctx_buffer_va[NVGPU_GR_GLOBAL_CTX_ATTRIBUTE_VA] != 0ULL)) {
+		unit_err(m, "Global ctx buffers mapped for Async VEID");
+		return UNIT_FAIL;
+	}
+
+	err = compare_phys_addr(m, g, veid0_mappings->vm,
+			veid0_mappings->global_ctx_buffer_va[NVGPU_GR_GLOBAL_CTX_PRIV_ACCESS_MAP_VA],
+			mappings->vm,
+			mappings->global_ctx_buffer_va[NVGPU_GR_GLOBAL_CTX_PRIV_ACCESS_MAP_VA]);
+	if (err != 0) {
+		unit_err(m, "priv_access_map ctx buffer va mismatch\n");
+		return UNIT_FAIL;
+	}
+
+	return UNIT_SUCCESS;
+}
+
+int test_gr_validate_multi_as_subctx_gr_ctx_buffers(struct unit_module *m,
+					 struct gk20a *g, void *args)
+{
+	u64 gr_ctx_phys_addr, patch_ctx_phys_addr, priv_access_map_phys_addr;
+	u32 max_subctx_count = g->ops.gr.init.get_max_subctx_count();
+	struct nvgpu_gr_ctx_mappings *veid0_mappings, *temp_mappings;
+	struct nvgpu_tsg_subctx *subctx;
+	bool shared_vm = false;
+	u32 close_ch;
+	int err;
+
+	err = gr_test_setup_allocate_subctx_ch_tsg(m, g, shared_vm);
+	if (err != 0) {
+		unit_return_fail(m, "alloc setup subctx channels failed\n");
+	}
+
+	/*
+	 * Close any random Async channel to check that it does not change the
+	 * state of other channels/subcontexts.
+	 */
+	srand(time(0));
+	close_ch = get_random_u32(1, max_subctx_count - 1U);
+	nvgpu_channel_close(subctx_chs[close_ch]);
+	subctx_chs[close_ch] = NULL;
+
+	if (nvgpu_list_first_entry(&subctx_tsg->gr_ctx_mappings_list, nvgpu_gr_ctx_mappings,
+				   tsg_entry) ==
+	    nvgpu_list_last_entry(&subctx_tsg->gr_ctx_mappings_list, nvgpu_gr_ctx_mappings,
+				   tsg_entry)) {
+		unit_err(m, "Multiple elements should be present in the"
+			 "gr_ctx_mappings_list");
+		err = -EINVAL;
+		goto out;
+	}
+
+	veid0_mappings = subctx_chs[0]->subctx->gr_subctx->mappings;
+	if (veid0_mappings == NULL) {
+		unit_return_fail(m, "veid0 mappings not initialized\n");
+		err = -EINVAL;
+		goto out;
+	}
+
+	if ((veid0_mappings->global_ctx_buffer_va[NVGPU_GR_GLOBAL_CTX_CIRCULAR_VA] == 0ULL) ||
+	    (veid0_mappings->global_ctx_buffer_va[NVGPU_GR_GLOBAL_CTX_PAGEPOOL_VA] == 0ULL) ||
+	    (veid0_mappings->global_ctx_buffer_va[NVGPU_GR_GLOBAL_CTX_ATTRIBUTE_VA] == 0ULL)) {
+		unit_err(m, "Global ctx buffers not mapped for VEID0");
+		err = -EINVAL;
+		goto out;
+	}
+
+	nvgpu_list_for_each_entry(subctx, &subctx_tsg->subctx_list,
+				  nvgpu_tsg_subctx, tsg_entry) {
+		if (subctx->gr_subctx == NULL) {
+			unit_err(m, "gr_subctx not initialized\n");
+			err = -EINVAL;
+			goto out;
+		}
+
+		if (subctx->subctx_id == CHANNEL_INFO_VEID0) {
+			continue;
+		}
+
+		err = gr_test_setup_compare_multi_as_mappings(m, veid0_mappings,
+				subctx->gr_subctx->mappings);
+		if (err != 0) {
+			unit_err(m, "gr ctx mapping not valid\n");
+			err = -EINVAL;
+			goto out;
+		}
+	}
+
+	err = get_phys_addr(m, g, veid0_mappings->vm,
+			veid0_mappings->ctx_buffer_va[NVGPU_GR_CTX_CTX],
+			&gr_ctx_phys_addr);
+	if (err != 0) {
+		unit_err(m, "gr ctx get_phys_addr failed\n");
+		err = -EINVAL;
+		goto out;
+	}
+
+	err = get_phys_addr(m, g, veid0_mappings->vm,
+			veid0_mappings->ctx_buffer_va[NVGPU_GR_CTX_PATCH_CTX],
+			&patch_ctx_phys_addr);
+	if (err != 0) {
+		unit_err(m, "patch ctx get_phys_addr failed\n");
+		err = -EINVAL;
+		goto out;
+	}
+
+	err = get_phys_addr(m, g, veid0_mappings->vm,
+			veid0_mappings->global_ctx_buffer_va[NVGPU_GR_GLOBAL_CTX_PRIV_ACCESS_MAP_VA],
+			&priv_access_map_phys_addr);
+	if (err != 0) {
+		unit_err(m, "priv access map get_phys_addr failed\n");
+		err = -EINVAL;
+		goto out;
+	}
+
+	/*
+	 * Close any Sync channel to check that it does not change the
+	 * state of other channels/subcontexts.
+	 */
+	nvgpu_channel_close(subctx_chs[0]);
+	subctx_chs[0] = NULL;
+
+	nvgpu_list_for_each_entry(subctx, &subctx_tsg->subctx_list,
+				  nvgpu_tsg_subctx, tsg_entry) {
+		if (subctx->gr_subctx == NULL) {
+			unit_err(m, "gr_subctx not initialized\n");
+			err = -EINVAL;
+			goto out;
+		}
+
+		if (subctx->subctx_id == CHANNEL_INFO_VEID0) {
+			unit_err(m, "subctx 0 is freed\n");
+			err = -EINVAL;
+			goto out;
+		}
+
+		temp_mappings = subctx->gr_subctx->mappings;
+
+		err = compare_phys_addr2(m, g, temp_mappings->vm,
+				temp_mappings->ctx_buffer_va[NVGPU_GR_CTX_CTX],
+				gr_ctx_phys_addr);
+		if (err != 0) {
+			unit_err(m, "gr ctx buffer va mismatch\n");
+			err = -EINVAL;
+			goto out;
+		}
+
+		err = compare_phys_addr2(m, g, temp_mappings->vm,
+				temp_mappings->ctx_buffer_va[NVGPU_GR_CTX_PATCH_CTX],
+				patch_ctx_phys_addr);
+		if (err != 0) {
+			unit_err(m, "patch ctx buffer va mismatch\n");
+			err = -EINVAL;
+			goto out;
+		}
+
+		err = compare_phys_addr2(m, g, temp_mappings->vm,
+				temp_mappings->global_ctx_buffer_va[NVGPU_GR_GLOBAL_CTX_PRIV_ACCESS_MAP_VA],
+				priv_access_map_phys_addr);
+		if (err != 0) {
+			unit_err(m, "priv_access_map ctx buffer va mismatch\n");
+			err = -EINVAL;
+			goto out;
+		}
+	}
+
+out:
+	gr_test_setup_free_subctx_ch_tsg(m, g);
 
 	return (err == 0) ? UNIT_SUCCESS : UNIT_FAIL;
 }
@@ -1135,6 +1427,8 @@ struct unit_module_test nvgpu_gr_setup_tests[] = {
 	UNIT_TEST(gr_setup_alloc_obj_ctx, test_gr_setup_alloc_obj_ctx, NULL, 0),
 	UNIT_TEST(gr_setup_subctx_gr_ctx_buffers,
 			test_gr_validate_subctx_gr_ctx_buffers, NULL, 0),
+	UNIT_TEST(gr_setup_subctx_multi_as_gr_ctx_buffers,
+			test_gr_validate_multi_as_subctx_gr_ctx_buffers, NULL, 0),
 	UNIT_TEST(gr_setup_set_preemption_mode,
 			test_gr_setup_set_preemption_mode, NULL, 0),
 	UNIT_TEST(gr_setup_preemption_mode_errors,
