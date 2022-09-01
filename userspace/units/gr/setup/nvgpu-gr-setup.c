@@ -26,6 +26,7 @@
 #include <unit/io.h>
 #include <unit/utils.h>
 
+#include <nvgpu/dma.h>
 #include <nvgpu/types.h>
 #include <nvgpu/gk20a.h>
 #include <nvgpu/channel.h>
@@ -55,6 +56,7 @@
 #include "common/gr/subctx_priv.h"
 
 #include <nvgpu/hw/gv11b/hw_gmmu_gv11b.h>
+#include <nvgpu/hw/gv11b/hw_ram_gv11b.h>
 
 #include "../nvgpu-gr.h"
 #include "nvgpu-gr-setup.h"
@@ -296,9 +298,11 @@ static int gr_test_setup_free_subctx_ch_tsg(struct unit_module *m,
 }
 
 static int gr_test_setup_allocate_subctx_ch_tsg(struct unit_module *m,
-					 struct gk20a *g, bool shared_vm)
+					 struct gk20a *g, bool shared_vm,
+					 bool setup_bind)
 {
 	u32 max_subctx_count = g->ops.gr.init.get_max_subctx_count();
+	struct nvgpu_setup_bind_args bind_args;
 	u32 tsgid = getpid();
 	struct nvgpu_channel *ch = NULL;
 	struct nvgpu_tsg *tsg = NULL;
@@ -340,6 +344,12 @@ static int gr_test_setup_allocate_subctx_ch_tsg(struct unit_module *m,
 
 		shared_subctx_as_share = as_share;
 	}
+
+	memset(&bind_args, 0, sizeof(bind_args));
+	bind_args.num_gpfifo_entries = 32;
+
+	bind_args.flags |=
+		NVGPU_SETUP_BIND_FLAGS_USERMODE_SUPPORT;
 
 	for (i = 0; i < max_subctx_count; i++) {
 		ch = nvgpu_channel_open_new(g, NVGPU_INVALID_RUNLIST_ID,
@@ -384,6 +394,14 @@ static int gr_test_setup_allocate_subctx_ch_tsg(struct unit_module *m,
 		if (err != 0) {
 			unit_err(m, "setup alloc obj_ctx failed\n");
 			goto ch_cleanup;
+		}
+
+		if (setup_bind) {
+			err = nvgpu_channel_setup_bind(ch, &bind_args);
+			if (err != 0) {
+				unit_err(m, "setup bind failed\n");
+				goto ch_cleanup;
+			}
 		}
 	}
 
@@ -492,7 +510,7 @@ int test_gr_validate_subctx_gr_ctx_buffers(struct unit_module *m,
 	u32 close_ch;
 	int err;
 
-	err = gr_test_setup_allocate_subctx_ch_tsg(m, g, shared_vm);
+	err = gr_test_setup_allocate_subctx_ch_tsg(m, g, shared_vm, false);
 	if (err != 0) {
 		unit_return_fail(m, "alloc setup subctx channels failed\n");
 	}
@@ -715,7 +733,7 @@ int test_gr_validate_multi_as_subctx_gr_ctx_buffers(struct unit_module *m,
 	u32 close_ch;
 	int err;
 
-	err = gr_test_setup_allocate_subctx_ch_tsg(m, g, shared_vm);
+	err = gr_test_setup_allocate_subctx_ch_tsg(m, g, shared_vm, false);
 	if (err != 0) {
 		unit_return_fail(m, "alloc setup subctx channels failed\n");
 	}
@@ -855,6 +873,265 @@ int test_gr_validate_multi_as_subctx_gr_ctx_buffers(struct unit_module *m,
 
 out:
 	gr_test_setup_free_subctx_ch_tsg(m, g);
+
+	return (err == 0) ? UNIT_SUCCESS : UNIT_FAIL;
+}
+
+static int gv11b_ramin_compare_subctx_valid_mask(struct unit_module *m,
+		struct gk20a *g, struct nvgpu_mem *inst_block,
+		unsigned long *valid_subctx_mask)
+{
+	u32 max_subctx_count = g->ops.gr.init.get_max_subctx_count();
+	u32 id;
+
+	for (id = 0U; id < max_subctx_count; id += 32U) {
+		u32 subctx_mask = nvgpu_mem_rd32(g, inst_block,
+					ram_in_sc_pdb_valid_long_w(id));
+
+		if (((u32 *)valid_subctx_mask)[id / 32U] != subctx_mask) {
+			unit_err(m, "valid mask mismatch\n");
+			return UNIT_FAIL;
+		}
+	}
+
+	return UNIT_SUCCESS;
+}
+
+static int gv11b_ramin_compare_subctx_pdb(struct unit_module *m,
+		struct gk20a *g, struct nvgpu_mem *inst_block,
+		u32 *subctx_pdb_map)
+{
+	u32 max_subctx_count = g->ops.gr.init.get_max_subctx_count();
+	u32 id;
+
+	for (id = 0U; id < max_subctx_count; id++) {
+		u64 map_entry = nvgpu_mem_rd32_pair(g, inst_block,
+					ram_in_sc_page_dir_base_vol_w(id),
+					ram_in_sc_page_dir_base_hi_w(id));
+
+		if ((subctx_pdb_map[id * 4U] != (u32) (map_entry & U32_MAX)) ||
+		    (subctx_pdb_map[(id * 4U) + 1U] != (u32) (map_entry >> 32U))) {
+			unit_err(m, "pdb mismatch %u %x %x %llx\n", id, subctx_pdb_map[id * 4U],
+				 subctx_pdb_map[(id * 4U) + 1U], map_entry);
+			return UNIT_FAIL;
+		}
+	}
+
+	return UNIT_SUCCESS;
+}
+
+static int gr_test_setup_validate_inst_blocks(struct unit_module *m,
+				struct gk20a *g,
+				u32 *subctx_pdb_map,
+				unsigned long *valid_subctxs,
+				struct nvgpu_mem *inst_block)
+{
+	int err;
+
+	err = gv11b_ramin_compare_subctx_valid_mask(m, g, inst_block,
+			valid_subctxs);
+	if (err != 0) {
+		unit_return_fail(m, "subctx valid mask compare failed\n");
+	}
+
+	err = gv11b_ramin_compare_subctx_pdb(m, g, inst_block,
+			subctx_pdb_map);
+	if (err != 0) {
+		unit_return_fail(m, "subctx pdb map compare failed\n");
+	}
+
+	return UNIT_SUCCESS;
+}
+
+static int stub_os_channel_alloc_usermode_buffers(struct nvgpu_channel *ch,
+		struct nvgpu_setup_bind_args *args)
+{
+	int err;
+	struct gk20a *g = ch->g;
+
+	err = nvgpu_dma_alloc(g, NVGPU_CPU_PAGE_SIZE, &ch->usermode_userd);
+	if (err != 0) {
+		return err;
+	}
+
+	err = nvgpu_dma_alloc(g, NVGPU_CPU_PAGE_SIZE, &ch->usermode_gpfifo);
+	if (err != 0) {
+		return err;
+	}
+
+	return err;
+}
+
+int test_gr_validate_subctx_inst_blocks(struct unit_module *m,
+					struct gk20a *g, void *args)
+{
+	u32 max_subctx_count = g->ops.gr.init.get_max_subctx_count();
+	int (*alloc_usermode_buffers)(struct nvgpu_channel *c,
+		struct nvgpu_setup_bind_args *args) =
+			g->os_channel.alloc_usermode_buffers;
+	u32 close_ch_pdb_map_low = 0, close_ch_pdb_map_high = 0;
+	struct nvgpu_setup_bind_args bind_args;
+	unsigned long *valid_subctxs;
+	struct nvgpu_channel *ch;
+	bool shared_vm = false;
+	u32 *subctx_pdb_map;
+	u32 format_word = 0;
+	u32 pdb_addr_lo = 0;
+	u32 pdb_addr_hi = 0;
+	u64 pdb_addr;
+	u32 aperture;
+	u32 close_ch;
+	int err;
+	u32 id;
+
+	subctx_pdb_map = nvgpu_kzalloc(g, max_subctx_count * sizeof(u32) * 4U);
+	if (subctx_pdb_map == NULL) {
+		unit_return_fail(m, "subctx_pdb_map alloc failed\n");
+	}
+
+	valid_subctxs = nvgpu_kzalloc(g,
+				BITS_TO_LONGS(max_subctx_count) *
+				sizeof(unsigned long));
+	if (valid_subctxs == NULL) {
+		nvgpu_kfree(g, subctx_pdb_map);
+		unit_return_fail(m, "valid_subctxs bitmap alloc failed\n");
+	}
+
+	g->os_channel.alloc_usermode_buffers =
+			stub_os_channel_alloc_usermode_buffers;
+
+	err = gr_test_setup_allocate_subctx_ch_tsg(m, g, shared_vm, true);
+	if (err != 0) {
+		nvgpu_kfree(g, subctx_pdb_map);
+		nvgpu_kfree(g, valid_subctxs);
+		unit_return_fail(m, "alloc setup subctx channels failed\n");
+	}
+
+	for (id = 0U; id < max_subctx_count; id += 32U) {
+		((u32 *)valid_subctxs)[id / 32U] = U32_MAX;
+	}
+
+	/*
+	 * Close any 4 random channels to check that it does not change the
+	 * state of other channels/subcontexts.
+	 */
+	srand(time(0));
+	close_ch = get_random_u32(0, 26U);
+
+	for (id = 0U; id < max_subctx_count; id++) {
+		aperture = nvgpu_aperture_mask(g, subctx_as_shares[id]->vm->pdb.mem,
+				ram_in_sc_page_dir_base_target_sys_mem_ncoh_v(),
+				ram_in_sc_page_dir_base_target_sys_mem_coh_v(),
+				ram_in_sc_page_dir_base_target_vid_mem_v());
+
+		pdb_addr = nvgpu_mem_get_addr(g, subctx_as_shares[id]->vm->pdb.mem);
+		pdb_addr_lo = u64_lo32(pdb_addr >> ram_in_base_shift_v());
+		pdb_addr_hi = u64_hi32(pdb_addr);
+		format_word = ram_in_sc_page_dir_base_target_f(aperture, 0U) |
+			ram_in_sc_page_dir_base_vol_f(
+			ram_in_sc_page_dir_base_vol_true_v(), 0U) |
+			ram_in_sc_use_ver2_pt_format_f(1U, 0U) |
+			ram_in_sc_big_page_size_f(1U, 0U) |
+			ram_in_sc_page_dir_base_lo_0_f(pdb_addr_lo);
+
+		subctx_pdb_map[id * 4U] = format_word;
+		subctx_pdb_map[(id * 4U) + 1U] = pdb_addr_hi;
+
+		/* Save the lo and high pdb words for later usage */
+		if (id == close_ch) {
+			close_ch_pdb_map_low = format_word;
+			close_ch_pdb_map_high = pdb_addr_hi;
+		}
+	}
+
+	for (id = 0; id < 4; id++) {
+		nvgpu_channel_close(subctx_chs[close_ch + id]);
+		subctx_chs[close_ch + id] = NULL;
+
+		aperture = ram_in_sc_page_dir_base_target_invalid_v();
+		format_word = ram_in_sc_page_dir_base_target_f(aperture, 0U);
+
+		subctx_pdb_map[(close_ch + id) * 4U] = format_word;
+		subctx_pdb_map[((close_ch + id) * 4U) + 1] = 0U;
+
+		((u32 *)valid_subctxs)[0] &= ~(1U << (close_ch + id));
+	}
+
+	/*
+	 * Validate the instance blocks of all channels. Check valid subctx
+	 * bitmask and pdb map.
+	 */
+	nvgpu_list_for_each_entry(ch, &subctx_tsg->ch_list,
+				  nvgpu_channel, ch_entry) {
+		err = gr_test_setup_validate_inst_blocks(m, g, subctx_pdb_map,
+			valid_subctxs, &ch->inst_block);
+		if (err != 0) {
+			unit_err(m, "subctx programming not valid\n");
+			err = -EINVAL;
+			goto out;
+		}
+	}
+
+	/* Create a channel again to check the state update */
+	subctx_chs[close_ch] = nvgpu_channel_open_new(g, NVGPU_INVALID_RUNLIST_ID,
+				false, getpid(), getpid());
+	ch = subctx_chs[close_ch];
+
+	err = g->ops.mm.vm_bind_channel(subctx_as_shares[close_ch]->vm, ch);
+	if (err != 0) {
+		unit_err(m, "failed vm binding to ch\n");
+		goto out;
+	}
+
+	ch->subctx_id = close_ch;
+
+	err = nvgpu_tsg_bind_channel(subctx_tsg, ch);
+	if (err != 0) {
+		unit_err(m, "failed tsg channel bind\n");
+		goto out;
+	}
+
+	err = g->ops.gr.setup.alloc_obj_ctx(ch, VOLTA_COMPUTE_A, 0);
+	if (err != 0) {
+		unit_err(m, "setup alloc obj_ctx failed\n");
+		goto out;
+	}
+
+	memset(&bind_args, 0, sizeof(bind_args));
+	bind_args.num_gpfifo_entries = 32;
+
+	bind_args.flags |=
+		NVGPU_SETUP_BIND_FLAGS_USERMODE_SUPPORT;
+
+	err = nvgpu_channel_setup_bind(ch, &bind_args);
+	if (err != 0) {
+		unit_err(m, "setup bind failed\n");
+		goto out;
+	}
+
+	subctx_pdb_map[close_ch * 4U] = close_ch_pdb_map_low;
+	subctx_pdb_map[(close_ch * 4U) + 1U] = close_ch_pdb_map_high;
+
+	((u32 *)valid_subctxs)[0] |= (1U << close_ch);
+
+	nvgpu_list_for_each_entry(ch, &subctx_tsg->ch_list,
+				  nvgpu_channel, ch_entry) {
+		err = gr_test_setup_validate_inst_blocks(m, g, subctx_pdb_map,
+			valid_subctxs, &ch->inst_block);
+		if (err != 0) {
+			unit_err(m, "subctx programming not valid\n");
+			err = -EINVAL;
+			goto out;
+		}
+	}
+
+out:
+	gr_test_setup_free_subctx_ch_tsg(m, g);
+
+	nvgpu_kfree(g, subctx_pdb_map);
+	nvgpu_kfree(g, valid_subctxs);
+
+	g->os_channel.alloc_usermode_buffers = alloc_usermode_buffers;
 
 	return (err == 0) ? UNIT_SUCCESS : UNIT_FAIL;
 }
@@ -1429,6 +1706,8 @@ struct unit_module_test nvgpu_gr_setup_tests[] = {
 			test_gr_validate_subctx_gr_ctx_buffers, NULL, 0),
 	UNIT_TEST(gr_setup_subctx_multi_as_gr_ctx_buffers,
 			test_gr_validate_multi_as_subctx_gr_ctx_buffers, NULL, 0),
+	UNIT_TEST(gr_setup_subctx_inst_blocks,
+			test_gr_validate_subctx_inst_blocks, NULL, 0),
 	UNIT_TEST(gr_setup_set_preemption_mode,
 			test_gr_setup_set_preemption_mode, NULL, 0),
 	UNIT_TEST(gr_setup_preemption_mode_errors,
