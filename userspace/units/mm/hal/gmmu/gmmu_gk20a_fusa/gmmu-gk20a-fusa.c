@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -34,8 +34,8 @@
 
 int test_gk20a_get_pde_pgsz(struct unit_module *m, struct gk20a *g, void *args)
 {
-	struct gk20a_mmu_level l;
-	struct nvgpu_gmmu_pd pd;
+	struct gk20a_mmu_level l = { 0 };
+	struct nvgpu_gmmu_pd pd = { 0 };
 	u32 ret_pgsz;
 	int ret = UNIT_FAIL;
 
@@ -55,8 +55,8 @@ done:
 
 int test_gk20a_get_pte_pgsz(struct unit_module *m, struct gk20a *g, void *args)
 {
-	struct gk20a_mmu_level l;
-	struct nvgpu_gmmu_pd pd;
+	struct gk20a_mmu_level l = { 0 };
+	struct nvgpu_gmmu_pd pd = { 0 };
 	u32 ret_pgsz;
 	int ret = UNIT_FAIL;
 
