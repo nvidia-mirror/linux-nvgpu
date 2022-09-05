@@ -25,6 +25,7 @@
 #include <nvgpu/worker.h>
 #include <nvgpu/string.h>
 #include <nvgpu/thread.h>
+#include <nvgpu/barrier.h>
 
 static void nvgpu_worker_pre_process(struct nvgpu_worker *worker)
 {
@@ -331,6 +332,11 @@ static void nvgpu_worker_init_common(struct gk20a *g,
 	nvgpu_mutex_init(&worker->start_lock);
 
 	worker->ops = worker_ops;
+
+	/* Ensure initialization is complete before actually invoking the thread.
+	 * The corresponding read barrier lies in the nvgpu_thread_proxy function.
+	 */
+	nvgpu_smp_wmb();
 }
 
 int nvgpu_worker_init(struct gk20a *g, struct nvgpu_worker *worker,

@@ -28,6 +28,7 @@
 #include <nvgpu/kmem.h>
 #include <nvgpu/gk20a.h>
 #include <nvgpu/runlist.h>
+#include <nvgpu/kref.h>
 
 static struct nvs_sched_ops nvgpu_nvs_ops = {
 	.preempt = NULL,
@@ -55,6 +56,7 @@ struct nvgpu_nvs_worker_item {
 	bool wait_for_finish;
 	bool locked;
 	int status;
+	struct nvgpu_ref ref;
 	struct nvgpu_list_node list;
 	nvgpu_atomic_t state;
 };
@@ -75,6 +77,13 @@ nvgpu_nvs_worker_from_worker(struct nvgpu_worker *worker)
 {
 	return (struct nvgpu_nvs_worker *)
 	   ((uintptr_t)worker - offsetof(struct nvgpu_nvs_worker, worker));
+};
+
+static inline struct nvgpu_nvs_worker_item *
+nvgpu_nvs_worker_item_from_ref(struct nvgpu_ref *ref_node)
+{
+	return (struct nvgpu_nvs_worker_item *)
+	   ((uintptr_t)ref_node - offsetof(struct nvgpu_nvs_worker_item, ref));
 };
 
 static void nvgpu_nvs_worker_poll_init(struct nvgpu_worker *worker)
@@ -152,6 +161,16 @@ static u64 nvgpu_nvs_tick(struct gk20a *g)
 	return timeslice;
 }
 
+static void nvgpu_nvs_worker_item_release(struct nvgpu_ref *ref)
+{
+	struct nvgpu_nvs_worker_item *work =
+			nvgpu_nvs_worker_item_from_ref(ref);
+	struct gk20a *g = work->g;
+
+	nvgpu_cond_destroy(&work->cond);
+	nvgpu_kfree(g, work);
+}
+
 static void nvgpu_nvs_worker_wakeup_process_item(struct nvgpu_list_node *work_item)
 {
 	struct nvgpu_nvs_worker_item *work =
@@ -195,9 +214,14 @@ static void nvgpu_nvs_worker_wakeup_process_item(struct nvgpu_list_node *work_it
 done:
 	nvgpu_mutex_release(&g->sched_mutex);
 	work->status = ret;
-	(void)nvgpu_atomic_xchg(&work->state, 1);
+	nvgpu_atomic_set(&work->state, 1);
+
+	nvgpu_smp_mb();
 	/* Wakeup threads waiting on runlist submit */
 	nvgpu_cond_signal(&work->cond);
+
+	/* This reference was taken as part of nvgpu_nvs_worker_submit */
+	nvgpu_ref_put(&work->ref, nvgpu_nvs_worker_item_release);
 }
 
 static int nvgpu_nvs_worker_submit(struct gk20a *g, struct nvgpu_runlist *rl,
@@ -228,21 +252,29 @@ static int nvgpu_nvs_worker_submit(struct gk20a *g, struct nvgpu_runlist *rl,
 	nvgpu_init_list_node(&work->list);
 	work->wait_for_finish = wait_for_finish;
 	nvgpu_atomic_set(&work->state, 0);
+	nvgpu_ref_init(&work->ref);
 
 	nvs_dbg(g, " enqueueing runlist submit");
 
+	/* Add a barrier here to ensure all reads and writes have happened before
+	 * enqueuing the job in the worker thread.
+	 */
+	nvgpu_smp_mb();
+
+	/* The corresponding refcount is decremented inside the wakeup_process item */
+	nvgpu_ref_get(&work->ref);
 	ret = nvgpu_worker_enqueue(&worker->worker, &work->list);
 	if (ret != 0) {
+		/* Refcount is decremented here as no additional job is enqueued */
+		nvgpu_ref_put(&work->ref, nvgpu_nvs_worker_item_release);
 		goto fail;
 	}
 
-	/* Add a barrier here to ensure that worker thread is interrupted
-	 * before waiting on the condition below
-	 */
-	nvgpu_mb();
-
 	ret = NVGPU_COND_WAIT(&work->cond, nvgpu_atomic_read(&work->state) == 1, 0U);
 	if (ret != 0) {
+		/* refcount is not decremented here since even though this thread is
+		 * unblocked, but the job could be still queued.
+		 */
 		nvgpu_err(g, "Runlist submit interrupted while waiting for submit");
 		goto fail;
 	}
@@ -252,8 +284,7 @@ static int nvgpu_nvs_worker_submit(struct gk20a *g, struct nvgpu_runlist *rl,
 	ret = work->status;
 
 fail:
-	nvgpu_cond_destroy(&work->cond);
-	nvgpu_kfree(g, work);
+	nvgpu_ref_put(&work->ref, nvgpu_nvs_worker_item_release);
 
 free_domain:
 

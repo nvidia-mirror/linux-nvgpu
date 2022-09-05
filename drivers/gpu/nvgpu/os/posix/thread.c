@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,6 +22,7 @@
 
 #include <nvgpu/bug.h>
 #include <nvgpu/thread.h>
+#include <nvgpu/barrier.h>
 #include <nvgpu/os_sched.h>
 #ifdef NVGPU_UNITTEST_FAULT_INJECTION_ENABLEMENT
 #include <nvgpu/posix/posix-fault-injection.h>
@@ -73,6 +74,8 @@ static void *nvgpu_posix_thread_wrapper(void *data)
 	/* setup the fault injection container from the parent */
 	nvgpu_posix_init_fault_injection(nvgpu->fi_container);
 #endif
+
+	nvgpu_smp_rmb();
 
 	ret = nvgpu->fn(nvgpu->data);
 

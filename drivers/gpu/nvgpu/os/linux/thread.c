@@ -18,14 +18,22 @@
 #include <linux/sched.h>
 #include <linux/version.h>
 
+#include <nvgpu/barrier.h>
 #include <nvgpu/thread.h>
 #include <nvgpu/timers.h>
 
 int nvgpu_thread_proxy(void *threaddata)
 {
 	struct nvgpu_thread *thread = threaddata;
-	int ret = thread->fn(thread->data);
 	bool was_running;
+	int ret;
+
+	/* Ensure any initialization required for this thread is completed.
+	 * The corresponding write barrier lies at the end of nvgpu_worker_init_common.
+	 */
+	nvgpu_smp_rmb();
+
+	ret = thread->fn(thread->data);
 
 	was_running = nvgpu_atomic_xchg(&thread->running, false);
 
