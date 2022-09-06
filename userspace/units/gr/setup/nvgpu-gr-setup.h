@@ -280,6 +280,48 @@ int test_gr_validate_subctx_inst_blocks(struct unit_module *m,
 					struct gk20a *g, void *args);
 
 /**
+ * Test specification for: test_gr_validate_ch_class_veid_pbdma.
+ *
+ * Description: This test helps to verify the class/VEID/PBDMA of the
+ *              allocated channels.
+ *
+ * Test Type: Feature
+ *
+ * Targets: nvgpu_gr_setup_alloc_obj_ctx,
+ *          nvgpu_gr_obj_ctx_alloc,
+ *          gops_gr_setup.alloc_obj_ctx,
+ *          nvgpu_tsg_subctx_bind_channel
+ *          nvgpu_tsg_subctx_unbind_channel
+ *          nvgpu_tsg_subctx_alloc_gr_subctx
+ *          nvgpu_tsg_subctx_setup_subctx_header
+ *          nvgpu_tsg_subctx_get_gr_subctx
+ *          nvgpu_tsg_subctx_get_id
+ *          nvgpu_tsg_validate_class_veid_pbdma
+ *
+ * Input: #test_gr_init_setup_ready must have been executed successfully.
+ *
+ * Steps:
+ * -  Allocate a TSG.
+ * -  Allocate a VM.
+ * -  Allocate GFX channel with subcontext id 1.
+ * -  Call g->ops.gr.setup.alloc_obj_ctx for it. It should fail.
+ * -  Close the GFX channel.
+ * -  Allocate GFX channel with subcontext id 0.
+ * -  Call g->ops.gr.setup.alloc_obj_ctx for it. It should pass.
+ * -  Allocate Compute channel with subcontext id 1.
+ * -  Verify that runqueue_sel is not equal to 0.
+ * -  Allocate Compute channel with subcontext id 0.
+ * -  Verify that runqueue_sel is equal to 0.
+ * -  Free the channels.
+ * -  Free the TSG and address spaces.
+ *
+ * Output: Returns PASS if the steps above were executed successfully. FAIL
+ * otherwise.
+ */
+int test_gr_validate_ch_class_veid_pbdma(struct unit_module *m,
+					struct gk20a *g, void *args);
+
+/**
  * Test specification for: test_gr_setup_set_preemption_mode.
  *
  * Description: This test helps to verify set_preemption_mode.

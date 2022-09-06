@@ -1136,6 +1136,150 @@ out:
 	return (err == 0) ? UNIT_SUCCESS : UNIT_FAIL;
 }
 
+static int gr_test_create_channel(struct unit_module *m, struct gk20a *g,
+				  struct nvgpu_tsg *tsg,
+				  struct vm_gk20a *vm, u32 subctx_id,
+				  struct nvgpu_channel **out_ch)
+{
+	struct nvgpu_channel *ch = NULL;
+	u32 tsgid = getpid();
+	int err;
+
+	ch = nvgpu_channel_open_new(g, NVGPU_INVALID_RUNLIST_ID,
+				false, tsgid, tsgid);
+	if (ch == NULL) {
+		unit_err(m, "failed channel open\n");
+		return -ENOMEM;
+	}
+
+	err = g->ops.mm.vm_bind_channel(vm, ch);
+	if (err != 0) {
+		unit_err(m, "failed vm binding to ch\n");
+		return err;
+	}
+
+	ch->subctx_id = subctx_id;
+
+	err = nvgpu_tsg_bind_channel(tsg, ch);
+	if (err != 0) {
+		unit_err(m, "failed tsg channel bind\n");
+		return err;
+	}
+
+	*out_ch = ch;
+
+	return err;
+}
+
+int test_gr_validate_ch_class_veid_pbdma(struct unit_module *m,
+					 struct gk20a *g, void *args)
+{
+	struct nvgpu_channel *gfx_ch = NULL, *veid0_compute_ch = NULL;
+	struct nvgpu_channel *veid1_compute_ch = NULL;
+	struct gk20a_as_share *as_share = NULL;
+	struct nvgpu_tsg *tsg = NULL;
+	int err;
+
+	tsg = nvgpu_tsg_open(g, getpid());
+	if (tsg == NULL) {
+		unit_return_fail(m, "failed tsg open\n");
+	}
+
+	err = gk20a_as_alloc_share(g,
+		0U, NVGPU_AS_ALLOC_UNIFIED_VA,
+		U64(SZ_4K) << U64(10),
+		(1ULL << 37), 0ULL, &as_share);
+	if (err != 0) {
+		unit_err(m, "failed vm memory alloc\n");
+		goto ch_cleanup;
+	}
+
+	err = gr_test_create_channel(m, g, tsg, as_share->vm, 1, &gfx_ch);
+	if (err != 0) {
+		unit_err(m, "create gfx channel failed\n");
+		goto ch_cleanup;
+	}
+
+	err = g->ops.gr.setup.alloc_obj_ctx(gfx_ch, VOLTA_A, 0);
+	if (err == 0) {
+		unit_err(m, "setup alloc obj_ctx passed\n");
+		goto ch_cleanup;
+	}
+
+	nvgpu_channel_close(gfx_ch);
+
+	err = gr_test_create_channel(m, g, tsg, as_share->vm, 0, &gfx_ch);
+	if (err != 0) {
+		unit_err(m, "create gfx channel failed\n");
+		goto ch_cleanup;
+	}
+
+	err = g->ops.gr.setup.alloc_obj_ctx(gfx_ch, VOLTA_A, 0);
+	if (err != 0) {
+		unit_err(m, "setup alloc obj_ctx failed\n");
+		goto ch_cleanup;
+	}
+
+	if (gfx_ch->runqueue_sel != 0) {
+		unit_err(m, "Can't have Graphics in PBDMA1\n");
+		err = -EINVAL;
+		goto ch_cleanup;
+	}
+
+	err = gr_test_create_channel(m, g, tsg, as_share->vm, 0, &veid0_compute_ch);
+	if (err != 0) {
+		unit_err(m, "create veid0 compute channel failed\n");
+		goto ch_cleanup;
+	}
+
+	if (veid0_compute_ch->runqueue_sel != 0) {
+		unit_err(m, "Can't have VEID0 compute in PBDMA1\n");
+		err = -EINVAL;
+		goto ch_cleanup;
+	}
+
+	err = gr_test_create_channel(m, g, tsg, as_share->vm, 1, &veid1_compute_ch);
+	if (err != 0) {
+		unit_err(m, "create veid1 compute channel failed\n");
+		goto ch_cleanup;
+	}
+
+	if (veid1_compute_ch->runqueue_sel == 0) {
+		unit_err(m, "Can't have async compute in PBDMA0\n");
+		err = -EINVAL;
+		goto ch_cleanup;
+	}
+
+ch_cleanup:
+
+	if (gfx_ch) {
+		nvgpu_channel_close(gfx_ch);
+		gfx_ch = NULL;
+	}
+
+	if (veid0_compute_ch) {
+		nvgpu_channel_close(veid0_compute_ch);
+		veid0_compute_ch = NULL;
+	}
+
+	if (veid1_compute_ch) {
+		nvgpu_channel_close(veid1_compute_ch);
+		veid1_compute_ch = NULL;
+	}
+
+	if (as_share) {
+		gk20a_as_release_share(as_share);
+		as_share = NULL;
+	}
+
+	if (tsg != NULL) {
+		nvgpu_ref_put(&tsg->refcount, nvgpu_tsg_release);
+		tsg = NULL;
+	}
+
+	return (err == 0) ? UNIT_SUCCESS : UNIT_FAIL;
+}
+
 static void gr_setup_restore_valid_ops(struct gk20a *g)
 {
 	g->ops.mm.cache.l2_flush =
@@ -1708,6 +1852,8 @@ struct unit_module_test nvgpu_gr_setup_tests[] = {
 			test_gr_validate_multi_as_subctx_gr_ctx_buffers, NULL, 0),
 	UNIT_TEST(gr_setup_subctx_inst_blocks,
 			test_gr_validate_subctx_inst_blocks, NULL, 0),
+	UNIT_TEST(gr_setup_class_veid_pbdma,
+			test_gr_validate_ch_class_veid_pbdma, NULL, 0),
 	UNIT_TEST(gr_setup_set_preemption_mode,
 			test_gr_setup_set_preemption_mode, NULL, 0),
 	UNIT_TEST(gr_setup_preemption_mode_errors,
