@@ -134,6 +134,20 @@ int nvgpu_acr_init(struct gk20a *g)
 		goto done;
 	}
 
+	/*
+	 * Firmware is stored in soc specific path in FMODEL
+	 * Hence NVGPU_REQUEST_FIRMWARE_NO_WARN is used instead
+	 * of NVGPU_REQUEST_FIRMWARE_NO_SOC
+	 */
+#ifdef CONFIG_NVGPU_SIM
+	if (nvgpu_is_enabled(g, NVGPU_IS_FMODEL)) {
+		g->acr->fw_load_flag = NVGPU_REQUEST_FIRMWARE_NO_WARN;
+	} else
+#endif
+	{
+		g->acr->fw_load_flag = NVGPU_REQUEST_FIRMWARE_NO_SOC;
+	}
+
 	switch (ver) {
 #ifdef CONFIG_NVGPU_ACR_LEGACY
 	case GK20A_GPUID_GM20B:
@@ -172,21 +186,6 @@ int nvgpu_acr_init(struct gk20a *g)
 		break;
 	}
 
-	/*
-	 * Firmware is stored in soc specific path in FMODEL
-	 * Hence NVGPU_REQUEST_FIRMWARE_NO_WARN is used instead
-	 * of NVGPU_REQUEST_FIRMWARE_NO_SOC
-	 */
-	if (err == 0) {
-#ifdef CONFIG_NVGPU_SIM
-		if (nvgpu_is_enabled(g, NVGPU_IS_FMODEL)) {
-			g->acr->fw_load_flag = NVGPU_REQUEST_FIRMWARE_NO_WARN;
-		} else
-#endif
-		{
-			g->acr->fw_load_flag = NVGPU_REQUEST_FIRMWARE_NO_SOC;
-		}
-	}
 done:
 	return err;
 }
