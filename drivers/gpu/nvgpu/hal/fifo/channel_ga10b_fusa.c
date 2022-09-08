@@ -37,8 +37,11 @@
 #include "channel_ga10b.h"
 
 #include <nvgpu/hw/ga10b/hw_runlist_ga10b.h>
-
+#ifdef CONFIG_NVGPU_HAL_NON_FUSA
 #define NUM_CHANNELS		512U
+#else
+#define NUM_CHANNELS		128U
+#endif
 #define CHANNEL_BOUND		1
 #define CHANNEL_UNBOUND		0
 
