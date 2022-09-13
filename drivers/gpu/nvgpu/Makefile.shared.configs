@@ -112,6 +112,9 @@ ifeq ($(profile),$(filter $(profile),safety_debug safety_release))
 NVGPU_COMMON_CFLAGS             +=      \
 	-DCONFIG_NVGPU_GR_GOLDEN_CTX_VERIFICATION     \
 	-DCONFIG_NVGPU_BUILD_CONFIGURATION_IS_SAFETY
+#Enable NVGPU_MON interaction with NVGPU-RM
+CONFIG_NVGPU_MON_PRESENT        := 1
+NVGPU_COMMON_CFLAGS             += -DCONFIG_NVGPU_MON_PRESENT
 
 ## For tesing of CTXSW FW error codes manually, enable below configs in safety build.
 ## Enable only one config at a time, because only one error can be tested at a time.
