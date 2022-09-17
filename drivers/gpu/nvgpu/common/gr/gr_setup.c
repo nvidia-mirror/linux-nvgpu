@@ -242,12 +242,21 @@ int nvgpu_gr_setup_alloc_obj_ctx(struct nvgpu_channel *c, u32 class_num,
 
 #ifdef CONFIG_NVGPU_FECS_TRACE
 	if (g->ops.gr.fecs_trace.bind_channel && !c->vpr) {
+		u32 vmid = 0U;
+
 		if (nvgpu_is_enabled(g, NVGPU_SUPPORT_TSG_SUBCONTEXTS)) {
 			gr_subctx = nvgpu_tsg_subctx_get_gr_subctx(c->subctx);
 		}
 
+		if (g->ops.channel.get_vmid != NULL) {
+			err = g->ops.channel.get_vmid(c, &vmid);
+			if (err != 0) {
+				nvgpu_warn(g, "failed to get vmid from channel. chid=%u", c->chid);
+			}
+		}
+
 		err = g->ops.gr.fecs_trace.bind_channel(g, &c->inst_block,
-			gr_subctx, gr_ctx, mappings, tsg->tgid, 0);
+			gr_subctx, gr_ctx, mappings, tsg->tgid, vmid);
 		if (err != 0) {
 			nvgpu_warn(g,
 				"fail to bind channel for ctxsw trace");
