@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -161,12 +161,33 @@ int tu104_set_l2_sector_promotion(struct gk20a *g, struct nvgpu_tsg *tsg,
 		nvgpu_err(g, "failed to read ltcs_ltss_tstg_cfg(2,3)_r");
 		goto fail;
 	}
-	if (cfg2_vidmem != cfg_ops[0].value_lo || cfg3_sysmem != cfg_ops[1].value_lo) {
+
+	if ((get_field(cfg2_vidmem,
+			ltc_ltcs_ltss_tstg_cfg2_vidmem_t1_promote_m()) !=
+	     get_field(cfg_ops[0].value_lo,
+			ltc_ltcs_ltss_tstg_cfg2_vidmem_t1_promote_m())) ||
+	    (get_field(cfg2_vidmem,
+			ltc_ltcs_ltss_tstg_cfg2_vidmem_l1_promote_m()) !=
+	     get_field(cfg_ops[0].value_lo,
+			ltc_ltcs_ltss_tstg_cfg2_vidmem_l1_promote_m()))) {
 		nvgpu_err(g, "mismatch: cfg2: wrote(0x%x) read(0x%x)",
-				cfg_ops[0].value_lo, cfg2_vidmem);
-		nvgpu_err(g, "          cfg3: wrote(0x%x) read(0x%x)",
-				cfg_ops[1].value_lo, cfg3_sysmem);
+				cfg2_vidmem, cfg_ops[0].value_lo);
 		err = -EINVAL;
+		goto fail;
+	}
+
+	if ((get_field(cfg3_sysmem,
+			ltc_ltcs_ltss_tstg_cfg3_sysmem_t1_promote_m()) !=
+	     get_field(cfg_ops[1].value_lo,
+			ltc_ltcs_ltss_tstg_cfg3_sysmem_t1_promote_m())) ||
+	    (get_field(cfg3_sysmem,
+			ltc_ltcs_ltss_tstg_cfg3_sysmem_l1_promote_m()) !=
+	     get_field(cfg_ops[1].value_lo,
+			ltc_ltcs_ltss_tstg_cfg3_sysmem_l1_promote_m()))) {
+		nvgpu_err(g, "mismatch: cfg3: wrote(0x%x) read(0x%x)",
+				cfg3_sysmem, cfg_ops[1].value_lo);
+		err = -EINVAL;
+		goto fail;
 	}
 
 fail:
