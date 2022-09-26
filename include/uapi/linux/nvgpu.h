@@ -193,6 +193,77 @@ struct nvgpu_tsg_delete_subcontext_args {
 	__u32 reserved;
 };
 
+/*
+ * NVGPU_TSG_IOCTL_GET_SHARE_TOKEN - get TSG share token ioctl.
+ *
+ * This IOCTL creates a TSG share token. The TSG share token may be
+ * specified when opening new TSG fds with NVGPU_GPU_IOCTL_OPEN_TSG.
+ * In this case, the underlying HW TSG will be shared.
+ *
+ * The source_device_instance_id is checked to be authorized while
+ * creating share token.
+ *
+ * TBD: TSG share tokens have an expiration time. This is controlled
+ * by /sys/kernel/debug/<gpu>/tsg_share_token_timeout_ms. The default
+ * timeout is 30000 ms on silicon platforms and 0 (= no timeout) on
+ * pre-silicon platforms.
+ *
+ * When the TSG is closed, all share tokens on the TSG will be
+ * invalidated. Share token can also be invalidated by calling
+ * the ioctl NVGPU_TSG_IOCTL_REVOKE_SHARE_TOKEN.
+ *
+ * When creating a TSG fd with share token, it is ensured that
+ * target_device_instance_id specified here matches with the
+ * device instance id that is used to call the ioctl
+ * NVGPU_GPU_IOCTL_OPEN_TSG. This will secure the sharing of
+ * the TSG within trusted parties.
+ *
+ * Note: share token is unique in the context of the source and
+ * target device instance ids for a TSG.
+ *
+ * return 0 on success, -1 on error.
+ * retval EINVAL if invalid parameters are specified.
+ *               (if any of the device id argument is zero or
+ *                unauthorized device).
+ */
+
+/* Arguments for NVGPU_TSG_IOCTL_GET_SHARE_TOKEN */
+struct nvgpu_tsg_get_share_token_args {
+	/* in: Source (exporter) device id */
+	__u64 source_device_instance_id;
+
+	/* in: Target (importer) device id */
+	__u64 target_device_instance_id;
+
+	/* out: Share token */
+	__u64 share_token;
+};
+
+/*
+ * NVGPU_TSG_IOCTL_REVOKE_SHARE_TOKEN - revoke TSG share token ioctl.
+ *
+ * This IOCTL revokes a TSG share token. It is intended to be called
+ * whe the share token data exchange with the other end point is
+ * unsuccessful.
+ *
+ * return 0 on success, -1 on error.
+ * retval EINVAL if invalid parameters are specified.
+ *               (if any of the argument is zero or unauthorized device).
+ * retval EINVAL if share token doesn't exist or is expired.
+ */
+
+/* Arguments for NVGPU_TSG_IOCTL_REVOKE_SHARE_TOKEN */
+struct nvgpu_tsg_revoke_share_token_args {
+	/* in: Source (exporter) device id */
+	__u64 source_device_instance_id;
+
+	/* in: Target (importer) device id */
+	__u64 target_device_instance_id;
+
+	/* in: Share token */
+	__u64 share_token;
+};
+
 #define NVGPU_TSG_IOCTL_BIND_CHANNEL \
 	_IOW(NVGPU_TSG_IOCTL_MAGIC, 1, int)
 #define NVGPU_TSG_IOCTL_UNBIND_CHANNEL \
@@ -237,11 +308,17 @@ struct nvgpu_tsg_delete_subcontext_args {
 #define NVGPU_TSG_IOCTL_DELETE_SUBCONTEXT \
 	_IOW(NVGPU_TSG_IOCTL_MAGIC, 19, \
 			struct nvgpu_tsg_delete_subcontext_args)
+#define NVGPU_TSG_IOCTL_GET_SHARE_TOKEN \
+	_IOWR(NVGPU_TSG_IOCTL_MAGIC, 20, \
+			struct nvgpu_tsg_get_share_token_args)
+#define NVGPU_TSG_IOCTL_REVOKE_SHARE_TOKEN \
+	_IOW(NVGPU_TSG_IOCTL_MAGIC, 21, \
+			struct nvgpu_tsg_revoke_share_token_args)
 #define NVGPU_TSG_IOCTL_MAX_ARG_SIZE	\
 		sizeof(struct nvgpu_tsg_bind_scheduling_domain_args)
 
 #define NVGPU_TSG_IOCTL_LAST		\
-	_IOC_NR(NVGPU_TSG_IOCTL_DELETE_SUBCONTEXT)
+	_IOC_NR(NVGPU_TSG_IOCTL_REVOKE_SHARE_TOKEN)
 
 /*
  * /dev/nvhost-dbg-gpu device

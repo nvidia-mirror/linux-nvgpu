@@ -434,9 +434,55 @@ struct nvgpu_alloc_as_args {
 	__u32 padding[6];
 };
 
+/*
+ * NVGPU_GPU_IOCTL_OPEN_TSG - create/share TSG ioctl.
+ *
+ * This IOCTL allocates one of the available TSG for user when called
+ * without share token specified. When called with share token specified,
+ * fd is created for already allocated TSG for sharing the TSG under
+ * different device/CTRL object hierarchies in different processes.
+ *
+ * Source device is specified in the arguments and target device is
+ * implied from the caller. Share token is unique for a TSG.
+ *
+ * When the TSG is successfully created first time or is opened with share
+ * token, the device instance id associated with the CTRL fd will be added
+ * to the TSG private data structure as authorized device instance ids.
+ * This is used for a security check when creating a TSG share token with
+ * nvgpu_tsg_get_share_token.
+ *
+ * return 0 on success, -1 on error.
+ * retval EINVAL if invalid parameters are specified (if TSG_FLAGS_SHARE
+ *               is set but source_device_instance_id and/or share token
+ *               are zero or TSG_FLAGS_SHARE is not set but other
+ *               arguments are non-zero).
+ * retval EINVAL if share token doesn't exist or is expired.
+ */
+
+/*
+ * Specify that the newly created TSG fd will map to existing hardware
+ * TSG resources.
+ */
+#define NVGPU_GPU_IOCTL_OPEN_TSG_FLAGS_SHARE	((__u32)1U << 0U)
+
+/* Arguments for NVGPU_GPU_IOCTL_OPEN_TSG */
 struct nvgpu_gpu_open_tsg_args {
-	__u32 tsg_fd;			/* out, tsg fd */
-	__u32 reserved;			/* must be zero */
+	__u32 tsg_fd;		/* out: tsg fd */
+	__u32 flags;		/* in: NVGPU_GPU_IOCTL_OPEN_TSG_FLAGS_* */
+
+	__u64 source_device_instance_id; /*
+					  * in: source device instance id
+					  * that created the token. Ignored when
+					  * NVGPU_GPU_IOCTL_OPEN_TSG_FLAGS_SHARE
+					  * is unset.
+					  */
+
+	__u64 share_token;	/*
+				 * in: share token obtained from
+				 * NVGPU_TSG_IOCTL_GET_SHARE_TOKEN. Ignored when
+				 * NVGPU_GPU_IOCTL_OPEN_TSG_FLAGS_SHARE
+				 * is unset.
+				 */
 };
 
 struct nvgpu_gpu_get_tpc_masks_args {
