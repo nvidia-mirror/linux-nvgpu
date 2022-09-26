@@ -343,6 +343,12 @@ struct nvgpu_gpu_characteristics {
 	__u32 max_dbg_tsg_timeslice;
 	__u32 reserved5;
 
+	/*
+	 * Instance id of the opened ctrl node. Unique number over the
+	 * nvgpu driver's lifetime (probe to unload).
+	 */
+	__u64 device_instance_id;
+
 	/* Notes:
 	   - This struct can be safely appended with new fields. However, always
 	     keep the structure size multiple of 8 and make sure that the binary

@@ -148,7 +148,9 @@ static int vgpu_init_support(struct platform_device *pdev)
 #if defined(CONFIG_NVGPU_CYCLESTATS)
 	nvgpu_mutex_init(&g->cs_lock);
 #endif
-
+#ifdef CONFIG_NVGPU_TSG_SHARING
+	nvgpu_mutex_init(&g->ctrl_dev_id_lock);
+#endif
 	nvgpu_init_list_node(&g->profiler_objects);
 
 #ifdef CONFIG_NVGPU_DEBUGGER

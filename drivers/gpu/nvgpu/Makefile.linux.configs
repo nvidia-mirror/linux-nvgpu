@@ -204,6 +204,8 @@ CONFIG_NVGPU_FSI_ERR_INJECTION := y
 endif
 endif
 
+CONFIG_NVGPU_TSG_SHARING := y
+
 ifeq ($(CONFIG_GK20A_PMU),y)
 ccflags-y += -DCONFIG_GK20A_PMU
 endif
@@ -320,4 +322,7 @@ ccflags-y += -DCONFIG_NVGPU_ENABLE_MISC_EC
 endif
 ifeq ($(CONFIG_NVGPU_FSI_ERR_INJECTION),y)
 ccflags-y += -DCONFIG_NVGPU_FSI_ERR_INJECTION
+endif
+ifeq ($(CONFIG_NVGPU_TSG_SHARING),y)
+ccflags-y += -DCONFIG_NVGPU_TSG_SHARING
 endif

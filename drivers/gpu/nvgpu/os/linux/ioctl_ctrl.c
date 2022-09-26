@@ -85,6 +85,9 @@ struct gk20a_ctrl_priv {
 	struct gk20a *g;
 	struct nvgpu_clk_session *clk_session;
 	struct nvgpu_cdev *cdev;
+#ifdef CONFIG_NVGPU_TSG_SHARING
+	u64 device_instance_id;
+#endif
 
 	struct nvgpu_list_node list;
 	struct {
@@ -145,6 +148,18 @@ int gk20a_ctrl_dev_open(struct inode *inode, struct file *filp)
 	 * dev structure on teardown
 	 */
 	priv->g = g;
+
+#ifdef CONFIG_NVGPU_TSG_SHARING
+	nvgpu_mutex_acquire(&g->ctrl_dev_id_lock);
+
+	nvgpu_assert(g->ctrl_device_instance_id < U64_MAX);
+	g->ctrl_device_instance_id += 1ULL;
+	priv->device_instance_id = g->ctrl_device_instance_id;
+
+	nvgpu_mutex_release(&g->ctrl_dev_id_lock);
+
+	nvgpu_log_info(g, "opened ctrl device: %llx", priv->device_instance_id);
+#endif
 
 	if (!g->sw_ready) {
 		err = gk20a_busy(g);
@@ -361,7 +376,7 @@ static void nvgpu_set_preemption_mode_flags(struct gk20a *g,
 
 static long gk20a_ctrl_ioctl_gpu_characteristics(
 		struct gk20a *g, u32 gpu_instance_id, struct nvgpu_gr_config *gr_config,
-		struct nvgpu_gpu_get_characteristics *request)
+		struct gk20a_ctrl_priv *priv, struct nvgpu_gpu_get_characteristics *request)
 {
 	struct nvgpu_gpu_characteristics gpu;
 	long err = 0;
@@ -376,6 +391,10 @@ static long gk20a_ctrl_ioctl_gpu_characteristics(
 
 	(void) memset(&gpu, 0, sizeof(gpu));
 	gpu_instance = &g->mig.gpu_instance[gpu_instance_id];
+
+#ifdef CONFIG_NVGPU_TSG_SHARING
+	gpu.device_instance_id = priv->device_instance_id;
+#endif
 
 	gpu.L2_cache_size = g->ops.ltc.determine_L2_size_bytes(g);
 	gpu.on_board_video_memory_size = 0; /* integrated GPU */
@@ -2416,7 +2435,7 @@ long gk20a_ctrl_dev_ioctl(struct file *filp, unsigned int cmd, unsigned long arg
 #endif /* CONFIG_NVGPU_GRAPHICS */
 	case NVGPU_GPU_IOCTL_GET_CHARACTERISTICS:
 		err = gk20a_ctrl_ioctl_gpu_characteristics(g, gpu_instance_id, gr_config,
-			(struct nvgpu_gpu_get_characteristics *)buf);
+			priv, (struct nvgpu_gpu_get_characteristics *)buf);
 		break;
 	case NVGPU_GPU_IOCTL_PREPARE_COMPRESSIBLE_READ:
 		err = gk20a_ctrl_prepare_compressible_read(g,

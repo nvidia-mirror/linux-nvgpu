@@ -117,6 +117,9 @@ void vgpu_remove_support_common(struct gk20a *g)
 	nvgpu_clk_arb_cleanup_arbiter(g);
 
 	nvgpu_mutex_destroy(&g->clk_arb_enable_lock);
+#ifdef CONFIG_NVGPU_TSG_SHARING
+	nvgpu_mutex_destroy(&g->ctrl_dev_id_lock);
+#endif
 	nvgpu_mutex_destroy(&priv->vgpu_clk_get_freq_lock);
 
 	nvgpu_kfree(g, priv->freqs);

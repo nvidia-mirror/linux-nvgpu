@@ -1082,6 +1082,9 @@ void gk20a_remove_support(struct gk20a *g)
 
 	nvgpu_fbp_remove_support(g);
 
+#ifdef CONFIG_NVGPU_TSG_SHARING
+	nvgpu_mutex_destroy(&g->ctrl_dev_id_lock);
+#endif
 	nvgpu_remove_usermode_support(g);
 
 	nvgpu_free_enabled_flags(g);

@@ -96,6 +96,9 @@ static void nvgpu_init_vars(struct gk20a *g)
 #if defined(CONFIG_NVGPU_CYCLESTATS)
 	nvgpu_mutex_init(&g->cs_lock);
 #endif
+#ifdef CONFIG_NVGPU_TSG_SHARING
+	nvgpu_mutex_init(&g->ctrl_dev_id_lock);
+#endif
 
 	/* Init the clock req count to 0 */
 	nvgpu_atomic_set(&g->clk_arb_global_nr, 0);

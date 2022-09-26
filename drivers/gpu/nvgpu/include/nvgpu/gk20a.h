@@ -520,6 +520,22 @@ struct gk20a {
 #ifdef CONFIG_NVGPU_SIM
 	struct sim_nvgpu *sim;
 #endif
+
+#ifdef CONFIG_NVGPU_TSG_SHARING
+	/**
+	 * Used to assign unique ID to ctrl device opened by the application.
+	 * This is used to identify the target for TSG sharing. This is
+	 * guaranteed to be unique for every device created for CTRL
+	 * device node over nvgpu lifespan.
+	 */
+	u64 ctrl_device_instance_id;
+
+	/**
+	 * Mutex to protect access to ctrl_device_instance_id.
+	 */
+	struct nvgpu_mutex ctrl_dev_id_lock;
+#endif
+
 	struct nvgpu_device_list *devs;
 	/** Top level struct maintaining MM unit's software state. */
 	struct mm_gk20a mm;
