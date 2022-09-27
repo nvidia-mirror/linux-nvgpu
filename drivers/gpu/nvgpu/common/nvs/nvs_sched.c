@@ -380,6 +380,9 @@ void nvgpu_nvs_worker_pause(struct gk20a *g)
 	struct nvgpu_nvs_worker *nvs_worker = &g->scheduler->worker;
 	int nvs_worker_state;
 
+	if (g->scheduler == NULL)
+		return;
+
 	if (g->is_virtual) {
 		return;
 	}
