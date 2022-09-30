@@ -219,31 +219,6 @@ static int nvgpu_tsg_bind_scheduling_domain(struct nvgpu_tsg *tsg,
 #endif
 
 #ifdef CONFIG_NVGPU_CHANNEL_TSG_CONTROL
-static int gk20a_tsg_get_event_data_from_id(struct nvgpu_tsg *tsg,
-				unsigned int event_id,
-				struct gk20a_event_id_data **event_id_data)
-{
-	struct gk20a_event_id_data *local_event_id_data;
-	bool event_found = false;
-
-	nvgpu_mutex_acquire(&tsg->event_id_list_lock);
-	nvgpu_list_for_each_entry(local_event_id_data, &tsg->event_id_list,
-					gk20a_event_id_data, event_id_node) {
-		if (local_event_id_data->event_id == event_id) {
-			event_found = true;
-			break;
-		}
-	}
-	nvgpu_mutex_release(&tsg->event_id_list_lock);
-
-	if (event_found) {
-		*event_id_data = local_event_id_data;
-		return 0;
-	} else {
-		return -1;
-	}
-}
-
 /*
  * Convert common event_id of the form NVGPU_EVENT_ID_* to Linux specific
  * event_id of the form NVGPU_IOCTL_CHANNEL_EVENT_ID_* which is used in IOCTLs
@@ -276,28 +251,30 @@ void nvgpu_tsg_post_event_id(struct nvgpu_tsg *tsg,
 {
 	struct gk20a_event_id_data *channel_event_id_data;
 	u32 channel_event_id;
-	int err = 0;
 	struct gk20a *g = tsg->g;
 
 	channel_event_id = nvgpu_event_id_to_ioctl_channel_event_id(event_id);
 	if (event_id >= NVGPU_IOCTL_CHANNEL_EVENT_ID_MAX)
 		return;
 
-	err = gk20a_tsg_get_event_data_from_id(tsg, channel_event_id,
-						&channel_event_id_data);
-	if (err)
-		return;
 
-	nvgpu_mutex_acquire(&channel_event_id_data->lock);
+	nvgpu_mutex_acquire(&tsg->event_id_list_lock);
+	nvgpu_list_for_each_entry(channel_event_id_data, &tsg->event_id_list,
+					gk20a_event_id_data, event_id_node) {
+		if (channel_event_id_data->event_id == event_id) {
+			nvgpu_mutex_acquire(&channel_event_id_data->lock);
 
-	nvgpu_log_info(g,
-		"posting event for event_id=%d on tsg=%d\n",
-		channel_event_id, tsg->tsgid);
-	channel_event_id_data->event_posted = true;
+			nvgpu_log_info(g,
+				"posting event for event_id=%d on tsg=%d\n",
+				channel_event_id, tsg->tsgid);
+			channel_event_id_data->event_posted = true;
 
-	nvgpu_cond_broadcast_interruptible(&channel_event_id_data->event_id_wq);
+			nvgpu_cond_broadcast_interruptible(&channel_event_id_data->event_id_wq);
 
-	nvgpu_mutex_release(&channel_event_id_data->lock);
+			nvgpu_mutex_release(&channel_event_id_data->lock);
+		}
+	}
+	nvgpu_mutex_release(&tsg->event_id_list_lock);
 }
 
 static unsigned int gk20a_event_id_poll(struct file *filep, poll_table *wait)
@@ -371,14 +348,6 @@ static int gk20a_tsg_event_id_enable(struct nvgpu_tsg *tsg,
 	g = nvgpu_get(tsg->g);
 	if (!g)
 		return -ENODEV;
-
-	err = gk20a_tsg_get_event_data_from_id(tsg,
-				event_id, &event_id_data);
-	if (err == 0) {
-		/* We already have event enabled */
-		err = -EINVAL;
-		goto free_ref;
-	}
 
 	err = get_unused_fd_flags(O_RDWR | O_CLOEXEC);
 	if (err < 0)
