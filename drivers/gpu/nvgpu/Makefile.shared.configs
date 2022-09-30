@@ -117,6 +117,10 @@ NVGPU_COMMON_CFLAGS             +=      \
 CONFIG_NVGPU_MON_PRESENT        := 1
 NVGPU_COMMON_CFLAGS             += -DCONFIG_NVGPU_MON_PRESENT
 
+# Enable ASIL-D checkers
+CONFIG_NVGPU_CHECKER              := 1
+NVGPU_COMMON_CFLAGS               += -DCONFIG_NVGPU_CHECKER=1
+
 ## For tesing of CTXSW FW error codes manually, enable below configs in safety build.
 ## Enable only one config at a time, because only one error can be tested at a time.
 # NVGPU_COMMON_CFLAGS             +=      \
