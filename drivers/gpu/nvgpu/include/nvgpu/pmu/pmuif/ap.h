@@ -52,7 +52,7 @@
  * CYCLES_PER_SAMPLE_MAX_DEFAULT      : Maximum power feature cycles per AP sample
  */
 #define NV_PMU_PG_AP_IDLE_FILTER_MIN_DEFAULT_US                 (100)
-#define NV_PMU_PG_AP_IDLE_FILTER_MAX_DEFAULT_US                 (70000)
+#define NV_PMU_PG_AP_IDLE_FILTER_MAX_DEFAULT_US                 (15000)
 #define NV_PMU_PG_AP_MIN_RESIDENCY_DEFAULT                      (1)
 #define NV_PMU_PG_AP_BREAK_EVEN_RESIDENT_TIME_DEFAULT_US        (1300)
 #define NV_PMU_PG_AP_CYCLES_PER_SAMPLE_MAX_DEFAULT              (100)
