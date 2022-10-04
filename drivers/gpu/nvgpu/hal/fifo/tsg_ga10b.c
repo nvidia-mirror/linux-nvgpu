@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2021-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -33,6 +33,7 @@ int ga10b_tsg_unbind_channel_check_hw_next(struct nvgpu_channel *ch,
 		nvgpu_log_info(ch->g, "Channel %d to be removed "
 			"from TSG %d has NEXT set!",
 			ch->chid, ch->tsgid);
+		return -EAGAIN;
 	}
 
 	return 0;

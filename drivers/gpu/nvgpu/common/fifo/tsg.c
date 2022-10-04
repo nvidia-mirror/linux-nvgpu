@@ -483,6 +483,7 @@ int nvgpu_tsg_unbind_channel(struct nvgpu_tsg *tsg, struct nvgpu_channel *ch,
 			     bool force)
 {
 	struct gk20a *g = ch->g;
+	int retries = 10;
 	int err;
 
 	nvgpu_log_fn(g, "unbind tsg:%u ch:%u\n", tsg->tsgid, ch->chid);
@@ -494,10 +495,27 @@ int nvgpu_tsg_unbind_channel(struct nvgpu_tsg *tsg, struct nvgpu_channel *ch,
 	 */
 	nvgpu_mutex_acquire(&tsg->ctx_init_lock);
 
-	err = nvgpu_tsg_unbind_channel_common(tsg, ch);
-	if (!force && err == -EAGAIN) {
-		nvgpu_mutex_release(&tsg->ctx_init_lock);
-		return err;
+	if (!force) {
+		err = nvgpu_tsg_unbind_channel_common(tsg, ch);
+
+		/* Let userspace retry the unbind if HW is busy. */
+		if (err == -EAGAIN) {
+			nvgpu_mutex_release(&tsg->ctx_init_lock);
+			return err;
+		}
+	} else {
+		do {
+			err = nvgpu_tsg_unbind_channel_common(tsg, ch);
+			/*
+			 * Retry for few iterations if the HW is busy before failing unbind
+			 * if the channel is getting killed, otherwise it can lead to faults.
+			 */
+			if (err == -EAGAIN) {
+				nvgpu_usleep_range(2000U, 4000U);
+			} else {
+				break;
+			}
+		} while (retries-- != 0);
 	}
 
 	if (err != 0) {
