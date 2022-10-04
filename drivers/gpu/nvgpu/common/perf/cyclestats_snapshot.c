@@ -369,7 +369,7 @@ u32 nvgpu_css_allocate_perfmon_ids(struct gk20a_cs_snapshot *data,
 
 	f = U32(bitmap_find_next_zero_area(pids, CSS_MAX_PERFMON_IDS,
 				       CSS_FIRST_PERFMON_ID, count, 0));
-	if (f > CSS_MAX_PERFMON_IDS) {
+	if (f >= CSS_MAX_PERFMON_IDS) {
 		f = 0;
 	} else {
 		nvgpu_bitmap_set(pids, f, count);
