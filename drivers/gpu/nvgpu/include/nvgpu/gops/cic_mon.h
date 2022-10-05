@@ -58,6 +58,24 @@ struct gops_cic_mon {
 	 * @return 0 in case of success, < 0 in case of failure.
 	 */
 	int (*report_err)(struct gk20a *g, u32 err_id);
+
+	/**
+	 * @brief Register error injection callback with error
+	 *        injection utility.
+	 *
+	 * @param g [in]		Pointer to GPU driver struct.
+	 *
+	 * @return 0 in case of success, < 0 in case of failure.
+	 */
+	int (*reg_errinj_cb)(struct gk20a *g);
+
+	/**
+	 * @brief Unregister error injection callback from error
+	 *        injection utility.
+	 *
+	 * @return 0 in case of success, < 0 in case of failure.
+	 */
+	int (*dereg_errinj_cb)(void);
 };
 
 #endif/*NVGPU_GOPS_CIC_MON_H*/

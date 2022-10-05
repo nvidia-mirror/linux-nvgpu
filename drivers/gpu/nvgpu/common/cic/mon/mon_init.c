@@ -46,16 +46,18 @@ int nvgpu_cic_mon_setup(struct gk20a *g)
 	g->cic_mon = cic_mon;
 
 #ifdef CONFIG_NVGPU_FSI_ERR_INJECTION
-	err = nvgpu_cic_mon_reg_errinj_cb(g);
-	if (err != 0) {
-		nvgpu_err(g,
-			"Err inj callback registration failed: %d",
-			err);
-		/* Continue CIC init despite err inj utility
-		 * registration failure, as the err inj support
-		 * is meant only for debug purposes.
-		 */
-		err = 0;
+	if (g->ops.cic_mon.reg_errinj_cb != NULL) {
+		err = g->ops.cic_mon.reg_errinj_cb(g);
+		if (err != 0) {
+			nvgpu_err(g,
+				"Err inj callback registration failed: %d",
+				err);
+			/* Continue CIC init despite err inj utility
+			 * registration failure, as the err inj support
+			 * is meant only for debug purposes.
+			 */
+			err = 0;
+		}
 	}
 #endif
 
@@ -100,16 +102,17 @@ int nvgpu_cic_mon_remove(struct gk20a *g)
 	struct nvgpu_cic_mon *cic_mon;
 
 #ifdef CONFIG_NVGPU_FSI_ERR_INJECTION
-	int err = nvgpu_cic_mon_dereg_errinj_cb();
-
-	if (err != 0) {
-		nvgpu_err(g,
-			"Err inj callback de-registration failed: %d",
-			err);
-		/* Continue CIC remove despite err inj utility
-		 * de-registration failure, as the err inj support
-		 * is meant only for debug purposes.
-		 */
+	if (g->ops.cic_mon.dereg_errinj_cb != NULL) {
+		int err = g->ops.cic_mon.dereg_errinj_cb();
+		if (err != 0) {
+			nvgpu_err(g,
+				"Err inj callback de-registration failed: %d",
+				err);
+			/* Continue CIC remove despite err inj utility
+			 * de-registration failure, as the err inj support
+			 * is meant only for debug purposes.
+			 */
+		}
 	}
 #endif
 

@@ -199,9 +199,7 @@ endif
 
 ifeq ($(CONFIG_TEGRA_HSIERRRPTINJ),y)
 ifeq ($(CONFIG_NVGPU_ENABLE_MISC_EC),y)
-ifeq ($(CONFIG_NVGPU_DGPU),n)
 CONFIG_NVGPU_FSI_ERR_INJECTION := y
-endif
 endif
 endif
 

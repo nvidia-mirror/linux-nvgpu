@@ -1757,6 +1757,10 @@ static const struct gops_mssnvlink ga10b_ops_mssnvlink = {
 #endif
 
 static const struct gops_cic_mon ga10b_ops_cic_mon = {
+#ifdef CONFIG_NVGPU_FSI_ERR_INJECTION
+	.reg_errinj_cb = nvgpu_cic_mon_reg_errinj_cb,
+	.dereg_errinj_cb = nvgpu_cic_mon_dereg_errinj_cb,
+#endif
 	.init = ga10b_cic_mon_init,
 	.report_err = nvgpu_cic_mon_report_err_safety_services
 };
