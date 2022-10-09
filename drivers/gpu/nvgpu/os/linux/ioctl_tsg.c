@@ -39,6 +39,7 @@
 #include <nvgpu/nvs.h>
 
 #include "platform_gk20a.h"
+#include "ioctl_ctrl.h"
 #include "ioctl_tsg.h"
 #include "ioctl_as.h"
 #include "ioctl_channel.h"
@@ -50,6 +51,7 @@ struct tsg_private {
 	struct gk20a *g;
 	struct nvgpu_tsg *tsg;
 	struct nvgpu_cdev *cdev;
+	struct gk20a_ctrl_priv *ctrl_priv;
 };
 
 extern const struct file_operations gk20a_tsg_ops;
@@ -450,8 +452,66 @@ static int gk20a_tsg_event_id_ctrl(struct gk20a *g, struct nvgpu_tsg *tsg,
 }
 #endif /* CONFIG_NVGPU_CHANNEL_TSG_CONTROL */
 
-int nvgpu_ioctl_tsg_open(struct gk20a *g, struct nvgpu_cdev *cdev,
-		struct file *filp)
+#ifdef CONFIG_NVGPU_TSG_SHARING
+static inline struct nvgpu_tsg_ctrl_dev_node *
+nvgpu_tsg_ctrl_dev_node_from_tsg_entry(struct nvgpu_list_node *node)
+{
+	return (struct nvgpu_tsg_ctrl_dev_node *)
+	   ((uintptr_t)node - offsetof(struct nvgpu_tsg_ctrl_dev_node, tsg_entry));
+};
+
+static void nvgpu_tsg_remove_ctrl_dev_inst_id(struct nvgpu_tsg *tsg,
+					struct gk20a_ctrl_priv *ctrl_priv)
+{
+	struct nvgpu_tsg_ctrl_dev_node *node, *tmp;
+	struct gk20a *g = tsg->g;
+
+	nvgpu_mutex_acquire(&tsg->tsg_share_lock);
+
+	nvgpu_list_for_each_entry_safe(node, tmp, &tsg->ctrl_devices_list,
+				  nvgpu_tsg_ctrl_dev_node, tsg_entry) {
+		if (node->device_instance_id ==
+				nvgpu_gpu_get_device_instance_id(ctrl_priv)) {
+			nvgpu_log_info(g, "removing ctrl dev id %llx",
+				       nvgpu_gpu_get_device_instance_id(ctrl_priv));
+			nvgpu_list_del(&node->tsg_entry);
+			nvgpu_kfree(g, node);
+		}
+	}
+
+	nvgpu_mutex_release(&tsg->tsg_share_lock);
+}
+
+static int nvgpu_tsg_add_ctrl_dev_inst_id(struct nvgpu_tsg *tsg,
+					  struct gk20a_ctrl_priv *ctrl_priv)
+{
+	struct nvgpu_tsg_ctrl_dev_node *ctrl_dev_node;
+	struct gk20a *g = tsg->g;
+
+	ctrl_dev_node = (struct nvgpu_tsg_ctrl_dev_node *) nvgpu_kzalloc(g,
+				sizeof(struct nvgpu_tsg_ctrl_dev_node));
+	if (ctrl_dev_node == NULL) {
+		nvgpu_err(g, "ctrl_dev_node alloc failed");
+		return -ENOMEM;
+	}
+
+	nvgpu_init_list_node(&ctrl_dev_node->tsg_entry);
+	ctrl_dev_node->device_instance_id =
+			nvgpu_gpu_get_device_instance_id(ctrl_priv);
+
+	nvgpu_mutex_acquire(&tsg->tsg_share_lock);
+	nvgpu_list_add_tail(&ctrl_dev_node->tsg_entry, &tsg->ctrl_devices_list);
+	nvgpu_mutex_release(&tsg->tsg_share_lock);
+
+	nvgpu_log_info(g, "added ctrl dev id %llx",
+		       nvgpu_gpu_get_device_instance_id(ctrl_priv));
+
+	return 0;
+}
+#endif
+
+int nvgpu_ioctl_tsg_open(struct gk20a *g, struct gk20a_ctrl_priv *ctrl_priv,
+			 struct nvgpu_cdev *cdev, struct file *filp)
 {
 	struct tsg_private *priv;
 	struct nvgpu_tsg *tsg;
@@ -485,9 +545,21 @@ int nvgpu_ioctl_tsg_open(struct gk20a *g, struct nvgpu_cdev *cdev,
 		goto free_mem;
 	}
 
+#ifdef CONFIG_NVGPU_TSG_SHARING
+	if (ctrl_priv != NULL) {
+		err = nvgpu_tsg_add_ctrl_dev_inst_id(tsg, ctrl_priv);
+		if (err != 0) {
+			nvgpu_err(g, "add ctrl dev failed %d", err);
+			nvgpu_ref_put(&tsg->refcount, nvgpu_tsg_release);
+			goto free_mem;
+		}
+	}
+#endif
+
 	priv->g = g;
 	priv->tsg = tsg;
 	priv->cdev = cdev;
+	priv->ctrl_priv = ctrl_priv;
 	filp->private_data = priv;
 
 	gk20a_sched_ctrl_tsg_added(g, tsg);
@@ -518,7 +590,7 @@ int nvgpu_ioctl_tsg_dev_open(struct inode *inode, struct file *filp)
 		return ret;
 	}
 
-	ret = nvgpu_ioctl_tsg_open(g, cdev, filp);
+	ret = nvgpu_ioctl_tsg_open(g, NULL, cdev, filp);
 
 	gk20a_idle(g);
 	nvgpu_log_fn(g, "done");
@@ -547,6 +619,10 @@ int nvgpu_ioctl_tsg_dev_release(struct inode *inode, struct file *filp)
 	}
 
 	tsg = priv->tsg;
+
+#ifdef CONFIG_NVGPU_TSG_SHARING
+	nvgpu_tsg_remove_ctrl_dev_inst_id(tsg, priv->ctrl_priv);
+#endif
 
 	nvgpu_ref_put(&tsg->refcount, nvgpu_ioctl_tsg_release);
 	nvgpu_kfree(tsg->g, priv);

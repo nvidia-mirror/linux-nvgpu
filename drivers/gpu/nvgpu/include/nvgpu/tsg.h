@@ -169,6 +169,19 @@ struct nvgpu_tsg {
 	 */
 	struct nvgpu_mutex event_id_list_lock;
 #endif
+
+#ifdef CONFIG_NVGPU_TSG_SHARING
+	/**
+	 * List of devices sharing this TSG (Opened TSG directly or through
+	 * share token).
+	 */
+	struct nvgpu_list_node ctrl_devices_list;
+	/**
+	 * Mutex used to access/modify #ctrl_devices_list.
+	 */
+	struct nvgpu_mutex tsg_share_lock;
+#endif
+
 	/**
 	 * Read write type of semaphore lock used for accessing/modifying
 	 * #ch_list, #subctx_list and #ch_list in #nvgpu_tsg_subctx.
@@ -274,6 +287,13 @@ struct nvgpu_tsg {
 	struct nvgpu_profiler_object *prof;
 #endif
 };
+
+#ifdef CONFIG_NVGPU_TSG_SHARING
+struct nvgpu_tsg_ctrl_dev_node {
+	u64 device_instance_id;
+	struct nvgpu_list_node tsg_entry;
+};
+#endif
 
 /**
  * @brief Allocate subcontext VEID within a TSG.

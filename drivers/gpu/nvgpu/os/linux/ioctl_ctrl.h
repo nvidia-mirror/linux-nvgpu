@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -16,6 +16,8 @@
 #ifndef __NVGPU_IOCTL_CTRL_H__
 #define __NVGPU_IOCTL_CTRL_H__
 
+struct gk20a_ctrl_priv;
+
 int gk20a_ctrl_dev_open(struct inode *inode, struct file *filp);
 int gk20a_ctrl_dev_release(struct inode *inode, struct file *filp);
 long gk20a_ctrl_dev_ioctl(struct file *filp, unsigned int cmd, unsigned long arg);
@@ -23,5 +25,9 @@ int gk20a_ctrl_dev_mmap(struct file *filp, struct vm_area_struct *vma);
 
 void nvgpu_hide_usermode_for_poweroff(struct gk20a *g);
 void nvgpu_restore_usermode_for_poweron(struct gk20a *g);
+
+#ifdef CONFIG_NVGPU_TSG_SHARING
+u64 nvgpu_gpu_get_device_instance_id(struct gk20a_ctrl_priv *priv);
+#endif
 
 #endif

@@ -840,6 +840,9 @@ static void nvgpu_tsg_destroy(struct nvgpu_tsg *tsg)
 #ifdef CONFIG_NVGPU_CHANNEL_TSG_CONTROL
 	nvgpu_mutex_destroy(&tsg->event_id_list_lock);
 #endif
+#ifdef CONFIG_NVGPU_TSG_SHARING
+	nvgpu_mutex_destroy(&tsg->tsg_share_lock);
+#endif
 	nvgpu_mutex_destroy(&tsg->ctx_init_lock);
 	nvgpu_mutex_destroy(&tsg->veid_alloc_lock);
 }
@@ -901,6 +904,10 @@ static void nvgpu_tsg_init_support(struct gk20a *g, u32 tsgid)
 #ifdef CONFIG_NVGPU_CHANNEL_TSG_CONTROL
 	nvgpu_init_list_node(&tsg->event_id_list);
 	nvgpu_mutex_init(&tsg->event_id_list_lock);
+#endif
+#ifdef CONFIG_NVGPU_TSG_SHARING
+	nvgpu_init_list_node(&tsg->ctrl_devices_list);
+	nvgpu_mutex_init(&tsg->tsg_share_lock);
 #endif
 }
 

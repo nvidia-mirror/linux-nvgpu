@@ -705,7 +705,7 @@ clean_up:
 	return err;
 }
 
-static int gk20a_ctrl_open_tsg(struct gk20a *g, struct nvgpu_cdev *cdev,
+static int gk20a_ctrl_open_tsg(struct gk20a *g, struct gk20a_ctrl_priv *priv,
 			       struct nvgpu_gpu_open_tsg_args *args)
 {
 	int err;
@@ -726,7 +726,7 @@ static int gk20a_ctrl_open_tsg(struct gk20a *g, struct nvgpu_cdev *cdev,
 		goto clean_up;
 	}
 
-	err = nvgpu_ioctl_tsg_open(g, cdev, file);
+	err = nvgpu_ioctl_tsg_open(g, priv, priv->cdev, file);
 	if (err)
 		goto clean_up_file;
 
@@ -2450,7 +2450,7 @@ long gk20a_ctrl_dev_ioctl(struct file *filp, unsigned int cmd, unsigned long arg
 			(struct nvgpu_alloc_as_args *)buf);
 		break;
 	case NVGPU_GPU_IOCTL_OPEN_TSG:
-		err = gk20a_ctrl_open_tsg(g, priv->cdev,
+		err = gk20a_ctrl_open_tsg(g, priv,
 			(struct nvgpu_gpu_open_tsg_args *)buf);
 		break;
 	case NVGPU_GPU_IOCTL_GET_TPC_MASKS:
@@ -2798,3 +2798,10 @@ void nvgpu_restore_usermode_for_poweron(struct gk20a *g)
 {
 	alter_usermode_mappings(g, false);
 }
+
+#ifdef CONFIG_NVGPU_TSG_SHARING
+u64 nvgpu_gpu_get_device_instance_id(struct gk20a_ctrl_priv *priv)
+{
+	return priv ? priv->device_instance_id : 0ULL;
+}
+#endif
