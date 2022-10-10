@@ -419,6 +419,7 @@ static int nvgpu_gr_ctx_mappings_map_global_ctx_buffer(
 	bool vpr, struct nvgpu_gr_ctx_mappings *mappings)
 {
 	struct vm_gk20a *vm = mappings->vm;
+	struct gk20a *g = mappings->tsg->g;
 	u64 *g_bfr_va;
 	u32 *g_bfr_index;
 	u64 gpu_va = 0ULL;
@@ -428,6 +429,11 @@ static int nvgpu_gr_ctx_mappings_map_global_ctx_buffer(
 
 	g_bfr_va = &mappings->global_ctx_buffer_va[0];
 	g_bfr_index = &mappings->global_ctx_buffer_index[0];
+
+	if (g_bfr_va[va_type] != 0ULL) {
+		nvgpu_log_info(g, "global buffer %u already mapped", va_type);
+		return 0;
+	}
 
 #ifdef CONFIG_NVGPU_VPR
 	if (vpr && nvgpu_gr_global_ctx_buffer_ready(global_ctx_buffer,
