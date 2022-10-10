@@ -395,8 +395,20 @@ bool ga10b_pmu_is_interrupted(struct nvgpu_pmu *pmu)
 {
 	struct gk20a *g = pmu->g;
 
-	if (!g->ops.falcon.is_priv_lockdown(pmu->flcn)) {
-		return gk20a_pmu_is_interrupted(pmu);
+	/*
+	 * Fix "GPU has disappeared from bus" failure.
+	 * Function could be called from main GPU thread or
+	 * pg task thread and PMU unit may have exited in
+	 * nvgpu_pmu_destroy() as part of power off sequence
+	 * and the registers may have been unmapped.
+	 * So skip the NVRSICV priv lock down register read
+	 * which can trigger the error:
+	 * "GPU has disappeared from bus".
+	 */
+	if (nvgpu_pmu_get_fw_state(g, pmu) != PMU_FW_STATE_OFF) {
+		if (!g->ops.falcon.is_priv_lockdown(pmu->flcn)) {
+			return gk20a_pmu_is_interrupted(pmu);
+		}
 	}
 
 	return false;

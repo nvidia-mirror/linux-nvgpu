@@ -126,6 +126,21 @@ int nvgpu_pmu_wait_fw_ack_status(struct gk20a *g, struct nvgpu_pmu *pmu,
 	do {
 		nvgpu_rmb();
 
+		if (nvgpu_pmu_get_fw_state(g, pmu) == PMU_FW_STATE_OFF) {
+			/*
+			 * Fix "GPU has disappeared from bus" failure.
+			 * Function could be called from main GPU thread or
+			 * pg task thread and PMU unit may have exited in
+			 * nvgpu_pmu_destroy() as part of power off sequence
+			 * and the registers may have been unmapped.
+			 * So skip the NVRSICV priv lock down register read
+			 * which can trigger the error:
+			 * "GPU has disappeared from bus".
+			 */
+			*(volatile u8 *)var = val;
+			return 0;
+		}
+
 		if (nvgpu_can_busy(g) == 0) {
 			/*
 			 * Since the system is shutting down so we don't
