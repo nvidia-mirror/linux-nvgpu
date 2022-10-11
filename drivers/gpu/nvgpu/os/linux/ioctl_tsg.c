@@ -629,7 +629,9 @@ static int nvgpu_tsg_ioctl_revoke_share_token(struct gk20a *g,
 #endif
 
 int nvgpu_ioctl_tsg_open(struct gk20a *g, struct gk20a_ctrl_priv *ctrl_priv,
-			 struct nvgpu_cdev *cdev, struct file *filp)
+			 struct nvgpu_cdev *cdev, struct file *filp,
+			 bool open_share, u64 source_device_instance_id,
+			 u64 target_device_instance_id, u64 share_token)
 {
 	struct tsg_private *priv;
 	struct nvgpu_tsg *tsg;
@@ -650,20 +652,37 @@ int nvgpu_ioctl_tsg_open(struct gk20a *g, struct gk20a_ctrl_priv *ctrl_priv,
 		goto free_ref;
 	}
 
-	err = gk20a_busy(g);
-	if (err) {
-		nvgpu_err(g, "failed to power on, %d", err);
-		goto free_mem;
+	if (!open_share) {
+		err = gk20a_busy(g);
+		if (err) {
+			nvgpu_err(g, "failed to power on, %d", err);
+			goto free_mem;
+		}
+
+		tsg = nvgpu_tsg_open(g, nvgpu_current_pid(g));
+		gk20a_idle(g);
+		if (tsg == NULL) {
+			err = -ENOMEM;
+			goto free_mem;
+		}
+
+		gk20a_sched_ctrl_tsg_added(g, tsg);
+
+#ifndef CONFIG_NVGPU_TSG_SHARING
+	}
+#else
+	} else {
+		tsg = nvgpu_gpu_open_tsg_with_share_token(g,
+				 source_device_instance_id,
+				 target_device_instance_id,
+				 share_token);
+		if (tsg == NULL) {
+			nvgpu_err(g, "TSG open with token failed");
+			err = -EINVAL;
+			goto free_mem;
+		}
 	}
 
-	tsg = nvgpu_tsg_open(g, nvgpu_current_pid(g));
-	gk20a_idle(g);
-	if (!tsg) {
-		err = -ENOMEM;
-		goto free_mem;
-	}
-
-#ifdef CONFIG_NVGPU_TSG_SHARING
 	if (ctrl_priv != NULL) {
 		err = nvgpu_tsg_add_ctrl_dev_inst_id(tsg, ctrl_priv);
 		if (err != 0) {
@@ -679,8 +698,6 @@ int nvgpu_ioctl_tsg_open(struct gk20a *g, struct gk20a_ctrl_priv *ctrl_priv,
 	priv->cdev = cdev;
 	priv->ctrl_priv = ctrl_priv;
 	filp->private_data = priv;
-
-	gk20a_sched_ctrl_tsg_added(g, tsg);
 
 	return 0;
 
@@ -708,7 +725,8 @@ int nvgpu_ioctl_tsg_dev_open(struct inode *inode, struct file *filp)
 		return ret;
 	}
 
-	ret = nvgpu_ioctl_tsg_open(g, NULL, cdev, filp);
+	ret = nvgpu_ioctl_tsg_open(g, NULL, cdev, filp, false,
+				   0ULL, 0ULL, 0ULL);
 
 	gk20a_idle(g);
 	nvgpu_log_fn(g, "done");
@@ -727,13 +745,13 @@ void nvgpu_ioctl_tsg_release(struct nvgpu_ref *ref)
 	gk20a_sched_ctrl_tsg_removed(g, tsg);
 
 	nvgpu_tsg_release(ref);
-	nvgpu_put(g);
 }
 
 int nvgpu_ioctl_tsg_dev_release(struct inode *inode, struct file *filp)
 {
 	struct tsg_private *priv = filp->private_data;
 	struct nvgpu_tsg *tsg;
+	struct gk20a *g;
 #ifdef CONFIG_NVGPU_TSG_SHARING
 	u32 count;
 	int err;
@@ -745,15 +763,16 @@ int nvgpu_ioctl_tsg_dev_release(struct inode *inode, struct file *filp)
 	}
 
 	tsg = priv->tsg;
+	g = tsg->g;
 
 #ifdef CONFIG_NVGPU_TSG_SHARING
 	nvgpu_mutex_acquire(&tsg->tsg_share_lock);
 
-	err = nvgpu_gpu_tsg_revoke_share_tokens(tsg->g,
+	err = nvgpu_gpu_tsg_revoke_share_tokens(g,
 				nvgpu_gpu_get_device_instance_id(priv->ctrl_priv),
 				tsg, &count);
 	if (err != 0) {
-		nvgpu_err(tsg->g, "revoke token(%llu) failed %d",
+		nvgpu_err(g, "revoke token(%llu) failed %d",
 			  nvgpu_gpu_get_device_instance_id(priv->ctrl_priv),
 			  err);
 	}
@@ -766,7 +785,10 @@ int nvgpu_ioctl_tsg_dev_release(struct inode *inode, struct file *filp)
 #endif
 
 	nvgpu_ref_put(&tsg->refcount, nvgpu_ioctl_tsg_release);
-	nvgpu_kfree(tsg->g, priv);
+	nvgpu_kfree(g, priv);
+
+	nvgpu_put(g);
+
 	return 0;
 }
 

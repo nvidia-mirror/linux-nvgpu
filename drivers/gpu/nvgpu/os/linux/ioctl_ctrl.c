@@ -725,10 +725,34 @@ clean_up:
 static int gk20a_ctrl_open_tsg(struct gk20a *g, struct gk20a_ctrl_priv *priv,
 			       struct nvgpu_gpu_open_tsg_args *args)
 {
-	int err;
-	int fd;
+	u64 device_instance_id = 0ULL;
+	bool open_share = false;
 	struct file *file;
 	char name[64];
+	int err;
+	int fd;
+
+#ifdef CONFIG_NVGPU_TSG_SHARING
+	open_share =
+		(args->flags & NVGPU_GPU_IOCTL_OPEN_TSG_FLAGS_SHARE) != 0U;
+
+	if (!open_share) {
+		if (args->source_device_instance_id != 0UL ||
+		    args->share_token != 0UL) {
+			nvgpu_err(g, "Source device inst id/token specified");
+			return -EINVAL;
+		}
+
+	} else {
+		if (args->source_device_instance_id == 0UL ||
+		    args->share_token == 0UL) {
+			nvgpu_err(g, "Source device inst id/token not specified");
+			return -EINVAL;
+		}
+	}
+
+	device_instance_id = priv->device_instance_id;
+#endif
 
 	err = get_unused_fd_flags(O_RDWR | O_CLOEXEC);
 	if (err < 0)
@@ -743,12 +767,17 @@ static int gk20a_ctrl_open_tsg(struct gk20a *g, struct gk20a_ctrl_priv *priv,
 		goto clean_up;
 	}
 
-	err = nvgpu_ioctl_tsg_open(g, priv, priv->cdev, file);
+	err = nvgpu_ioctl_tsg_open(g, priv, priv->cdev, file, open_share,
+				   args->source_device_instance_id,
+				   device_instance_id,
+				   args->share_token);
 	if (err)
 		goto clean_up_file;
 
 	fd_install(fd, file);
+
 	args->tsg_fd = fd;
+
 	return 0;
 
 clean_up_file:
@@ -2998,5 +3027,51 @@ int nvgpu_gpu_tsg_revoke_share_tokens(struct gk20a *g,
 	nvgpu_log_fn(g, "done");
 
 	return 0;
+}
+
+struct nvgpu_tsg *nvgpu_gpu_open_tsg_with_share_token(struct gk20a *g,
+				 u64 source_device_instance_id,
+				 u64 target_device_instance_id,
+				 u64 share_token)
+{
+	struct nvgpu_tsg_share_token_node *token_node, *tmp;
+	struct gk20a_ctrl_priv *ctrl_priv;
+	struct nvgpu_tsg *tsg = NULL;
+
+	ctrl_priv = nvgpu_gpu_get_ctrl_priv(g, source_device_instance_id);
+	if (ctrl_priv == NULL) {
+		nvgpu_err(g, "Invalid source device instance id");
+		return NULL;
+	}
+
+	nvgpu_log_info(g, "Using the token src: %llx target: %llx token:%llx",
+		       source_device_instance_id,
+		       target_device_instance_id, share_token);
+
+	nvgpu_mutex_acquire(&ctrl_priv->tokens_lock);
+
+	nvgpu_list_for_each_entry_safe(token_node, tmp,
+				&ctrl_priv->tsg_share_tokens_list,
+				nvgpu_tsg_share_token_node, ctrl_entry) {
+		if ((token_node->token == share_token) &&
+		    (token_node->target_device_instance_id ==
+					target_device_instance_id)) {
+			tsg = token_node->tsg;
+			nvgpu_ref_get(&tsg->refcount);
+			nvgpu_list_del(&token_node->ctrl_entry);
+			nvgpu_kfree(g, token_node);
+			break;
+		}
+	}
+
+	nvgpu_mutex_release(&ctrl_priv->tokens_lock);
+
+	if (tsg != NULL) {
+		nvgpu_mutex_acquire(&tsg->tsg_share_lock);
+		tsg->share_token_count--;
+		nvgpu_mutex_release(&tsg->tsg_share_lock);
+	}
+
+	return tsg;
 }
 #endif

@@ -17,6 +17,7 @@
 #define __NVGPU_IOCTL_CTRL_H__
 
 struct gk20a_ctrl_priv;
+struct nvgpu_tsg;
 
 int gk20a_ctrl_dev_open(struct inode *inode, struct file *filp);
 int gk20a_ctrl_dev_release(struct inode *inode, struct file *filp);
@@ -42,6 +43,10 @@ int nvgpu_gpu_tsg_revoke_share_tokens(struct gk20a *g,
 				      u64 source_device_instance_id,
 				      struct nvgpu_tsg *tsg,
 				      u32 *out_count);
+struct nvgpu_tsg *nvgpu_gpu_open_tsg_with_share_token(struct gk20a *g,
+				 u64 source_device_instance_id,
+				 u64 target_device_instance_id,
+				 u64 share_token);
 #endif
 
 #endif
