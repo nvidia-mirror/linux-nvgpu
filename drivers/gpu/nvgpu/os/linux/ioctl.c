@@ -166,6 +166,10 @@ const struct file_operations nvgpu_nvs_ctrl_fifo_ops = {
 	.owner          = THIS_MODULE,
 	.release        = nvgpu_nvs_ctrl_fifo_ops_release,
 	.open           = nvgpu_nvs_ctrl_fifo_ops_open,
+#ifdef CONFIG_COMPAT
+	.compat_ioctl   = nvgpu_nvs_ctrl_fifo_ops_ioctl,
+#endif
+	.unlocked_ioctl = nvgpu_nvs_ctrl_fifo_ops_ioctl,
 };
 
 static const struct file_operations nvgpu_nvs_ops = {
