@@ -175,9 +175,9 @@ int test_gr_init_setup_ready(struct unit_module *m,
 		unit_return_fail(m, "CIC init failed\n");
 	}
 
-	err = nvgpu_cic_mon_init_lut(g);
+	err = nvgpu_cic_mon_init(g);
 	if (err != 0) {
-		unit_return_fail(m, "CIC LUT init failed\n");
+		unit_return_fail(m, "CIC Mon init failed\n");
 	}
 
 	err = nvgpu_cic_rm_setup(g);

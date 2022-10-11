@@ -81,8 +81,8 @@ int fb_gv11b_init_test(struct unit_module *m, struct gk20a *g, void *args)
 		unit_return_fail(m, "CIC init failed\n");
 	}
 
-	if (nvgpu_cic_mon_init_lut(g) != 0) {
-		unit_return_fail(m, "CIC LUT init failed\n");
+	if (nvgpu_cic_mon_init(g) != 0) {
+		unit_return_fail(m, "CIC Mon init failed\n");
 	}
 
 	g->ops.ecc.ecc_init_support(g);

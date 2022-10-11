@@ -45,6 +45,21 @@ int nvgpu_cic_mon_setup(struct gk20a *g)
 
 	g->cic_mon = cic_mon;
 
+	cic_dbg(g, "CIC_MON unit initialization done.");
+	return err;
+}
+
+int nvgpu_cic_mon_init(struct gk20a *g)
+{
+	struct nvgpu_cic_mon *cic_mon;
+	int err = 0;
+
+	cic_mon = g->cic_mon;
+	if (cic_mon == NULL) {
+		nvgpu_err(g, "CIC_MON setup pending");
+		return -EINVAL;
+	}
+
 #ifdef CONFIG_NVGPU_FSI_ERR_INJECTION
 	if (g->ops.cic_mon.reg_errinj_cb != NULL) {
 		err = g->ops.cic_mon.reg_errinj_cb(g);
@@ -60,21 +75,6 @@ int nvgpu_cic_mon_setup(struct gk20a *g)
 		}
 	}
 #endif
-
-	cic_dbg(g, "CIC_MON unit initialization done.");
-	return err;
-}
-
-int nvgpu_cic_mon_init_lut(struct gk20a *g)
-{
-	struct nvgpu_cic_mon *cic_mon;
-	int err = 0;
-
-	cic_mon = g->cic_mon;
-	if (cic_mon == NULL) {
-		nvgpu_err(g, "CIC_MON setup pending");
-		return -EINVAL;
-	}
 
 	if (g->ops.cic_mon.init != NULL) {
 		err = g->ops.cic_mon.init(g, cic_mon);
@@ -100,21 +100,6 @@ cleanup:
 int nvgpu_cic_mon_remove(struct gk20a *g)
 {
 	struct nvgpu_cic_mon *cic_mon;
-
-#ifdef CONFIG_NVGPU_FSI_ERR_INJECTION
-	if (g->ops.cic_mon.dereg_errinj_cb != NULL) {
-		int err = g->ops.cic_mon.dereg_errinj_cb();
-		if (err != 0) {
-			nvgpu_err(g,
-				"Err inj callback de-registration failed: %d",
-				err);
-			/* Continue CIC remove despite err inj utility
-			 * de-registration failure, as the err inj support
-			 * is meant only for debug purposes.
-			 */
-		}
-	}
-#endif
 
 	cic_mon = g->cic_mon;
 
@@ -148,6 +133,21 @@ int nvgpu_cic_mon_deinit_lut(struct gk20a *g)
 
 int nvgpu_cic_mon_deinit(struct gk20a *g)
 {
+#ifdef CONFIG_NVGPU_FSI_ERR_INJECTION
+	if (g->ops.cic_mon.dereg_errinj_cb != NULL) {
+		int err = g->ops.cic_mon.dereg_errinj_cb();
+		if (err != 0) {
+			nvgpu_err(g,
+				"Err inj callback de-registration failed: %d",
+				err);
+			/* Continue CIC mon deinit despite err inj utility
+			 * de-registration failure, as the err inj support
+			 * is meant only for debug purposes.
+			 */
+		}
+	}
+#endif
+
 	/** More deinit calls might get added here as CIC grows. */
 	return nvgpu_cic_mon_deinit_lut(g);
 }

@@ -137,8 +137,8 @@ int test_ce_setup_env(struct unit_module *m,
 		return UNIT_FAIL;
 	}
 
-	if (nvgpu_cic_mon_init_lut(g) != 0) {
-		unit_err(m, "%s: failed to initialize CIC LUT\n",
+	if (nvgpu_cic_mon_init(g) != 0) {
+		unit_err(m, "%s: failed to initialize CIC Mon\n",
 			 __func__);
 		return UNIT_FAIL;
 	}

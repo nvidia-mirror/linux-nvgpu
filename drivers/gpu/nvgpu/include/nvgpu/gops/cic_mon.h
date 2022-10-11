@@ -59,6 +59,7 @@ struct gops_cic_mon {
 	 */
 	int (*report_err)(struct gk20a *g, u32 err_id);
 
+#ifdef CONFIG_NVGPU_FSI_ERR_INJECTION
 	/**
 	 * @brief Register error injection callback with error
 	 *        injection utility.
@@ -76,6 +77,7 @@ struct gops_cic_mon {
 	 * @return 0 in case of success, < 0 in case of failure.
 	 */
 	int (*dereg_errinj_cb)(void);
+#endif
 };
 
 #endif/*NVGPU_GOPS_CIC_MON_H*/

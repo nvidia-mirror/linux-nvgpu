@@ -224,9 +224,9 @@ static int init_acr_falcon_test_env(struct unit_module *m, struct gk20a *g)
 		unit_return_fail(m, "CIC init failed\n");
 	}
 
-	err = nvgpu_cic_mon_init_lut(g);
+	err = nvgpu_cic_mon_init(g);
 	if (err != 0) {
-		unit_return_fail(m, "CIC LUT init failed\n");
+		unit_return_fail(m, "CIC Mon init failed\n");
 	}
 
 	/*

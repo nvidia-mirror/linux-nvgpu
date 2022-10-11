@@ -796,7 +796,7 @@ gk20a_bus_set_bar0_window
 nvgpu_pramin_ops_init
 nvgpu_dma_alloc_vid_at
 nvgpu_cic_mon_setup
-nvgpu_cic_mon_init_lut
+nvgpu_cic_mon_init
 nvgpu_cic_mon_deinit
 nvgpu_cic_mon_bound_check_hw_unit_id
 nvgpu_cic_mon_bound_check_err_id

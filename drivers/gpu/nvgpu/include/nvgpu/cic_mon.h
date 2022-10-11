@@ -274,7 +274,7 @@ struct nvgpu_err_desc;
  */
 int nvgpu_cic_mon_setup(struct gk20a *g);
 
-int nvgpu_cic_mon_init_lut(struct gk20a *g);
+int nvgpu_cic_mon_init(struct gk20a *g);
 
 /**
  * @brief De-initialize the CIC unit's data structures

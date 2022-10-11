@@ -228,8 +228,8 @@ int test_env_init_mm_mmu_fault_gv11b_fusa(struct unit_module *m,
 		unit_return_fail(m, "Failed to initialize CIC\n");
 	}
 
-	if (nvgpu_cic_mon_init_lut(g) != 0) {
-		unit_return_fail(m, "Failed to initialize CIC LUT\n");
+	if (nvgpu_cic_mon_init(g) != 0) {
+		unit_return_fail(m, "Failed to initialize CIC Mon\n");
 	}
 
 	return UNIT_SUCCESS;

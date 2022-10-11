@@ -166,8 +166,8 @@ int test_priv_ring_setup(struct unit_module *m, struct gk20a *g, void *args)
 		return UNIT_FAIL;
 	}
 
-	if (nvgpu_cic_mon_init_lut(g) != 0) {
-		unit_err(m, "%s: Failed to initialize CIC LUT\n",
+	if (nvgpu_cic_mon_init(g) != 0) {
+		unit_err(m, "%s: Failed to initialize CIC Mon\n",
 				__func__);
 		return UNIT_FAIL;
 	}

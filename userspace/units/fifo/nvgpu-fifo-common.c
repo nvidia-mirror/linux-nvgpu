@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -195,9 +195,9 @@ int test_fifo_init_support(struct unit_module *m, struct gk20a *g, void *args)
 		return UNIT_FAIL;
 	}
 
-	err = nvgpu_cic_mon_init_lut(g);
+	err = nvgpu_cic_mon_init(g);
 	if (err != 0) {
-		unit_return_fail(m, "CIC LUT init failed\n");
+		unit_return_fail(m, "CIC mon init failed\n");
 	}
 
 	err = nvgpu_cic_rm_setup(g);

@@ -823,7 +823,7 @@ nvgpu_rc_ce_fault
 gp10b_priv_ring_isr_handle_0
 gp10b_priv_ring_isr_handle_1
 nvgpu_cic_mon_setup
-nvgpu_cic_mon_init_lut
+nvgpu_cic_mon_init
 nvgpu_cic_mon_deinit
 nvgpu_cic_mon_bound_check_hw_unit_id
 nvgpu_cic_mon_bound_check_err_id

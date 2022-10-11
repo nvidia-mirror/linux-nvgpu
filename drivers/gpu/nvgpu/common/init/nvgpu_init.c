@@ -849,9 +849,9 @@ int nvgpu_early_poweron(struct gk20a *g)
 	/* Initialize CIC early on before the interrupts are
 	 * enabled.
 	 */
-	err = nvgpu_cic_mon_init_lut(g);
+	err = nvgpu_cic_mon_init(g);
 	if (err != 0) {
-		nvgpu_err(g, "CIC LUT Initialization failed[%d]", err);
+		nvgpu_err(g, "CIC Mon Initialization failed[%d]", err);
 		goto done;
 	}
 done:
