@@ -59,6 +59,7 @@
 #include <nvgpu/nvgpu_init.h>
 #include <nvgpu/grmgr.h>
 #include <nvgpu/string.h>
+#include <nvgpu/kmem.h>
 
 #include "ioctl_ctrl.h"
 #include "ioctl_dbg.h"
@@ -80,6 +81,15 @@
 
 extern const struct file_operations gk20a_tsg_ops;
 
+#ifdef CONFIG_NVGPU_TSG_SHARING
+struct nvgpu_tsg_share_token_node {
+	u64 token;
+	u64 target_device_instance_id;
+	struct nvgpu_tsg *tsg;
+	struct nvgpu_list_node ctrl_entry;
+};
+#endif
+
 struct gk20a_ctrl_priv {
 	struct device *dev;
 	struct gk20a *g;
@@ -87,6 +97,9 @@ struct gk20a_ctrl_priv {
 	struct nvgpu_cdev *cdev;
 #ifdef CONFIG_NVGPU_TSG_SHARING
 	u64 device_instance_id;
+	u64 tsg_share_token;
+	struct nvgpu_list_node tsg_share_tokens_list;
+	struct nvgpu_mutex tokens_lock;
 #endif
 
 	struct nvgpu_list_node list;
@@ -159,6 +172,9 @@ int gk20a_ctrl_dev_open(struct inode *inode, struct file *filp)
 	nvgpu_mutex_release(&g->ctrl_dev_id_lock);
 
 	nvgpu_log_info(g, "opened ctrl device: %llx", priv->device_instance_id);
+
+	nvgpu_init_list_node(&priv->tsg_share_tokens_list);
+	nvgpu_mutex_init(&priv->tokens_lock);
 #endif
 
 	if (!g->sw_ready) {
@@ -184,6 +200,7 @@ free_ref:
 
 	return err;
 }
+
 int gk20a_ctrl_dev_release(struct inode *inode, struct file *filp)
 {
 	struct gk20a_ctrl_priv *priv = filp->private_data;
@@ -2803,5 +2820,183 @@ void nvgpu_restore_usermode_for_poweron(struct gk20a *g)
 u64 nvgpu_gpu_get_device_instance_id(struct gk20a_ctrl_priv *priv)
 {
 	return priv ? priv->device_instance_id : 0ULL;
+}
+
+static struct gk20a_ctrl_priv *nvgpu_gpu_get_ctrl_priv(
+					struct gk20a *g,
+					u64 device_instance_id)
+{
+	struct nvgpu_os_linux *l = nvgpu_os_linux_from_gk20a(g);
+	struct gk20a_ctrl_priv *priv;
+
+	nvgpu_mutex_acquire(&l->ctrl_privs_lock);
+	nvgpu_list_for_each_entry(priv, &l->ctrl_privs,
+			gk20a_ctrl_priv, list) {
+		if (priv->device_instance_id == device_instance_id) {
+			nvgpu_mutex_release(&l->ctrl_privs_lock);
+			return priv;
+		}
+	}
+	nvgpu_mutex_release(&l->ctrl_privs_lock);
+
+	return NULL;
+}
+
+int nvgpu_gpu_get_share_token(struct gk20a *g,
+			      u64 source_device_instance_id,
+			      u64 target_device_instance_id,
+			      struct nvgpu_tsg *tsg,
+			      u64 *share_token)
+{
+	struct nvgpu_tsg_share_token_node *token_node;
+	struct gk20a_ctrl_priv *ctrl_priv;
+
+	nvgpu_log_fn(g, " ");
+
+	ctrl_priv = nvgpu_gpu_get_ctrl_priv(g, target_device_instance_id);
+	if (ctrl_priv == NULL) {
+		nvgpu_err(g, "Invalid target device instance id");
+		return -EINVAL;
+	}
+
+	ctrl_priv = nvgpu_gpu_get_ctrl_priv(g, source_device_instance_id);
+	if (ctrl_priv == NULL) {
+		nvgpu_err(g, "Invalid source device instance id");
+		return -EINVAL;
+	}
+
+	token_node = (struct nvgpu_tsg_share_token_node *) nvgpu_kzalloc(g,
+				sizeof(struct nvgpu_tsg_share_token_node));
+	if (token_node == NULL) {
+		nvgpu_err(g, "token node allocation failed");
+		return -ENOMEM;
+	}
+
+	nvgpu_init_list_node(&token_node->ctrl_entry);
+	token_node->target_device_instance_id = target_device_instance_id;
+	token_node->tsg = tsg;
+
+	nvgpu_mutex_acquire(&ctrl_priv->tokens_lock);
+
+	nvgpu_assert(ctrl_priv->tsg_share_token < U64_MAX);
+	ctrl_priv->tsg_share_token += 1ULL;
+	token_node->token = ctrl_priv->tsg_share_token;
+
+	nvgpu_list_add_tail(&token_node->ctrl_entry,
+			    &ctrl_priv->tsg_share_tokens_list);
+
+	nvgpu_mutex_release(&ctrl_priv->tokens_lock);
+
+	*share_token = token_node->token;
+
+	nvgpu_log_info(g, "Share token issued.");
+	nvgpu_log_info(g, "Source: %llx Target: %llx Token: %llx", source_device_instance_id,
+		       target_device_instance_id, token_node->token);
+
+	nvgpu_log_fn(g, "done");
+
+	return 0;
+}
+
+static inline struct nvgpu_tsg_share_token_node *
+	nvgpu_tsg_share_token_node_from_ctrl_entry(struct nvgpu_list_node *node)
+{
+	return (struct nvgpu_tsg_share_token_node *)
+	   ((uintptr_t)node - offsetof(struct nvgpu_tsg_share_token_node,
+				       ctrl_entry));
+}
+
+int nvgpu_gpu_revoke_share_token(struct gk20a *g,
+				 u64 source_device_instance_id,
+				 u64 target_device_instance_id,
+				 u64 share_token,
+				 struct nvgpu_tsg *tsg)
+{
+	struct nvgpu_tsg_share_token_node *token_node, *tmp;
+	struct gk20a_ctrl_priv *ctrl_priv;
+	bool revoke = false;
+
+	nvgpu_log_fn(g, " ");
+
+	ctrl_priv = nvgpu_gpu_get_ctrl_priv(g, source_device_instance_id);
+	if (ctrl_priv == NULL) {
+		nvgpu_err(g, "Invalid source device instance id");
+		return -EINVAL;
+	}
+
+	nvgpu_mutex_acquire(&ctrl_priv->tokens_lock);
+
+	nvgpu_list_for_each_entry_safe(token_node, tmp,
+				&ctrl_priv->tsg_share_tokens_list,
+				nvgpu_tsg_share_token_node, ctrl_entry) {
+		if ((token_node->token == share_token) &&
+		    (token_node->target_device_instance_id ==
+					target_device_instance_id) &&
+		    (token_node->tsg == tsg)) {
+			/*
+			 * Found the token with specified parameters.
+			 * Now, revoke it.
+			 */
+			revoke = true;
+			nvgpu_log_info(g, "Share token revoked.");
+			nvgpu_log_info(g, "Source: %llx Target: %llx Token: %llx",
+				       source_device_instance_id,
+				       target_device_instance_id,
+				       share_token);
+			nvgpu_list_del(&token_node->ctrl_entry);
+			nvgpu_kfree(g, token_node);
+			break;
+		}
+	}
+
+	nvgpu_mutex_release(&ctrl_priv->tokens_lock);
+
+	nvgpu_log_fn(g, "done");
+
+	return revoke ? 0 : -EINVAL;
+}
+
+int nvgpu_gpu_tsg_revoke_share_tokens(struct gk20a *g,
+				      u64 source_device_instance_id,
+				      struct nvgpu_tsg *tsg,
+				      u32 *out_count)
+{
+	struct nvgpu_tsg_share_token_node *token_node, *temp;
+	struct gk20a_ctrl_priv *ctrl_priv;
+	u32 revoked_count = 0U;
+
+	nvgpu_log_fn(g, " ");
+
+	*out_count = 0U;
+
+	ctrl_priv = nvgpu_gpu_get_ctrl_priv(g, source_device_instance_id);
+	if (ctrl_priv == NULL) {
+		nvgpu_err(g, "source device instance id is not available");
+		return -EINVAL;
+	}
+
+	nvgpu_mutex_acquire(&ctrl_priv->tokens_lock);
+
+	nvgpu_list_for_each_entry_safe(token_node, temp,
+				       &ctrl_priv->tsg_share_tokens_list,
+				       nvgpu_tsg_share_token_node, ctrl_entry) {
+		if (token_node->tsg == tsg) {
+			/*
+			 * Found the token with specified parameters.
+			 * Now, revoke it.
+			 */
+			nvgpu_list_del(&token_node->ctrl_entry);
+			nvgpu_kfree(g, token_node);
+			revoked_count++;
+		}
+	}
+
+	nvgpu_mutex_release(&ctrl_priv->tokens_lock);
+
+	*out_count = revoked_count;
+
+	nvgpu_log_fn(g, "done");
+
+	return 0;
 }
 #endif

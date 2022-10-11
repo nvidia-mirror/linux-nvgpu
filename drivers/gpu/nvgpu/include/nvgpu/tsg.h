@@ -176,8 +176,16 @@ struct nvgpu_tsg {
 	 * share token).
 	 */
 	struct nvgpu_list_node ctrl_devices_list;
+
 	/**
-	 * Mutex used to access/modify #ctrl_devices_list.
+	 * Share tokens issued for this TSG. Maximum share tokens is limited
+	 * to number of maximum subcontexts - 1.
+	 */
+	u32 share_token_count;
+
+	/**
+	 * Mutex used to access/modify #ctrl_devices_list
+	 * and #share_token_count.
 	 */
 	struct nvgpu_mutex tsg_share_lock;
 #endif

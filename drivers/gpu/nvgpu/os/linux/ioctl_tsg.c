@@ -508,6 +508,124 @@ static int nvgpu_tsg_add_ctrl_dev_inst_id(struct nvgpu_tsg *tsg,
 
 	return 0;
 }
+
+static bool nvgpu_tsg_is_authorized_ctrl_device_id(struct nvgpu_tsg *tsg,
+					      u64 device_instance_id)
+{
+	struct nvgpu_tsg_ctrl_dev_node *node;
+	bool authorized = false;
+
+	nvgpu_mutex_acquire(&tsg->tsg_share_lock);
+
+	nvgpu_list_for_each_entry(node, &tsg->ctrl_devices_list,
+				  nvgpu_tsg_ctrl_dev_node, tsg_entry) {
+		if (node->device_instance_id == device_instance_id) {
+			authorized = true;
+			break;
+		}
+	}
+
+	nvgpu_mutex_release(&tsg->tsg_share_lock);
+
+	return authorized;
+}
+
+static int nvgpu_tsg_ioctl_get_share_token(struct gk20a *g,
+		struct tsg_private *priv,
+		struct nvgpu_tsg_get_share_token_args *args)
+{
+	u64 source_device_instance_id = args->source_device_instance_id;
+	u64 target_device_instance_id = args->target_device_instance_id;
+	struct nvgpu_tsg *tsg = priv->tsg;
+	u32 max_subctx_count;
+	u32 gpu_instance_id;
+	u64 share_token = 0;
+	int err;
+
+	if ((source_device_instance_id == 0UL) ||
+	    (target_device_instance_id == 0UL)) {
+		nvgpu_err(g, "Invalid source/target device instance id");
+		return -EINVAL;
+	}
+
+	if (!nvgpu_tsg_is_authorized_ctrl_device_id(tsg,
+					       source_device_instance_id)) {
+		nvgpu_err(g, "Unauthorized source device instance id");
+		return -EINVAL;
+	}
+
+	gpu_instance_id = nvgpu_get_gpu_instance_id_from_cdev(g, priv->cdev);
+	nvgpu_assert(gpu_instance_id < g->mig.num_gpu_instances);
+
+	max_subctx_count = nvgpu_grmgr_get_gpu_instance_max_veid_count(g, gpu_instance_id);
+
+	nvgpu_mutex_acquire(&tsg->tsg_share_lock);
+
+	if (tsg->share_token_count == max_subctx_count) {
+		nvgpu_err(g, "Maximum share tokens are in use");
+		nvgpu_mutex_release(&tsg->tsg_share_lock);
+		return -ENOSPC;
+	}
+
+	err = nvgpu_gpu_get_share_token(g,
+					source_device_instance_id,
+					target_device_instance_id,
+					tsg, &share_token);
+	if (err != 0) {
+		nvgpu_err(g, "Share token allocation failed %d", err);
+		nvgpu_mutex_release(&tsg->tsg_share_lock);
+		return err;
+	}
+
+	args->share_token = share_token;
+	tsg->share_token_count++;
+
+	nvgpu_mutex_release(&tsg->tsg_share_lock);
+
+	return 0;
+}
+
+static int nvgpu_tsg_ioctl_revoke_share_token(struct gk20a *g,
+		struct nvgpu_tsg *tsg,
+		struct nvgpu_tsg_revoke_share_token_args *args)
+{
+	u64 source_device_instance_id = args->source_device_instance_id;
+	u64 target_device_instance_id = args->target_device_instance_id;
+	u64 share_token = args->share_token;
+	int err;
+
+	if ((source_device_instance_id == 0UL) ||
+	    (target_device_instance_id == 0UL) ||
+	    (share_token == 0UL)) {
+		nvgpu_err(g, "Invalid source/target device instance id or"
+			     " share token");
+		return -EINVAL;
+	}
+
+	if (!nvgpu_tsg_is_authorized_ctrl_device_id(tsg,
+					       source_device_instance_id)) {
+		nvgpu_err(g, "Unauthorized source device instance id");
+		return -EINVAL;
+	}
+
+	nvgpu_mutex_acquire(&tsg->tsg_share_lock);
+
+	err = nvgpu_gpu_revoke_share_token(g,
+					source_device_instance_id,
+					target_device_instance_id,
+					share_token, tsg);
+	if (err != 0) {
+		nvgpu_err(g, "Share token revocation failed %d", err);
+		nvgpu_mutex_release(&tsg->tsg_share_lock);
+		return err;
+	}
+
+	tsg->share_token_count--;
+
+	nvgpu_mutex_release(&tsg->tsg_share_lock);
+
+	return 0;
+}
 #endif
 
 int nvgpu_ioctl_tsg_open(struct gk20a *g, struct gk20a_ctrl_priv *ctrl_priv,
@@ -602,6 +720,10 @@ void nvgpu_ioctl_tsg_release(struct nvgpu_ref *ref)
 	struct nvgpu_tsg *tsg = container_of(ref, struct nvgpu_tsg, refcount);
 	struct gk20a *g = tsg->g;
 
+#ifdef CONFIG_NVGPU_TSG_SHARING
+	nvgpu_assert(tsg->share_token_count <= 1U);
+#endif
+
 	gk20a_sched_ctrl_tsg_removed(g, tsg);
 
 	nvgpu_tsg_release(ref);
@@ -612,6 +734,10 @@ int nvgpu_ioctl_tsg_dev_release(struct inode *inode, struct file *filp)
 {
 	struct tsg_private *priv = filp->private_data;
 	struct nvgpu_tsg *tsg;
+#ifdef CONFIG_NVGPU_TSG_SHARING
+	u32 count;
+	int err;
+#endif
 
 	if (!priv) {
 		/* open failed, never got a tsg for this file */
@@ -621,6 +747,21 @@ int nvgpu_ioctl_tsg_dev_release(struct inode *inode, struct file *filp)
 	tsg = priv->tsg;
 
 #ifdef CONFIG_NVGPU_TSG_SHARING
+	nvgpu_mutex_acquire(&tsg->tsg_share_lock);
+
+	err = nvgpu_gpu_tsg_revoke_share_tokens(tsg->g,
+				nvgpu_gpu_get_device_instance_id(priv->ctrl_priv),
+				tsg, &count);
+	if (err != 0) {
+		nvgpu_err(tsg->g, "revoke token(%llu) failed %d",
+			  nvgpu_gpu_get_device_instance_id(priv->ctrl_priv),
+			  err);
+	}
+
+	tsg->share_token_count -= count;
+
+	nvgpu_mutex_release(&tsg->tsg_share_lock);
+
 	nvgpu_tsg_remove_ctrl_dev_inst_id(tsg, priv->ctrl_priv);
 #endif
 
@@ -1129,6 +1270,20 @@ long nvgpu_ioctl_tsg_dev_ioctl(struct file *filp, unsigned int cmd,
 				(struct nvgpu_tsg_delete_subcontext_args *)buf);
 		break;
 		}
+#ifdef CONFIG_NVGPU_TSG_SHARING
+	case NVGPU_TSG_IOCTL_GET_SHARE_TOKEN:
+		{
+		err = nvgpu_tsg_ioctl_get_share_token(g, priv,
+					(struct nvgpu_tsg_get_share_token_args *)buf);
+		break;
+		}
+	case NVGPU_TSG_IOCTL_REVOKE_SHARE_TOKEN:
+		{
+		err = nvgpu_tsg_ioctl_revoke_share_token(g, tsg,
+					(struct nvgpu_tsg_revoke_share_token_args *)buf);
+		break;
+		}
+#endif
 	default:
 		nvgpu_err(g, "unrecognized tsg gpu ioctl cmd: 0x%x",
 			   cmd);

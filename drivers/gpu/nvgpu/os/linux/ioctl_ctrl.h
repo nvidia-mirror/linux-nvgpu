@@ -28,6 +28,20 @@ void nvgpu_restore_usermode_for_poweron(struct gk20a *g);
 
 #ifdef CONFIG_NVGPU_TSG_SHARING
 u64 nvgpu_gpu_get_device_instance_id(struct gk20a_ctrl_priv *priv);
+int nvgpu_gpu_get_share_token(struct gk20a *g,
+			      u64 source_device_instance_id,
+			      u64 target_device_instance_id,
+			      struct nvgpu_tsg *tsg,
+			      u64 *share_token);
+int nvgpu_gpu_revoke_share_token(struct gk20a *g,
+				 u64 source_device_instance_id,
+				 u64 target_device_instance_id,
+				 u64 share_token,
+				 struct nvgpu_tsg *tsg);
+int nvgpu_gpu_tsg_revoke_share_tokens(struct gk20a *g,
+				      u64 source_device_instance_id,
+				      struct nvgpu_tsg *tsg,
+				      u32 *out_count);
 #endif
 
 #endif

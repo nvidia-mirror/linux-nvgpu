@@ -1266,6 +1266,10 @@ static int nvgpu_tsg_alloc_veid_state(struct gk20a *g, struct nvgpu_tsg *tsg)
 		return -ENOMEM;
 	}
 
+#ifdef CONFIG_NVGPU_TSG_SHARING
+	tsg->share_token_count = 1U;
+#endif
+
 	return 0;
 }
 
