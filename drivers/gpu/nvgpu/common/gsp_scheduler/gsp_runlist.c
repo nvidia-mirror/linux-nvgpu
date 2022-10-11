@@ -131,22 +131,6 @@ exit:
 	return err;
 }
 
-static int gsp_get_async_ce(struct gk20a *g, struct nvgpu_device *device,
-		u32 instance)
-{
-	const struct nvgpu_device *lces[NVGPU_MIG_MAX_ENGINES] = { };
-	u32 num_lce;
-
-	num_lce = nvgpu_device_get_async_copies(g, lces, NVGPU_MIG_MAX_ENGINES);
-	if (num_lce == 0) {
-		nvgpu_err(g, "Async CEs not supported");
-		return -1;
-	}
-
-	*device = *lces[instance];
-	return 0;
-}
-
 static void gsp_get_device_info(struct gk20a *g, struct nvgpu_gsp_device_info *dev_info,
 		const struct nvgpu_device *device)
 {
@@ -180,37 +164,80 @@ static int gsp_sched_send_devices_info(struct gk20a *g,
 	return err;
 }
 
-int nvgpu_gsp_sched_send_devices_info(struct gk20a *g)
+static int gsp_sched_send_grs_dev_info(struct gk20a *g)
 {
 	const struct nvgpu_device *gr_dev = NULL;
-	struct nvgpu_device ce_dev = { };
+	u32 num_grs;
 	int err = 0;
 	u8 engine_instance = 0;
-	for (engine_instance = 0; engine_instance < GSP_SCHED_ENGINE_INSTANCE; engine_instance++) {
-		// handling GR engine
+
+	num_grs = nvgpu_device_count(g, NVGPU_DEVTYPE_GRAPHICS);
+	if (num_grs == 0) {
+		nvgpu_err(g, "GRs not supported");
+		err = -EINVAL;
+		goto exit;
+	}
+
+	for (engine_instance = 0; engine_instance < num_grs; engine_instance++) {
 		gr_dev = nvgpu_device_get(g, NVGPU_DEVTYPE_GRAPHICS, engine_instance);
 		if (gr_dev == NULL) {
 			err = -ENXIO;
 			nvgpu_err(g, " Get GR device info failed ID: %d", engine_instance);
 			goto exit;
 		}
+
 		err = gsp_sched_send_devices_info(g, gr_dev);
 		if (err != 0) {
 			nvgpu_err(g, "Sending GR engine info failed ID: %d", engine_instance);
 			goto exit;
 		}
+	}
 
-		// handling Async engine
-		err = gsp_get_async_ce(g, &ce_dev, engine_instance);
-		if (err != 0) {
-			nvgpu_err(g, "Getting Async engine failed ID: %d", engine_instance);
-			goto exit;
-		}
+exit:
+	return err;
+}
+
+static int gsp_sched_send_ces_dev_info(struct gk20a *g)
+{
+	struct nvgpu_device ce_dev = { };
+	const struct nvgpu_device *lces[NVGPU_MIG_MAX_ENGINES] = { };
+	int err = 0;
+	u32 num_lce;
+	u8 engine_instance = 0;
+
+	num_lce = nvgpu_device_get_async_copies(g, lces, NVGPU_MIG_MAX_ENGINES);
+	if (num_lce == 0) {
+		nvgpu_err(g, "Async CEs not supported");
+		err = -EINVAL;
+		goto exit;
+	}
+
+	for (engine_instance = 0; engine_instance < num_lce; engine_instance++) {
+		ce_dev = *lces[engine_instance];
 		err = gsp_sched_send_devices_info(g, &ce_dev);
 		if (err != 0) {
 			nvgpu_err(g, "Sending Async engin info failed ID: %d", engine_instance);
 			goto exit;
 		}
+	}
+
+exit:
+	return err;
+}
+
+int nvgpu_gsp_sched_send_devices_info(struct gk20a *g)
+{
+	int err = 0;
+
+	err = gsp_sched_send_grs_dev_info(g);
+	if (err != 0) {
+		nvgpu_err(g, "sending grs dev info failed");
+		goto exit;
+	}
+
+	err = gsp_sched_send_ces_dev_info(g);
+	if (err != 0) {
+		nvgpu_err(g, "sending ces dev info failed");
 	}
 
 exit:
