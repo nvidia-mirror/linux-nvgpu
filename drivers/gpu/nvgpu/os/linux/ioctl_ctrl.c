@@ -342,6 +342,8 @@ static struct nvgpu_flags_mapping flags_mapping[] = {
 		NVGPU_SUPPORT_NVS_CTRL_FIFO},
 	{NVGPU_GPU_FLAGS_SCHED_EXIT_WAIT_FOR_ERRBAR_SUPPORTED,
 		NVGPU_SCHED_EXIT_WAIT_FOR_ERRBAR_SUPPORTED},
+	{NVGPU_GPU_FLAGS_MULTI_PROCESS_TSG_SHARING,
+		NVGPU_SUPPORT_MULTI_PROCESS_TSG_SHARING},
 };
 
 static u64 nvgpu_ctrl_ioctl_gpu_characteristics_flags(struct gk20a *g)

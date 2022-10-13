@@ -340,6 +340,7 @@ void gk20a_init_linux_characteristics(struct gk20a *g)
 	nvgpu_set_enabled(g, NVGPU_SUPPORT_USERSPACE_MANAGED_AS, true);
 	nvgpu_set_enabled(g, NVGPU_SUPPORT_REMAP, true);
 	nvgpu_set_enabled(g, NVGPU_SUPPORT_BUFFER_METADATA, true);
+	nvgpu_set_enabled(g, NVGPU_SUPPORT_MULTI_PROCESS_TSG_SHARING, true);
 
 	if (!IS_ENABLED(CONFIG_NVGPU_SYNCFD_NONE)) {
 		nvgpu_set_enabled(g, NVGPU_SUPPORT_SYNC_FENCE_FDS, true);
