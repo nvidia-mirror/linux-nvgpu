@@ -947,13 +947,13 @@ static int nvgpu_nvs_ctrl_fifo_destroy_queue(struct gk20a *g,
 		}
 	}
 
+	nvgpu_nvs_ctrl_fifo_lock_queues(g);
+
 	queue = nvgpu_nvs_ctrl_fifo_get_queue(g->sched_ctrl_fifo, num_queue, queue_direction, &mask);
 	if (queue == NULL) {
 		err = -EOPNOTSUPP;
 		goto fail;
 	}
-
-	nvgpu_nvs_ctrl_fifo_lock_queues(g);
 
 	if (!nvgpu_nvs_ctrl_fifo_user_is_subscribed_to_queue(user, queue)) {
 		err = -EPERM;

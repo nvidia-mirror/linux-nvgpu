@@ -41,7 +41,7 @@
 /*
  * Keep it to page size for now. Can be updated later.
  */
-#define NVS_QUEUE_DEFAULT_SIZE (64 * 1024)
+#define NVS_QUEUE_DEFAULT_SIZE (64U * 1024U)
 
 struct gk20a;
 struct nvgpu_nvs_domain_ioctl;

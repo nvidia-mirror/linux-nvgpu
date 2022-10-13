@@ -85,6 +85,7 @@ static int nvs_release_user_mappings_locked(struct gk20a *g, struct nvgpu_nvs_li
 
 		zap_vma_entries(g, vma);
 		linux_buf->mapped_ref--;
+		nvgpu_kfree(g, current_entry);
 	}
 
 	return err;
