@@ -1376,20 +1376,16 @@ exit:
 
 s32 nvgpu_runlist_get_device_id(struct gk20a *g, struct nvgpu_runlist *rl, u32 *device_id)
 {
-	u8 dev;
 	s32 err = 0;
+	u32 rleng_id = 0;
 
-	for (dev = 0; dev < (u8)(RLENG_PER_RUNLIST_SIZE); dev++) {
-		u32 rl_pribase =rl->rl_dev_list[dev]->rl_pri_base;
-		if (rl->runlist_pri_base == rl_pribase) {
-			*device_id = rl->rl_dev_list[dev]->engine_id;
-			goto exit;
-		}
+	if (g->ops.runlist.get_engine_id_from_rleng_id != NULL) {
+		*device_id = g->ops.runlist.get_engine_id_from_rleng_id(g, rleng_id, rl->runlist_pri_base);
+	} else {
+		err = (s32)(-EINVAL);
+		nvgpu_err(g, "Get device ID failed:");
 	}
 
-	err = (s32)(-EINVAL);
-	nvgpu_err(g, "Get device ID failed:");
-exit:
 	return err;
 }
 
