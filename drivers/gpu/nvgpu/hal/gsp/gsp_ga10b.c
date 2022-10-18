@@ -292,7 +292,7 @@ void ga10b_gsp_enable_irq(struct gk20a *g, bool enable)
 	}
 }
 
-static int gsp_get_emem_boundaries(struct gk20a *g,
+s32 ga10b_gsp_get_emem_boundaries(struct gk20a *g,
 	u32 *start_emem, u32 *end_emem)
 {
 	u32 tag_width_shift = 0;
@@ -357,7 +357,7 @@ static int gsp_memcpy_params_check(struct gk20a *g, u32 dmem_addr,
 		goto exit;
 	}
 
-	status = gsp_get_emem_boundaries(g, &start_emem, &end_emem);
+	status = ga10b_gsp_get_emem_boundaries(g, &start_emem, &end_emem);
 	if (status != 0) {
 		goto exit;
 	}
@@ -402,7 +402,7 @@ static int ga10b_gsp_emem_transfer(struct gk20a *g, u32 dmem_addr, u8 *buf,
 	emem_d_offset = pgsp_ememd_r(port);
 
 	/* Only start address needed */
-	status = gsp_get_emem_boundaries(g, &start_emem, NULL);
+	status = ga10b_gsp_get_emem_boundaries(g, &start_emem, NULL);
 	if (status != 0) {
 		goto exit;
 	}

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -40,5 +40,10 @@ void gv11b_mm_mmu_fault_handle_other_fault_notify(struct gk20a *g,
 						  u32 fault_status);
 
 void gv11b_mm_mmu_fault_parse_mmu_fault_info(struct mmu_fault_info *mmufault);
+void gv11b_fb_copy_from_hw_fault_buf(struct gk20a *g,
+	 struct nvgpu_mem *mem, u32 offset, struct mmu_fault_info *mmufault);
+bool gv11b_mm_mmu_fault_handle_mmu_fault_refch(struct gk20a *g,
+		struct mmu_fault_info *mmufault, u32 *id_ptr,
+		unsigned int *id_type_ptr, unsigned int *rc_type_ptr);
 
 #endif

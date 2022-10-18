@@ -48,6 +48,8 @@ int ga10b_gsp_flcn_copy_from_emem(struct gk20a *g,
 
 /* interrupt */
 void ga10b_gsp_enable_irq(struct gk20a *g, bool enable);
+s32 ga10b_gsp_get_emem_boundaries(struct gk20a *g,
+	u32 *start_emem, u32 *end_emem);
 void ga10b_gsp_isr(struct gk20a *g, struct nvgpu_gsp *gsp);
 void ga10b_gsp_set_msg_intr(struct gk20a *g);
 #endif /* CONFIG_NVGPU_GSP_SCHEDULER */

@@ -198,7 +198,7 @@ void gv11b_mm_mmu_fault_parse_mmu_fault_info(struct mmu_fault_info *mmufault)
  *|V|R|P|  gpc_id |0 0 0|t|0|acctp|0|   client    |RF0 0|faulttype|
  */
 
-static void gv11b_fb_copy_from_hw_fault_buf(struct gk20a *g,
+void gv11b_fb_copy_from_hw_fault_buf(struct gk20a *g,
 	 struct nvgpu_mem *mem, u32 offset, struct mmu_fault_info *mmufault)
 {
 	u32 rd32_val;
@@ -341,7 +341,7 @@ static bool gv11b_mm_mmu_fault_handle_mmu_fault_ce(struct gk20a *g,
 	return false;
 }
 
-static bool gv11b_mm_mmu_fault_handle_mmu_fault_refch(struct gk20a *g,
+bool gv11b_mm_mmu_fault_handle_mmu_fault_refch(struct gk20a *g,
 		struct mmu_fault_info *mmufault, u32 *id_ptr,
 		unsigned int *id_type_ptr, unsigned int *rc_type_ptr)
 {
