@@ -1867,7 +1867,7 @@ int gr_gv11b_decode_priv_addr(struct gk20a *g, u32 addr,
 	return 0;
 }
 
-static u32 gr_gv11b_pri_pmmgpc_addr(struct gk20a *g, u32 gpc_num,
+u32 gr_gv11b_pri_pmmgpc_addr(struct gk20a *g, u32 gpc_num,
 	u32 domain_idx, u32 offset)
 {
 	return perf_pmmgpc_base_v() +
@@ -1892,7 +1892,7 @@ static u32 gr_gv11b_pri_pmmfbprouter_addr(struct gk20a *g, u32 fbp_num,
 		offset;
 }
 
-static void gr_gv11b_split_pmm_fbp_broadcast_address(struct gk20a *g,
+void gr_gv11b_split_pmm_fbp_broadcast_address(struct gk20a *g,
 	u32 offset, u32 *priv_addr_table, u32 *t,
 	u32 domain_start, u32 num_domains)
 {

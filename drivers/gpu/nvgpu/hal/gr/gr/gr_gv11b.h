@@ -1,7 +1,7 @@
 /*
  * GV11B GPU GR
  *
- * Copyright (c) 2016-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -90,6 +90,11 @@ int gr_gv11b_decode_priv_addr(struct gk20a *g, u32 addr,
 	enum ctxsw_addr_type *addr_type,
 	u32 *gpc_num, u32 *tpc_num, u32 *ppc_num, u32 *be_num,
 	u32 *broadcast_flags);
+u32 gr_gv11b_pri_pmmgpc_addr(struct gk20a *g, u32 gpc_num,
+	u32 domain_idx, u32 offset);
+void gr_gv11b_split_pmm_fbp_broadcast_address(struct gk20a *g,
+	u32 offset, u32 *priv_addr_table, u32 *t,
+	u32 domain_start, u32 num_domains);
 int gr_gv11b_create_priv_addr_table(struct gk20a *g,
 	u32 addr,
 	u32 *priv_addr_table,
