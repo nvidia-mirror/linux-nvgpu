@@ -770,7 +770,7 @@ static bool ga10b_gr_intr_sm_icache_ecc_status_errors(struct gk20a *g,
 	return err_status;
 }
 
-static void ga10b_gr_intr_report_tpc_sm_rams_ecc_err(struct gk20a *g,
+void ga10b_gr_intr_report_tpc_sm_rams_ecc_err(struct gk20a *g,
 		struct nvgpu_gr_sm_ecc_status *ecc_status, u32 gpc, u32 tpc)
 {
 	u32 i;

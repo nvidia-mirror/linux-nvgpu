@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -146,6 +146,12 @@ u32 gv11b_gr_intr_ctxsw_checksum_mismatch_mailbox_val(void);
 bool gv11b_gr_intr_sm_ecc_status_errors(struct gk20a *g,
 	u32 ecc_status_reg, enum nvgpu_gr_sm_ecc_error_types err_type,
 	struct nvgpu_gr_sm_ecc_status *ecc_status);
+void gv11b_gr_intr_report_l1_tag_uncorrected_err(struct gk20a *g,
+		struct nvgpu_gr_sm_ecc_status *ecc_status, u32 gpc, u32 tpc);
+void gv11b_gr_intr_report_l1_tag_corrected_err(struct gk20a *g,
+		struct nvgpu_gr_sm_ecc_status *ecc_status, u32 gpc, u32 tpc);
+void gv11b_gr_intr_report_icache_uncorrected_err(struct gk20a *g,
+		struct nvgpu_gr_sm_ecc_status *ecc_status, u32 gpc, u32 tpc);
 #ifdef CONFIG_NVGPU_HAL_NON_FUSA
 void gv11b_gr_intr_set_shader_exceptions(struct gk20a *g, u32 data);
 #endif

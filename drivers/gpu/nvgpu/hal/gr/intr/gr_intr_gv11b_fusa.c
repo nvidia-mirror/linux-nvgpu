@@ -924,7 +924,7 @@ void gv11b_gr_intr_set_hww_esr_report_mask(struct gk20a *g)
 		sm_hww_warp_esr_report_mask | get_sm_hww_warp_esr_report_mask());
 }
 
-static void gv11b_gr_intr_report_l1_tag_uncorrected_err(struct gk20a *g,
+void gv11b_gr_intr_report_l1_tag_uncorrected_err(struct gk20a *g,
 		struct nvgpu_gr_sm_ecc_status *ecc_status, u32 gpc, u32 tpc)
 {
 	u32 i;
@@ -953,7 +953,7 @@ static void gv11b_gr_intr_report_l1_tag_uncorrected_err(struct gk20a *g,
 	}
 }
 
-static void gv11b_gr_intr_report_l1_tag_corrected_err(struct gk20a *g,
+void gv11b_gr_intr_report_l1_tag_corrected_err(struct gk20a *g,
 		struct nvgpu_gr_sm_ecc_status *ecc_status, u32 gpc, u32 tpc)
 {
 	u32 i;
@@ -1554,7 +1554,7 @@ static void gv11b_gr_intr_handle_l1_data_exception(struct gk20a *g, u32 gpc, u32
 			gr_pri_gpc0_tpc0_sm_l1_data_ecc_status_reset_task_f());
 }
 
-static void gv11b_gr_intr_report_icache_uncorrected_err(struct gk20a *g,
+void gv11b_gr_intr_report_icache_uncorrected_err(struct gk20a *g,
 		struct nvgpu_gr_sm_ecc_status *ecc_status, u32 gpc, u32 tpc)
 {
 	u32 i;

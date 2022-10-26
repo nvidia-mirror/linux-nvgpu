@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -73,5 +73,7 @@ void ga10b_gr_intr_handle_gpc_rrh_hww(struct gk20a *g, u32 gpc, u32 exception);
 u32 ga10b_gr_intr_read_pending_interrupts(struct gk20a *g,
 					struct nvgpu_gr_intr_info *intr_info);
 u32 ga10b_gr_intr_enable_mask(struct gk20a *g);
+void ga10b_gr_intr_report_tpc_sm_rams_ecc_err(struct gk20a *g,
+		struct nvgpu_gr_sm_ecc_status *ecc_status, u32 gpc, u32 tpc);
 
 #endif /* NVGPU_GR_INTR_GA10B_H */
