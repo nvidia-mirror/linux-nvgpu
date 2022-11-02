@@ -153,6 +153,18 @@ void nvgpu_cic_mon_intr_nonstall_handle(struct gk20a *g)
 	(void)nvgpu_cic_rm_broadcast_last_irq_nonstall(g);
 }
 #endif
+#ifdef CONFIG_NVGPU_MON_PRESENT
+int nvgpu_cic_mon_handle_fatal_intr(struct gk20a *g)
+{
+	if (nvgpu_is_powered_off(g)) {
+		nvgpu_err(g, "GPU is already powered off");
+		return -ENODEV;
+	}
+	g->ops.mc.isr_stall(g);
+
+	return 0U;
+}
+#endif
 
 u32 nvgpu_cic_mon_intr_stall_isr(struct gk20a *g)
 {

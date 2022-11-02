@@ -409,6 +409,22 @@ int nvgpu_cic_mon_report_err_safety_services(struct gk20a *g,
  */
 int nvgpu_cic_mon_get_num_hw_modules(struct gk20a *g);
 
+#ifdef CONFIG_NVGPU_MON_PRESENT
+/**
+ * @brief Fatal error interrupt handler for safety.
+ *
+ * @param g [in]	The GPU driver struct.
+ *
+ * This function is invoked by NVGPU_MON_DEVCTL_NOTIFY_INTR devctl raised by nvgpu-mon.
+ * It is called to parse the interrupt tree and determine exact error.
+ * The unit ISR functions are invoked based on triggered interrupts.
+ *
+ * @retval -ENODEV if GPU is already powered off.
+ * @retval 0U if Fatal interrupt handling was performed succcessfully.
+ */
+int nvgpu_cic_mon_handle_fatal_intr(struct gk20a *g);
+#endif
+
 /**
  * @brief Top half of stall interrupt ISR.
  *
