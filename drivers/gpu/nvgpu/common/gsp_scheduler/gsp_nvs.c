@@ -14,17 +14,18 @@
 #include "gsp_runlist.h"
 
 static int gsp_nvs_update_runlist_info(struct gk20a *g,
-            struct nvgpu_gsp_runlist_info *gsp_runlist, struct nvgpu_runlist *rl)
+    struct nvgpu_gsp_runlist_info *gsp_runlist, struct nvgpu_runlist *rl,
+    struct nvgpu_runlist_domain *domain)
 {
     int err = 0;
-    u64 runlist_iova = nvgpu_mem_get_addr(g, &rl->domain->mem_hw->mem);
-    u32 num_entries = rl->domain->mem_hw->count;
-    u32 aperture = g->ops.runlist.get_runlist_aperture(g, &rl->domain->mem_hw->mem);
+    u64 runlist_iova = nvgpu_mem_get_addr(g, &domain->mem_hw->mem);
+    u32 num_entries = domain->mem_hw->count;
+    u32 aperture = g->ops.runlist.get_runlist_aperture(g, &domain->mem_hw->mem);
     u32 device_id = 0;
 
     nvgpu_gsp_dbg(g, " ");
 
-    gsp_runlist->domain_id = u64_lo32(rl->domain->domain_id);
+    gsp_runlist->domain_id = u64_lo32(domain->domain_id);
     gsp_runlist->runlist_id = rl->id;
     gsp_runlist->aperture = aperture;
     gsp_runlist->runlist_base_lo = u64_lo32(runlist_iova);
@@ -149,14 +150,15 @@ int nvgpu_gsp_nvs_delete_domain(struct gk20a *g, u64 nvgpu_domain_id)
 }
 
 /* funtion to update the runlist domain of gsp */
-int nvgpu_gps_sched_update_runlist(struct gk20a *g, struct nvgpu_runlist *rl)
+int nvgpu_gps_sched_update_runlist(struct gk20a *g,
+    struct nvgpu_runlist_domain *domain, struct nvgpu_runlist *rl)
 {
     struct nvgpu_gsp_runlist_info gsp_runlist = { };
     int err = 0;
 
     nvgpu_gsp_dbg(g, " ");
     /* copy runlist data to cmd buffer */
-    err = gsp_nvs_update_runlist_info(g, &gsp_runlist, rl);
+    err = gsp_nvs_update_runlist_info(g, &gsp_runlist, rl, domain);
     if (err != 0){
         nvgpu_err(g, "gsp runlist update to cmd failed");
         goto exit;
