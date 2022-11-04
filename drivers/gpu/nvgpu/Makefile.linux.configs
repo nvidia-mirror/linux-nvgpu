@@ -185,6 +185,11 @@ endif
 # internal build system.
 ifneq ($(NV_BUILD_KERNEL_OPTIONS),)
 
+ifeq ($(NV_BUILD_CONFIGURATION_VARIANT_IS_EMBEDDED),1)
+CONFIG_NVS_ROUND_ROBIN_SCHEDULER_DISABLE := y
+ccflags-y += -DCONFIG_NVS_ROUND_ROBIN_SCHEDULER_DISABLE
+endif
+
 ifneq ($(filter 4.9 4.14,$(patsubst -,$(space),$(NV_BUILD_KERNEL_OPTIONS))),)
 # Enable support to pass PM_QOS constraints to devfreq based scaling.
 CONFIG_GK20A_PM_QOS := y

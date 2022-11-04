@@ -113,6 +113,7 @@ static u32 nvgpu_nvs_worker_wakeup_timeout(struct nvgpu_worker *worker)
 	return nvs_worker->current_timeout;
 }
 
+#ifndef CONFIG_NVS_ROUND_ROBIN_SCHEDULER_DISABLE
 static u64 nvgpu_nvs_tick(struct gk20a *g)
 {
 	struct nvgpu_nvs_scheduler *sched = g->scheduler;
@@ -162,6 +163,27 @@ static u64 nvgpu_nvs_tick(struct gk20a *g)
 
 	return timeslice;
 }
+
+static void nvgpu_nvs_worker_multi_domain_process(struct nvgpu_worker *worker)
+{
+	struct gk20a *g = worker->g;
+	struct nvgpu_nvs_worker *nvs_worker =
+		nvgpu_nvs_worker_from_worker(worker);
+
+	if (nvgpu_timeout_peek_expired(&nvs_worker->timeout)) {
+		u64 next_timeout_ns = nvgpu_nvs_tick(g);
+		u64 timeout = next_timeout_ns + NSEC_PER_MSEC - 1U;
+
+		if (next_timeout_ns != 0U) {
+			nvs_worker->current_timeout =
+				nvgpu_safe_cast_u64_to_u32(timeout / NSEC_PER_MSEC);
+		}
+
+		nvgpu_timeout_init_cpu_timer_sw(g, &nvs_worker->timeout,
+				nvs_worker->current_timeout);
+	}
+}
+#endif
 
 static void nvgpu_nvs_worker_item_release(struct nvgpu_ref *ref)
 {
@@ -346,32 +368,16 @@ static void nvgpu_nvs_handle_pause_requests(struct nvgpu_worker *worker)
 	}
 }
 
-static void nvgpu_nvs_worker_multi_domain_process(struct nvgpu_worker *worker)
-{
-	struct gk20a *g = worker->g;
-	struct nvgpu_nvs_worker *nvs_worker =
-		nvgpu_nvs_worker_from_worker(worker);
-
-	if (nvgpu_timeout_peek_expired(&nvs_worker->timeout)) {
-		u64 next_timeout_ns = nvgpu_nvs_tick(g);
-		u64 timeout = next_timeout_ns + NSEC_PER_MSEC - 1U;
-
-		if (next_timeout_ns != 0U) {
-			nvs_worker->current_timeout =
-				nvgpu_safe_cast_u64_to_u32(timeout / NSEC_PER_MSEC);
-		}
-
-		nvgpu_timeout_init_cpu_timer_sw(g, &nvs_worker->timeout,
-				nvs_worker->current_timeout);
-	}
-}
-
 static void nvgpu_nvs_worker_wakeup_post_process(struct nvgpu_worker *worker)
 {
 	if (nvgpu_nvs_ctrl_fifo_is_enabled(worker->g)) {
 		nvgpu_nvs_ctrl_fifo_scheduler_handle_requests(worker->g);
 	} else {
+#ifndef CONFIG_NVS_ROUND_ROBIN_SCHEDULER_DISABLE
 		nvgpu_nvs_worker_multi_domain_process(worker);
+#else
+		(void)worker;
+#endif
 	}
 
 	nvgpu_nvs_handle_pause_requests(worker);
