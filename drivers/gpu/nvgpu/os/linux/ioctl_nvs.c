@@ -851,7 +851,7 @@ static int nvgpu_nvs_ctrl_fifo_create_queue(struct gk20a *g,
 		 */
 		if ((num_queue == NVGPU_NVS_NUM_CONTROL) ||
 				!nvgpu_nvs_ctrl_fifo_queue_has_subscribed_users(queue)) {
-			nvgpu_nvs_ctrl_fifo_erase_queue(g, queue);
+			nvgpu_nvs_ctrl_fifo_erase_queue_locked(g, queue);
 		}
 		err = fd;
 		goto fail;
@@ -910,7 +910,7 @@ static void nvgpu_nvs_ctrl_fifo_undo_create_queue(struct gk20a *g,
 	 */
 	if (nvgpu_nvs_buffer_is_valid(g, queue) &&
 			!nvgpu_nvs_ctrl_fifo_queue_has_subscribed_users(queue)) {
-		nvgpu_nvs_ctrl_fifo_erase_queue(g, queue);
+		nvgpu_nvs_ctrl_fifo_erase_queue_locked(g, queue);
 	}
 
 	put_unused_fd(args->dmabuf_fd);
@@ -975,7 +975,7 @@ static int nvgpu_nvs_ctrl_fifo_destroy_queue(struct gk20a *g,
 	 */
 	if (num_queue == NVGPU_NVS_NUM_CONTROL) {
 		if (!nvgpu_nvs_buf_linux_is_mapped(g, queue)) {
-			nvgpu_nvs_ctrl_fifo_erase_queue(g, queue);
+			nvgpu_nvs_ctrl_fifo_erase_queue_locked(g, queue);
 		} else {
 			err = -EBUSY;
 			goto fail;

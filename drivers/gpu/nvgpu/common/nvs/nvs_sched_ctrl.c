@@ -30,6 +30,22 @@
 #include <nvgpu/runlist.h>
 #include <nvgpu/nvgpu_init.h>
 
+/**
+ * @brief A structure for managing all the list of control-fifo users
+ *
+ * Globally manage set of users i.e. exclusive and non-exclusive users.
+ * Initially, all users upon creation are characterised as non-exclusive.
+ *
+ * Priviledged users with Write permissions can request for exclusive
+ * access. A user can be converted from non-exclusive to exclusive
+ * only if meets the above criteria and there exists no other exclusive
+ * user. Only one exclusive user can exist at a time. An exclusive user
+ * can be reset back into non-exclusive user.
+ *
+ * Maintain a list of non-exclusive users and only one exclusive user.
+ *
+ * Add a fast lock for accessing/modification of the users.
+ */
 struct nvgpu_nvs_domain_ctrl_fifo_users {
 	/* Flag to reserve exclusive user */
 	bool reserved_exclusive_rw_user;
@@ -43,60 +59,92 @@ struct nvgpu_nvs_domain_ctrl_fifo_users {
 	struct nvgpu_spinlock user_lock;
 };
 
+/**
+ * @brief A structure for managing the queues for control-fifo.
+ *
+ * This structure contains the Send/Receive and Event Queues
+ * for managing the manual mode scheduling.
+ *
+ * A coarse grained lock is also defined for access control of the queue.
+ */
 struct nvgpu_nvs_domain_ctrl_fifo_queues {
-	/*
-	 * send indicates a buffer having data(PUT) written by a userspace client
+	/**
+	 * Send indicates a buffer having data(PUT) written by a userspace client
 	 * and queried by the scheduler(GET).
 	 */
 	struct nvgpu_nvs_ctrl_queue send;
 
+	/**
+	 * Receive indicates a buffer having data(PUT) written by scheduler
+	 * and queried by the userspace client(GET).
+	 */
+	struct nvgpu_nvs_ctrl_queue receive;
+
+	/**
+	 * Event indicates a buffer that is subscribed to by userspace clients to
+	 * receive events. This buffer is Read-Only for the users and only scheduler can
+	 * write to it.
+	 */
+	struct nvgpu_nvs_ctrl_queue event;
+
+#ifdef CONFIG_KMD_SCHEDULING_WORKER_THREAD
 	/*
 	 * This contains the APIs required for reading the send queue.
 	 */
 	struct nvs_control_fifo_receiver *send_queue_receiver;
 
 	/*
-	 * receive indicates a buffer having data(PUT) written by scheduler
-	 * and queried by the userspace client(GET).
-	 */
-	struct nvgpu_nvs_ctrl_queue receive;
-
-	/*
 	 * This contains the APIs required for writing the receive queue.
 	 */
 	struct nvs_control_fifo_sender *receiver_queue_sender;
+#endif
 
-	/*
-	 * event indicates a buffer that is subscribed to by userspace clients to
-	 * receive events. This buffer is Read-Only for the users and only scheduler can
-	 * write to it.
-	 */
-	struct nvgpu_nvs_ctrl_queue event;
-	/*
+	/**
 	 * Global mutex for coarse grained access control
 	 * of all Queues for all UMD interfaces. e.g. IOCTL/devctls
-	 * and mmap calls. Keeping this as coarse-grained for now till
-	 * GSP's implementation is complete.
+	 * and mmap calls.
 	 */
 	struct nvgpu_mutex queue_lock;
 };
 
+/**
+ * @brief A master structure for Control-Fifo
+ *
+ * A global structure for Control-Fifo per GPU isntance.
+ * All the Users and Queues are centrally managed from here.
+ *
+ * In addition, any capabilities for the scheduler are
+ * also managed here.
+ */
 struct nvgpu_nvs_domain_ctrl_fifo {
-	/*
+	/**
 	 * Instance of global struct gk20a;
 	 */
 	struct gk20a *g;
-
+	/**
+	 * A placeholder for holding users of control-fifo.
+	 *
+	 */
 	struct nvgpu_nvs_domain_ctrl_fifo_users users;
-
+	/**
+	 * A placeholder for storing the queues of control-fifo.
+	 *
+	 */
 	struct nvgpu_nvs_domain_ctrl_fifo_queues queues;
-
+	/**
+	 * Store capabilities of control-fifo
+	 *
+	 */
 	struct nvs_domain_ctrl_fifo_capabilities capabilities;
 };
 
 void nvgpu_nvs_ctrl_fifo_reset_exclusive_user(
 		struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl, struct nvs_domain_ctrl_fifo_user *user)
 {
+	if (sched_ctrl == NULL || user == NULL) {
+		return;
+	}
+
 	nvgpu_spinlock_acquire(&sched_ctrl->users.user_lock);
 	nvgpu_list_del(&user->sched_ctrl_list);
 	nvgpu_list_add_tail(&user->sched_ctrl_list, &sched_ctrl->users.list_non_exclusive_user);
@@ -107,6 +155,10 @@ int nvgpu_nvs_ctrl_fifo_reserve_exclusive_user(
 		struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl, struct nvs_domain_ctrl_fifo_user *user)
 {
 	int ret = 0;
+
+	if (sched_ctrl == NULL || user == NULL) {
+		return -ENODEV;
+	}
 
 	if (!user->has_write_access) {
 		return -EPERM;
@@ -131,6 +183,10 @@ bool nvgpu_nvs_ctrl_fifo_user_exists(struct nvgpu_nvs_domain_ctrl_fifo *sched_ct
 {
 	bool user_exists = false;
 	struct nvs_domain_ctrl_fifo_user *user;
+
+	if (sched_ctrl == NULL) {
+		return false;
+	}
 
 	(void)rw;
 	nvgpu_spinlock_acquire(&sched_ctrl->users.user_lock);
@@ -162,8 +218,11 @@ bool nvgpu_nvs_ctrl_fifo_is_exclusive_user(struct nvgpu_nvs_domain_ctrl_fifo *sc
     struct nvs_domain_ctrl_fifo_user *user)
 {
 	bool result = false;
-
 	struct nvs_domain_ctrl_fifo_user *exclusive_user = NULL;
+
+	if (sched_ctrl == NULL || user == NULL) {
+		return false;
+	}
 
 	nvgpu_spinlock_acquire(&sched_ctrl->users.user_lock);
 
@@ -184,6 +243,11 @@ bool nvgpu_nvs_ctrl_fifo_is_exclusive_user(struct nvgpu_nvs_domain_ctrl_fifo *sc
 void nvgpu_nvs_ctrl_fifo_add_user(struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl,
 	struct nvs_domain_ctrl_fifo_user *user)
 {
+
+	if (sched_ctrl == NULL || user == NULL) {
+		return;
+	}
+
 	nvgpu_spinlock_acquire(&sched_ctrl->users.user_lock);
 
 	nvgpu_list_add(&user->sched_ctrl_list, &sched_ctrl->users.list_non_exclusive_user);
@@ -195,12 +259,21 @@ void nvgpu_nvs_ctrl_fifo_add_user(struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl,
 
 bool nvgpu_nvs_ctrl_fifo_user_is_active(struct nvs_domain_ctrl_fifo_user *user)
 {
+	if (user == NULL) {
+		return false;
+	}
+
 	return user->active_used_queues != 0;
 }
 
 void nvgpu_nvs_ctrl_fifo_remove_user(struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl,
 	struct nvs_domain_ctrl_fifo_user *user)
 {
+
+	if (sched_ctrl == NULL || user == NULL) {
+		return;
+	}
+
 	nvgpu_spinlock_acquire(&sched_ctrl->users.user_lock);
 
 	nvgpu_list_del(&user->sched_ctrl_list);
@@ -328,6 +401,10 @@ bool nvgpu_nvs_ctrl_fifo_is_busy(struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl)
 {
 	bool ret = 0;
 
+	if (sched_ctrl == NULL) {
+		return false;
+	}
+
 	nvgpu_spinlock_acquire(&sched_ctrl->users.user_lock);
 	ret = (sched_ctrl->users.usage_counter != 0);
 	nvgpu_spinlock_release(&sched_ctrl->users.user_lock);
@@ -388,12 +465,19 @@ struct nvgpu_nvs_ctrl_queue *nvgpu_nvs_ctrl_fifo_get_queue(
 struct nvs_domain_ctrl_fifo_capabilities *nvgpu_nvs_ctrl_fifo_get_capabilities(
 		struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl)
 {
+	if (sched_ctrl == NULL) {
+		return NULL;
+	}
+
 	return &sched_ctrl->capabilities;
 }
 
 bool nvgpu_nvs_buffer_is_valid(struct gk20a *g, struct nvgpu_nvs_ctrl_queue *buf)
 {
 	(void)g;
+	if (buf == NULL) {
+		return false;
+	}
 
 	return buf->valid;
 }
@@ -402,12 +486,23 @@ int nvgpu_nvs_buffer_alloc(struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl,
 		size_t bytes, u8 mask, struct nvgpu_nvs_ctrl_queue *buf)
 {
 	int err;
-	struct gk20a *g = sched_ctrl->g;
-	struct vm_gk20a *system_vm = g->mm.pmu.vm;
+	struct gk20a *g;
+	struct vm_gk20a *system_vm;
 #ifdef CONFIG_KMD_SCHEDULING_WORKER_THREAD
 	struct nvs_control_fifo_receiver *send_queue_receiver;
 	struct nvs_control_fifo_sender *receiver_queue_sender;
 #endif
+
+	if (sched_ctrl == NULL) {
+		return -ENODEV;
+	}
+
+	if (buf == NULL) {
+		return -EINVAL;
+	}
+
+	g = sched_ctrl->g;
+	system_vm = g->mm.pmu.vm;
 
 	(void)memset(buf, 0, sizeof(*buf));
 	buf->g = g;
@@ -450,14 +545,29 @@ fail:
 void nvgpu_nvs_buffer_free(struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl,
 		struct nvgpu_nvs_ctrl_queue *buf)
 {
-	struct gk20a *g = sched_ctrl->g;
-	struct vm_gk20a *system_vm = g->mm.pmu.vm;
-	u8 mask = buf->mask;
+	struct gk20a *g;
+	struct vm_gk20a *system_vm;
+	u8 mask;
 #ifdef CONFIG_KMD_SCHEDULING_WORKER_THREAD
-	struct nvs_control_fifo_receiver * const send_queue_receiver =
-		nvgpu_nvs_domain_ctrl_fifo_get_receiver(g);
-	struct nvs_control_fifo_sender * const receiver_queue_sender =
-		nvgpu_nvs_domain_ctrl_fifo_get_sender(g);
+	struct nvs_control_fifo_receiver *send_queue_receiver;
+	struct nvs_control_fifo_sender *receiver_queue_sender;
+#endif
+
+	if (sched_ctrl == NULL) {
+		return;
+	}
+
+	if (buf == NULL) {
+		return;
+	}
+
+	g = sched_ctrl->g;
+	system_vm = g->mm.pmu.vm;
+	mask = buf->mask;
+
+#ifdef CONFIG_KMD_SCHEDULING_WORKER_THREAD
+	send_queue_receiver = nvgpu_nvs_domain_ctrl_fifo_get_receiver(g);
+	receiver_queue_sender = nvgpu_nvs_domain_ctrl_fifo_get_sender(g);
 
 	if (mask == NVGPU_NVS_CTRL_FIFO_QUEUE_EXCLUSIVE_CLIENT_WRITE) {
 		nvgpu_nvs_domain_ctrl_fifo_set_receiver(g, NULL);
@@ -490,24 +600,40 @@ void nvgpu_nvs_ctrl_fifo_unlock_queues(struct gk20a *g)
 
 bool nvgpu_nvs_ctrl_fifo_queue_has_subscribed_users(struct nvgpu_nvs_ctrl_queue *queue)
 {
+	if (queue == NULL) {
+		return false;
+	}
+
 	return queue->ref != 0;
 }
 
 void nvgpu_nvs_ctrl_fifo_user_subscribe_queue(struct nvs_domain_ctrl_fifo_user *user,
 		struct nvgpu_nvs_ctrl_queue *queue)
 {
+	if (queue == NULL || user == NULL) {
+		return;
+	}
+
 	user->active_used_queues |= queue->mask;
 	queue->ref++;
 }
 void nvgpu_nvs_ctrl_fifo_user_unsubscribe_queue(struct nvs_domain_ctrl_fifo_user *user,
 		struct nvgpu_nvs_ctrl_queue *queue)
 {
+	if (queue == NULL || user == NULL) {
+		return;
+	}
+
 	user->active_used_queues &= ~((u32)queue->mask);
 	queue->ref--;
 }
 bool nvgpu_nvs_ctrl_fifo_user_is_subscribed_to_queue(struct nvs_domain_ctrl_fifo_user *user,
 		struct nvgpu_nvs_ctrl_queue *queue)
 {
+	if (queue == NULL || user == NULL) {
+		return false;
+	}
+
 	return (user->active_used_queues & queue->mask);
 }
 
@@ -518,23 +644,23 @@ void nvgpu_nvs_ctrl_fifo_erase_all_queues(struct gk20a *g)
 	nvgpu_nvs_ctrl_fifo_lock_queues(g);
 
 	if (nvgpu_nvs_buffer_is_valid(g, &sched_ctrl->queues.send)) {
-		nvgpu_nvs_ctrl_fifo_erase_queue(g, &sched_ctrl->queues.send);
+		nvgpu_nvs_ctrl_fifo_erase_queue_locked(g, &sched_ctrl->queues.send);
 	}
 
 	if (nvgpu_nvs_buffer_is_valid(g, &sched_ctrl->queues.receive)) {
-		nvgpu_nvs_ctrl_fifo_erase_queue(g, &sched_ctrl->queues.receive);
+		nvgpu_nvs_ctrl_fifo_erase_queue_locked(g, &sched_ctrl->queues.receive);
 	}
 
 	if (nvgpu_nvs_buffer_is_valid(g, &sched_ctrl->queues.event)) {
-		nvgpu_nvs_ctrl_fifo_erase_queue(g, &sched_ctrl->queues.event);
+		nvgpu_nvs_ctrl_fifo_erase_queue_locked(g, &sched_ctrl->queues.event);
 	}
 
 	nvgpu_nvs_ctrl_fifo_unlock_queues(g);
 }
 
-void nvgpu_nvs_ctrl_fifo_erase_queue(struct gk20a *g, struct nvgpu_nvs_ctrl_queue *queue)
+void nvgpu_nvs_ctrl_fifo_erase_queue_locked(struct gk20a *g, struct nvgpu_nvs_ctrl_queue *queue)
 {
-	if (queue->free != NULL) {
+	if (queue != NULL && queue->free != NULL) {
 		queue->free(g, queue);
 	}
 }
