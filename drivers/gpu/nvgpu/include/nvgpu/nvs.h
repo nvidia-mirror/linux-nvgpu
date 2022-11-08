@@ -89,25 +89,25 @@ nvs_domain_ctrl_fifo_user_from_sched_ctrl_list(struct nvgpu_list_node *node)
 		((uintptr_t)node - offsetof(struct nvs_domain_ctrl_fifo_user, sched_ctrl_list));
 };
 
-/*
+/**
  * NvGPU KMD domain implementation details for nvsched.
  */
 struct nvgpu_nvs_domain {
 	u64 id;
 
-	/*
+	/**
 	 * Subscheduler ID to define the scheduling within a domain. These will
 	 * be implemented by the kernel as needed. There'll always be at least
 	 * one, which is the host HW built in round-robin scheduler.
 	 */
 	u32 subscheduler;
 
-	/*
+	/**
 	 * Convenience pointer for linking back to the parent object.
 	 */
 	struct nvs_domain *parent;
 
-	/*
+	/**
 	 * Domains are dynamically used by their participant TSGs and the
 	 * runlist HW. A refcount prevents them from getting prematurely freed.
 	 *
@@ -116,12 +116,12 @@ struct nvgpu_nvs_domain {
 	 */
 	u32 ref;
 
-	/*
+	/**
 	 * Userspace API on the device nodes.
 	 */
 	struct nvgpu_nvs_domain_ioctl *ioctl;
 
-	/*
+	/**
 	 * One corresponding to every runlist
 	 */
 	struct nvgpu_runlist_domain **rl_domains;
@@ -230,22 +230,207 @@ struct nvgpu_nvs_ctrl_queue {
 };
 
 #ifdef CONFIG_NVS_PRESENT
+/**
+ * @brief This API is used to initialize NVS services
+ *
+ * Initializes \a g->sched_mutex and invokes \a nvgpu_nvs_open
+ *
+ * @param g [in] The GPU super structure. Function does not perform any
+ *	validation of the parameter.
+ *
+ * @retval 0 on success.
+ * @retval failure codes of \a nvgpu_nvs_open
+ */
 int nvgpu_nvs_init(struct gk20a *g);
+
+/**
+ * @brief Initialize NVS metadata and setup shadow domain.
+ *
+ * The initialization is done under a critical section defined by a global
+ * scheduling lock.
+ *
+ * 1) Initialize the metadata required for NVS subject to whether
+ *    the flag NVGPU_SUPPORT_NVS_CTRL_FIFO is supported. Return early,
+ *    if the metadata is already initialized.
+ * 2) Initialize NVS's internal ID counter used for tracking Domain IDs.
+ * 3) Construct the Control-Fifo master structure and store it as part
+ *    of \a g->sched_ctrl_fifo.
+ * 4) Construct a global list for storing domains and initialize the counters
+ *    associated with it.
+ * 5) Generate the global Shadow Domain. The ID of the shadow domain is set to U64_MAX
+ *    as well as timeslice set to 100U * NSEC_PER_MSEC. Ensure the Shadow Domain
+ *    is linked with the corresponding Shadow Runlist Domains.
+ *
+ * @param g [in] The GPU super structure. Function does not perform any
+ *	validation of the parameter.
+ *
+ * @retval 0 on success.
+ * @retval ENOMEM Failed to allocate enough memory.
+ */
 int nvgpu_nvs_open(struct gk20a *g);
+
+/**
+ * @brief Remove support for NVS.
+ *
+ * 1) Erase all existing struct nvgpu_dom in NVS.
+ * 2) Erase the Shadow Domain.
+ * 3) Release the metadata required for NVS.
+ * 4) Remove Control Fifo support if its enabled.
+ *
+ * @param g [in] The GPU super structure. Function does not perform any
+ *	validation of the parameter.
+ */
 void nvgpu_nvs_remove_support(struct gk20a *g);
 void nvgpu_nvs_get_log(struct gk20a *g, s64 *timestamp, const char **msg);
+
+/**
+ * @brief Return the number of active domains in the global list
+ *
+ * @param g [in] The GPU super structure. Function does not perform any
+ *	validation of the parameter.
+ * @return u32 Count of active domains.
+ */
 u32 nvgpu_nvs_domain_count(struct gk20a *g);
+
+/**
+ * @brief Erase a domain metadata corresponding to a given domain id.
+ *
+ * The removal of the metedata is done under a critical section defined by a global
+ * scheduling lock.
+ *
+ * 1) Check if dom_id is valid i.e. a valid domain metadata(struct nvgpu_nvs_domain) exists.
+ * 2) Check if the domain's reference counter is not one to ensure no existing
+ *    user exists.
+ * 3) Unlink the RL domain metadata corresponding to this domain metadata.
+ * 4) Free RL domain metadata specific memory.
+ * 5) Set NVS's active domain to the next domain, if no other domain exists,
+ *    set the shadow domain as the active domain.
+ * 6) Unlink strut nvgpu_nvs_domain and its corresponding nvs_domain
+ * 7) Free domain metadata(struct nvgpu_nvs_domain).
+ *
+ * @param g [in] The GPU super structure. Function does not perform any
+ *	validation of the parameter.
+ * @param dom_id Domain Id for which the domain needs to be erased.
+ *
+ * @retval 0 on success.
+ * @retval ENOENT if domain doesn't exist.
+ * @retval EBUSY If domain is already being used i.e domain's reference
+ *         counter is not 1.
+ */
 int nvgpu_nvs_del_domain(struct gk20a *g, u64 dom_id);
+
+/**
+ * @brief Create Domain Metadata and Link with RL domain
+ *
+ * The initialization is done under a critical section defined by a global
+ * scheduling lock.
+ *
+ * 1) Verify if name already doesn't exist, otherwise return failure.
+ * 2) Generate a struct nvgpu_nvs_domain, an internal struct nvs_domain,
+ *    add their corresponding linkages. i.e. associate nvgpu_nvs_domain
+ *    as a priv of nvs_domain and set nvs_domain as the parent of nvgpu_nvs_domain.
+ * 3) Increment the global domain ID counter and set the domain's ID to the same.
+ * 4) Set the corresponding timeslice and preempt_grace values.
+ * 5) Create a struct nvgpu_runlist_domain corresponding to each engines and associate
+ *    them with the above struct nvgpu_nvs_domain.
+ * 6) Link the struct nvs_domain in a global list.
+ * 7) Set the struct nvgpu_nvs_domain's address to pdomain.
+ *
+ * @param g [in] The GPU super structure. Function does not perform any
+ *	validation of the parameter.
+ * @param name [in] Name of the domain. Must not be NULL and must not already exist.
+ * @param timeslice [in] The default timeslice of the Domain. Function does not perform any
+ *	validation of the parameter.
+ * @param preempt_grace [in] The default preempt_grace of the Domain. Function does not perform any
+ *	validation of the parameter.
+ * @param pdomain [out] Placeholder for returning the constructed Domain pointer. Must be non NULL.
+ *
+ * @retval 0 on success.
+ * @retval EINVAL name is NULL or pdomain is NULL.
+ * @retval EEXIST If name already exists
+ * @retval ENOMEM Memory allocation failure
+ */
 int nvgpu_nvs_add_domain(struct gk20a *g, const char *name, u64 timeslice,
 			 u64 preempt_grace, struct nvgpu_nvs_domain **pdomain);
+
+/**
+ * @brief Print domain attributes
+ *
+ * Print domain attributes such as name, timeslice, preempt_grace
+ * and ID.
+ *
+ * @param g [in] The GPU super structure. Function does not perform any
+ *	validation of the parameter.
+ * @param dom Input Domain. Need null check
+ */
 void nvgpu_nvs_print_domain(struct gk20a *g, struct nvgpu_nvs_domain *domain);
 
+/**
+ * @brief Get a pointer to a corresponding domain metadata using ID
+ *
+ * Within a global scheduling lock, check if the corresponding domain ID mapping
+ * exists and increment its reference counter.
+ *
+ * @param g [in] The GPU super structure. Function does not perform any
+ *	validation of the parameter.
+ * @param domain_id Domain Id required for input.
+ *
+ * @retval NULL If domain_id doesn't exist.
+ * @retval correct pointer to struct nvgpu_nvs_domain
+ */
 struct nvgpu_nvs_domain *
 nvgpu_nvs_domain_by_id(struct gk20a *g, u64 domain_id);
+
+/**
+ * @brief Search for instance of nvgpu_nvs_domain by name.
+ *
+ * Within a global scheduling lock, check if the corresponding domain name
+ * exists and increment its reference counter and return the instance.
+ *
+ * @param g [in] The GPU super structure. Function does not perform any
+ *	validation of the parameter.
+ * @param name Name of the domain to search for. Must not be NULL.
+ *
+ * @retval NULL If domain is null or doesn't exist.
+ * @retval correct pointer to instance of struct nvgpu_nvs_domain
+ */
 struct nvgpu_nvs_domain *
 nvgpu_nvs_domain_by_name(struct gk20a *g, const char *name);
+
+/**
+ * @brief Increment the domain's reference counter
+ *
+ * Within a global scheduling lock, increment the corresponding domain's
+ * reference counter. Warn if zero already before increment as the init
+ * value is one.
+ *
+ * @param g [in] The GPU super structure. Function does not perform any
+ *	validation of the parameter.
+ * @param dom Input Domain. Need null check
+ */
 void nvgpu_nvs_domain_get(struct gk20a *g, struct nvgpu_nvs_domain *dom);
+
+/**
+ * @brief Decrement the domain's reference counter
+ *
+ * Within a global scheduling lock, decrement the corresponding domain's
+ * reference counter. Assert that value after decrement stays greater than
+ * zero.
+ *
+ * @param g [in] The GPU super structure. Function does not perform any
+ *	validation of the parameter.
+ * @param dom Input Domain. Need null check
+ */
 void nvgpu_nvs_domain_put(struct gk20a *g, struct nvgpu_nvs_domain *dom);
+
+/**
+ * @brief Return name corresponding to the domain.
+ *
+ * @param dom Input Domain, Need validation check
+ *
+ * @retval Return name of the domain.
+ * @retval NULL If domain_id doesn't exist.
+ */
 const char *nvgpu_nvs_domain_get_name(struct nvgpu_nvs_domain *dom);
 /*
  * Debug wrapper for NVS code.

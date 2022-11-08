@@ -824,6 +824,10 @@ int nvgpu_nvs_add_domain(struct gk20a *g, const char *name, u64 timeslice,
 	struct nvgpu_nvs_domain *nvgpu_dom;
 	struct nvgpu_nvs_scheduler *sched = g->scheduler;
 
+	if (name == NULL || pdomain == NULL) {
+		return -EINVAL;
+	}
+
 	nvgpu_mutex_acquire(&g->sched_mutex);
 
 	if (nvs_domain_by_name(g->scheduler->sched, name) != NULL) {
@@ -914,6 +918,10 @@ nvgpu_nvs_domain_by_name(struct gk20a *g, const char *name)
 	struct nvgpu_nvs_domain *dom = NULL;
 	struct nvgpu_nvs_scheduler *sched = g->scheduler;
 
+	if (name == NULL) {
+		return NULL;
+	}
+
 	nvgpu_log(g, gpu_dbg_nvs, "lookup %s", name);
 
 	nvgpu_mutex_acquire(&g->sched_mutex);
@@ -933,6 +941,10 @@ unlock:
 
 void nvgpu_nvs_domain_get(struct gk20a *g, struct nvgpu_nvs_domain *dom)
 {
+	if (dom == NULL) {
+		return;
+	}
+
 	nvgpu_mutex_acquire(&g->sched_mutex);
 	WARN_ON(dom->ref == 0U);
 	dom->ref++;
@@ -943,6 +955,10 @@ void nvgpu_nvs_domain_get(struct gk20a *g, struct nvgpu_nvs_domain *dom)
 
 void nvgpu_nvs_domain_put(struct gk20a *g, struct nvgpu_nvs_domain *dom)
 {
+	if (dom == NULL) {
+		return;
+	}
+
 	nvgpu_mutex_acquire(&g->sched_mutex);
 	dom->ref--;
 	WARN_ON(dom->ref == 0U);
@@ -1038,7 +1054,13 @@ u32 nvgpu_nvs_domain_count(struct gk20a *g)
 
 const char *nvgpu_nvs_domain_get_name(struct nvgpu_nvs_domain *dom)
 {
-	struct nvs_domain *nvs_dom = dom->parent;
+	struct nvs_domain *nvs_dom;
+
+	if (dom == NULL) {
+		return NULL;
+	}
+
+	nvs_dom = dom->parent;
 
 	return nvs_dom->name;
 }
@@ -1061,7 +1083,13 @@ void nvgpu_nvs_get_log(struct gk20a *g, s64 *timestamp, const char **msg)
 
 void nvgpu_nvs_print_domain(struct gk20a *g, struct nvgpu_nvs_domain *domain)
 {
-	struct nvs_domain *nvs_dom = domain->parent;
+	struct nvs_domain *nvs_dom;
+
+	if (domain == NULL) {
+		return;
+	}
+
+	nvs_dom = domain->parent;
 
 	nvs_dbg(g, "Domain %s", nvs_dom->name);
 	nvs_dbg(g, "  timeslice:     %llu ns", nvs_dom->timeslice_ns);
