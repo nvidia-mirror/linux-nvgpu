@@ -1,7 +1,7 @@
 /*
  * GA10B FB
  *
- * Copyright (c) 2020-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -150,7 +150,9 @@ void ga10b_fb_init_fs_state(struct gk20a *g)
 	nvgpu_log(g, gpu_dbg_fn, "initialize ga10b fb");
 
 #if defined(CONFIG_NVGPU_HAL_NON_FUSA)
-	g->ops.mssnvlink.init_soc_credits(g);
+	if (g->ops.mssnvlink.init_soc_credits != NULL) {
+		g->ops.mssnvlink.init_soc_credits(g);
+	}
 #endif
 	ga10b_fb_check_ltcs_count(g);
 

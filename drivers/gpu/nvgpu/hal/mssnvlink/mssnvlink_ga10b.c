@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -71,6 +71,10 @@ void ga10b_mssnvlink_init_soc_credits(struct gk20a *g)
 	u32 num_links;
 
 	uintptr_t mssnvlink_control[MSS_NVLINK_INTERNAL_NUM];
+
+	if (g->ops.mssnvlink.get_links == NULL) {
+		return;
+	}
 
 	if (nvgpu_platform_is_simulation(g)) {
 		nvgpu_log(g, gpu_dbg_info, "simulation platform: "
