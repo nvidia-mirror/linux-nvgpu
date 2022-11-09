@@ -46,14 +46,12 @@
  * number of bits, depending on chip).
  *
  * However, this does lead to some potential quirks: GPU addresses of different
- * CPU virtual addresses could alias (e.g B and B + 4GB will both result in the
- * same value when ANDing with 0xFFFFFFFF.
+ * CPU virtual addresses could alias (e.g B and B + 1024GB will both result in
+ * the same value when ANDing with 0xFFFFFFFFFF.
  *
- * If there is a buffer with an address range that crosses a 4GB boundary it'll
+ * If there is a buffer with an address range that crosses a 1024GB boundary it'll
  * be detected here. A more sophisticated buffer to GPU virtual address approach
- * could be taken, but for now this is probably sufficient. At least for one run
- * through the unit test framework, the CPU malloc() address range seemed to be
- * 0x555555000000 - this is a long way away from any 4GB boundary.
+ * could be taken, but for now this is probably sufficient.
  *
  * For invalid nvgpu_mems and nvgpu_mems with no cpu_va, just return NULL.
  * There's little else we can do. In many cases in the unit test FW we wind up
@@ -61,8 +59,8 @@
  */
 static u64 nvgpu_mem_userspace_get_addr(struct gk20a *g, struct nvgpu_mem *mem)
 {
-	u64 hi_front = ((u64)(uintptr_t)mem->cpu_va) & ~0xffffffffUL;
-	u64 hi_back  = ((u64)(uintptr_t)mem->cpu_va + mem->size - 1U) & ~0xffffffffUL;
+	u64 hi_front = ((u64)(uintptr_t)mem->cpu_va) & ~0xffffffffffUL;
+	u64 hi_back  = ((u64)(uintptr_t)mem->cpu_va + mem->size - 1U) & ~0xffffffffffUL;
 
 	if (!nvgpu_mem_is_valid(mem) || mem->cpu_va == NULL) {
 		return 0x0UL;
@@ -79,7 +77,7 @@ static u64 nvgpu_mem_userspace_get_addr(struct gk20a *g, struct nvgpu_mem *mem)
 
 	nvgpu_assert(hi_front == hi_back);
 
-	return ((u64)(uintptr_t)mem->cpu_va) & 0xffffffffUL;
+	return ((u64)(uintptr_t)mem->cpu_va) & 0xffffffffffUL;
 }
 
 u64 nvgpu_mem_get_addr(struct gk20a *g, struct nvgpu_mem *mem)
