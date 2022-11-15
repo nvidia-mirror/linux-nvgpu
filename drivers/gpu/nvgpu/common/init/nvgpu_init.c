@@ -738,7 +738,6 @@ static int nvgpu_early_init(struct gk20a *g)
 		NVGPU_INIT_TABLE_ENTRY(g->ops.bios.bios_sw_init, NO_FLAG),
 #endif
 		NVGPU_INIT_TABLE_ENTRY(&nvgpu_init_interrupt_setup, NO_FLAG),
-		NVGPU_INIT_TABLE_ENTRY(g->ops.bus.init_hw, NO_FLAG),
 #ifdef CONFIG_NVGPU_STATIC_POWERGATE
 		NVGPU_INIT_TABLE_ENTRY(&nvgpu_init_power_gate, NO_FLAG),
 		NVGPU_INIT_TABLE_ENTRY(&nvgpu_init_acquire_static_pg_lock, NO_FLAG),
@@ -746,6 +745,7 @@ static int nvgpu_early_init(struct gk20a *g)
 #endif
 		NVGPU_INIT_TABLE_ENTRY(g->ops.priv_ring.enable_priv_ring,
 				   NO_FLAG),
+		NVGPU_INIT_TABLE_ENTRY(g->ops.bus.init_hw, NO_FLAG),
 #ifdef CONFIG_NVGPU_NON_FUSA
 		NVGPU_INIT_TABLE_ENTRY(&nvgpu_ptimer_init, NO_FLAG),
 #endif
