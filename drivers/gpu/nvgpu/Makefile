@@ -1003,7 +1003,7 @@ nvgpu-y += \
 	common/nvs/nvs_sched.o \
 	common/nvs/nvs_sched_ctrl.o
 
-ifeq ($(CONFIG_NVS_KMD_BACKEND), y)
+ifeq ($(CONFIG_KMD_SCHEDULING_WORKER_THREAD), y)
 nvgpu-y += common/nvs/nvs-control-interface-parser.o
 endif
 

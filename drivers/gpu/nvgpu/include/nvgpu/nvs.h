@@ -256,7 +256,7 @@ const char *nvgpu_nvs_domain_get_name(struct nvgpu_nvs_domain *dom);
 void nvgpu_nvs_ctrl_fifo_lock_queues(struct gk20a *g);
 void nvgpu_nvs_ctrl_fifo_unlock_queues(struct gk20a *g);
 
-#ifdef CONFIG_NVS_KMD_BACKEND
+#ifdef CONFIG_KMD_SCHEDULING_WORKER_THREAD
 void nvgpu_nvs_worker_pause(struct gk20a *g);
 void nvgpu_nvs_worker_resume(struct gk20a *g);
 #endif
@@ -288,7 +288,7 @@ struct nvgpu_nvs_ctrl_queue *nvgpu_nvs_ctrl_fifo_get_queue(
 		enum nvgpu_nvs_ctrl_queue_direction queue_direction,
 		u8 *mask);
 
-#ifdef CONFIG_NVS_KMD_BACKEND
+#ifdef CONFIG_KMD_SCHEDULING_WORKER_THREAD
 struct nvs_control_fifo_receiver *nvgpu_nvs_domain_ctrl_fifo_get_receiver(struct gk20a *g);
 struct nvs_control_fifo_sender *nvgpu_nvs_domain_ctrl_fifo_get_sender(struct gk20a *g);
 void nvgpu_nvs_domain_ctrl_fifo_set_receiver(struct gk20a *g,

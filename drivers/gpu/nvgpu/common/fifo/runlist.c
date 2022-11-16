@@ -575,13 +575,24 @@ int nvgpu_runlist_reschedule(struct nvgpu_channel *ch, bool preempt_next,
 		g, g->pmu, PMU_MUTEX_ID_FIFO, &token);
 #endif
 
-#if defined(CONFIG_NVS_KMD_BACKEND)
+#if defined(CONFIG_NVS_PRESENT)
+	/*
+	 * This path(CONFIG_KMD_SCHEDULING_WORKER_THREAD) contains the CPU based
+	 * Manual mode scheduler. With GSP enabled, this will be no longer required
+	 * and can be disabled.
+	 */
+#if defined(CONFIG_KMD_SCHEDULING_WORKER_THREAD)
 	ret = g->nvs_worker_submit(g, runlist, runlist->domain, wait_preempt);
 	if (ret == 1) {
 		ret = 0;
 	} else if (ret != 0) {
 		goto done;
 	}
+#endif /* CONFIG_KMD_SCHEDULING_WORKER_THREAD */
+	/*
+	 * The else path is for some platforms that doesn't itself support
+	 * NVS. They take the traditional submit path used before NVS.
+	 */
 #else
 	ret = nvgpu_rl_domain_sync_submit(g, runlist, runlist->domain, wait_preempt);
 	if (ret != 0) {
@@ -645,12 +656,23 @@ static int nvgpu_runlist_do_update(struct gk20a *g, struct nvgpu_runlist *rl,
 #endif
 	ret = nvgpu_runlist_update_locked(g, rl, domain, ch, add, wait_for_finish);
 	if (ret == 0) {
-#if defined(CONFIG_NVS_KMD_BACKEND)
+#if defined(CONFIG_NVS_PRESENT)
+		/*
+		* This path(CONFIG_KMD_SCHEDULING_WORKER_THREAD) contains the CPU based
+		* Manual mode scheduler. With GSP enabled, this will be no longer required
+		* and can be disabled.
+		*/
+#if defined(CONFIG_KMD_SCHEDULING_WORKER_THREAD)
 		ret = g->nvs_worker_submit(g, rl, domain, wait_for_finish);
 		/* Deferred Update */
 		if (ret == 1) {
 			ret = 0;
 		}
+#endif /* CONFIG_KMD_SCHEDULING_WORKER_THREAD */
+		/*
+		* The else path is for some platforms that doesn't itself support
+		* NVS. They take the traditional submit path used before NVS.
+		*/
 #else
 		ret = nvgpu_rl_domain_sync_submit(g, rl, domain, wait_for_finish);
 #endif
@@ -722,7 +744,7 @@ int nvgpu_rl_domain_sync_submit(struct gk20a *g, struct nvgpu_runlist *runlist,
 	return err;
 }
 
-#ifdef CONFIG_NVS_KMD_BACKEND
+#ifdef CONFIG_KMD_SCHEDULING_WORKER_THREAD
 int nvgpu_runlist_tick(struct gk20a *g, struct nvgpu_runlist_domain **rl_domain,
 	u64 preempt_grace_ns)
 {

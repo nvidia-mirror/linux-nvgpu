@@ -238,7 +238,7 @@ nvgpu_runlist_domain_from_domains_list(struct nvgpu_list_node *node)
 int nvgpu_rl_domain_sync_submit(struct gk20a *g, struct nvgpu_runlist *runlist,
 		struct nvgpu_runlist_domain *next_domain, bool wait_for_finish);
 
-#ifdef CONFIG_NVS_KMD_BACKEND
+#ifdef CONFIG_KMD_SCHEDULING_WORKER_THREAD
 
 /**
  * @brief Submit the nvgpu_runlist_domain instance corresponding to a given domain.

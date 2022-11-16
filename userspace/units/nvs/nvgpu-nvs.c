@@ -52,7 +52,7 @@
 #include <nvgpu/nvs-control-interface-parser.h>
 #include "nvgpu-nvs.h"
 
-#ifdef CONFIG_NVS_KMD_BACKEND
+#ifdef CONFIG_KMD_SCHEDULING_WORKER_THREAD
 #define NUM_CHANNELS     5
 #define NUM_DOMAINS      4
 #define NUM_TSGS         NUM_CHANNELS
@@ -463,7 +463,7 @@ done:
 
 struct unit_module_test nvgpu_nvs_tests[] = {
 	UNIT_TEST(init_support, test_fifo_init_support, &nvs_context, 0),
-#ifdef CONFIG_NVS_KMD_BACKEND
+#ifdef CONFIG_KMD_SCHEDULING_WORKER_THREAD
 	UNIT_TEST(setup_sw, test_nvs_setup_sw, &nvs_context, 0),
 	UNIT_TEST(nvs_remove_support, test_nvs_remove_sw, &nvs_context, 0),
 #endif

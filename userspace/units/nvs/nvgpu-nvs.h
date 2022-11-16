@@ -33,7 +33,7 @@ struct gk20a;
  * Software Unit Test Specification for fifo/tsg
  */
 
-#ifdef CONFIG_NVS_KMD_BACKEND
+#ifdef CONFIG_KMD_SCHEDULING_WORKER_THREAD
 int test_nvs_setup_sw(struct unit_module *m,
 		struct gk20a *g, void *args);
 

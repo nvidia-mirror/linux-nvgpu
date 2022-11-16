@@ -404,7 +404,7 @@ int nvgpu_nvs_buffer_alloc(struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl,
 	int err;
 	struct gk20a *g = sched_ctrl->g;
 	struct vm_gk20a *system_vm = g->mm.pmu.vm;
-#ifdef CONFIG_NVS_KMD_BACKEND
+#ifdef CONFIG_KMD_SCHEDULING_WORKER_THREAD
 	struct nvs_control_fifo_receiver *send_queue_receiver;
 	struct nvs_control_fifo_sender *receiver_queue_sender;
 #endif
@@ -418,7 +418,7 @@ int nvgpu_nvs_buffer_alloc(struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl,
 		goto fail;
 	}
 
-#ifdef CONFIG_NVS_KMD_BACKEND
+#ifdef CONFIG_KMD_SCHEDULING_WORKER_THREAD
 	if (mask == NVGPU_NVS_CTRL_FIFO_QUEUE_EXCLUSIVE_CLIENT_WRITE) {
 		send_queue_receiver = nvs_control_fifo_receiver_initialize(g,
 			(struct nvs_domain_msg_fifo * const)buf->mem.cpu_va, bytes);
@@ -453,7 +453,7 @@ void nvgpu_nvs_buffer_free(struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl,
 	struct gk20a *g = sched_ctrl->g;
 	struct vm_gk20a *system_vm = g->mm.pmu.vm;
 	u8 mask = buf->mask;
-#ifdef CONFIG_NVS_KMD_BACKEND
+#ifdef CONFIG_KMD_SCHEDULING_WORKER_THREAD
 	struct nvs_control_fifo_receiver * const send_queue_receiver =
 		nvgpu_nvs_domain_ctrl_fifo_get_receiver(g);
 	struct nvs_control_fifo_sender * const receiver_queue_sender =
@@ -539,7 +539,7 @@ void nvgpu_nvs_ctrl_fifo_erase_queue(struct gk20a *g, struct nvgpu_nvs_ctrl_queu
 	}
 }
 
-#ifdef CONFIG_NVS_KMD_BACKEND
+#ifdef CONFIG_KMD_SCHEDULING_WORKER_THREAD
 static int nvgpu_nvs_ctrl_fifo_scheduler_process_caps_request(struct gk20a *g,
 		struct nvs_control_fifo_receiver * const send_queue_receiver,
 		struct nvs_control_fifo_sender * const receiver_queue_sender)
@@ -703,5 +703,5 @@ int nvgpu_nvs_ctrl_fifo_scheduler_handle_requests(struct gk20a *g)
 
 	return ret;
 }
-#endif /* CONFIG_NVS_KMD_BACKEND */
+#endif /* CONFIG_KMD_SCHEDULING_WORKER_THREAD */
 

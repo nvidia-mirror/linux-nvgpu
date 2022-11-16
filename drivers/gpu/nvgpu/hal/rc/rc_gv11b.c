@@ -122,7 +122,13 @@ static void gv11b_fifo_locked_abort_runlist_active_tsgs(struct gk20a *g,
 			if (err != 0) {
 				nvgpu_err(g, "runlist id %d is not cleaned up", runlist->id);
 			}
-#if defined(CONFIG_NVS_KMD_BACKEND)
+#if defined(CONFIG_NVS_PRESENT)
+			/*
+			 * This path(CONFIG_KMD_SCHEDULING_WORKER_THREAD) contains the CPU based
+			 * Manual mode scheduler. With GSP enabled, this will be no longer required
+			 * and can be disabled.
+			 */
+#if defined(CONFIG_KMD_SCHEDULING_WORKER_THREAD)
 			/* Special case. Submit the recovery runlist now */
 			err = g->nvs_worker_submit(g, runlist, runlist->domain, false);
 			if (err == 1) {
@@ -130,6 +136,11 @@ static void gv11b_fifo_locked_abort_runlist_active_tsgs(struct gk20a *g,
 			} else if (err != 0) {
 				nvgpu_err(g, "runlist id %d is not cleaned up", runlist->id);
 			}
+#endif /*CONFIG_KMD_SCHEDULING_WORKER_THREAD*/
+			/*
+			 * The else path is for some traditional platforms that doesn't itself support
+			 * NVS. They take the traditional submit path used before NVS.
+			 */
 #else
 			err = nvgpu_rl_domain_sync_submit(g, runlist, runlist->domain, false);
 			if (err != 0) {

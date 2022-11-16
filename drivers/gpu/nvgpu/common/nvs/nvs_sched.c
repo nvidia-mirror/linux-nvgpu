@@ -38,7 +38,7 @@ static struct nvs_sched_ops nvgpu_nvs_ops = {
 	.recover = NULL,
 };
 
-#ifdef CONFIG_NVS_KMD_BACKEND
+#ifdef CONFIG_KMD_SCHEDULING_WORKER_THREAD
 
 #ifndef NSEC_PER_MSEC
 #define NSEC_PER_MSEC 1000000U
@@ -519,7 +519,7 @@ static void nvgpu_nvs_worker_deinit(struct gk20a *g)
 
 	nvs_dbg(g, "NVS worker suspended");
 }
-#endif /* CONFIG_NVS_KMD_BACKEND */
+#endif /* CONFIG_KMD_SCHEDULING_WORKER_THREAD */
 
 static struct nvgpu_nvs_domain *
 	nvgpu_nvs_gen_domain(struct gk20a *g, const char *name, u64 id,
@@ -695,7 +695,7 @@ int nvgpu_nvs_open(struct gk20a *g)
 	if (g->scheduler != NULL) {
 		/* resuming from railgate */
 		nvgpu_mutex_release(&g->sched_mutex);
-#ifdef CONFIG_NVS_KMD_BACKEND
+#ifdef CONFIG_KMD_SCHEDULING_WORKER_THREAD
 		nvgpu_nvs_worker_resume(g);
 #endif
 		return err;
@@ -742,7 +742,7 @@ int nvgpu_nvs_open(struct gk20a *g)
 	/* Ensure all the previous writes are seen */
 	nvgpu_wmb();
 
-#ifdef CONFIG_NVS_KMD_BACKEND
+#ifdef CONFIG_KMD_SCHEDULING_WORKER_THREAD
 	err = nvgpu_nvs_worker_init(g);
 	if (err != 0) {
 		nvgpu_nvs_remove_shadow_domain(g);

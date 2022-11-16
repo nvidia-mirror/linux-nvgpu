@@ -917,7 +917,7 @@ struct gk20a {
 	struct nvgpu_nvs_scheduler *scheduler;
 	struct nvgpu_mutex sched_mutex;
 
-#ifdef CONFIG_NVS_KMD_BACKEND
+#ifdef CONFIG_KMD_SCHEDULING_WORKER_THREAD
 	/**
 	 * A global interface to notify NVS thread about a domain
 	 * modification. Wakes up the worker thread to process domain

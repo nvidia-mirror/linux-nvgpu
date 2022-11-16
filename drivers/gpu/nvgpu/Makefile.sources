@@ -192,7 +192,7 @@ endif
 ifeq ($(CONFIG_NVS_PRESENT),1)
 srcs += common/nvs/nvs_sched_ctrl.c \
 	common/nvs/nvs_sched.c
-ifeq ($(CONFIG_NVS_KMD_BACKEND),1)
+ifeq ($(CONFIG_KMD_SCHEDULING_WORKER_THREAD),1)
 srcs += common/nvs/nvs-control-interface-parser.c
 endif
 endif
