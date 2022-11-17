@@ -59,8 +59,8 @@ struct sim_nvgpu {
 #elif defined(__NVGPU_POSIX__) || defined(NVGPU_HVRTOS)
 /* Nothing for POSIX-nvgpu and nvgpu_hvrtos. */
 #else
-#include <nvgpu_rmos/include/sim.h>
-#include <nvgpu_rmos/include/sim_pci.h>
+#include <nvgpu/qnx/sim.h>
+#include <nvgpu/qnx/sim_pci.h>
 #endif
 int nvgpu_init_sim_support(struct gk20a *g);
 int nvgpu_init_sim_support_pci(struct gk20a *g);

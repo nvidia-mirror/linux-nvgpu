@@ -35,7 +35,7 @@
 #elif defined(NVGPU_HVRTOS)
 #include <nvgpu_hvrtos/barrier.h>
 #else
-#include <nvgpu_rmos/include/barrier.h>
+#include <nvgpu/qnx/barrier.h>
 #endif
 
 #define nvgpu_mb()	nvgpu_mb_impl()

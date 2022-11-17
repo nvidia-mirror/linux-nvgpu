@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,7 +28,7 @@
 #elif defined(__NVGPU_POSIX__)
 #include <nvgpu/posix/pci.h>
 #elif defined(__QNX__)
-#include <nvgpu_rmos/include/pci.h>
+#include <nvgpu/qnx/pci.h>
 #else
 /*
  * In case someone tries to use this without implementing support!

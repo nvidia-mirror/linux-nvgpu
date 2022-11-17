@@ -96,7 +96,7 @@ struct nvgpu_os_buffer;
 #include <nvgpu_hvrtos/vm.h>
 #else
 /* QNX include goes here. */
-#include <nvgpu_rmos/include/vm.h>
+#include <nvgpu/qnx/vm.h>
 #endif
 
 #define NVGPU_VM_NAME_LEN	32U

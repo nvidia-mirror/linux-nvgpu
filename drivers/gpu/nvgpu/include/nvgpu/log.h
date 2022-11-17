@@ -30,7 +30,7 @@
 #elif defined(NVGPU_HVRTOS)
 #include <nvgpu_hvrtos/log.h>
 #else
-#include <nvgpu_rmos/include/log.h>
+#include <nvgpu/qnx/log.h>
 #endif
 
 #ifdef CONFIG_NVGPU_NON_FUSA

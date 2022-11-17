@@ -35,7 +35,7 @@
 #elif defined(NVGPU_HVRTOS)
 #include <nvgpu_hvrtos/nvgpu_mem.h>
 #else
-#include <nvgpu_rmos/include/nvgpu_mem.h>
+#include <nvgpu/qnx/nvgpu_mem.h>
 #endif
 
 /**
