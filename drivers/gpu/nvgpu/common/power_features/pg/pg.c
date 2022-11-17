@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -129,13 +129,19 @@ int nvgpu_pg_elpg_ms_enable(struct gk20a *g)
 		return 0;
 	}
 
-	if (g->pmu->pg->initialized) {
+	/*
+	 * If elpg and elpg_ms flags are set to true
+	 * and pg is initialized then only we wait
+	 * for gr init. In rmmod path, the gr struct
+	 * could be freed earlier. In order to avoid
+	 * NULL access for gr, we check for these
+	 * conditions then proceed further.
+	 */
+	if ((g->elpg_enabled) && (g->elpg_ms_enabled) &&
+		(g->pmu->pg->initialized)) {
 		g->ops.gr.init.wait_initialized(g);
-
 		nvgpu_mutex_acquire(&g->cg_pg_lock);
-		if ((g->elpg_enabled) && (g->elpg_ms_enabled)) {
-			err = nvgpu_pmu_enable_elpg_ms(g);
-		}
+		err = nvgpu_pmu_enable_elpg_ms(g);
 		nvgpu_mutex_release(&g->cg_pg_lock);
 	}
 #endif
@@ -152,14 +158,17 @@ int nvgpu_pg_elpg_ms_disable(struct gk20a *g)
 		return 0;
 	}
 
-	if (g->pmu->pg->initialized) {
-		g->ops.gr.init.wait_initialized(g);
-
-		nvgpu_mutex_acquire(&g->cg_pg_lock);
-		if ((g->elpg_enabled) && (g->elpg_ms_enabled)) {
+	/*
+	 * If elpg and elpg_ms flags are set to true
+	 * then only we check further conditions.
+	 */
+	if ((g->elpg_enabled) && (g->elpg_ms_enabled)) {
+		if (g->pmu->pg->initialized) {
+			g->ops.gr.init.wait_initialized(g);
+			nvgpu_mutex_acquire(&g->cg_pg_lock);
 			err = nvgpu_pmu_disable_elpg_ms(g);
+			nvgpu_mutex_release(&g->cg_pg_lock);
 		}
-		nvgpu_mutex_release(&g->cg_pg_lock);
 	}
 #endif
 	return err;
