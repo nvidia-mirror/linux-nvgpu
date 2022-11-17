@@ -145,6 +145,7 @@ srcs +=	common/device.c \
 	common/acr/acr_wpr.c \
 	common/acr/acr_blob_alloc.c \
 	common/acr/acr_blob_construct.c \
+	common/acr/acr_blob_construct_v2.c \
 	common/acr/acr_bootstrap.c \
 	common/acr/acr_sw_gv11b.c \
 	common/ptimer/ptimer.c \

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,9 +27,31 @@
 #include <nvgpu/flcnif_cmn.h>
 #include <nvgpu/pmu.h>
 
-#include "nvgpu_acr_interface.h"
+#include "nvgpu_acr_interface_v2.h"
+
+#define APP_IMEM_OFFSET			(0)
+#define APP_IMEM_ENTRY			(0)
+#define APP_DMEM_OFFSET			(0)
+#define APP_RESIDENT_CODE_OFFSET	(0)
+#define MEMSET_VALUE			(0)
+#define LSB_HDR_DATA_SIZE		(0)
+#define BL_START_OFFSET			(0)
+
+#if defined(CONFIG_NVGPU_DGPU) || defined(CONFIG_NVGPU_LS_PMU)
+#define UCODE_PARAMS			(1)
+#define UCODE_DESC_TOOL_VERSION		0x4U
+#else
+#define UCODE_PARAMS			(0)
+#endif
+
+#ifdef CONFIG_NVGPU_LS_PMU
+#if defined(CONFIG_NVGPU_NON_FUSA)
+#define PMU_NVRISCV_WPR_RSVD_BYTES	(0x8000)
+#endif
+#endif
 
 #define UCODE_NB_MAX_DATE_LENGTH  64U
+
 struct ls_falcon_ucode_desc {
 	u32 descriptor_size;
 	u32 image_size;
@@ -96,8 +118,10 @@ struct flcn_ucode_img {
 struct lsfm_managed_ucode_img {
 	struct lsfm_managed_ucode_img *next;
 	struct lsf_wpr_header wpr_header;
+	LSF_WPR_HEADER_WRAPPER wpr_header_wrapper;
 	struct lsf_lsb_header lsb_header;
-	struct lsf_lsb_header_v2 lsb_header_v2;
+	struct lsf_lsb_header_v1 lsb_header_v1;
+	LSF_LSB_HEADER_WRAPPER lsb_header_v2;
 	struct flcn_bl_dmem_desc bl_gen_desc;
 	u32 bl_gen_desc_size;
 	u32 full_ucode_size;
@@ -140,6 +164,7 @@ struct ls_flcn_mgr {
 };
 
 int nvgpu_acr_prepare_ucode_blob(struct gk20a *g);
+void nvgpu_acr_free_resources(struct gk20a *g, struct ls_flcn_mgr *plsfm);
 #ifdef CONFIG_NVGPU_LS_PMU
 int nvgpu_acr_lsf_pmu_ucode_details(struct gk20a *g, void *lsf_ucode_img);
 s32 nvgpu_acr_lsf_pmu_ncore_ucode_details(struct gk20a *g, void *lsf_ucode_img);

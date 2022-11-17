@@ -281,12 +281,12 @@ struct lsf_ucode_desc {
 #define LS_ENCRYPTION_AES_CBC_IV_SIZE_BYTE      (16)
 
 /*!
- * WPR generic struct header
- * identifier - To identify type of WPR struct i.e. WPR vs SUBWPR vs LSB vs LSF_UCODE_DESC
+ * ACR generic struct header
+ * identifier - To identify type of ACR struct i.e. WPR vs SUBWPR vs LSB vs LSF_UCODE_DESC
  * version    - To specify version of struct, for backward compatibility
  * size       - Size of struct, include header and body
  */
-struct wpr_generic_header {
+struct acr_generic_header {
 	u16 identifier;
 	u16 version;
 	u32 size;
@@ -326,7 +326,7 @@ struct lsf_ucode_desc_v2 {
  * The wrapper for LSF_UCODE_DESC, start support from version 2.
  */
 struct lsf_ucode_desc_wrapper {
-	struct wpr_generic_header generic_hdr;
+	struct acr_generic_header generic_hdr;
 
 	union {
 		struct lsf_ucode_desc_v2 lsf_ucode_desc_v2;
@@ -441,7 +441,7 @@ struct lsf_lsb_header {
 	u32 flags;
 };
 
-struct lsf_lsb_header_v2 {
+struct lsf_lsb_header_v1 {
 	/** Code/data signature details of each LS falcon */
 	struct lsf_ucode_desc_wrapper signature;
 	/**

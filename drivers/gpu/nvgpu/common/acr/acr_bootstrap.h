@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,7 +23,7 @@
 #ifndef ACR_BOOTSTRAP_H
 #define ACR_BOOTSTRAP_H
 
-#include "nvgpu_acr_interface.h"
+#include "nvgpu_acr_interface_v2.h"
 
 struct gk20a;
 struct nvgpu_acr;
@@ -115,6 +115,7 @@ struct hs_acr {
 
 	struct nvgpu_mem acr_falcon2_sysmem_desc;
 	struct flcn2_acr_desc acr_sysmem_desc;
+	RM_RISCV_ACR_DESC_WRAPPER acr_sysmem_desc_v1;
 	struct nvgpu_mem ls_pmu_desc;
 
 	/* Falcon used to execute ACR ucode */

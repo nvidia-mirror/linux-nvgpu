@@ -35,7 +35,7 @@
 #include "common/acr/acr_wpr.h"
 #include "common/acr/acr_priv.h"
 #include "common/acr/acr_blob_alloc.h"
-#include "common/acr/acr_blob_construct.h"
+#include "common/acr/acr_blob_construct_v2.h"
 #include "common/acr/acr_bootstrap.h"
 #include "common/acr/acr_sw_gv11b.h"
 #include "acr_sw_ga10b.h"
@@ -75,6 +75,133 @@ static int ga10b_bootstrap_hs_acr(struct gk20a *g, struct nvgpu_acr *acr)
 	return err;
 }
 
+#ifndef CONFIG_NVGPU_NON_FUSA
+static int ga10b_safety_acr_patch_wpr_info_to_ucode(struct gk20a *g,
+	struct nvgpu_acr *acr, struct hs_acr *acr_desc, bool is_recovery)
+{
+	int err = 0;
+	struct nvgpu_mem *acr_falcon2_sysmem_desc =
+					&acr_desc->acr_falcon2_sysmem_desc;
+	RM_RISCV_ACR_DESC_WRAPPER  *acr_sysmem_desc = &acr_desc->acr_sysmem_desc_v1;
+
+	(void)acr;
+	(void)is_recovery;
+
+	nvgpu_log_fn(g, " ");
+
+#ifdef CONFIG_NVGPU_NON_FUSA
+	if (is_recovery) {
+		/*
+		 * In case of recovery ucode blob size is 0 as it has already
+		 * been authenticated during cold boot.
+		 */
+		if (!nvgpu_mem_is_valid(&acr_desc->acr_falcon2_sysmem_desc)) {
+			nvgpu_err(g, "invalid mem acr_falcon2_sysmem_desc");
+			return -EINVAL;
+                }
+		/*
+		 * In T234 the CTXSW LS ucodes are encrypted. ACR will perform the
+		 * decryption and the decrypted content will be written back
+		 * into the same WPR location. So on recovery with LSPMU absence
+		 * and on warm boot case, to perform the authentication , the ucode
+		 * blob needs to be copied into the WPR from sysmem always.
+		 * Below are the LS ucodes authentication type
+		 * 	LSPMU - Only Signed ( Only for non-safety build, for safety LSPMU is NA)
+		 * 	CTXSW FECS/GPCCS - Encrypted and Signed (on both safety
+		 * 			   and non-safety build)
+		 */
+		if (!acr->is_lsf_encrypt_support) {
+			acr_sysmem_desc->acrDesc.riscvAcrDescV1.regionDesc[0].nonWprBlobSize =
+							RECOVERY_UCODE_BLOB_SIZE;
+		}
+	} else
+#endif
+        {
+		/*
+		 * Alloc space for  sys mem space to which interface struct is
+		 * copied.
+		 */
+		if (!nvgpu_mem_is_valid(acr_falcon2_sysmem_desc)) {
+			err = nvgpu_dma_alloc_flags_sys(g,
+				NVGPU_DMA_PHYSICALLY_ADDRESSED,
+				sizeof(RM_RISCV_ACR_DESC_WRAPPER ),
+				acr_falcon2_sysmem_desc);
+			if (err != 0) {
+				nvgpu_err(g, "alloc for sysmem desc failed");
+				goto end;
+			}
+		} else {
+			/*
+			 * In T234 the CTXSW LS ucodes are encrypted. ACR will perform the
+			 * decryption and the decrypted content will be written back
+			 * into the same WPR location. So on recovery with LSPMU absence
+			 * and on warm boot case, to perform the authentication , the ucode
+			 * blob needs to be copied into the WPR from sysmem always.
+			 * Below are the LS ucodes authentication type
+			 * 	LSPMU - Only Signed ( Only for non-safety build, for safety LSPMU is NA)
+			 * 	CTXSW FECS/GPCCS - Encrypted and Signed (on both safety
+			 * 							and non-safety build
+			 */
+			if (!acr->is_lsf_encrypt_support) {
+				acr_sysmem_desc->acrDesc.riscvAcrDescV1.regionDesc[0].nonWprBlobSize =
+							RECOVERY_UCODE_BLOB_SIZE;
+			}
+			goto load;
+		}
+
+		/*
+		 * Generic header info for ACR descriptor.
+		 */
+		acr_sysmem_desc->genericHdr.size = RM_RISCV_ACR_DESC_V1_WRAPPER_SIZE_BYTE;
+		acr_sysmem_desc->genericHdr.version = ACR_DESC_GENERIC_HEADER_VERSION_1;
+		acr_sysmem_desc->genericHdr.identifier = WPR_GENERIC_HEADER_ID_ACR_DESC_HEADER;
+
+		/*
+		 * Start address of non wpr sysmem region holding ucode blob.
+		 */
+		acr_sysmem_desc->acrDesc.riscvAcrDescV1.regionDesc[0].nonWprBlobStart =
+			nvgpu_mem_get_addr(g, &g->acr->ucode_blob);
+		/*
+		 * LS ucode blob size.
+		 */
+		nvgpu_assert(g->acr->ucode_blob.size <= U32_MAX);
+		acr_sysmem_desc->acrDesc.riscvAcrDescV1.regionDesc[0].nonWprBlobSize =
+			(u32)g->acr->ucode_blob.size;
+
+		if (nvgpu_is_enabled(g, NVGPU_SUPPORT_EMULATE_MODE) &&
+				(g->emulate_mode < EMULATE_MODE_MAX_CONFIG)) {
+			acr_sysmem_desc->acrDesc.riscvAcrDescV1.mode &= (~EMULATE_MODE_MASK);
+			acr_sysmem_desc->acrDesc.riscvAcrDescV1.mode |= g->emulate_mode;
+		} else {
+			acr_sysmem_desc->acrDesc.riscvAcrDescV1.mode &= (~EMULATE_MODE_MASK);
+		}
+
+		if (nvgpu_is_enabled(g, NVGPU_SUPPORT_MIG)) {
+			acr_sysmem_desc->acrDesc.riscvAcrDescV1.mode |= MIG_MODE;
+		} else {
+			acr_sysmem_desc->acrDesc.riscvAcrDescV1.mode &= (u32)(~MIG_MODE);
+		}
+
+		if (nvgpu_platform_is_simulation(g)) {
+			acr_sysmem_desc->acrDesc.riscvAcrDescV1.mode |= ACR_SIMULATION_MODE;
+		} else {
+			acr_sysmem_desc->acrDesc.riscvAcrDescV1.mode &= (u32)(~ACR_SIMULATION_MODE);
+		}
+	}
+
+load:
+	/*
+	 * Push the acr descriptor data to sysmem.
+	 */
+	nvgpu_mem_wr_n(g, acr_falcon2_sysmem_desc, 0U,
+				acr_sysmem_desc,
+					sizeof(RM_RISCV_ACR_DESC_WRAPPER ));
+
+end:
+	return err;
+}
+
+#else
 static int ga10b_acr_patch_wpr_info_to_ucode(struct gk20a *g,
 	struct nvgpu_acr *acr, struct hs_acr *acr_desc, bool is_recovery)
 {
@@ -116,7 +243,7 @@ static int ga10b_acr_patch_wpr_info_to_ucode(struct gk20a *g,
 		 */
 		if (!acr->is_lsf_encrypt_support) {
 			acr_sysmem_desc->nonwpr_ucode_blob_size =
-						RECOVERY_UCODE_BLOB_SIZE;
+					RECOVERY_UCODE_BLOB_SIZE;
 		}
 	} else
 #endif
@@ -148,7 +275,7 @@ static int ga10b_acr_patch_wpr_info_to_ucode(struct gk20a *g,
 			 */
 			if (!acr->is_lsf_encrypt_support) {
 				acr_sysmem_desc->nonwpr_ucode_blob_size =
-						RECOVERY_UCODE_BLOB_SIZE;
+					RECOVERY_UCODE_BLOB_SIZE;
 			}
 			goto load;
 		}
@@ -226,6 +353,7 @@ load:
 end:
 	return err;
 }
+#endif
 
 /* LSF static config functions */
 #ifdef CONFIG_NVGPU_LS_PMU
@@ -401,11 +529,20 @@ static void ga10b_acr_sw_init(struct gk20a *g, struct nvgpu_acr *acr)
 
 	ga10b_acr_default_sw_init(g, &acr->acr_asc);
 
+#ifndef CONFIG_NVGPU_NON_FUSA
+	acr->prepare_ucode_blob = nvgpu_acr_prepare_ucode_blob_v2;
+#else
 	acr->prepare_ucode_blob = nvgpu_acr_prepare_ucode_blob;
+#endif
+
 	acr->get_wpr_info = nvgpu_acr_wpr_info_sys;
 	acr->alloc_blob_space = nvgpu_acr_alloc_blob_space_sys;
 	acr->bootstrap_hs_acr = ga10b_bootstrap_hs_acr;
+#ifndef CONFIG_NVGPU_NON_FUSA
+	acr->patch_wpr_info_to_ucode = ga10b_safety_acr_patch_wpr_info_to_ucode;
+#else
 	acr->patch_wpr_info_to_ucode = ga10b_acr_patch_wpr_info_to_ucode;
+#endif
 }
 
 
