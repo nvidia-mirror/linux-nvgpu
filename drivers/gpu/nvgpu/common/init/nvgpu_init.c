@@ -558,10 +558,12 @@ static int nvgpu_init_boot_clk_or_clk_arb(struct gk20a *g)
 #endif
 	{
 #ifdef CONFIG_NVGPU_CLK_ARB
-		err = g->ops.clk_arb.clk_arb_init_arbiter(g);
-		if (err != 0) {
-			nvgpu_err(g, "failed to init clk arb");
-			return err;
+		if (g->ops.clk_arb.clk_arb_init_arbiter != NULL) {
+			err = g->ops.clk_arb.clk_arb_init_arbiter(g);
+			if (err != 0) {
+				nvgpu_err(g, "failed to init clk arb");
+				return err;
+			}
 		}
 #endif
 	}
@@ -586,7 +588,9 @@ static int nvgpu_init_set_debugger_mode(struct gk20a *g)
 	(void)g;
 #ifdef CONFIG_NVGPU_DEBUGGER
 	/* Restore the debug setting */
-	g->ops.fb.set_debug_mode(g, g->mmu_debug_ctrl);
+	if (g->ops.fb.set_debug_mode != NULL) {
+		g->ops.fb.set_debug_mode(g, g->mmu_debug_ctrl);
+	}
 #endif
 	return 0;
 }
@@ -709,8 +713,8 @@ struct nvgpu_init_table_t {
 
 static bool needs_init(struct gk20a *g, nvgpu_init_func_t func, u32 enable_flag)
 {
-	return ((enable_flag == NO_FLAG) ||
-		nvgpu_is_enabled(g, enable_flag)) && (func != NULL);
+	return (func != NULL) && ((enable_flag == NO_FLAG) ||
+		nvgpu_is_enabled(g, enable_flag));
 }
 
 static int nvgpu_early_init(struct gk20a *g)
