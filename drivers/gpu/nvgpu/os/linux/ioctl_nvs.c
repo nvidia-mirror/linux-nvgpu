@@ -612,9 +612,15 @@ int nvgpu_nvs_ctrl_fifo_ops_open(struct inode *inode, struct file *filp)
 	int err = 0;
 	struct nvgpu_nvs_domain_ctrl_fifo_user_linux *linux_user;
 	bool writable = filp->f_mode & FMODE_WRITE;
+	bool readable = filp->f_mode & FMODE_READ;
 
 	cdev = container_of(inode->i_cdev, struct nvgpu_cdev, cdev);
 	g = nvgpu_get_gk20a_from_cdev(cdev);
+
+	if (!writable && !readable) {
+		nvgpu_err(g, "User doesn't have adequate permission to open this device");
+		return -EOPNOTSUPP;
+	}
 
 	err = gk20a_busy(g);
 	if (err != 0) {
