@@ -1114,8 +1114,8 @@ int nvgpu_init_gpu_characteristics(struct gk20a *g)
 	nvgpu_set_enabled(g, NVGPU_SUPPORT_TSG, true);
 
 #ifdef CONFIG_NVGPU_CLK_ARB
-	if ((g->ops.clk_arb.check_clk_arb_support != NULL) &&
-			(nvgpu_is_enabled(g, NVGPU_CLK_ARB_ENABLED))){
+	if ((nvgpu_is_enabled(g, NVGPU_CLK_ARB_ENABLED)) &&
+			(g->ops.clk_arb.check_clk_arb_support != NULL)) {
 		if (g->ops.clk_arb.check_clk_arb_support(g)) {
 			nvgpu_set_enabled(g, NVGPU_SUPPORT_CLOCK_CONTROLS,
 					true);

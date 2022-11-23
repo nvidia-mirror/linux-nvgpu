@@ -28,7 +28,8 @@
 
 bool gp10b_check_clk_arb_support(struct gk20a *g)
 {
-	if (g->ops.clk_arb.get_arbiter_clk_domains != NULL) {
+	if ((nvgpu_is_enabled(g, NVGPU_CLK_ARB_ENABLED)) &&
+			g->ops.clk_arb.get_arbiter_clk_domains != NULL) {
 		return true;
 	}
 	else {

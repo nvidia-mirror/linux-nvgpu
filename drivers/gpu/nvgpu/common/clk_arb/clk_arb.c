@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -441,7 +441,8 @@ int nvgpu_clk_arb_init_arbiter(struct gk20a *g)
 {
 	int err = 0;
 
-	if (g->ops.clk_arb.check_clk_arb_support != NULL) {
+	if ((nvgpu_is_enabled(g, NVGPU_CLK_ARB_ENABLED)) &&
+			(g->ops.clk_arb.check_clk_arb_support != NULL)) {
 		if (!g->ops.clk_arb.check_clk_arb_support(g)) {
 			return 0;
 		}
