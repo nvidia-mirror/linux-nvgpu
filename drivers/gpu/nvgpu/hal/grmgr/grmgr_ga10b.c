@@ -870,14 +870,14 @@ int ga10b_grmgr_get_gpc_instance_gpcgrp_id(struct gk20a *g,
 		u32 gpu_instance_id, u32 gr_syspipe_id, u32 *gpcgrp_id)
 {
 
-	if ((gpu_instance_id >= smcarb_allowed_swizzid__size1_v()) ||
+	if ((gpu_instance_id >= g->ops.grmgr.get_allowed_swizzid_size(g)) ||
 		(gr_syspipe_id >= g->ops.grmgr.get_max_sys_pipes(g)) ||
 		(gpcgrp_id == NULL)) {
 		nvgpu_err(g,
 			"[Invalid_param] gr_syspipe_id[%u %u] gpu_instance_id[%u %u] "
 				"or gpcgrp_id == NULL ",
 				gr_syspipe_id, g->ops.grmgr.get_max_sys_pipes(g),
-				gpu_instance_id, smcarb_allowed_swizzid__size1_v());
+				gpu_instance_id, g->ops.grmgr.get_allowed_swizzid_size(g));
 		return -EINVAL;
 	}
 
