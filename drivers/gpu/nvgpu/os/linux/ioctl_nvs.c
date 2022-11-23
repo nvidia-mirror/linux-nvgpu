@@ -628,7 +628,7 @@ int nvgpu_nvs_ctrl_fifo_ops_open(struct inode *inode, struct file *filp)
 		return err;
 	}
 
-	if (!nvgpu_is_enabled(g, NVGPU_SUPPORT_NVS_CTRL_FIFO)) {
+	if (!nvgpu_is_enabled(g, NVGPU_SUPPORT_NVS)) {
 		gk20a_idle(g);
 		return -EOPNOTSUPP;
 	}
@@ -1115,7 +1115,7 @@ long nvgpu_nvs_ctrl_fifo_ops_ioctl(struct file *filp, unsigned int cmd, unsigned
 		struct nvgpu_nvs_ctrl_fifo_scheduler_characteristics_args *args =
 			(struct nvgpu_nvs_ctrl_fifo_scheduler_characteristics_args *)buf;
 
-		if (!nvgpu_is_enabled(g, NVGPU_SUPPORT_NVS_CTRL_FIFO)) {
+		if (!nvgpu_is_enabled(g, NVGPU_SUPPORT_NVS)) {
 			err = -EOPNOTSUPP;
 			return err;
 		}

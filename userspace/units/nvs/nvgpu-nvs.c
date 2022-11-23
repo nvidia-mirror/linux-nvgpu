@@ -332,7 +332,6 @@ int test_nvs_setup_sw(struct unit_module *m,
 		NVGPU_SETUP_BIND_FLAGS_USERMODE_SUPPORT;
 
 	nvgpu_set_enabled(g, NVGPU_SUPPORT_NVS, true);
-	nvgpu_set_enabled(g, NVGPU_SUPPORT_NVS_CTRL_FIFO, true);
 
 	err = nvgpu_nvs_init(g);
 

@@ -710,7 +710,7 @@ int nvgpu_nvs_open(struct gk20a *g)
 	nvgpu_atomic64_set(&g->scheduler->id_counter, 0);
 	nvgpu_smp_wmb();
 
-	if (nvgpu_is_enabled(g, NVGPU_SUPPORT_NVS_CTRL_FIFO)) {
+	if (nvgpu_is_enabled(g, NVGPU_SUPPORT_NVS)) {
 		g->sched_ctrl_fifo = nvgpu_nvs_ctrl_fifo_create(g);
 		if (g->sched_ctrl_fifo == NULL) {
 			err = -ENOMEM;

@@ -201,8 +201,6 @@ struct nvgpu_gpu_zbc_query_table_args {
 #define NVGPU_GPU_FLAGS_SUPPORT_VAB		(1ULL << 52)
 /* The NVS scheduler interface is usable */
 #define NVGPU_GPU_FLAGS_SUPPORT_NVS		(1ULL << 53)
-/* The NVS control fifo interface is usable */
-#define NVGPU_GPU_FLAGS_SUPPORT_NVS_SCHED_CTRL_FIFO		(1ULL << 54)
 /* Flag to indicate whether implicit ERRBAR is supported */
 #define NVGPU_GPU_FLAGS_SCHED_EXIT_WAIT_FOR_ERRBAR_SUPPORTED    (1ULL << 55)
 /* Flag to indicate whether multi-process TSG sharing is supported */
