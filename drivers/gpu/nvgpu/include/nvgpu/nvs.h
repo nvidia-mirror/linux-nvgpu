@@ -285,18 +285,6 @@ enum nvgpu_nvs_ctrl_queue_direction {
  */
 #define NVGPU_NVS_CTRL_FIFO_QUEUE_CLIENT_EVENTS_READ 4U
 
-/*
- * Direction of the requested queue is from CLIENT(producer)
- * to SCHEDULER(consumer).
- */
-#define NVGPU_NVS_CTRL_FIFO_QUEUE_DIRECTION_CLIENT_TO_SCHEDULER 0
-
-/*
- * Direction of the requested queue is from SCHEDULER(producer)
- * to CLIENT(consumer).
- */
-#define NVGPU_NVS_CTRL_FIFO_QUEUE_DIRECTION_SCHEDULER_TO_CLIENT 1
-
 /* Structure to hold control_queues. This can be then passed to GSP or Rm based subscheduler. */
 struct nvgpu_nvs_ctrl_queue {
 	struct nvgpu_mem	mem;

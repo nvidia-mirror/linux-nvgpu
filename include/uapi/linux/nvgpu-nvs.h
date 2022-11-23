@@ -158,32 +158,32 @@ struct nvgpu_nvs_ioctl_query_domains {
 /* Request for a Control Queue. */
 #define NVGPU_NVS_CTRL_FIFO_QUEUE_NUM_CONTROL 1U
 /* Request for an Event queue.  */
-#define NVS_CTRL_FIFO_QUEUE_NUM_EVENT 2U
+#define NVGPU_NVS_CTRL_FIFO_QUEUE_NUM_EVENT 2U
 
 /* Direction of the requested queue is from CLIENT(producer)
  * to SCHEDULER(consumer).
  */
-#define NVS_CTRL_FIFO_QUEUE_DIRECTION_CLIENT_TO_SCHEDULER 0
+#define NVGPU_NVS_CTRL_FIFO_QUEUE_DIRECTION_CLIENT_TO_SCHEDULER 0
 
 /* Direction of the requested queue is from SCHEDULER(producer)
  * to CLIENT(consumer).
  */
-#define NVS_CTRL_FIFO_QUEUE_DIRECTION_SCHEDULER_TO_CLIENT 1
+#define NVGPU_NVS_CTRL_FIFO_QUEUE_DIRECTION_SCHEDULER_TO_CLIENT 1
 
-#define NVS_CTRL_FIFO_QUEUE_ACCESS_TYPE_EXCLUSIVE 1
-#define NVS_CTRL_FIFO_QUEUE_ACCESS_TYPE_NON_EXCLUSIVE 0
+#define NVGPU_NVS_CTRL_FIFO_QUEUE_ACCESS_TYPE_EXCLUSIVE 1
+#define NVGPU_NVS_CTRL_FIFO_QUEUE_ACCESS_TYPE_NON_EXCLUSIVE 0
 
 /**
- * NVGPU_NVS_CTRL_FIFO_CREATE_QUEUE
+ * NVGPU_NVS_CTRL_FIFO_IOCTL_CREATE_QUEUE
  *
  * Create shared queues for domain scheduler's control fifo.
  *
  * 'queue_num' is set by UMD to NVS_CTRL_FIFO_QUEUE_NUM_CONTROL
- * for Send/Receive queues and NVS_CTRL_FIFO_QUEUE_NUM_EVENT
+ * for Send/Receive queues and NVGPU_NVS_CTRL_FIFO_QUEUE_NUM_EVENT
  * for Event Queue.
  *
- * 'direction' is set by UMD to NVS_CTRL_FIFO_QUEUE_DIRECTION_CLIENT_TO_SCHEDULER
- * for Send Queue and NVS_CTRL_FIFO_QUEUE_DIRECTION_SCHEDULER_TO_CLIENT
+ * 'direction' is set by UMD to NVGPU_NVS_CTRL_FIFO_QUEUE_DIRECTION_CLIENT_TO_SCHEDULER
+ * for Send Queue and NVGPU_NVS_CTRL_FIFO_QUEUE_DIRECTION_SCHEDULER_TO_CLIENT
  * for Receive/Event Queue.
  *
  * The parameter 'queue_size' is set by KMD.
@@ -193,10 +193,10 @@ struct nvgpu_nvs_ioctl_query_domains {
  * so until the client closes the control-fifo device node.
  *
  * Clients that require exclusive access shall set 'access_type'
- * to NVS_CTRL_FIFO_QUEUE_ACCESS_TYPE_EXCLUSIVE, otherwise set it to
- * NVS_CTRL_FIFO_QUEUE_ACCESS_TYPE_NON_EXCLUSIVE.
+ * to NVGPU_NVS_CTRL_FIFO_QUEUE_ACCESS_TYPE_EXCLUSIVE, otherwise set it to
+ * NVGPU_NVS_CTRL_FIFO_QUEUE_ACCESS_TYPE_NON_EXCLUSIVE.
  *
- * Note, queues of NVS_CTRL_FIFO_QUEUE_NUM_EVENT has shared read-only
+ * Note, queues of NVGPU_NVS_CTRL_FIFO_QUEUE_NUM_EVENT has shared read-only
  * access irrespective of the type of client.
  *
  * 'dmabuf_fd' is populated by the KMD for the success case, else its set to -1.
@@ -242,23 +242,23 @@ struct nvgpu_nvs_ctrl_fifo_ioctl_create_queue_args {
 };
 
 /**
- * NVGPU_NVS_CTRL_FIFO_RELEASE_QUEUE
+ * NVGPU_NVS_CTRL_FIFO_IOCTL_RELEASE_QUEUE
  *
  * Release a domain scheduler's queue.
  *
  * 'queue_num' is set by UMD to NVS_CTRL_FIFO_QUEUE_NUM_CONTROL
- * for Send/Receive queues and NVS_CTRL_FIFO_QUEUE_NUM_EVENT
+ * for Send/Receive queues and NVGPU_NVS_CTRL_FIFO_QUEUE_NUM_EVENT
  * for Event Queue.
  *
- * 'direction' is set by UMD to NVS_CTRL_FIFO_QUEUE_DIRECTION_CLIENT_TO_SCHEDULER
- * for Send Queue and NVS_CTRL_FIFO_QUEUE_DIRECTION_SCHEDULER_TO_CLIENT
+ * 'direction' is set by UMD to NVGPU_NVS_CTRL_FIFO_QUEUE_DIRECTION_CLIENT_TO_SCHEDULER
+ * for Send Queue and NVGPU_NVS_CTRL_FIFO_QUEUE_DIRECTION_SCHEDULER_TO_CLIENT
  * for Receive/Event Queue.
  *
  * Returns an error if queues of type NVS_CTRL_FIFO_QUEUE_NUM_CONTROL
  * have an active mapping.
  *
  * Mapped buffers are removed immediately for queues of type
- * NVS_CTRL_FIFO_QUEUE_NUM_CONTROL while those of type NVS_CTRL_FIFO_QUEUE_NUM_EVENT
+ * NVS_CTRL_FIFO_QUEUE_NUM_CONTROL while those of type NVGPU_NVS_CTRL_FIFO_QUEUE_NUM_EVENT
  * are removed when the last user releases the control device node.
  *
  * User must ensure to invoke this IOCTL after invoking munmap on
@@ -285,9 +285,9 @@ struct nvgpu_nvs_ctrl_fifo_ioctl_release_queue_args {
 
 struct nvgpu_nvs_ctrl_fifo_ioctl_event {
 /* Enable Fault Detection Event */
-#define NVS_CTRL_FIFO_EVENT_FAULTDETECTED 1LLU
+#define NVGPU_NVS_CTRL_FIFO_EVENT_FAULTDETECTED 1LLU
 /* Enable Fault Recovery Detection Event */
-#define NVS_CTRL_FIFO_EVENT_FAULTRECOVERY 2LLU
+#define NVGPU_NVS_CTRL_FIFO_EVENT_FAULTRECOVERY 2LLU
 	__u64 event_mask;
 
 	/* Must be 0. */
@@ -295,38 +295,38 @@ struct nvgpu_nvs_ctrl_fifo_ioctl_event {
 };
 
 /**
- * NVGPU_NVS_QUERY_CTRL_FIFO_SCHEDULER_CHARACTERISTICS
+ * NVGPU_NVS_CTRL_FIFO_IOCTL_QUERY_SCHEDULER_CHARACTERISTICS
  *
  * Query the characteristics of the domain scheduler.
  * For R/W user, available_queues is set to
- * NVGPU_NVS_CTRL_FIFO_QUEUE_NUM_CONTROL | NVS_CTRL_FIFO_QUEUE_NUM_EVENT
+ * NVGPU_NVS_CTRL_FIFO_QUEUE_NUM_CONTROL | NVGPU_NVS_CTRL_FIFO_QUEUE_NUM_EVENT
  *
  * For Non-Exclusive users(can be multiple), available_queues is set to
- * NVS_CTRL_FIFO_QUEUE_NUM_EVENT.
+ * NVGPU_NVS_CTRL_FIFO_QUEUE_NUM_EVENT.
  *
  * Note that, even for multiple R/W users, only one user at a time
  * can exist as an exclusive user. Only exclusive users can create/destroy
  * queues of type 'NVGPU_NVS_CTRL_FIFO_QUEUE_NUM_CONTROL'
  */
-struct nvgpu_nvs_ctrl_fifo_scheduler_characteristics_args {
+struct nvgpu_nvs_ctrl_fifo_ioctl_query_scheduler_characteristics_args {
 	/*
 	 * Invalid domain scheduler.
 	 * The value of 'domain_scheduler_implementation'
 	 * when 'has_domain_scheduler_control_fifo' is 0.
 	 */
-#define NVS_DOMAIN_SCHED_INVALID 0U
+#define NVGPU_NVS_DOMAIN_SCHED_INVALID 0U
 	/*
 	 * CPU based scheduler implementation. Intended use is mainly
 	 * for debug and testing purposes. Doesn't meet latency requirements.
 	 * Implementation will be supported in the initial versions and eventually
 	 * discarded.
 	 */
-#define NVS_DOMAIN_SCHED_KMD 1U
+#define NVGPU_NVS_DOMAIN_SCHED_KMD 1U
 	/*
 	 * GSP based scheduler implementation that meets latency requirements.
-	 * This implementation will eventually replace NVS_DOMAIN_SCHED_KMD.
+	 * This implementation will eventually replace NVGPU_NVS_DOMAIN_SCHED_KMD.
 	 */
-#define NVS_DOMAIN_SCHED_GSP 2U
+#define NVGPU_NVS_DOMAIN_SCHED_GSP 2U
 	/*
 	 * - Out: Value is expected to be among the above available flags.
 	 */
@@ -342,24 +342,24 @@ struct nvgpu_nvs_ctrl_fifo_scheduler_characteristics_args {
 	__u32 available_queues;
 
 	/* Must be 0. */
-	__u64 reserved2;
+	__u64 reserved2[8];
 };
 
-#define NVGPU_NVS_CTRL_FIFO_CREATE_QUEUE		\
+#define NVGPU_NVS_CTRL_FIFO_IOCTL_CREATE_QUEUE		\
 	_IOWR(NVGPU_NVS_CTRL_FIFO_IOCTL_MAGIC, 1,	\
 	       struct nvgpu_nvs_ctrl_fifo_ioctl_create_queue_args)
-#define NVGPU_NVS_CTRL_FIFO_RELEASE_QUEUE		\
+#define NVGPU_NVS_CTRL_FIFO_IOCTL_RELEASE_QUEUE		\
 	_IOWR(NVGPU_NVS_CTRL_FIFO_IOCTL_MAGIC, 2,	\
 	       struct nvgpu_nvs_ctrl_fifo_ioctl_release_queue_args)
-#define NVGPU_NVS_CTRL_FIFO_ENABLE_EVENT		\
+#define NVGPU_NVS_CTRL_FIFO_IOCTL_ENABLE_EVENT		\
 	_IOW(NVGPU_NVS_CTRL_FIFO_IOCTL_MAGIC, 3,	\
 	       struct nvgpu_nvs_ctrl_fifo_ioctl_event)
-#define NVGPU_NVS_QUERY_CTRL_FIFO_SCHEDULER_CHARACTERISTICS	\
-	_IOW(NVGPU_NVS_CTRL_FIFO_IOCTL_MAGIC, 4,	\
-	       struct nvgpu_nvs_ctrl_fifo_scheduler_characteristics_args)
+#define NVGPU_NVS_CTRL_FIFO_IOCTL_QUERY_SCHEDULER_CHARACTERISTICS	\
+	_IOR(NVGPU_NVS_CTRL_FIFO_IOCTL_MAGIC, 4,	\
+	       struct nvgpu_nvs_ctrl_fifo_ioctl_query_scheduler_characteristics_args)
 #define NVGPU_NVS_CTRL_FIFO_IOCTL_LAST				\
-	_IOC_NR(NVGPU_NVS_QUERY_CTRL_FIFO_SCHEDULER_CHARACTERISTICS)
+	_IOC_NR(NVGPU_NVS_CTRL_FIFO_IOCTL_QUERY_SCHEDULER_CHARACTERISTICS)
 #define NVGPU_NVS_CTRL_FIFO_IOCTL_MAX_ARG_SIZE			\
-	sizeof(struct nvgpu_nvs_ctrl_fifo_ioctl_create_queue_args)
+	sizeof(struct nvgpu_nvs_ctrl_fifo_ioctl_query_scheduler_characteristics_args)
 
 #endif

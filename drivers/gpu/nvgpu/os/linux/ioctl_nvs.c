@@ -715,12 +715,12 @@ static int nvgpu_nvs_ctrl_fifo_create_queue_verify_flags(struct gk20a *g,
 		return -EINVAL;
 	}
 
-	if (args->access_type == NVS_CTRL_FIFO_QUEUE_ACCESS_TYPE_EXCLUSIVE) {
-		if ((args->queue_num != NVS_CTRL_FIFO_QUEUE_NUM_EVENT)
+	if (args->access_type == NVGPU_NVS_CTRL_FIFO_QUEUE_ACCESS_TYPE_EXCLUSIVE) {
+		if ((args->queue_num != NVGPU_NVS_CTRL_FIFO_QUEUE_NUM_EVENT)
 				&& (args->queue_num != NVGPU_NVS_CTRL_FIFO_QUEUE_NUM_CONTROL))
 			return -EINVAL;
-		if ((args->direction != NVS_CTRL_FIFO_QUEUE_DIRECTION_CLIENT_TO_SCHEDULER)
-				&& (args->direction != NVS_CTRL_FIFO_QUEUE_DIRECTION_SCHEDULER_TO_CLIENT))
+		if ((args->direction != NVGPU_NVS_CTRL_FIFO_QUEUE_DIRECTION_CLIENT_TO_SCHEDULER)
+				&& (args->direction != NVGPU_NVS_CTRL_FIFO_QUEUE_DIRECTION_SCHEDULER_TO_CLIENT))
 			return -EINVAL;
 		if (!nvgpu_nvs_ctrl_fifo_is_exclusive_user(g->sched_ctrl_fifo, user)) {
 			err = nvgpu_nvs_ctrl_fifo_reserve_exclusive_user(g->sched_ctrl_fifo, user);
@@ -728,10 +728,10 @@ static int nvgpu_nvs_ctrl_fifo_create_queue_verify_flags(struct gk20a *g,
 				return err;
 			}
 		}
-	} else if (args->access_type == NVS_CTRL_FIFO_QUEUE_ACCESS_TYPE_NON_EXCLUSIVE) {
-		if (args->queue_num != NVS_CTRL_FIFO_QUEUE_NUM_EVENT)
+	} else if (args->access_type == NVGPU_NVS_CTRL_FIFO_QUEUE_ACCESS_TYPE_NON_EXCLUSIVE) {
+		if (args->queue_num != NVGPU_NVS_CTRL_FIFO_QUEUE_NUM_EVENT)
 			return -EINVAL;
-		if (args->direction != NVS_CTRL_FIFO_QUEUE_DIRECTION_SCHEDULER_TO_CLIENT)
+		if (args->direction != NVGPU_NVS_CTRL_FIFO_QUEUE_DIRECTION_SCHEDULER_TO_CLIENT)
 			return -EINVAL;
 	} else {
 		return -EINVAL;
@@ -745,7 +745,7 @@ static enum nvgpu_nvs_ctrl_queue_num nvgpu_nvs_translate_queue_num(u32 queue_num
 	enum nvgpu_nvs_ctrl_queue_num num_queue = NVGPU_NVS_INVALID;
 	if (queue_num_arg == NVGPU_NVS_CTRL_FIFO_QUEUE_NUM_CONTROL)
 		num_queue = NVGPU_NVS_NUM_CONTROL;
-	else if (queue_num_arg == NVS_CTRL_FIFO_QUEUE_NUM_EVENT)
+	else if (queue_num_arg == NVGPU_NVS_CTRL_FIFO_QUEUE_NUM_EVENT)
 		num_queue = NVGPU_NVS_NUM_EVENT;
 
 	return num_queue;
@@ -755,9 +755,9 @@ static enum nvgpu_nvs_ctrl_queue_direction
 	nvgpu_nvs_translate_queue_direction(u32 queue_direction)
 {
 	enum nvgpu_nvs_ctrl_queue_direction direction = NVGPU_NVS_DIR_INVALID;
-	if (queue_direction == NVS_CTRL_FIFO_QUEUE_DIRECTION_CLIENT_TO_SCHEDULER)
+	if (queue_direction == NVGPU_NVS_CTRL_FIFO_QUEUE_DIRECTION_CLIENT_TO_SCHEDULER)
 		direction = NVGPU_NVS_DIR_CLIENT_TO_SCHEDULER;
-	else if (queue_direction == NVS_CTRL_FIFO_QUEUE_DIRECTION_SCHEDULER_TO_CLIENT)
+	else if (queue_direction == NVGPU_NVS_CTRL_FIFO_QUEUE_DIRECTION_SCHEDULER_TO_CLIENT)
 		direction = NVGPU_NVS_DIR_SCHEDULER_TO_CLIENT;
 
 	return direction;
@@ -795,14 +795,14 @@ static int nvgpu_nvs_ctrl_fifo_create_queue(struct gk20a *g,
 		goto fail;
 	}
 
-	read_only = (args->access_type == NVS_CTRL_FIFO_QUEUE_ACCESS_TYPE_EXCLUSIVE) ? false : true;
+	read_only = (args->access_type == NVGPU_NVS_CTRL_FIFO_QUEUE_ACCESS_TYPE_EXCLUSIVE) ? false : true;
 	if (read_only) {
 		flag |= O_RDONLY;
 	} else {
 		flag |= O_RDWR;
 	}
 
-	if (args->access_type == NVS_CTRL_FIFO_QUEUE_ACCESS_TYPE_EXCLUSIVE) {
+	if (args->access_type == NVGPU_NVS_CTRL_FIFO_QUEUE_ACCESS_TYPE_EXCLUSIVE) {
 		/* Observers are not supported for Control Queues, So ensure, buffer is invalid */
 		if (nvgpu_nvs_buffer_is_valid(g, queue) && (num_queue == NVGPU_NVS_NUM_CONTROL)) {
 			err = -EBUSY;
@@ -998,17 +998,17 @@ fail:
 static u32 nvgpu_nvs_translate_hw_scheduler_impl(struct gk20a *g, uint8_t impl)
 {
 	if (impl == NVGPU_NVS_DOMAIN_SCHED_KMD) {
-		return NVS_DOMAIN_SCHED_KMD;
+		return NVGPU_NVS_DOMAIN_SCHED_KMD;
 	} else if (impl == NVGPU_NVS_DOMAIN_SCHED_GSP) {
-		return NVS_DOMAIN_SCHED_GSP;
+		return NVGPU_NVS_DOMAIN_SCHED_GSP;
 	}
 
-	return NVS_DOMAIN_SCHED_INVALID;
+	return NVGPU_NVS_DOMAIN_SCHED_INVALID;
 }
 
 static int nvgpu_nvs_query_scheduler_characteristics(struct gk20a *g,
 		struct nvs_domain_ctrl_fifo_user *user,
-		struct nvgpu_nvs_ctrl_fifo_scheduler_characteristics_args *args)
+		struct nvgpu_nvs_ctrl_fifo_ioctl_query_scheduler_characteristics_args *args)
 {
 	struct nvs_domain_ctrl_fifo_capabilities *capabilities;
 
@@ -1027,7 +1027,7 @@ static int nvgpu_nvs_query_scheduler_characteristics(struct gk20a *g,
 	capabilities = nvgpu_nvs_ctrl_fifo_get_capabilities(g->sched_ctrl_fifo);
 	args->domain_scheduler_implementation =
 		nvgpu_nvs_translate_hw_scheduler_impl(g, capabilities->scheduler_implementation_hw);
-	args->available_queues = NVS_CTRL_FIFO_QUEUE_NUM_EVENT;
+	args->available_queues = NVGPU_NVS_CTRL_FIFO_QUEUE_NUM_EVENT;
 
 	if (user->has_write_access) {
 		args->available_queues |= NVGPU_NVS_CTRL_FIFO_QUEUE_NUM_CONTROL;
@@ -1075,7 +1075,7 @@ long nvgpu_nvs_ctrl_fifo_ops_ioctl(struct file *filp, unsigned int cmd, unsigned
 	}
 
 	switch (cmd) {
-	case NVGPU_NVS_CTRL_FIFO_CREATE_QUEUE:
+	case NVGPU_NVS_CTRL_FIFO_IOCTL_CREATE_QUEUE:
 	{
 		struct nvgpu_nvs_ctrl_fifo_ioctl_create_queue_args *args =
 			(struct nvgpu_nvs_ctrl_fifo_ioctl_create_queue_args *)buf;
@@ -1094,7 +1094,7 @@ long nvgpu_nvs_ctrl_fifo_ops_ioctl(struct file *filp, unsigned int cmd, unsigned
 
 		break;
 	}
-	case NVGPU_NVS_CTRL_FIFO_RELEASE_QUEUE:
+	case NVGPU_NVS_CTRL_FIFO_IOCTL_RELEASE_QUEUE:
 	{
 		struct nvgpu_nvs_ctrl_fifo_ioctl_release_queue_args *args =
 			(struct nvgpu_nvs_ctrl_fifo_ioctl_release_queue_args *)buf;
@@ -1105,15 +1105,15 @@ long nvgpu_nvs_ctrl_fifo_ops_ioctl(struct file *filp, unsigned int cmd, unsigned
 
 		break;
 	}
-	case NVGPU_NVS_CTRL_FIFO_ENABLE_EVENT:
+	case NVGPU_NVS_CTRL_FIFO_IOCTL_ENABLE_EVENT:
 	{
 		err = -EOPNOTSUPP;
 		goto done;
 	}
-	case NVGPU_NVS_QUERY_CTRL_FIFO_SCHEDULER_CHARACTERISTICS:
+	case NVGPU_NVS_CTRL_FIFO_IOCTL_QUERY_SCHEDULER_CHARACTERISTICS:
 	{
-		struct nvgpu_nvs_ctrl_fifo_scheduler_characteristics_args *args =
-			(struct nvgpu_nvs_ctrl_fifo_scheduler_characteristics_args *)buf;
+		struct nvgpu_nvs_ctrl_fifo_ioctl_query_scheduler_characteristics_args *args =
+			(struct nvgpu_nvs_ctrl_fifo_ioctl_query_scheduler_characteristics_args *)buf;
 
 		if (!nvgpu_is_enabled(g, NVGPU_SUPPORT_NVS)) {
 			err = -EOPNOTSUPP;
