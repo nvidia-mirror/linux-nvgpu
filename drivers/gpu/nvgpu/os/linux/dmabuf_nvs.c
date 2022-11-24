@@ -191,7 +191,59 @@ fail:
 	return err;
 }
 
+static struct sg_table *nvgpu_nvs_map_dma_buf(
+			struct dma_buf_attachment *attach,
+			enum dma_data_direction dir)
+{
+	(void)attach;
+	(void)dir;
+	WARN_ON("Not supported");
+	return ERR_PTR(-EINVAL);
+}
+
+static void nvgpu_nvs_unmap_dma_buf(struct dma_buf_attachment *attach,
+				       struct sg_table *sgt,
+				       enum dma_data_direction dir)
+{
+}
+
+#if LINUX_VERSION_CODE <= KERNEL_VERSION(5, 5, 0)
+static void *nvgpu_nvs_buf_kmap(struct dma_buf *dmabuf, unsigned long page_num)
+{
+	WARN_ON("Not supported");
+	return NULL;
+}
+#endif
+
+#if LINUX_VERSION_CODE <= KERNEL_VERSION(4, 16, 0)
+static void *nvgpu_nvs_buf_kmap_atomic(struct dma_buf *dmabuf,
+				      unsigned long page_num)
+{
+	WARN_ON("Not supported");
+	return NULL;
+}
+#endif
+
+static void nvgpu_nvs_buf_release(struct dma_buf *dmabuf)
+{
+	(void)dmabuf;
+}
+
 static struct dma_buf_ops gk20a_nvs_ops = {
+	.map_dma_buf      = nvgpu_nvs_map_dma_buf,
+	.unmap_dma_buf    = nvgpu_nvs_unmap_dma_buf,
+	.release          = nvgpu_nvs_buf_release,
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 0)
+#if LINUX_VERSION_CODE <= KERNEL_VERSION(4, 16, 0)
+	.map_atomic      = nvgpu_nvs_buf_kmap_atomic,
+#endif
+#if LINUX_VERSION_CODE <= KERNEL_VERSION(5, 5, 0)
+	.map             = nvgpu_nvs_buf_kmap,
+#endif
+#else
+	.kmap_atomic      = nvgpu_nvs_buf_kmap_atomic,
+	.kmap             = nvgpu_nvs_buf_kmap,
+#endif
 	.mmap             = nvgpu_nvs_buf_mmap,
 };
 
