@@ -32,6 +32,7 @@
 #include "ipc/gsp_seq.h"
 #include "ipc/gsp_queue.h"
 #include "gsp_runlist.h"
+#include "ipc/gsp_cmd.h"
 
 static void gsp_sched_get_file_names(struct gk20a *g, struct gsp_fw *gsp_ucode)
 {
@@ -208,6 +209,12 @@ int nvgpu_gsp_sched_bootstrap_ns(struct gk20a *g)
 		goto de_init;
 	}
 
+	status = nvgpu_gsp_sched_bind_ctx_reg(g);
+	if (status != 0) {
+		nvgpu_err(g, "gsp bind ctx register failed");
+		goto de_init;
+	}
+
 	status = nvgpu_gsp_sched_send_devices_info(g);
 	if (status != 0) {
 		nvgpu_err(g, "gsp send device info failed");
@@ -225,4 +232,16 @@ void nvgpu_gsp_sched_isr(struct gk20a *g)
 	struct nvgpu_gsp *gsp = g->gsp_sched->gsp;
 
 	g->ops.gsp.gsp_isr(g, gsp);
+}
+
+int nvgpu_gsp_sched_bind_ctx_reg(struct gk20a *g)
+{
+	struct nv_flcn_cmd_gsp cmd = { };
+	int err = 0;
+	nvgpu_gsp_dbg(g, " ");
+
+	err = gsp_send_cmd_and_wait_for_ack(g, &cmd,
+		NV_GSP_UNIT_BIND_CTX_REG, 0);
+
+	return err;
 }

@@ -123,4 +123,5 @@ int nvgpu_gsp_nvs_delete_domain(struct gk20a *g, u64 nvgpu_domain_id);
 int nvgpu_gsp_nvs_update_runlist(struct gk20a *g, const char *name,struct nvgpu_runlist *rl);
 int nvgpu_gps_sched_update_runlist(struct gk20a *g,
     struct nvgpu_runlist_domain *domain, struct nvgpu_runlist *rl);
+int nvgpu_gsp_sched_bind_ctx_reg(struct gk20a *g);
 #endif /* GSP_SCHED_H */
