@@ -203,6 +203,15 @@ NVGPU_COMMON_CFLAGS             += -DCONFIG_NVGPU_FALCON_DEBUG
 ifneq ($(profile),safety_debug)
 
 ifneq ($(NVGPU_HVRTOS),1)
+ifeq ($(CONFIG_NVGPU_ENABLE_MISC_EC),1)
+ifneq ($(CONFIG_NVGPU_MON_PRESENT),1)
+CONFIG_NVGPU_EPL_INIT            := 1
+NVGPU_COMMON_CFLAGS             += -DCONFIG_NVGPU_EPL_INIT
+endif
+endif
+endif
+
+ifneq ($(NVGPU_HVRTOS),1)
 CONFIG_NVGPU_SYSFS              := 1
 NVGPU_COMMON_CFLAGS             += -DCONFIG_NVGPU_SYSFS
 endif

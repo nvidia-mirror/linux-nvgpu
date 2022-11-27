@@ -60,6 +60,14 @@ int nvgpu_cic_mon_init(struct gk20a *g)
 		return -EINVAL;
 	}
 
+#ifdef CONFIG_NVGPU_EPL_INIT
+	err = nvgpu_cic_mon_init_epl(g);
+	if (err != 0) {
+		nvgpu_err(g, "NvEpl init failed: %d", err);
+		return -EINVAL;
+	}
+#endif
+
 #ifdef CONFIG_NVGPU_FSI_ERR_INJECTION
 	if (g->ops.cic_mon.reg_errinj_cb != NULL) {
 		err = g->ops.cic_mon.reg_errinj_cb(g);

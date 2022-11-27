@@ -663,4 +663,9 @@ void nvgpu_cic_mon_intr_enable(struct gk20a *g);
 int nvgpu_cic_mon_reg_errinj_cb(struct gk20a *g);
 int nvgpu_cic_mon_dereg_errinj_cb(void);
 #endif
+
+#ifdef CONFIG_NVGPU_EPL_INIT
+int nvgpu_cic_mon_init_epl(struct gk20a *g);
+#endif
+
 #endif /* NVGPU_CIC_MON_H */

@@ -208,6 +208,8 @@ endif
 
 CONFIG_NVGPU_TSG_SHARING := y
 
+CONFIG_NVGPU_EPL_INIT    := n
+
 ifeq ($(CONFIG_GK20A_PMU),y)
 ccflags-y += -DCONFIG_GK20A_PMU
 endif
