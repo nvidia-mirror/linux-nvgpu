@@ -261,6 +261,11 @@ int nvgpu_pm_reservation_init(struct gk20a *g)
 
 	nvgpu_log(g, gpu_dbg_prof, " ");
 
+	if (g->support_gpu_tools == 0U) {
+		nvgpu_info(g, "Profiler support is disabled");
+		return 0;
+	}
+
 	if (g->pm_reservations) {
 		return 0;
 	}
@@ -287,5 +292,9 @@ int nvgpu_pm_reservation_init(struct gk20a *g)
 
 void nvgpu_pm_reservation_deinit(struct gk20a *g)
 {
+	if (g->support_gpu_tools == 0U) {
+		return;
+	}
+
 	nvgpu_kfree(g, g->pm_reservations);
 }
