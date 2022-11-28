@@ -1484,6 +1484,8 @@ static DEVICE_ATTR(emulate_mode, ROOTRW, emulate_mode_read, emulate_mode_store);
 
 void nvgpu_remove_sysfs(struct device *dev)
 {
+	struct gk20a *g = get_gk20a(dev);
+
 	device_remove_file(dev, &dev_attr_elcg_enable);
 	device_remove_file(dev, &dev_attr_blcg_enable);
 	device_remove_file(dev, &dev_attr_slcg_enable);
@@ -1531,7 +1533,10 @@ void nvgpu_remove_sysfs(struct device *dev)
 	device_remove_file(dev, &dev_attr_mig_mode_config_list_parsable);
 	device_remove_file(dev, &dev_attr_mig_mode_config);
 #endif
-	device_remove_file(dev, &dev_attr_emulate_mode);
+	if (nvgpu_is_enabled(g, NVGPU_SUPPORT_EMULATE_MODE)) {
+		device_remove_file(dev, &dev_attr_emulate_mode);
+	}
+
 	if (strcmp(dev_name(dev), "gpu.0")) {
 		struct kobject *kobj = &dev->kobj;
 		struct device *parent = container_of((kobj->parent),
@@ -1600,7 +1605,10 @@ int nvgpu_create_sysfs(struct device *dev)
 	error |= device_create_file(dev, &dev_attr_mig_mode_config_list_parsable);
 	error |= device_create_file(dev, &dev_attr_mig_mode_config);
 #endif
-	error |= device_create_file(dev, &dev_attr_emulate_mode);
+	if (nvgpu_is_enabled(g, NVGPU_SUPPORT_EMULATE_MODE)) {
+		error |= device_create_file(dev, &dev_attr_emulate_mode);
+	}
+
 	if (strcmp(dev_name(dev), "gpu.0")) {
 		struct kobject *kobj = &dev->kobj;
 		struct device *parent = container_of((kobj->parent),
