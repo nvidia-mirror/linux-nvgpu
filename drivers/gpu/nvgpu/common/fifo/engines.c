@@ -222,9 +222,11 @@ int nvgpu_engine_disable_activity(struct gk20a *g,
 	}
 
 #ifdef CONFIG_NVGPU_LS_PMU
-	if (g->ops.pmu.is_pmu_supported(g)) {
-		mutex_ret = nvgpu_pmu_lock_acquire(g, g->pmu,
+	if (g->ops.pmu.is_pmu_supported != NULL) {
+		if (g->ops.pmu.is_pmu_supported(g)) {
+			mutex_ret = nvgpu_pmu_lock_acquire(g, g->pmu,
 						PMU_MUTEX_ID_FIFO, &token);
+		}
 	}
 #endif
 

@@ -162,6 +162,24 @@ void nvgpu_pmu_remove_support(struct gk20a *g, struct nvgpu_pmu *pmu)
 	}
 }
 
+static void nvgpu_pmu_disable_features(struct gk20a *g)
+{
+		g->support_ls_pmu = false;
+
+		/* Disable LS PMU global checkers */
+#ifdef CONFIG_NVGPU_NON_FUSA
+		g->can_elpg = false;
+		g->elpg_enabled = false;
+		g->aelpg_enabled = false;
+		g->elpg_ms_enabled = false;
+#endif
+		nvgpu_set_enabled(g, NVGPU_PMU_PERFMON, false);
+		nvgpu_set_enabled(g, NVGPU_ELPG_MS_ENABLED, false);
+#ifdef CONFIG_NVGPU_DGPU
+		nvgpu_set_enabled(g, NVGPU_PMU_PSTATE, false);
+#endif
+}
+
 /* PMU unit init */
 int nvgpu_pmu_early_init(struct gk20a *g)
 {
@@ -169,6 +187,11 @@ int nvgpu_pmu_early_init(struct gk20a *g)
 	struct nvgpu_pmu *pmu;
 
 	nvgpu_log_fn(g, " ");
+
+	if (g->ops.pmu.is_pmu_supported == NULL) {
+		nvgpu_pmu_disable_features(g);
+		goto exit;
+	}
 
 	if (g->pmu != NULL) {
 		/* skip alloc/reinit for unrailgate sequence */
@@ -208,20 +231,7 @@ int nvgpu_pmu_early_init(struct gk20a *g)
 	}
 
 	if (!g->ops.pmu.is_pmu_supported(g)) {
-		g->support_ls_pmu = false;
-
-		/* Disable LS PMU global checkers */
-#ifdef CONFIG_NVGPU_NON_FUSA
-		g->can_elpg = false;
-		g->elpg_enabled = false;
-		g->aelpg_enabled = false;
-		g->elpg_ms_enabled = false;
-#endif
-		nvgpu_set_enabled(g, NVGPU_PMU_PERFMON, false);
-		nvgpu_set_enabled(g, NVGPU_ELPG_MS_ENABLED, false);
-#ifdef  CONFIG_NVGPU_DGPU
-               nvgpu_set_enabled(g, NVGPU_PMU_PSTATE, false);
-#endif
+		nvgpu_pmu_disable_features(g);
 		goto exit;
 	}
 
