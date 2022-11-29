@@ -146,6 +146,7 @@ int nvgpu_profiler_pm_resource_reserve(struct nvgpu_profiler_object *prof,
 	enum nvgpu_profiler_pm_resource_type pm_resource);
 int nvgpu_profiler_pm_resource_release(struct nvgpu_profiler_object *prof,
 	enum nvgpu_profiler_pm_resource_type pm_resource);
+void nvgpu_profiler_pm_resource_release_all(struct nvgpu_profiler_object *prof);
 
 int nvgpu_profiler_bind_hwpm(struct gk20a *g,
 		u32 gr_instance_id,

@@ -1397,6 +1397,10 @@ struct nvgpu_tsg *nvgpu_tsg_open(struct gk20a *g, pid_t pid)
 
 void nvgpu_tsg_release_common(struct gk20a *g, struct nvgpu_tsg *tsg)
 {
+#ifdef CONFIG_NVGPU_PROFILER
+	struct nvgpu_profiler_object *prof;
+#endif
+
 	if (g->ops.tsg.release != NULL) {
 		g->ops.tsg.release(tsg);
 	}
@@ -1416,7 +1420,11 @@ void nvgpu_tsg_release_common(struct gk20a *g, struct nvgpu_tsg *tsg)
 
 #ifdef CONFIG_NVGPU_PROFILER
 	if (tsg->prof != NULL) {
-		nvgpu_profiler_unbind_context(tsg->prof);
+		/* save prof here as tsg pointer will be cleared in unbind */
+		prof = tsg->prof;
+		nvgpu_profiler_unbind_context(prof);
+		nvgpu_profiler_free_pma_stream(prof);
+		nvgpu_profiler_pm_resource_release_all(prof);
 	}
 #endif
 

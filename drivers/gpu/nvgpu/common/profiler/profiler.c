@@ -89,6 +89,7 @@ void nvgpu_profiler_free(struct nvgpu_profiler_object *prof)
 
 	nvgpu_profiler_unbind_context(prof);
 	nvgpu_profiler_free_pma_stream(prof);
+	nvgpu_profiler_pm_resource_release_all(prof);
 
 	nvgpu_list_del(&prof->prof_obj_entry);
 	prof->gpu_instance_id = 0U;
@@ -123,25 +124,29 @@ int nvgpu_profiler_bind_context(struct nvgpu_profiler_object *prof,
 	return 0;
 }
 
+void nvgpu_profiler_pm_resource_release_all(struct nvgpu_profiler_object *prof)
+{
+	int i;
+
+	for (i = 0; i < NVGPU_PROFILER_PM_RESOURCE_TYPE_COUNT; i++) {
+		if (prof->reserved[i]) {
+			nvgpu_warn(NULL,
+				"Releasing reserved resource %u for handle %u",
+				i, prof->prof_handle);
+			nvgpu_profiler_pm_resource_release(prof, i);
+		}
+	}
+}
+
 int nvgpu_profiler_unbind_context(struct nvgpu_profiler_object *prof)
 {
 	struct gk20a *g = prof->g;
 	struct nvgpu_tsg *tsg = prof->tsg;
-	int i;
 
 	if (prof->bound) {
 		nvgpu_warn(g, "Unbinding resources for handle %u",
 			prof->prof_handle);
 		nvgpu_profiler_unbind_pm_resources(prof);
-	}
-
-	for (i = 0; i < NVGPU_PROFILER_PM_RESOURCE_TYPE_COUNT; i++) {
-		if (prof->reserved[i]) {
-			nvgpu_warn(g, "Releasing reserved resource %u for handle %u",
-				i, prof->prof_handle);
-			nvgpu_profiler_pm_resource_release(prof,
-				(enum nvgpu_profiler_pm_resource_type)i);
-		}
 	}
 
 	if (!prof->context_init) {
