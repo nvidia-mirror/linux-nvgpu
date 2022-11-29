@@ -64,13 +64,13 @@ int ga10b_gsp_engine_reset(struct gk20a *g)
 	return 0;
 }
 
-static int ga10b_gsp_handle_ecc(struct gk20a *g, u32 ecc_status)
+static int ga10b_gsp_handle_ecc(struct gk20a *g, u32 ecc_status, u32 err_module)
 {
 	int ret = 0;
 
 	if ((ecc_status &
 		pgsp_falcon_ecc_status_uncorrected_err_imem_m()) != 0U) {
-		nvgpu_report_err_to_sdl(g, NVGPU_ERR_MODULE_GSP_ACR,
+		nvgpu_report_err_to_sdl(g, err_module,
 					GPU_GSP_ACR_IMEM_ECC_UNCORRECTED);
 		nvgpu_err(g, "imem ecc error uncorrected");
 		ret = -EFAULT;
@@ -78,7 +78,7 @@ static int ga10b_gsp_handle_ecc(struct gk20a *g, u32 ecc_status)
 
 	if ((ecc_status &
 		pgsp_falcon_ecc_status_uncorrected_err_dmem_m()) != 0U) {
-		nvgpu_report_err_to_sdl(g, NVGPU_ERR_MODULE_GSP_ACR,
+		nvgpu_report_err_to_sdl(g, err_module,
 					GPU_GSP_ACR_DMEM_ECC_UNCORRECTED);
 		nvgpu_err(g, "dmem ecc error uncorrected");
 		ret = -EFAULT;
@@ -86,7 +86,7 @@ static int ga10b_gsp_handle_ecc(struct gk20a *g, u32 ecc_status)
 
 	if ((ecc_status &
 		pgsp_falcon_ecc_status_uncorrected_err_dcls_m()) != 0U) {
-		nvgpu_report_err_to_sdl(g, NVGPU_ERR_MODULE_GSP_ACR,
+		nvgpu_report_err_to_sdl(g, err_module,
 					GPU_GSP_ACR_DCLS_UNCORRECTED);
 		nvgpu_err(g, "dcls ecc error uncorrected");
 		ret = -EFAULT;
@@ -94,7 +94,7 @@ static int ga10b_gsp_handle_ecc(struct gk20a *g, u32 ecc_status)
 
 	if ((ecc_status &
 		pgsp_falcon_ecc_status_uncorrected_err_reg_m()) != 0U) {
-		nvgpu_report_err_to_sdl(g, NVGPU_ERR_MODULE_GSP_ACR,
+		nvgpu_report_err_to_sdl(g, err_module,
 					GPU_GSP_ACR_REG_ECC_UNCORRECTED);
 		nvgpu_err(g, "reg ecc error uncorrected");
 		ret = -EFAULT;
@@ -102,7 +102,7 @@ static int ga10b_gsp_handle_ecc(struct gk20a *g, u32 ecc_status)
 
 	if ((ecc_status &
 		pgsp_falcon_ecc_status_uncorrected_err_emem_m()) != 0U) {
-		nvgpu_report_err_to_sdl(g, NVGPU_ERR_MODULE_GSP_ACR,
+		nvgpu_report_err_to_sdl(g, err_module,
 					GPU_GSP_ACR_EMEM_ECC_UNCORRECTED);
 		nvgpu_err(g, "emem ecc error uncorrected");
 		ret = -EFAULT;
@@ -117,7 +117,7 @@ bool ga10b_gsp_validate_mem_integrity(struct gk20a *g)
 
 	ecc_status = nvgpu_readl(g, pgsp_falcon_ecc_status_r());
 
-	return ((ga10b_gsp_handle_ecc(g, ecc_status) == 0) ? true :
+	return ((ga10b_gsp_handle_ecc(g, ecc_status, NVGPU_ERR_MODULE_GSP_ACR) == 0) ? true :
 			false);
 }
 
@@ -206,8 +206,12 @@ static bool ga10b_gsp_is_interrupted(struct gk20a *g, u32 *intr)
 	u32 intr_stat = gk20a_readl(g, pgsp_falcon_irqstat_r());
 
 	supported_gsp_int = pgsp_falcon_irqstat_halt_true_f() |
-			pgsp_falcon_irqstat_swgen1_true_f() |
-			pgsp_falcon_irqstat_swgen0_true_f() |
+			pgsp_falcon_irqstat_swgen1_true_f()		|
+			pgsp_falcon_irqstat_swgen0_true_f()		|
+			pgsp_falcon_irqstat_wdtmr_true_f()		|
+			pgsp_falcon_irqstat_extirq7_true_f()	|
+			pgsp_falcon_irqstat_memerr_true_f()		|
+			pgsp_falcon_irqstat_iopmp_true_f()		|
 			pgsp_falcon_irqstat_exterr_true_f();
 
 	*intr = intr_stat;
@@ -262,6 +266,8 @@ static void ga10b_gsp_handle_interrupts(struct gk20a *g, u32 intr)
 #ifndef CONFIG_NVGPU_MON_PRESENT
 	int err = 0;
 #endif
+	u32 ecc_status = 0U;
+
 	nvgpu_log_fn(g, " ");
 
 	/* swgen1 interrupt handle */
@@ -284,6 +290,13 @@ static void ga10b_gsp_handle_interrupts(struct gk20a *g, u32 intr)
 				~pgsp_falcon_exterrstat_valid_m());
 	}
 
+	/* watchdog timer interrupt handle */
+	if ((intr & pgsp_falcon_irqstat_wdtmr_true_f()) != 0U) {
+		nvgpu_err(g, "gsp watchdog timeout.");
+		nvgpu_report_err_to_sdl(g, NVGPU_ERR_MODULE_GSP_SCHED,
+			GPU_GSP_SCHED_WDT_UNCORRECTED);
+	}
+
 #ifndef CONFIG_NVGPU_MON_PRESENT
 	/* swgen0 interrupt handle */
 	if ((intr & pgsp_falcon_irqstat_swgen0_true_f()) != 0U) {
@@ -294,6 +307,23 @@ static void ga10b_gsp_handle_interrupts(struct gk20a *g, u32 intr)
 		}
 	}
 #endif
+
+	/* handling ecc error by extirq7 */
+	if ((intr & pgsp_falcon_irqstat_extirq7_true_f()) != 0U) {
+		nvgpu_err(g, "ECC error detected.");
+		ecc_status = nvgpu_readl(g, pgsp_falcon_ecc_status_r());
+		if (ga10b_gsp_handle_ecc(g, ecc_status, NVGPU_ERR_MODULE_GSP_SCHED) != 0) {
+			nvgpu_err(g, "nvgpu ecc error handling failed err=");
+		}
+	}
+
+	if ((intr & pgsp_falcon_irqstat_iopmp_true_f()) != 0U) {
+		nvgpu_err(g, "GSP Pri access failure IOPMP");
+	}
+
+	if ((intr & pgsp_falcon_irqstat_memerr_true_f()) != 0U) {
+		nvgpu_err(g, "GSP Pri access failure MEMERR");
+	}
 }
 
 void ga10b_gsp_isr(struct gk20a *g, struct nvgpu_gsp *gsp)
