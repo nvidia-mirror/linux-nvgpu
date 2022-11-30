@@ -966,6 +966,8 @@ static int nvgpu_nvs_ctrl_fifo_destroy_queue(struct gk20a *g,
 		goto fail;
 	}
 
+	nvgpu_nvs_ctrl_fifo_user_unsubscribe_queue(user, queue);
+
 	/* For Event Queues, don't erase even if the buffer
 	 * is currently not mapped. There might be some observers
 	 * who has acquired the dma_bufs but hasn't mapped yet.
@@ -981,8 +983,6 @@ static int nvgpu_nvs_ctrl_fifo_destroy_queue(struct gk20a *g,
 			goto fail;
 		}
 	}
-
-	nvgpu_nvs_ctrl_fifo_user_unsubscribe_queue(user, queue);
 
 	nvgpu_nvs_ctrl_fifo_unlock_queues(g);
 
