@@ -30,6 +30,7 @@
 #include <nvgpu/bug.h>
 #include <nvgpu/string.h>
 #include <nvgpu/kmem.h>
+#include <nvgpu/channel_sync.h>
 #include <nvgpu/log2.h>
 #include <nvgpu/static_analysis.h>
 
@@ -37,24 +38,22 @@
 #include "channel_ga10b.h"
 
 #include <nvgpu/hw/ga10b/hw_runlist_ga10b.h>
-#ifdef CONFIG_NVGPU_HAL_NON_FUSA
-#define NUM_CHANNELS		512U
-#else
-#define NUM_CHANNELS		128U
-#endif
+
 #define CHANNEL_BOUND		1
 #define CHANNEL_UNBOUND		0
 
 u32 ga10b_channel_count(struct gk20a *g)
 {
+	u32 num_channels = 0U;
 	/* Limit number of channels, avoids unnecessary memory allocation */
 	nvgpu_log(g, gpu_dbg_info, "Number of channels supported by hw = %u",
 		((0x1U) << runlist_channel_config_num_channels_log2_2k_v()));
 
+	num_channels = nvgpu_channel_get_synpoints(g);
 	nvgpu_log(g, gpu_dbg_info, "Number of channels supported by sw = %u",
-		NUM_CHANNELS);
+		num_channels);
 
-	return NUM_CHANNELS;
+	return	num_channels;
 }
 
 void ga10b_channel_enable(struct nvgpu_channel *ch)

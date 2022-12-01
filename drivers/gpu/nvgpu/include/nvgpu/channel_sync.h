@@ -134,4 +134,17 @@ bool nvgpu_channel_sync_needs_os_fence_framework(struct gk20a *g);
 
 #endif /* CONFIG_NVGPU_KERNEL_MODE_SUBMIT */
 
+/**
+ * @brief Get the number of supported syncpoints.
+ *
+ * @param g [in]		Pointer to GPU
+ *
+ * This function is required to initialize the supported channels
+ * as there is a one to one relationship between channel and syncpoint.
+ * Currently nvgpu assigns a sync-point to each allocated channel,
+ * thus we can only support as many channels as there are sync-points.
+ *
+ * @return Number of supported syncpoints.
+ */
+u32 nvgpu_channel_get_synpoints(struct gk20a *g);
 #endif /* NVGPU_CHANNEL_SYNC_H */

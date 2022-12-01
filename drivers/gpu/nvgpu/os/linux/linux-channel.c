@@ -21,6 +21,7 @@
 #include <nvgpu/os_sched.h>
 #include <nvgpu/gk20a.h>
 #include <nvgpu/channel.h>
+#include <nvgpu/channel_sync.h>
 #include <nvgpu/dma.h>
 #include <nvgpu/fence.h>
 #include <nvgpu/grmgr.h>
@@ -50,6 +51,8 @@
 #include "sync_sema_android.h"
 #include "sync_sema_dma.h"
 #include <nvgpu/linux/os_fence_dma.h>
+
+#define NUM_CHANNELS	512U
 
 u32 nvgpu_submit_gpfifo_user_flags_to_common_flags(u32 user_flags)
 {
@@ -651,6 +654,17 @@ u32 nvgpu_channel_get_max_subctx_count(struct nvgpu_channel *ch)
 	nvgpu_assert(gpu_instance_id < g->mig.num_gpu_instances);
 
 	return nvgpu_grmgr_get_gpu_instance_max_veid_count(g, gpu_instance_id);
+}
+
+u32 nvgpu_channel_get_synpoints(struct gk20a *g)
+{
+	(void)g;
+	/*
+	 * The syncpoints should be queried from the DT entry.
+	 * Once support is added in the DT, this function will
+	 * read and return syncpoint entry present in the device tree.
+	 */
+	return NUM_CHANNELS;
 }
 
 #ifdef CONFIG_DEBUG_FS
