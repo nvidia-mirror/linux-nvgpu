@@ -416,6 +416,7 @@ struct gops_gr_falcon {
 #ifdef CONFIG_NVGPU_SIM
 	void (*configure_fmodel)(struct gk20a *g);
 #endif
+	void (*get_fw_name)(struct gk20a *g, const char **ucode_name, u32 falcon_id);
 	/** @endcond */
 
 };

@@ -800,6 +800,7 @@ static const struct gops_gr_falcon ga10b_ops_gr_falcon = {
 #ifdef CONFIG_NVGPU_SIM
 	.configure_fmodel = gm20b_gr_falcon_configure_fmodel,
 #endif
+	.get_fw_name = ga10b_gr_falcon_get_fw_name,
 };
 
 static const struct gops_gr ga10b_ops_gr = {

@@ -45,7 +45,7 @@
  * to get complete path like gm204/NETC_img.bin
  */
 
-#define MAX_NETLIST_NAME (sizeof("GAxxx/") + sizeof("NET?_img.bin"))
+#define MAX_NETLIST_NAME (sizeof("GAxxx/") + sizeof("NET?_img_xxxxx_encrypted.bin"))
 
 struct netlist_av *nvgpu_netlist_alloc_av_list(struct gk20a *g,
 						struct netlist_av_list *avl)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,6 +27,7 @@
 
 struct gk20a;
 
+void ga10b_gr_falcon_get_fw_name(struct gk20a *g, const char **ucode_name, u32 falcon_id);
 u32 ga10b_gr_falcon_get_fecs_ctxsw_mailbox_size(void);
 void ga10b_gr_falcon_fecs_ctxsw_clear_mailbox(struct gk20a *g,
 						u32 reg_index, u32 clear_val);

@@ -706,6 +706,7 @@ static const struct gops_gr_falcon tu104_ops_gr_falcon = {
 #ifdef CONFIG_NVGPU_SIM
 	.configure_fmodel = gm20b_gr_falcon_configure_fmodel,
 #endif
+	.get_fw_name = gm20b_gr_falcon_get_fw_name,
 };
 
 static const struct gops_gr tu104_ops_gr = {

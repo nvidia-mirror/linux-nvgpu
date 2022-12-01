@@ -92,6 +92,9 @@ struct wpr_carveout_info;
 #define GA10B_FECS_UCODE_PKC_SIG "fecs_pkc_sig.bin"
 #define GA10B_GPCCS_UCODE_PKC_SIG "gpccs_pkc_sig.bin"
 
+#define GA10B_FECS_UCODE_ENCRYPT_PKC_SIG "fecs_pkc_sig_encrypt.bin"
+#define GA10B_GPCCS_UCODE_ENCRYPT_PKC_SIG "gpccs_pkc_sig_encrypt.bin"
+
 #define TU104_FECS_UCODE_SIG "tu104/fecs_sig.bin"
 #define TU104_GPCCS_UCODE_SIG "tu104/gpccs_sig.bin"
 

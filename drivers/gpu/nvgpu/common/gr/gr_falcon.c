@@ -43,9 +43,6 @@
 
 #include "gr_falcon_priv.h"
 
-#define NVGPU_FECS_UCODE_IMAGE	"fecs.bin"
-#define NVGPU_GPCCS_UCODE_IMAGE	"gpccs.bin"
-
 struct nvgpu_gr_falcon *nvgpu_gr_falcon_init_support(struct gk20a *g)
 {
 	struct nvgpu_gr_falcon *falcon;
@@ -311,11 +308,13 @@ int nvgpu_gr_falcon_init_ctxsw_ucode(struct gk20a *g,
 	u32 *gpccs_boot_image;
 	struct nvgpu_ctxsw_ucode_info *ucode_info = &falcon->ctxsw_ucode_info;
 	u32 ucode_size;
+	const char *fw_name = NULL;
 	int err = 0;
 
 	nvgpu_log(g, gpu_dbg_gr, "Requst and copy FECS/GPCCS firmwares");
 
-	fecs_fw = nvgpu_request_firmware(g, NVGPU_FECS_UCODE_IMAGE, 0);
+	g->ops.gr.falcon.get_fw_name(g, &fw_name, FALCON_ID_FECS);
+	fecs_fw = nvgpu_request_firmware(g, fw_name, 0);
 	if (fecs_fw == NULL) {
 		nvgpu_err(g, "failed to load fecs ucode!!");
 		return -ENOENT;
@@ -325,7 +324,8 @@ int nvgpu_gr_falcon_init_ctxsw_ucode(struct gk20a *g,
 	fecs_boot_image = (void *)(fecs_fw->data +
 				sizeof(struct nvgpu_ctxsw_bootloader_desc));
 
-	gpccs_fw = nvgpu_request_firmware(g, NVGPU_GPCCS_UCODE_IMAGE, 0);
+	g->ops.gr.falcon.get_fw_name(g, &fw_name, FALCON_ID_GPCCS);
+	gpccs_fw = nvgpu_request_firmware(g, fw_name, 0);
 	if (gpccs_fw == NULL) {
 		nvgpu_release_firmware(g, fecs_fw);
 		nvgpu_err(g, "failed to load gpccs ucode!!");

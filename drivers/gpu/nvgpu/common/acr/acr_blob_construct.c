@@ -27,6 +27,7 @@
 #include <nvgpu/bug.h>
 #include <nvgpu/gr/gr_falcon.h>
 #include <nvgpu/gr/gr_utils.h>
+#include <nvgpu/soc.h>
 
 #include "nvgpu_acr_interface.h"
 #include "acr_blob_construct.h"
@@ -190,9 +191,15 @@ int nvgpu_acr_lsf_fecs_ucode_details(struct gk20a *g, void *lsf_ucode_img)
 					GM20B_FECS_UCODE_SIG,
 					g->acr->fw_load_flag);
 			} else {
-				fecs_sig = nvgpu_request_firmware(g,
-					GA10B_FECS_UCODE_PKC_SIG,
-					g->acr->fw_load_flag);
+				if (nvgpu_platform_is_simulation(g)) {
+					fecs_sig = nvgpu_request_firmware(g,
+						GA10B_FECS_UCODE_PKC_SIG,
+						g->acr->fw_load_flag);
+				} else {
+					fecs_sig = nvgpu_request_firmware(g,
+						GA10B_FECS_UCODE_ENCRYPT_PKC_SIG,
+						g->acr->fw_load_flag);
+				}
 			}
 			break;
 #ifdef CONFIG_NVGPU_DGPU
@@ -333,9 +340,15 @@ int nvgpu_acr_lsf_gpccs_ucode_details(struct gk20a *g, void *lsf_ucode_img)
 					T18x_GPCCS_UCODE_SIG,
 					g->acr->fw_load_flag);
 			} else {
-				gpccs_sig = nvgpu_request_firmware(g,
-					GA10B_GPCCS_UCODE_PKC_SIG,
-					g->acr->fw_load_flag);
+				if (nvgpu_platform_is_simulation(g)) {
+					gpccs_sig = nvgpu_request_firmware(g,
+						GA10B_GPCCS_UCODE_PKC_SIG,
+						g->acr->fw_load_flag);
+				} else {
+					gpccs_sig = nvgpu_request_firmware(g,
+						GA10B_GPCCS_UCODE_ENCRYPT_PKC_SIG,
+						g->acr->fw_load_flag);
+				}
 			}
 			break;
 #ifdef CONFIG_NVGPU_DGPU

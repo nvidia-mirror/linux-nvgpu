@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,10 +25,46 @@
 #include <nvgpu/static_analysis.h>
 #include <nvgpu/gr/gr_utils.h>
 #include <nvgpu/gr/config.h>
+#include <nvgpu/falcon.h>
+#include <nvgpu/soc.h>
 
 #include "gr_falcon_ga10b.h"
 
 #include <nvgpu/hw/ga10b/hw_gr_ga10b.h>
+
+#define NVGPU_FECS_UCODE_IMAGE	                "fecs.bin"
+#define NVGPU_GPCCS_UCODE_IMAGE	                "gpccs.bin"
+#define NVGPU_FECS_ENCRYPT_DBG_UCODE_IMAGE	    "fecs_encrypt_dbg.bin"
+#define NVGPU_FECS_ENCRYPT_PROD_UCODE_IMAGE	    "fecs_encrypt_prod.bin"
+#define NVGPU_GPCCS_ENCRYPT_DBG_UCODE_IMAGE	    "gpccs_encrypt_dbg.bin"
+#define NVGPU_GPCCS_ENCRYPT_PROD_UCODE_IMAGE	"gpccs_encrypt_prod.bin"
+
+void ga10b_gr_falcon_get_fw_name(struct gk20a *g, const char **ucode_name, u32 falcon_id)
+{
+	nvgpu_log_fn(g, " ");
+
+	if (falcon_id == FALCON_ID_FECS) {
+		if (nvgpu_platform_is_simulation(g)) {
+			*ucode_name = NVGPU_FECS_UCODE_IMAGE;
+		} else {
+			if (g->ops.pmu.is_debug_mode_enabled(g)) {
+				*ucode_name = NVGPU_FECS_ENCRYPT_DBG_UCODE_IMAGE;
+			} else {
+				*ucode_name = NVGPU_FECS_ENCRYPT_PROD_UCODE_IMAGE;
+			}
+		}
+	} else if (falcon_id == FALCON_ID_GPCCS) {
+		if (nvgpu_platform_is_simulation(g)) {
+			*ucode_name = NVGPU_GPCCS_UCODE_IMAGE;
+		} else {
+			if (g->ops.pmu.is_debug_mode_enabled(g)) {
+				*ucode_name = NVGPU_GPCCS_ENCRYPT_DBG_UCODE_IMAGE;
+			} else {
+				*ucode_name = NVGPU_GPCCS_ENCRYPT_PROD_UCODE_IMAGE;
+			}
+		}
+	}
+}
 
 u32 ga10b_gr_falcon_get_fecs_ctxsw_mailbox_size(void)
 {

@@ -52,6 +52,21 @@
 #define CTXSW_INTR0 BIT32(0)
 #define CTXSW_INTR1 BIT32(1)
 
+#define NVGPU_FECS_UCODE_IMAGE	"fecs.bin"
+#define NVGPU_GPCCS_UCODE_IMAGE	"gpccs.bin"
+
+void gm20b_gr_falcon_get_fw_name(struct gk20a *g, const char **ucode_name, u32 falcon_id)
+{
+	nvgpu_log_fn(g, " ");
+
+	if (falcon_id == FALCON_ID_FECS) {
+		*ucode_name = NVGPU_FECS_UCODE_IMAGE;
+	} else if (falcon_id == FALCON_ID_GPCCS) {
+		*ucode_name = NVGPU_GPCCS_UCODE_IMAGE;
+	}
+}
+
+
 void gm20b_gr_falcon_fecs_ctxsw_clear_mailbox(struct gk20a *g,
 			u32 reg_index, u32 clear_val)
 {

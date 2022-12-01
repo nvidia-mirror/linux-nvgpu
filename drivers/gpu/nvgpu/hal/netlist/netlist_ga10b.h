@@ -30,6 +30,20 @@ struct gk20a;
 /* NVGPU_NETLIST_IMAGE_C is FNL for ga10b */
 #define GA10B_NETLIST_IMAGE_FW_NAME NVGPU_NETLIST_IMAGE_C
 
+#define NVGPU_NETLIST_DBG_IMAGE_A	"NETA_img_debug_encrypted.bin"
+#define NVGPU_NETLIST_DBG_IMAGE_B	"NETB_img_debug_encrypted.bin"
+#define NVGPU_NETLIST_DBG_IMAGE_C	"NETC_img_debug_encrypted.bin"
+#define NVGPU_NETLIST_DBG_IMAGE_D	"NETD_img_debug_encrypted.bin"
+
+#define NVGPU_NETLIST_PROD_IMAGE_A	"NETA_img_prod_encrypted.bin"
+#define NVGPU_NETLIST_PROD_IMAGE_B	"NETB_img_prod_encrypted.bin"
+#define NVGPU_NETLIST_PROD_IMAGE_C	"NETC_img_prod_encrypted.bin"
+#define NVGPU_NETLIST_PROD_IMAGE_D	"NETD_img_prod_encrypted.bin"
+
+/* NVGPU_NETLIST_IMAGE_C is FNL for ga10b */
+#define GA10B_NETLIST_DBG_IMAGE_FW_NAME NVGPU_NETLIST_DBG_IMAGE_C
+#define GA10B_NETLIST_PROD_IMAGE_FW_NAME NVGPU_NETLIST_PROD_IMAGE_C
+
 int ga10b_netlist_get_name(struct gk20a *g, int index, char *name);
 bool ga10b_netlist_is_firmware_defined(void);
 
