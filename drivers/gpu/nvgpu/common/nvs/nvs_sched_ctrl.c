@@ -507,7 +507,8 @@ int nvgpu_nvs_buffer_alloc(struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl,
 	(void)memset(buf, 0, sizeof(*buf));
 	buf->g = g;
 
-	err = nvgpu_dma_alloc_map_sys(system_vm, bytes, &buf->mem);
+	err = nvgpu_dma_alloc_map_flags_sys(system_vm,
+		NVGPU_DMA_VM_USERMAP_ADDRESS, bytes, &buf->mem);
 	if (err != 0) {
 		nvgpu_err(g, "failed to allocate memory for dma");
 		goto fail;

@@ -260,6 +260,7 @@ int nvgpu_dma_alloc_flags_sys(struct gk20a *g, unsigned long flags,
 	gfp_t gfps = GFP_KERNEL|__GFP_ZERO;
 	dma_addr_t iova;
 	unsigned long dma_attrs = 0;
+	unsigned long vma_flags = 0;
 	void *alloc_ret;
 	int err;
 
@@ -309,8 +310,18 @@ int nvgpu_dma_alloc_flags_sys(struct gk20a *g, unsigned long flags,
 
 	/* Map the page list from the non-contiguous allocation */
 	if (nvgpu_nvlink_non_contig(g, flags)) {
+		/*
+		 * If remap_vmalloc_range() is going to be used to map cpu_va to
+		 * userspace then VM_USERMAP flag should be passed to vmap() to
+		 * get appropriate cpu_va.
+		 */
+		if (flags & NVGPU_DMA_VM_USERMAP_ADDRESS) {
+			vma_flags |= VM_USERMAP;
+		}
+
 		mem->cpu_va = vmap(mem->priv.pages, size >> PAGE_SHIFT,
-				   0, PAGE_KERNEL);
+			   vma_flags, PAGE_KERNEL);
+
 		if (!mem->cpu_va) {
 			err = -ENOMEM;
 			goto fail_free_sgt;
@@ -365,12 +376,6 @@ int nvgpu_dma_mmap_sys(struct gk20a *g, struct vm_area_struct *vma, struct nvgpu
 		return -EINVAL;
 	}
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
-	mmap_write_lock(vma->vm_mm);
-#else
-	down_write(&vma->vm_mm->mmap_sem);
-#endif
-
 	vma_exists = find_vma_intersection(vma->vm_mm, vma->vm_start, vma->vm_end);
 	if (vma_exists != NULL) {
 		err = -EEXIST;
@@ -395,14 +400,9 @@ int nvgpu_dma_mmap_sys(struct gk20a *g, struct vm_area_struct *vma, struct nvgpu
 	}
 
 done:
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
-	mmap_write_unlock(vma->vm_mm);
-#else
-	up_write(&vma->vm_mm->mmap_sem);
-#endif
 
 	if (err != 0) {
-		nvgpu_err(g, "failed to map mem into userspace vma");
+		nvgpu_err(g, "failed to map mem into userspace vma %d", err);
 	}
 
 	return err;

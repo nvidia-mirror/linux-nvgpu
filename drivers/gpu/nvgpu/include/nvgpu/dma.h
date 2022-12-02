@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -61,6 +61,13 @@ struct nvgpu_mem;
  * block.
  */
 #define NVGPU_DMA_PHYSICALLY_ADDRESSED	BIT64(2)
+
+/**
+ * If remap_vmalloc_range() is used to map the pages to userspace then allocated
+ * pages should be mapped into virtually contiguous space by passing VM_USERMAP
+ * flag to vmap().
+ */
+#define NVGPU_DMA_VM_USERMAP_ADDRESS	BIT64(3)
 
 
 /**
