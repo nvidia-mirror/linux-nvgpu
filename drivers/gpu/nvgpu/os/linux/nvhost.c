@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -128,7 +128,7 @@ u32 nvgpu_nvhost_get_syncpt_client_managed(
 	struct nvgpu_nvhost_dev *nvhost_dev,
 	const char *syncpt_name)
 {
-	return nvhost_get_syncpt_client_managed(nvhost_dev->host1x_pdev,
+	return nvhost_get_syncpt_gpu_managed(nvhost_dev->host1x_pdev,
 			syncpt_name);
 }
 
