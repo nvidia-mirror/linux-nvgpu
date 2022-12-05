@@ -445,7 +445,7 @@ void gr_gv11b_set_gpc_tpc_mask(struct gk20a *g, u32 gpc_index)
 #endif
 
 #ifdef CONFIG_NVGPU_DEBUGGER
-static int gr_gv11b_handle_warp_esr_error_mmu_nack(struct gk20a *g,
+int gv11b_gr_handle_warp_esr_error_mmu_nack(struct gk20a *g,
 	u32 gpc, u32 tpc, u32 sm,
 	u32 warp_esr_error,
 	struct nvgpu_channel *fault_ch)
@@ -551,10 +551,10 @@ bool gv11b_gr_check_warp_esr_error(struct gk20a *g, u32 warp_esr_error)
 	return esr_err;
 }
 
-static int gr_gv11b_handle_all_warp_esr_errors(struct gk20a *g,
-						u32 gpc, u32 tpc, u32 sm,
-						u32 warp_esr_error,
-						struct nvgpu_channel *fault_ch)
+int gv11b_gr_handle_all_warp_esr_errors(struct gk20a *g,
+					u32 gpc, u32 tpc, u32 sm,
+					u32 warp_esr_error,
+					struct nvgpu_channel *fault_ch)
 {
 	struct nvgpu_tsg *tsg;
 	u32 offset = 0U;
@@ -632,7 +632,7 @@ int gr_gv11b_pre_process_sm_exception(struct gk20a *g,
 	 * So just handle MMU_NACK and return
 	 */
 	if (warp_esr_error == gr_gpc0_tpc0_sm0_hww_warp_esr_error_mmu_nack_f()) {
-		return gr_gv11b_handle_warp_esr_error_mmu_nack(g, gpc, tpc, sm,
+		return gv11b_gr_handle_warp_esr_error_mmu_nack(g, gpc, tpc, sm,
 				warp_esr_error, fault_ch);
 	}
 
@@ -640,7 +640,7 @@ int gr_gv11b_pre_process_sm_exception(struct gk20a *g,
 	 * Proceed to trigger CILP preemption if the return value
 	 * from this function is zero, else proceed to recovery
 	 */
-	ret = gr_gv11b_handle_all_warp_esr_errors(g, gpc, tpc, sm,
+	ret = gv11b_gr_handle_all_warp_esr_errors(g, gpc, tpc, sm,
 				warp_esr_error, fault_ch);
 	if (ret != 0) {
 		return ret;

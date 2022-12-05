@@ -101,5 +101,13 @@ int gr_gv11b_create_priv_addr_table(struct gk20a *g,
 	u32 *num_registers);
 bool gv11b_gr_esr_bpt_pending_events(u32 global_esr,
 				enum nvgpu_event_id_type bpt_event);
+int gv11b_gr_handle_warp_esr_error_mmu_nack(struct gk20a *g,
+	u32 gpc, u32 tpc, u32 sm,
+	u32 warp_esr_error,
+	struct nvgpu_channel *fault_ch);
+int gv11b_gr_handle_all_warp_esr_errors(struct gk20a *g,
+					u32 gpc, u32 tpc, u32 sm,
+					u32 warp_esr_error,
+					struct nvgpu_channel *fault_ch);
 #endif /* CONFIG_NVGPU_DEBUGGER */
 #endif /* NVGPU_GR_GV11B_H */
