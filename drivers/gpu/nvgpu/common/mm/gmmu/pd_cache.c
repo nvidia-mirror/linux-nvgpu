@@ -228,7 +228,7 @@ static int nvgpu_pd_cache_alloc_direct_locked(struct gk20a *g,
 	err = nvgpu_dma_alloc_flags(g, flags, bytes, &(pentry->mem));
 	if (err != 0) {
 		nvgpu_err(g, "OOM allocating page directory!");
-		nvgpu_kfree(g, pd->mem);
+		nvgpu_kfree(g, pentry);
 		return -ENOMEM;
 	}
 
