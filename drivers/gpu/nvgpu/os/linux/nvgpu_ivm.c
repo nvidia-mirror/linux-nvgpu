@@ -13,12 +13,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include <linux/version.h>
 
-#include <nvgpu/nvgpu_ivm.h>
-
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 15, 0)
 #include <linux/tegra-ivc.h>
+#else
+#include <soc/tegra/virt/hv-ivc.h>
+#endif
 
 #include "os/linux/os_linux.h"
+#include <nvgpu/nvgpu_ivm.h>
 
 struct tegra_hv_ivm_cookie *nvgpu_ivm_mempool_reserve(unsigned int id)
 {

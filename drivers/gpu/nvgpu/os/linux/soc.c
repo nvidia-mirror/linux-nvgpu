@@ -15,11 +15,14 @@
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 15, 0)
 #include <soc/tegra/chip-id.h>
 #endif
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 15, 0)
 #include <soc/tegra/fuse.h>
-#ifdef CONFIG_TEGRA_HV_MANAGER
+#else
+#include <soc/tegra/virt/hv-ivc.h>
+#include <soc/tegra/fuse-helper.h>
+#endif
 #include <soc/tegra/virt/syscalls.h>
 #include <nvgpu/ipa_pa_cache.h>
-#endif
 
 #include <nvgpu/soc.h>
 #include "os_linux.h"
@@ -47,15 +50,29 @@ bool nvgpu_is_hypervisor_mode(struct gk20a *g)
 
 bool nvgpu_is_soc_t194_a01(struct gk20a *g)
 {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 15, 0)
 	struct device *dev = dev_from_gk20a(g);
-	struct gk20a_platform *platform = gk20a_get_platform(dev);
 
+	struct gk20a_platform *platform = gk20a_get_platform(dev);
 	return ((platform->platform_chip_id == TEGRA_194 &&
 			tegra_chip_get_revision() == TEGRA_REVISION_A01) ?
-		true : false);
+			true : false);
+#else
+	const struct soc_device_attribute tegra_soc_attrs[] = {
+		{
+			.soc_id = "TEGRA194",
+			.revision = "*A01*"
+		},
+		{/* sentinel */}
+	};
+	if (soc_device_match(tegra_soc_attrs)) {
+		return true;
+	}
+
+	return false;
+#endif
 }
 
-#ifdef CONFIG_TEGRA_HV_MANAGER
 /* When nvlink is enabled on dGPU, we need to use physical memory addresses.
  * There is no SMMU translation. However, the device initially enumerates as a
  * PCIe device. As such, when allocation memory for this PCIe device, the DMA
@@ -110,11 +127,9 @@ static u64 nvgpu_tegra_hv_ipa_pa(struct gk20a *g, u64 ipa, u64 *pa_len)
 
 	return pa;
 }
-#endif
 
 int nvgpu_init_soc_vars(struct gk20a *g)
 {
-#ifdef CONFIG_TEGRA_HV_MANAGER
 	struct device *dev = dev_from_gk20a(g);
 	struct gk20a_platform *platform = gk20a_get_platform(dev);
 	int err;
@@ -127,7 +142,6 @@ int nvgpu_init_soc_vars(struct gk20a *g)
 		}
 		platform->phys_addr = nvgpu_tegra_hv_ipa_pa;
 	}
-#endif
 	return 0;
 }
 

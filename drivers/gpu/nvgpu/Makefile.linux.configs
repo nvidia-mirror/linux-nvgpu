@@ -120,10 +120,7 @@ CONFIG_NVGPU_NVMAP_NEXT := y
 CONFIG_NVGPU_NVMEM_FUSE := y
 endif
 
-# Set CONFIG_NVGPU_IVM_BUILD for non-oot build
-ifneq ($(CONFIG_TEGRA_OOT_MODULE),m)
 CONFIG_NVGPU_IVM_BUILD := y
-endif
 
 # Set config for OOT module build
 ifeq ($(CONFIG_TEGRA_OOT_MODULE),m)
@@ -195,6 +192,12 @@ endif
 # Set config for OOT module build
 ifeq ($(CONFIG_TEGRA_OOT_MODULE),m)
 CONFIG_GK20A_DEVFREQ := y
+endif
+
+# Set config FUSE_UPSTREAM for OOT for enabling some soc related APIs.
+ifeq ($(CONFIG_TEGRA_OOT_MODULE),m)
+CONFIG_TEGRA_FUSE_UPSTREAM := y
+ccflags-y += -DCONFIG_TEGRA_FUSE_UPSTREAM
 endif
 
 ifeq ($(CONFIG_TEGRA_HSIERRRPTINJ),y)

@@ -538,13 +538,13 @@ endif
 nvgpu-$(CONFIG_TEGRA_GK20A) += \
 	os/linux/fuse.o \
 	os/linux/module.o \
+	os/linux/soc.o \
 	os/linux/module_usermode.o \
 	os/linux/platform_gk20a_tegra.o \
 	os/linux/platform_gp10b_tegra.o \
 	os/linux/platform_gv11b_tegra.o
 
 ifeq ($(CONFIG_TEGRA_GK20A),y)
-nvgpu-$(CONFIG_NVGPU_TEGRA_FUSE) += os/linux/soc.o
 nvgpu-$(CONFIG_NVGPU_NVMEM_FUSE) += os/linux/nvmem.o
 endif
 
