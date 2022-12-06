@@ -56,9 +56,9 @@ struct gsp_sequences {
 	struct nvgpu_mutex gsp_seq_lock;
 };
 
-int nvgpu_gsp_sequences_init(struct gk20a *g, struct nvgpu_gsp_sched *gsp_sched);
+int nvgpu_gsp_sequences_init(struct gk20a *g, struct nvgpu_gsp_sched **gsp_sched);
 void nvgpu_gsp_sequences_free(struct gk20a *g,
-			struct gsp_sequences *sequences);
+			struct gsp_sequences **sequences);
 int nvgpu_gsp_seq_acquire(struct gk20a *g,
 			struct gsp_sequences *sequences,
 			struct gsp_sequence **pseq,

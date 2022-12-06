@@ -556,11 +556,9 @@ int nvgpu_falcon_sw_init(struct gk20a *g, u32 flcn_id)
 	nvgpu_mutex_init(&flcn->imem_lock);
 	nvgpu_mutex_init(&flcn->dmem_lock);
 
-#ifdef CONFIG_NVGPU_DGPU
 	if (flcn->emem_supported) {
 		nvgpu_mutex_init(&flcn->emem_lock);
 	}
-#endif
 
 	return 0;
 }
@@ -582,11 +580,10 @@ void nvgpu_falcon_sw_free(struct gk20a *g, u32 flcn_id)
 		return;
 	}
 
-#ifdef CONFIG_NVGPU_DGPU
 	if (flcn->emem_supported) {
 		nvgpu_mutex_destroy(&flcn->emem_lock);
 	}
-#endif
+
 	nvgpu_mutex_destroy(&flcn->dmem_lock);
 	nvgpu_mutex_destroy(&flcn->imem_lock);
 }

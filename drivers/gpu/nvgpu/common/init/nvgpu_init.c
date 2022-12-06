@@ -363,9 +363,11 @@ int nvgpu_prepare_poweroff(struct gk20a *g)
 		nvgpu_err(g, "Failed to halt GSP stress test");
 	}
 #endif
-#ifdef CONFIG_NVGPU_GSP_SCHEDULER
-	nvgpu_gsp_sched_suspend(g, g->gsp_sched);
 #endif
+#ifdef CONFIG_NVGPU_GSP_SCHEDULER
+	if (nvgpu_is_enabled(g, NVGPU_SUPPORT_GSP_SCHED)) {
+		nvgpu_gsp_sched_suspend(g, g->gsp_sched);
+	}
 #endif
 
 	nvgpu_falcons_sw_free(g);
@@ -990,13 +992,14 @@ int nvgpu_finalize_poweron(struct gk20a *g)
 		NVGPU_INIT_TABLE_ENTRY(nvgpu_nvs_init, NO_FLAG),
 		NVGPU_INIT_TABLE_ENTRY(g->ops.channel.resume_all_serviceable_ch,
 				       NO_FLAG),
-#ifndef CONFIG_NVGPU_DGPU
 #ifdef CONFIG_NVGPU_GSP_SCHEDULER
 		/* Init gsp ops */
-		NVGPU_INIT_TABLE_ENTRY(&nvgpu_gsp_sched_sw_init, NO_FLAG),
+		NVGPU_INIT_TABLE_ENTRY(&nvgpu_gsp_sched_sw_init, NVGPU_SUPPORT_GSP_SCHED),
 #endif
+#ifndef CONFIG_NVGPU_DGPU
 #ifdef CONFIG_NVGPU_GSP_STRESS_TEST
-		NVGPU_INIT_TABLE_ENTRY(&nvgpu_gsp_stress_test_sw_init, NO_FLAG),
+		NVGPU_INIT_TABLE_ENTRY(&nvgpu_gsp_stress_test_sw_init,
+				NO_FLAG),
 #endif
 #endif
 	};

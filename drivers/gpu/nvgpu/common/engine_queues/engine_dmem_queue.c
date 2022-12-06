@@ -50,14 +50,20 @@ static int engine_dmem_queue_pop(struct nvgpu_falcon *flcn,
 	struct gk20a *g = queue->g;
 	int err = 0;
 
+#if (defined(CONFIG_NVGPU_FALCON_DEBUG) || defined(CONFIG_NVGPU_FALCON_NON_FUSA))
 	err = nvgpu_falcon_copy_from_dmem(flcn, src, data, size, 0);
 	if (err != 0) {
 		nvgpu_err(g, "flcn-%d, queue-%d", queue->flcn_id, queue->id);
 		nvgpu_err(g, "dmem queue read failed");
-		goto exit;
 	}
-
-exit:
+#else
+	(void)flcn;
+	(void)src;
+	(void)data;
+	(void)size;
+	(void)g;
+	err = -EINVAL;
+#endif
 	return err;
 }
 

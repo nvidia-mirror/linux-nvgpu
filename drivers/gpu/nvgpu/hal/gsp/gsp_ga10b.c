@@ -183,7 +183,9 @@ static bool ga10b_gsp_is_interrupted(struct gk20a *g, u32 *intr)
 
 static void ga10b_gsp_handle_swgen1_irq(struct gk20a *g)
 {
+#ifdef CONFIG_NVGPU_FALCON_DEBUG
 	int err = 0;
+#endif
 	struct nvgpu_falcon *flcn = NULL;
 
 	nvgpu_log_fn(g, " ");

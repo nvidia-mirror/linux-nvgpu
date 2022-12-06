@@ -85,6 +85,10 @@ int nvgpu_gsp_debug_buf_init(struct gk20a *g, u32 queue_no, u32 buffer_size)
 			nvgpu_err(g, "GSP debug init failed");
 		}
 	}
+
+#else
+	(void)queue_no;
+	(void)buffer_size;
 #endif
 	return err;
 }

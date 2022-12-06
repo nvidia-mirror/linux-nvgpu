@@ -1955,6 +1955,13 @@ int ga10b_init_hal(struct gk20a *g)
 		nvgpu_set_enabled(g, NVGPU_SUPPORT_PMU_SUPER_SURFACE, true);
 	}
 
+#ifdef CONFIG_NVGPU_GSP_SCHEDULER
+	/*
+	 * enable gsp scheduler
+	 */
+	nvgpu_set_enabled(g, NVGPU_SUPPORT_GSP_SCHED, true);
+#endif
+
 	/*
 	 * enable GSP VM for gsp scheduler firmware
 	 */

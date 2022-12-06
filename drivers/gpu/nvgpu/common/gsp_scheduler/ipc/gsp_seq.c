@@ -30,60 +30,61 @@
 #include "gsp_seq.h"
 
 static void gsp_sequences_init(struct gk20a *g,
-			struct gsp_sequences *sequences)
+			struct gsp_sequences **sequences)
 {
 	u16 i = 0;
 
 	nvgpu_gsp_dbg(g, " ");
 
-	(void) memset(sequences->seq, 0,
-		sizeof(*sequences->seq) * GSP_MAX_NUM_SEQUENCES);
+	(void) memset((*sequences)->seq, 0,
+		sizeof(struct gsp_sequence) * GSP_MAX_NUM_SEQUENCES);
 
-	(void) memset(sequences->gsp_seq_tbl, 0,
-		sizeof(sequences->gsp_seq_tbl));
+	(void) memset((*sequences)->gsp_seq_tbl, 0,
+		sizeof((*sequences)->gsp_seq_tbl));
 
 	for (i = 0; i < GSP_MAX_NUM_SEQUENCES; i++) {
-		sequences->seq[i].id = (u8)i;
+		(*sequences)->seq[i].id = (u8)i;
 	}
 }
 
-int nvgpu_gsp_sequences_init(struct gk20a *g, struct nvgpu_gsp_sched *gsp_sched)
+int nvgpu_gsp_sequences_init(struct gk20a *g, struct nvgpu_gsp_sched **gsp_sched)
 {
 	int err = 0;
-	struct gsp_sequences *seqs;
+	struct gsp_sequences *seqs = NULL;
 
 	nvgpu_gsp_dbg(g, " ");
 
-	seqs = (struct gsp_sequences *) nvgpu_kzalloc(g, sizeof(*seqs->seq));
+	seqs = (struct gsp_sequences *) nvgpu_kzalloc(g, sizeof(struct gsp_sequences));
 	if (seqs == NULL) {
 		nvgpu_err(g, "GSP sequences allocation failed");
 		return -ENOMEM;
 	}
 
-	seqs->seq = nvgpu_kzalloc(g,
-			GSP_MAX_NUM_SEQUENCES * sizeof(*seqs->seq));
+	seqs->seq = (struct gsp_sequence *) nvgpu_kzalloc(g,
+			GSP_MAX_NUM_SEQUENCES * sizeof(struct gsp_sequence));
 	if (seqs->seq == NULL) {
 		nvgpu_err(g, "GSP sequence allocation failed");
 		nvgpu_kfree(g, seqs);
 		return -ENOMEM;
 	}
 
-	gsp_sched->sequences = seqs;
-	gsp_sched->sequences->seq = seqs->seq;
-
 	nvgpu_mutex_init(&seqs->gsp_seq_lock);
 
-	gsp_sequences_init(g, seqs);
+	gsp_sequences_init(g, &seqs);
+
+	(*gsp_sched)->sequences = seqs;
 
 	return err;
 }
 
 void nvgpu_gsp_sequences_free(struct gk20a *g,
-			struct gsp_sequences *sequences)
+			struct gsp_sequences **sequences)
 {
-	nvgpu_mutex_destroy(&sequences->gsp_seq_lock);
-	nvgpu_kfree(g, sequences->seq);
-	nvgpu_kfree(g, sequences);
+	nvgpu_mutex_destroy(&(*sequences)->gsp_seq_lock);
+	nvgpu_kfree(g, ((*sequences)->seq));
+	(*sequences)->seq = NULL;
+	nvgpu_kfree(g, (*sequences));
+	*sequences = NULL;
 }
 
 int nvgpu_gsp_seq_acquire(struct gk20a *g,

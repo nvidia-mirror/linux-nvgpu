@@ -1087,10 +1087,12 @@ void gk20a_remove_support(struct gk20a *g)
 	nvgpu_free_cyclestats_snapshot_data(g);
 #endif
 
-#ifndef CONFIG_NVGPU_DGPU
 #ifdef CONFIG_NVGPU_GSP_SCHEDULER
-	nvgpu_gsp_sched_sw_deinit(g);
+	if (nvgpu_is_enabled(g, NVGPU_SUPPORT_GSP_SCHED)) {
+		nvgpu_gsp_sched_sw_deinit(g);
+	}
 #endif
+#ifndef CONFIG_NVGPU_DGPU
 #ifdef CONFIG_NVGPU_GSP_STRESS_TEST
 	nvgpu_gsp_test_sw_deinit(g);
 #endif

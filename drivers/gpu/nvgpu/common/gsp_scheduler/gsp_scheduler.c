@@ -84,7 +84,7 @@ void nvgpu_gsp_sched_sw_deinit(struct gk20a *g)
 	}
 
 	if (gsp_sched->sequences != NULL) {
-		nvgpu_gsp_sequences_free(g, gsp_sched->sequences);
+		nvgpu_gsp_sequences_free(g, &gsp_sched->sequences);
 	}
 
 	nvgpu_gsp_queues_free(g, gsp_sched->queues);
@@ -119,8 +119,6 @@ static int gsp_sched_wait_for_init(struct gk20a *g,
 int nvgpu_gsp_sched_sw_init(struct gk20a *g)
 {
 	int err = 0;
-	struct nvgpu_gsp_sched *gsp_sched;
-	struct nvgpu_gsp *gsp;
 
 	nvgpu_gsp_dbg(g, " ");
 
@@ -149,17 +147,14 @@ int nvgpu_gsp_sched_sw_init(struct gk20a *g)
 		goto de_init;
 	}
 
-	gsp_sched = g->gsp_sched;
-	gsp = g->gsp_sched->gsp;
-
 	/* gsp falcon software state */
-	gsp->gsp_flcn = &g->gsp_flcn;
-	gsp->g = g;
+	g->gsp_sched->gsp->gsp_flcn = &g->gsp_flcn;
+	g->gsp_sched->gsp->g = g;
 
 	/* Init isr mutex */
-	nvgpu_mutex_init(&gsp->isr_mutex);
+	nvgpu_mutex_init(&g->gsp_sched->gsp->isr_mutex);
 
-	err = nvgpu_gsp_sequences_init(g, gsp_sched);
+	err = nvgpu_gsp_sequences_init(g, &g->gsp_sched);
 	if (err != 0) {
 		nvgpu_err(g, "GSP sequences init failed");
 		goto de_init;

@@ -229,6 +229,7 @@ struct gk20a;
 			"PES Floorsweeping"), \
 	DEFINE_FLAG(NVGPU_SCHED_EXIT_WAIT_FOR_ERRBAR_SUPPORTED,               \
 			"Implicit ERRBAR support"),		\
+	DEFINE_FLAG(NVGPU_SUPPORT_GSP_SCHED, "To enable gsp sheduler"),			\
 	DEFINE_FLAG(NVGPU_SUPPORT_MULTI_PROCESS_TSG_SHARING, \
 			"Multi process TSG sharing support"), \
 	DEFINE_FLAG(NVGPU_MAX_ENABLED_BITS, "Marks max number of flags"),

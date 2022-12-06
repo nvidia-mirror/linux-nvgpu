@@ -132,16 +132,22 @@ NVGPU_COMMON_CFLAGS               += -DCONFIG_NVGPU_CHECKER=1
 # NVGPU_COMMON_CFLAGS             +=      \
 # 	-DCONFIG_NVGPU_CTXSW_FW_ERROR_HEADER_TESTING
 
+# Enable gsp scheduler for safety build
+ifneq ($(NVGPU_HVRTOS),1)
+CONFIG_NVGPU_GSP_SCHEDULER	:= 1
+NVGPU_COMMON_CFLAGS		+= -DCONFIG_NVGPU_GSP_SCHEDULER
+endif
+
+# used by sec2/gsp code
+CONFIG_NVGPU_ENGINE_QUEUE       := 1
+NVGPU_COMMON_CFLAGS             += -DCONFIG_NVGPU_ENGINE_QUEUE
+
 ifeq ($(CONFIG_NVGPU_DGPU),1)
 
 NVGPU_COMMON_CFLAGS             += -DCONFIG_NVGPU_DGPU
 
 CONFIG_NVGPU_NVLINK             := 1
 NVGPU_COMMON_CFLAGS             += -DCONFIG_NVGPU_NVLINK
-
-# used by sec2 code
-CONFIG_NVGPU_ENGINE_QUEUE       := 1
-NVGPU_COMMON_CFLAGS             += -DCONFIG_NVGPU_ENGINE_QUEUE
 
 # used in ce_app
 CONFIG_NVGPU_FENCE              := 1
@@ -219,9 +225,6 @@ endif
 # ACR feature to enable old tegra ACR profile support
 CONFIG_NVGPU_ACR_LEGACY         := 1
 NVGPU_COMMON_CFLAGS             += -DCONFIG_NVGPU_ACR_LEGACY
-
-CONFIG_NVGPU_ENGINE_QUEUE       := 1
-NVGPU_COMMON_CFLAGS             += -DCONFIG_NVGPU_ENGINE_QUEUE
 
 CONFIG_NVGPU_DEBUGGER           := 1
 NVGPU_COMMON_CFLAGS             += -DCONFIG_NVGPU_DEBUGGER
@@ -368,8 +371,14 @@ NVGPU_COMMON_CFLAGS                  += -DCONFIG_NVGPU_MIG
 endif
 
 # Enable gsp scheduler for normal build
+ifneq ($(NVGPU_HVRTOS),1)
 CONFIG_NVGPU_GSP_SCHEDULER	:= 1
 NVGPU_COMMON_CFLAGS		+= -DCONFIG_NVGPU_GSP_SCHEDULER
+endif
+
+# used by sec2/gsp code
+CONFIG_NVGPU_ENGINE_QUEUE       := 1
+NVGPU_COMMON_CFLAGS             += -DCONFIG_NVGPU_ENGINE_QUEUE
 
 # Code to encapsulate the error information into a uniform interface via
 # nvgpu_err_msg is currently used, but might be needed in future by nvgpu_rm
