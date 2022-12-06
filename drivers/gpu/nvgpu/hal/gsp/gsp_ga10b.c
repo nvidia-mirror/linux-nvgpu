@@ -121,6 +121,20 @@ bool ga10b_gsp_validate_mem_integrity(struct gk20a *g)
 			false);
 }
 
+bool ga10b_gsp_is_debug_mode_en(struct gk20a *g)
+{
+	u32 ctl_stat =  nvgpu_readl(g, pgsp_falcon_hwcfg2_r());
+
+	if (pgsp_falcon_hwcfg2_dbgmode_v(ctl_stat) ==
+		pgsp_falcon_hwcfg2_dbgmode_enable_v()) {
+		nvgpu_info(g, "DEBUG MODE");
+		return true;
+	} else {
+		nvgpu_info(g, "PROD MODE");
+		return false;
+	}
+}
+
 #ifdef CONFIG_NVGPU_GSP_SCHEDULER
 u32 ga10b_gsp_queue_head_r(u32 i)
 {

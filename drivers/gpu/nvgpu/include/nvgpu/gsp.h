@@ -34,9 +34,9 @@ struct nvgpu_runlist;
 
 struct gsp_fw {
 	/* gsp ucode name */
-	char *code_name;
-	char *data_name;
-	char *manifest_name;
+	const char *code_name;
+	const char *data_name;
+	const char *manifest_name;
 
 	/* gsp ucode */
 	struct nvgpu_firmware *code;

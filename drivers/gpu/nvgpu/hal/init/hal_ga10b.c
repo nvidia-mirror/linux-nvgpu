@@ -1318,6 +1318,7 @@ static const struct gops_gsp ga10b_ops_gsp = {
 	.falcon2_base_addr = ga10b_gsp_falcon2_base_addr,
 	.gsp_reset = ga10b_gsp_engine_reset,
 	.validate_mem_integrity = ga10b_gsp_validate_mem_integrity,
+	.is_debug_mode_enabled = ga10b_gsp_is_debug_mode_en,
 #ifdef CONFIG_NVGPU_GSP_SCHEDULER
 	/* interrupt */
 	.enable_irq = ga10b_gsp_enable_irq,

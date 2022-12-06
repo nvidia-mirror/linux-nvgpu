@@ -35,11 +35,15 @@
 
 static void gsp_sched_get_file_names(struct gk20a *g, struct gsp_fw *gsp_ucode)
 {
-	nvgpu_gsp_dbg(g, " ");
-
-	gsp_ucode->code_name = GSP_DBG_RISCV_FW_CODE;
-	gsp_ucode->data_name = GSP_DBG_RISCV_FW_DATA;
-	gsp_ucode->manifest_name = GSP_DBG_RISCV_FW_MANIFEST;
+	if (!g->ops.gsp.is_debug_mode_enabled(g)) {
+		gsp_ucode->code_name = SAFETY_SCHED_RISCV_FW_CODE_PROD;
+		gsp_ucode->data_name = SAFETY_SCHED_RISCV_FW_DATA_PROD;
+		gsp_ucode->manifest_name = SAFETY_SCHED_RISCV_FW_MANIFEST_PROD;
+	} else {
+		gsp_ucode->code_name = SAFETY_SCHED_RISCV_FW_CODE;
+		gsp_ucode->data_name = SAFETY_SCHED_RISCV_FW_DATA;
+		gsp_ucode->manifest_name = SAFETY_SCHED_RISCV_FW_MANIFEST;
+	}
 }
 
 void nvgpu_gsp_sched_suspend(struct gk20a *g, struct nvgpu_gsp_sched *gsp_sched)

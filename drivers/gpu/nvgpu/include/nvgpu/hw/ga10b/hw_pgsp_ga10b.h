@@ -120,6 +120,9 @@
 #define pgsp_falcon_hwcfg1_dmem_tag_width_f(v)         ((U32(v) & 0x1fU) << 21U)
 #define pgsp_falcon_hwcfg1_dmem_tag_width_m()                (U32(0x1fU) << 21U)
 #define pgsp_falcon_hwcfg1_dmem_tag_width_v(r)            (((r) >> 21U) & 0x1fU)
+#define pgsp_falcon_hwcfg2_r()                                     (0x001100f4U)
+#define pgsp_falcon_hwcfg2_dbgmode_v(r)                     (((r) >> 3U) & 0x1U)
+#define pgsp_falcon_hwcfg2_dbgmode_enable_v()                      (0x00000001U)
 #define pgsp_ememc_r(i)\
 		(nvgpu_safe_add_u32(0x00110ac0U, nvgpu_safe_mult_u32((i), 8U)))
 #define pgsp_ememc__size_1_v()                                     (0x00000004U)

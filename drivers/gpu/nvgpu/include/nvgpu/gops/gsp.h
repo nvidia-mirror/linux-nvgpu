@@ -35,6 +35,7 @@ struct gops_gsp {
 	void (*falcon_setup_boot_config)(struct gk20a *g);
 	int (*gsp_reset)(struct gk20a *g);
 	bool (*validate_mem_integrity)(struct gk20a *g);
+	bool (*is_debug_mode_enabled)(struct gk20a *g);
 #ifdef CONFIG_NVGPU_GSP_SCHEDULER
 	u32 (*gsp_get_queue_head)(u32 i);
 	u32 (*gsp_get_queue_head_size)(void);

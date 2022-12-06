@@ -28,9 +28,13 @@
 
 #define GSP_QUEUE_NUM	2U
 
-#define GSP_DBG_RISCV_FW_MANIFEST  "sample-gsp.manifest.encrypt.bin.out.bin"
-#define GSP_DBG_RISCV_FW_CODE      "sample-gsp.text.encrypt.bin"
-#define GSP_DBG_RISCV_FW_DATA      "sample-gsp.data.encrypt.bin"
+#define SAFETY_SCHED_RISCV_FW_MANIFEST	"safety-scheduler.manifest.encrypt.bin.out.bin"
+#define SAFETY_SCHED_RISCV_FW_CODE		"safety-scheduler.text.encrypt.bin"
+#define SAFETY_SCHED_RISCV_FW_DATA		"safety-scheduler.data.encrypt.bin"
+
+#define SAFETY_SCHED_RISCV_FW_MANIFEST_PROD	"safety-scheduler.manifest.encrypt.bin.out.bin.prod"
+#define SAFETY_SCHED_RISCV_FW_CODE_PROD		"safety-scheduler.text.encrypt.bin.prod"
+#define SAFETY_SCHED_RISCV_FW_DATA_PROD		"safety-scheduler.data.encrypt.bin.prod"
 
 /* GSP descriptor's */
 struct nvgpu_gsp_sched {
