@@ -380,14 +380,9 @@ static void gr_config_log_info(struct gk20a *g,
 static void gr_config_set_gpc_mask(struct gk20a *g,
 					struct nvgpu_gr_config *config)
 {
-#ifdef CONFIG_NVGPU_DGPU
 	if (g->ops.gr.config.get_gpc_mask != NULL) {
 		config->gpc_mask = g->ops.gr.config.get_gpc_mask(g);
-	} else
-#else
-	(void)g;
-#endif
-	{
+	} else {
 		config->gpc_mask = nvgpu_safe_sub_u32(BIT32(config->gpc_count),
 								1U);
 	}
