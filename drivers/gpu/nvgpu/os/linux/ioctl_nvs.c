@@ -1020,10 +1020,6 @@ static int nvgpu_nvs_query_scheduler_characteristics(struct gk20a *g,
 		return -EINVAL;
 	}
 
-	if (args->reserved2 != 0ULL) {
-		return -EINVAL;
-	}
-
 	capabilities = nvgpu_nvs_ctrl_fifo_get_capabilities(g->sched_ctrl_fifo);
 	args->domain_scheduler_implementation =
 		nvgpu_nvs_translate_hw_scheduler_impl(g, capabilities->scheduler_implementation_hw);
