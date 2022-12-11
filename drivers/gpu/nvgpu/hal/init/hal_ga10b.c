@@ -1154,6 +1154,7 @@ static const struct gops_ramin ga10b_ops_ramin = {
 	.base_shift = gk20a_ramin_base_shift,
 	.alloc_size = gk20a_ramin_alloc_size,
 	.set_eng_method_buffer = gv11b_ramin_set_eng_method_buffer,
+	.set_magic_value = ga10b_ramin_set_magic_value,
 };
 
 static const struct gops_runlist ga10b_ops_runlist = {

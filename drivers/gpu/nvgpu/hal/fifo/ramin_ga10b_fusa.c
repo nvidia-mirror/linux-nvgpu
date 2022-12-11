@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -49,4 +49,10 @@ void ga10b_ramin_init_pdb(struct gk20a *g, struct nvgpu_mem *inst_block,
 
 	nvgpu_mem_wr32(g, inst_block, ram_in_page_dir_base_hi_w(),
 		ram_in_page_dir_base_hi_f(pdb_addr_hi));
+}
+
+void ga10b_ramin_set_magic_value(struct gk20a *g, struct nvgpu_mem *inst_block)
+{
+	nvgpu_mem_wr32(g, inst_block, ram_in_engine_fw_magic_value_w(),
+			ram_in_engine_fw_magic_value_engine_fw_magic_value_v());
 }

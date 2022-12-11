@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -72,6 +72,8 @@
 #define ram_in_page_dir_base_lo_w()                                       (128U)
 #define ram_in_page_dir_base_hi_f(v)              ((U32(v) & 0xffffffffU) << 0U)
 #define ram_in_page_dir_base_hi_w()                                       (129U)
+#define ram_in_engine_fw_magic_value_w()                                  (131U)
+#define ram_in_engine_fw_magic_value_engine_fw_magic_value_v()     (0xcafeca11U)
 #define ram_in_engine_cs_s()                                                (1U)
 #define ram_in_engine_cs_f(v)                            ((U32(v) & 0x1U) << 3U)
 #define ram_in_engine_cs_m()                                   (U32(0x1U) << 3U)

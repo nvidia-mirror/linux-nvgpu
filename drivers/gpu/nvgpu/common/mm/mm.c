@@ -108,6 +108,10 @@ int nvgpu_alloc_inst_block(struct gk20a *g, struct nvgpu_mem *inst_block)
 		return err;
 	}
 
+	if (g->ops.ramin.set_magic_value != NULL) {
+		g->ops.ramin.set_magic_value(g, inst_block);
+	}
+
 	nvgpu_log_fn(g, "done");
 	return 0;
 }

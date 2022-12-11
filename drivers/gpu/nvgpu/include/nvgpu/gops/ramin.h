@@ -214,6 +214,8 @@ struct gops_ramin {
 			struct nvgpu_mem *inst_block, u64 va_limit);
 	void (*set_eng_method_buffer)(struct gk20a *g,
 			struct nvgpu_mem *inst_block, u64 gpu_va);
+	void (*set_magic_value)(struct gk20a *g,
+			struct nvgpu_mem *inst_block);
 
 	/** @endcond DOXYGEN_SHOULD_SKIP_THIS */
 };
