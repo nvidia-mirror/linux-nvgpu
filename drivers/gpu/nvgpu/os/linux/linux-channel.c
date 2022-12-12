@@ -25,6 +25,8 @@
 #include <nvgpu/dma.h>
 #include <nvgpu/fence.h>
 #include <nvgpu/grmgr.h>
+#include <nvgpu/dt.h>
+#include <nvgpu/soc.h>
 
 /*
  * This is required for nvgpu_vm_find_buf() which is used in the tracing
@@ -44,6 +46,8 @@
 #include <linux/uaccess.h>
 #include <linux/dma-buf.h>
 #include <linux/dma-direction.h>
+#include <linux/of.h>
+#include <linux/version.h>
 
 #include <nvgpu/trace.h>
 #include <uapi/linux/nvgpu.h>
@@ -52,7 +56,7 @@
 #include "sync_sema_dma.h"
 #include <nvgpu/linux/os_fence_dma.h>
 
-#define NUM_CHANNELS	512U
+#define NUM_CHANNELS	256U
 
 u32 nvgpu_submit_gpfifo_user_flags_to_common_flags(u32 user_flags)
 {
@@ -658,13 +662,45 @@ u32 nvgpu_channel_get_max_subctx_count(struct nvgpu_channel *ch)
 
 u32 nvgpu_channel_get_synpoints(struct gk20a *g)
 {
-	(void)g;
-	/*
-	 * The syncpoints should be queried from the DT entry.
-	 * Once support is added in the DT, this function will
-	 * read and return syncpoint entry present in the device tree.
-	 */
-	return NUM_CHANNELS;
+	if (nvgpu_is_hypervisor_mode(g)) {
+	#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 14, 0)
+		(void)g;
+		/*
+		 * The syncpoints should be queried from the DT entry.
+		 * Once support is added in the DT, this function will
+		 * read and return syncpoint entry present in the device tree.
+		 */
+		return NUM_CHANNELS;
+	#else
+		struct device_node *syncpt_node = NULL;
+		int val_read = 0U;
+		u32 val[2] = {0U, 0U};
+
+		(void)g;
+		syncpt_node = of_find_compatible_node(NULL, NULL,
+				"nvidia,tegra234-host1x-hv");
+		if (syncpt_node == NULL) {
+			return NUM_CHANNELS;
+		}
+
+		val_read = of_property_read_variable_u32_array(syncpt_node,
+			 "nvidia,gpu-syncpt-pool", val, 2, 2);
+		if ((val_read != 2) || (val_read < 0) || (val[1] == 0U)) {
+			return NUM_CHANNELS;
+		}
+
+		/*
+		 * As 0 is invalid syncpoint, HOST1x provides a syncpoint more than
+		 * expected. So subtract 1 from the length of the pool.
+		 */
+		return (val[1] - 1U);
+	#endif
+	} else {
+		/*
+		 * Return 512 channels for L4T and native platform.
+		 */
+		return 512U;
+	}
 }
 
 #ifdef CONFIG_DEBUG_FS
