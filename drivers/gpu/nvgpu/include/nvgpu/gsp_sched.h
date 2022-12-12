@@ -22,6 +22,9 @@
 
 #ifndef GSP_SCHED_H
 #define GSP_SCHED_H
+
+#include <nvgpu/nvs.h>
+
 struct gk20a;
 struct nvgpu_gsp_sched;
 struct nvgpu_runlist;
@@ -124,4 +127,9 @@ int nvgpu_gsp_nvs_update_runlist(struct gk20a *g, const char *name,struct nvgpu_
 int nvgpu_gps_sched_update_runlist(struct gk20a *g,
     struct nvgpu_runlist_domain *domain, struct nvgpu_runlist *rl);
 int nvgpu_gsp_sched_bind_ctx_reg(struct gk20a *g);
+bool nvgpu_gsp_is_ready(struct gk20a *g);
+#ifdef CONFIG_NVS_PRESENT
+int nvgpu_gsp_sched_send_queue_info(struct gk20a *g, struct nvgpu_nvs_ctrl_queue *queue,
+	enum nvgpu_nvs_ctrl_queue_direction queue_direction);
+#endif
 #endif /* GSP_SCHED_H */

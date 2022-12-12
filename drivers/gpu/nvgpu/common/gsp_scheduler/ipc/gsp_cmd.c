@@ -113,7 +113,6 @@ int nvgpu_gsp_cmd_post(struct gk20a *g, struct nv_flcn_cmd_gsp *cmd,
 		err = -EINVAL;
 		goto exit;
 	}
-
 	/* Sanity check the command input. */
 	if (!gsp_validate_cmd(gsp_sched, cmd, queue_id)) {
 		err = -EINVAL;

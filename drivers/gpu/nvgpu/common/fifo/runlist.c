@@ -555,6 +555,14 @@ int nvgpu_runlist_update_locked(struct gk20a *g, struct nvgpu_runlist *rl,
 		}
 #ifdef CONFIG_NVS_ROUND_ROBIN_SCHEDULER_DISABLE
 		nvgpu_runlist_swap_mem(g, rl->shadow_rl_domain);
+#if defined(CONFIG_NVGPU_GSP_SCHEDULER) && defined(CONFIG_NVS_PRESENT)
+	if (nvgpu_is_enabled(g, (u32)(NVGPU_SUPPORT_GSP_SCHED))) {
+		if ((nvgpu_gsp_is_ready(g) == true)
+			&& (nvgpu_nvs_gsp_usr_domain_present(g) == true)) {
+			ret = nvgpu_gps_sched_update_runlist(g, rl->shadow_rl_domain, rl);
+		}
+	}
+#endif
 #endif
 	}
 
@@ -565,6 +573,15 @@ int nvgpu_runlist_update_locked(struct gk20a *g, struct nvgpu_runlist *rl,
 	}
 
 	nvgpu_runlist_swap_mem(g, domain);
+	/* runlist update */
+#if defined(CONFIG_NVGPU_GSP_SCHEDULER) && defined(CONFIG_NVS_PRESENT)
+	if (nvgpu_is_enabled(g, (u32)(NVGPU_SUPPORT_GSP_SCHED))) {
+		if ((nvgpu_gsp_is_ready(g) == true)
+			&& (nvgpu_nvs_gsp_usr_domain_present(g) == true)) {
+			ret = nvgpu_gps_sched_update_runlist(g, domain, rl);
+		}
+	}
+#endif
 
 	return ret;
 }
@@ -760,20 +777,26 @@ int nvgpu_rl_domain_sync_submit(struct gk20a *g, struct nvgpu_runlist *runlist,
 		struct nvgpu_runlist_domain *next_domain, bool wait_for_finish)
 {
 	int err = 0;
-
-	if (next_domain == NULL) {
-		next_domain = runlist->shadow_rl_domain;
-	}
-
-	runlist_submit_powered(g, runlist, next_domain);
-	if (wait_for_finish) {
-		err = nvgpu_runlist_wait_pending_legacy(g, runlist);
-		if (err != 0) {
-			nvgpu_err(g, "runlist %d update timeout", runlist->id);
-			/* trigger runlist update timeout recovery */
-			return err;
+#ifdef CONFIG_NVS_PRESENT
+	if (nvgpu_nvs_gsp_usr_domain_present(g) == false) {
+#endif
+		/* schedule runlists for only for shadow domains */
+		if (next_domain == NULL) {
+			next_domain = runlist->shadow_rl_domain;
 		}
+
+		runlist_submit_powered(g, runlist, next_domain);
+		if (wait_for_finish) {
+			err = nvgpu_runlist_wait_pending_legacy(g, runlist);
+			if (err != 0) {
+				nvgpu_err(g, "runlist %d update timeout", runlist->id);
+				/* trigger runlist update timeout recovery */
+				return err;
+			}
+		}
+#ifdef CONFIG_NVS_PRESENT
 	}
+#endif
 
 	return err;
 }

@@ -246,3 +246,8 @@ int nvgpu_gsp_sched_bind_ctx_reg(struct gk20a *g)
 
 	return err;
 }
+
+bool nvgpu_gsp_is_ready(struct gk20a *g)
+{
+	return g->gsp_sched->gsp_ready;
+}

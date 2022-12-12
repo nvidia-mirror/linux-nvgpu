@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2022-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -57,5 +57,4 @@ struct nvgpu_gsp_ctrl_fifo_info {
      */
     u32 qtype;
 };
-int nvgpu_gsp_sched_send_queue_info(struct gk20a *g, enum queue_type qtype);
 #endif/* GSP_CTRL_FIFO_H */

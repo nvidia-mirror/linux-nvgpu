@@ -28,6 +28,10 @@
 #include <nvs/nvs_sched.h>
 #include <nvs/domain.h>
 
+#if defined (CONFIG_NVS_PRESENT) && defined (CONFIG_NVGPU_GSP_SCHEDULER)
+#include <nvgpu/gsp_sched.h>
+#endif
+
 #include "ioctl.h"
 #include "dmabuf_nvs.h"
 
@@ -905,6 +909,19 @@ static int nvgpu_nvs_ctrl_fifo_create_queue(struct gk20a *g,
 		err = nvgpu_nvs_get_buf(g, queue, read_only);
 	}
 
+	/*
+	 * sending control fifo info to GSP scheduler
+	 * currently only control and message queues
+	 * are supported and not event queue
+	 */
+#if defined (CONFIG_NVS_PRESENT) && defined (CONFIG_NVGPU_GSP_SCHEDULER)
+	if (nvgpu_is_enabled(g, (u32)(NVGPU_SUPPORT_GSP_SCHED))) {
+		if ((nvgpu_gsp_is_ready(g) == true) &&
+			(num_queue == NVGPU_NVS_NUM_CONTROL)) {
+			err = nvgpu_gsp_sched_send_queue_info(g, queue, queue_direction);
+		}
+	}
+#endif
 	if (err != 0) {
 		goto fail;
 	}

@@ -929,4 +929,9 @@ s32 nvgpu_nvs_gsp_get_runlist_domain_info(struct gk20a *g, u64 nvgpu_domain_id, 
 s32 nvgpu_nvs_get_gsp_domain_info(struct gk20a *g, u64 nvgpu_domain_id,
 		u32 *domain_id, u32 *timeslice_ns);
 #endif
+#ifdef CONFIG_NVS_PRESENT
+/* function to chech if user domain are present or only shadow domain
+ * exists if domain_list::nr = 0 if only shadow domain is present */
+bool nvgpu_nvs_gsp_usr_domain_present(struct gk20a *g);
+#endif
 #endif

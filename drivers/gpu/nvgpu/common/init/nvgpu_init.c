@@ -1017,7 +1017,6 @@ int nvgpu_finalize_poweron(struct gk20a *g)
 		NVGPU_INIT_TABLE_ENTRY(g->ops.pmu.pmu_restore_golden_img_state,
 				       NO_FLAG),
 #endif
-		NVGPU_INIT_TABLE_ENTRY(nvgpu_nvs_init, NO_FLAG),
 		NVGPU_INIT_TABLE_ENTRY(g->ops.channel.resume_all_serviceable_ch,
 				       NO_FLAG),
 #ifdef CONFIG_NVGPU_GSP_SCHEDULER
@@ -1031,6 +1030,7 @@ int nvgpu_finalize_poweron(struct gk20a *g)
 				NVGPU_SUPPORT_GSP_STEST),
 #endif
 #endif
+	NVGPU_INIT_TABLE_ENTRY(nvgpu_nvs_init, NO_FLAG),
 	};
 	size_t i;
 

@@ -615,6 +615,15 @@ static int nvgpu_nvs_gen_shadow_domain(struct gk20a *g)
 	/* Set active_domain to shadow_domain during Init */
 	g->scheduler->active_domain = g->scheduler->shadow_domain;
 
+#ifdef CONFIG_NVGPU_GSP_SCHEDULER
+	if (nvgpu_is_enabled(g, (u32)(NVGPU_SUPPORT_GSP_SCHED))) {
+		err = nvgpu_gsp_nvs_add_domain(g, nvgpu_dom->id);
+		if (err != 0) {
+			nvgpu_err(g, "add domain for shadow domain failed");
+		}
+	}
+#endif
+
 error:
 	return err;
 }
@@ -623,6 +632,7 @@ static void nvgpu_nvs_remove_shadow_domain(struct gk20a *g)
 {
 	struct nvgpu_nvs_scheduler *sched = g->scheduler;
 	struct nvs_domain *nvs_dom;
+	s32 err = 0;
 
 	if (sched == NULL) {
 		/* never powered on to init anything */
@@ -637,9 +647,11 @@ static void nvgpu_nvs_remove_shadow_domain(struct gk20a *g)
 		nvgpu_warn(g,
 				"domain %llu is still in use during shutdown! refs: %u",
 				sched->shadow_domain->id, sched->shadow_domain->ref);
+		nvgpu_err(g, "%u", err);
 	}
 
 	nvs_dom = sched->shadow_domain->parent;
+
 	nvs_domain_destroy(sched->sched, nvs_dom);
 
 	nvgpu_kfree(g, sched->shadow_domain->rl_domains);
@@ -714,6 +726,14 @@ int nvgpu_nvs_open(struct gk20a *g)
 			nvgpu_nvs_worker_resume(g);
 		}
 #endif
+#ifdef CONFIG_NVGPU_GSP_SCHEDULER
+	if (nvgpu_is_enabled(g, (u32)(NVGPU_SUPPORT_GSP_SCHED))) {
+		err = nvgpu_gsp_nvs_add_domain(g, U64_MAX);
+		if (err != 0) {
+			nvgpu_err(g, "add domain for shadow domain failed");
+		}
+	}
+#endif
 		return err;
 	}
 
@@ -777,6 +797,17 @@ unlock:
 			}
 			if (g->sched_ctrl_fifo)
 				nvgpu_nvs_ctrl_fifo_destroy(g);
+		}
+	}
+#endif
+
+#ifdef CONFIG_NVGPU_GSP_SCHEDULER
+	if (err != 0) {
+		if (nvgpu_is_enabled(g, (u32)(NVGPU_SUPPORT_GSP_SCHED))) {
+			err = nvgpu_gsp_nvs_delete_domain(g, g->scheduler->shadow_domain->id);
+			if (err != 0) {
+				nvgpu_err(g, "delete domain for shadow domain failed");
+			}
 		}
 	}
 #endif
@@ -875,6 +906,16 @@ int nvgpu_nvs_add_domain(struct gk20a *g, const char *name, u64 timeslice,
 	nvs_domain_scheduler_attach(g->scheduler->sched, nvs_dom);
 
 	nvgpu_dom->parent = nvs_dom;
+
+#ifdef CONFIG_NVGPU_GSP_SCHEDULER
+	if (nvgpu_is_enabled(g, (u32)(NVGPU_SUPPORT_GSP_SCHED))) {
+		err = nvgpu_gsp_nvs_add_domain(g, nvgpu_dom->id);
+		if (err != 0) {
+			nvgpu_err(g, "sending domain info to gsp failed");
+			goto unlock;
+		}
+	}
+#endif
 
 	*pdomain = nvgpu_dom;
 unlock:
@@ -1036,6 +1077,14 @@ int nvgpu_nvs_del_domain(struct gk20a *g, u64 dom_id)
 
 	nvs_dom = nvgpu_dom->parent;
 
+#ifdef CONFIG_NVGPU_GSP_SCHEDULER
+	if (nvgpu_is_enabled(g, (u32)(NVGPU_SUPPORT_GSP_SCHED))) {
+		err = nvgpu_gsp_nvs_delete_domain(g, dom_id);
+		if (err != 0) {
+			nvgpu_err(g, "failed to delete domain");
+		}
+	}
+#endif
 	nvgpu_nvs_unlink_rl_domains(g, nvgpu_dom);
 	nvgpu_nvs_delete_rl_domain_mem(g, nvgpu_dom);
 	nvgpu_dom->ref = 0U;
@@ -1178,5 +1227,18 @@ s32 nvgpu_nvs_get_gsp_domain_info(struct gk20a *g, u64 nvgpu_domain_id,
 			nvgpu_domain->parent->timeslice_ns);
 exit:
 	return err;
+}
+#endif
+
+#ifdef CONFIG_NVS_PRESENT
+bool nvgpu_nvs_gsp_usr_domain_present(struct gk20a *g)
+{
+	bool ret = false;
+
+	if (nvs_domain_count(g->scheduler->sched) > 0U) {
+		/* for count more than 0 user domains are present */
+		ret = true;
+	}
+	return ret;
 }
 #endif
