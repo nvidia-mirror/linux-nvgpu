@@ -680,19 +680,18 @@ static int nvgpu_nvs_ctrl_fifo_scheduler_process_caps_request(struct gk20a *g,
 
 	(void)g;
 
-	if (request->client_version_major == NVS_DOMAIN_SCHED_VERSION_MAJOR
-			&& request->client_version_minor == NVS_DOMAIN_SCHED_VERSION_MINOR
-			&& request->client_version_patch == NVS_DOMAIN_SCHED_VERSION_PATCH) {
+	if (request->client_version_major == NVS_DOMAIN_SCHED_VERSION_MAJOR) {
 		result = 0;
-		response->sched_version_major = NVS_DOMAIN_SCHED_VERSION_MAJOR;
-		response->sched_version_minor = NVS_DOMAIN_SCHED_VERSION_MINOR;
-		response->sched_version_patch = NVS_DOMAIN_SCHED_VERSION_PATCH;
 		response->client_version_status = NVS_DOMAIN_MSG_CTRL_GET_CAPS_RESP_CLIENT_VERSION_STATUS_OK;
 	} else {
 		result = 1;
 		response->client_version_status =
 			NVS_DOMAIN_MSG_CTRL_GET_CAPS_RESP_CLIENT_VERSION_STATUS_FAILED;
 	}
+
+		response->sched_version_major = NVS_DOMAIN_SCHED_VERSION_MAJOR;
+		response->sched_version_minor = NVS_DOMAIN_SCHED_VERSION_MINOR;
+		response->sched_version_patch = NVS_DOMAIN_SCHED_VERSION_PATCH;
 
 	return result;
 }

@@ -189,7 +189,7 @@ static int test_nvs_worker(struct unit_module *m,
 			client_request_caps->client_version_minor = NVS_DOMAIN_SCHED_VERSION_MINOR;
 			client_request_caps->client_version_patch = NVS_DOMAIN_SCHED_VERSION_PATCH;
 			if (error_case) {
-				client_request_caps->client_version_patch = 127U;
+				client_request_caps->client_version_major = 127U;
 			}
 		} else if (message_type == 1) {
 			fifo_msg_type = NVS_DOMAIN_MSG_TYPE_CTRL_SWITCH_DOMAIN;
