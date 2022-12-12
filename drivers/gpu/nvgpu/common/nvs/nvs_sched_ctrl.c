@@ -502,7 +502,11 @@ int nvgpu_nvs_buffer_alloc(struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl,
 	}
 
 	g = sched_ctrl->g;
-	system_vm = g->mm.pmu.vm;
+	if (nvgpu_is_enabled(g, (u32)(NVGPU_SUPPORT_GSP_VM))) {
+		system_vm = g->mm.gsp.vm;
+	} else {
+		system_vm = g->mm.pmu.vm;
+	}
 
 	(void)memset(buf, 0, sizeof(*buf));
 	buf->g = g;
