@@ -168,7 +168,7 @@ de_init:
 	return err;
 }
 
-int nvgpu_gsp_sched_bootstrap_ns(struct gk20a *g)
+int nvgpu_gsp_sched_bootstrap_hs(struct gk20a *g)
 {
 	struct nvgpu_gsp_sched *gsp_sched = g->gsp_sched;
 	int status = 0;

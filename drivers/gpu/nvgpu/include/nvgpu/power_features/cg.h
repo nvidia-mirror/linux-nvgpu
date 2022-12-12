@@ -524,7 +524,7 @@ void nvgpu_cg_elcg_ce_load_enable(struct gk20a *g);
  *
  * Checks the platform software capability slcg_enabled and programs registers
  * for configuring production gating values for SLCG for GSP. This is called
- * in #nvgpu_gsp_sched_bootstrap_ns.
+ * in #nvgpu_gsp_sched_bootstrap_hs.
  *
  * Steps:
  * - Acquire the mutex #cg_pg_lock.

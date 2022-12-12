@@ -995,6 +995,7 @@ int nvgpu_finalize_poweron(struct gk20a *g)
 #ifdef CONFIG_NVGPU_GSP_SCHEDULER
 		/* Init gsp ops */
 		NVGPU_INIT_TABLE_ENTRY(&nvgpu_gsp_sched_sw_init, NVGPU_SUPPORT_GSP_SCHED),
+		NVGPU_INIT_TABLE_ENTRY(&nvgpu_gsp_sched_bootstrap_hs, NVGPU_SUPPORT_GSP_SCHED),
 #endif
 #ifndef CONFIG_NVGPU_DGPU
 #ifdef CONFIG_NVGPU_GSP_STRESS_TEST

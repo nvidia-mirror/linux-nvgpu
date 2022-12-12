@@ -99,7 +99,7 @@ struct nvgpu_gsp_domain_info {
 	struct nvgpu_gsp_runlist_info runlist_info[TOTAL_NO_OF_RUNLISTS];
 };
 
-int nvgpu_gsp_sched_bootstrap_ns(struct gk20a *g);
+int nvgpu_gsp_sched_bootstrap_hs(struct gk20a *g);
 int nvgpu_gsp_sched_sw_init(struct gk20a *g);
 void nvgpu_gsp_sched_sw_deinit(struct gk20a *g);
 void nvgpu_gsp_sched_suspend(struct gk20a *g, struct nvgpu_gsp_sched *gsp_sched);
