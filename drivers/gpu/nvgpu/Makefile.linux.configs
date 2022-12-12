@@ -59,8 +59,10 @@ endif
 # Support for remap
 CONFIG_NVGPU_REMAP := y
 
+ifeq ($(NV_BUILD_CONFIGURATION_VARIANT_IS_EMBEDDED),1)
 # Enable gsp scheduler support
 CONFIG_NVGPU_GSP_SCHEDULER := y
+endif
 
 #Enable stress test for GSP
 ifeq ($(CONFIG_NVGPU_GSP_SCHEDULER),y)

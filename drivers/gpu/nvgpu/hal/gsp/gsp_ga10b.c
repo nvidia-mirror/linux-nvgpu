@@ -135,6 +135,44 @@ bool ga10b_gsp_is_debug_mode_en(struct gk20a *g)
 	}
 }
 
+s32 ga10b_gsp_get_emem_boundaries(struct gk20a *g,
+	u32 *start_emem, u32 *end_emem)
+{
+	u32 tag_width_shift = 0;
+	int status = 0;
+	/*
+	 * EMEM is mapped at the top of DMEM VA space
+	 * START_EMEM = DMEM_VA_MAX = 2^(DMEM_TAG_WIDTH + 8)
+	 */
+	if (start_emem == NULL) {
+		status = -EINVAL;
+		goto exit;
+	}
+
+	tag_width_shift = ((u32)pgsp_falcon_hwcfg1_dmem_tag_width_v(
+			gk20a_readl(g, pgsp_falcon_hwcfg1_r())) + (u32)8U);
+
+	if (tag_width_shift > 31) {
+		nvgpu_err(g, "Invalid tag width shift, %u", tag_width_shift);
+		status = -EINVAL;
+		goto exit;
+	}
+
+	*start_emem = BIT32(tag_width_shift);
+
+
+	if (end_emem == NULL) {
+		goto exit;
+	}
+
+	*end_emem = *start_emem +
+		((u32)pgsp_hwcfg_emem_size_f(gk20a_readl(g, pgsp_hwcfg_r()))
+		* (u32)256U);
+
+exit:
+	return status;
+}
+
 #ifdef CONFIG_NVGPU_GSP_SCHEDULER
 u32 ga10b_gsp_queue_head_r(u32 i)
 {
@@ -309,44 +347,6 @@ void ga10b_gsp_enable_irq(struct gk20a *g, bool enable)
 
 		/* Configuring RISCV interrupts is expected to be done inside firmware */
 	}
-}
-
-s32 ga10b_gsp_get_emem_boundaries(struct gk20a *g,
-	u32 *start_emem, u32 *end_emem)
-{
-	u32 tag_width_shift = 0;
-	int status = 0;
-	/*
-	 * EMEM is mapped at the top of DMEM VA space
-	 * START_EMEM = DMEM_VA_MAX = 2^(DMEM_TAG_WIDTH + 8)
-	 */
-	if (start_emem == NULL) {
-		status = -EINVAL;
-		goto exit;
-	}
-
-	tag_width_shift = ((u32)pgsp_falcon_hwcfg1_dmem_tag_width_v(
-			gk20a_readl(g, pgsp_falcon_hwcfg1_r())) + (u32)8U);
-
-	if (tag_width_shift > 31) {
-		nvgpu_err(g, "Invalid tag width shift, %u", tag_width_shift);
-		status = -EINVAL;
-		goto exit;
-	}
-
-	*start_emem = BIT32(tag_width_shift);
-
-
-	if (end_emem == NULL) {
-		goto exit;
-	}
-
-	*end_emem = *start_emem +
-		((u32)pgsp_hwcfg_emem_size_f(gk20a_readl(g, pgsp_hwcfg_r()))
-		* (u32)256U);
-
-exit:
-	return status;
 }
 
 static int gsp_memcpy_params_check(struct gk20a *g, u32 dmem_addr,

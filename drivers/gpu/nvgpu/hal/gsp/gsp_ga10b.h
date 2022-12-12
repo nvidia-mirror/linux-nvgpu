@@ -28,6 +28,8 @@ u32 ga10b_gsp_falcon2_base_addr(void);
 int ga10b_gsp_engine_reset(struct gk20a *g);
 bool ga10b_gsp_validate_mem_integrity(struct gk20a *g);
 bool ga10b_gsp_is_debug_mode_en(struct gk20a *g);
+s32 ga10b_gsp_get_emem_boundaries(struct gk20a *g,
+	u32 *start_emem, u32 *end_emem);
 #ifdef CONFIG_NVGPU_GSP_SCHEDULER
 void ga10b_gsp_flcn_setup_boot_config(struct gk20a *g);
 
@@ -49,8 +51,6 @@ int ga10b_gsp_flcn_copy_from_emem(struct gk20a *g,
 
 /* interrupt */
 void ga10b_gsp_enable_irq(struct gk20a *g, bool enable);
-s32 ga10b_gsp_get_emem_boundaries(struct gk20a *g,
-	u32 *start_emem, u32 *end_emem);
 void ga10b_gsp_isr(struct gk20a *g, struct nvgpu_gsp *gsp);
 void ga10b_gsp_set_msg_intr(struct gk20a *g);
 #endif /* CONFIG_NVGPU_GSP_SCHEDULER */
