@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -434,6 +434,7 @@ static ssize_t is_railgated_show(struct device *dev,
 }
 static DEVICE_ATTR(is_railgated, S_IRUGO, is_railgated_show, NULL);
 
+#ifndef CONFIG_NVGPU_EMB_LINUX_PROD_BUILD
 static ssize_t counters_show(struct device *dev,
 			     struct device_attribute *attr, char *buf)
 {
@@ -531,6 +532,7 @@ static ssize_t elpg_enable_read(struct device *dev,
 }
 
 static DEVICE_ATTR(elpg_enable, ROOTRW, elpg_enable_read, elpg_enable_store);
+#endif
 
 static ssize_t ldiv_slowdown_factor_store(struct device *dev,
 	struct device_attribute *attr, const char *buf, size_t count)
@@ -663,6 +665,7 @@ static ssize_t mscg_enable_read(struct device *dev,
 
 static DEVICE_ATTR(mscg_enable, ROOTRW, mscg_enable_read, mscg_enable_store);
 
+#ifndef CONFIG_NVGPU_EMB_LINUX_PROD_BUILD
 static ssize_t aelpg_param_store(struct device *dev,
 	struct device_attribute *attr, const char *buf, size_t count)
 {
@@ -787,7 +790,7 @@ static ssize_t aelpg_enable_read(struct device *dev,
 
 static DEVICE_ATTR(aelpg_enable, ROOTRW,
 		aelpg_enable_read, aelpg_enable_store);
-
+#endif
 
 static ssize_t allow_all_enable_read(struct device *dev,
 		struct device_attribute *attr, char *buf)
@@ -1495,24 +1498,27 @@ void nvgpu_remove_sysfs(struct device *dev)
 	device_remove_file(dev, &dev_attr_ptimer_scale_factor);
 	device_remove_file(dev, &dev_attr_ptimer_ref_freq);
 	device_remove_file(dev, &dev_attr_ptimer_src_freq);
-	device_remove_file(dev, &dev_attr_elpg_enable);
 	device_remove_file(dev, &dev_attr_mscg_enable);
 	device_remove_file(dev, &dev_attr_emc3d_ratio);
 	device_remove_file(dev, &dev_attr_ldiv_slowdown_factor);
 
 	device_remove_file(dev, &dev_attr_fmax_at_vmin_safe);
 
+#ifndef CONFIG_NVGPU_EMB_LINUX_PROD_BUILD
+	device_remove_file(dev, &dev_attr_elpg_enable);
 	device_remove_file(dev, &dev_attr_counters);
 	device_remove_file(dev, &dev_attr_counters_reset);
 	device_remove_file(dev, &dev_attr_load);
+	device_remove_file(dev, &dev_attr_aelpg_param);
+	device_remove_file(dev, &dev_attr_aelpg_enable);
+#endif
+
 	device_remove_file(dev, &dev_attr_railgate_delay);
 	device_remove_file(dev, &dev_attr_is_railgated);
 #ifdef CONFIG_PM
 	device_remove_file(dev, &dev_attr_force_idle);
 	device_remove_file(dev, &dev_attr_railgate_enable);
 #endif
-	device_remove_file(dev, &dev_attr_aelpg_param);
-	device_remove_file(dev, &dev_attr_aelpg_enable);
 	device_remove_file(dev, &dev_attr_allow_all);
 	device_remove_file(dev, &dev_attr_tpc_fs_mask);
 	device_remove_file(dev, &dev_attr_tpc_pg_mask);
@@ -1570,24 +1576,25 @@ int nvgpu_create_sysfs(struct device *dev)
 	error |= device_create_file(dev, &dev_attr_ptimer_scale_factor);
 	error |= device_create_file(dev, &dev_attr_ptimer_ref_freq);
 	error |= device_create_file(dev, &dev_attr_ptimer_src_freq);
-	error |= device_create_file(dev, &dev_attr_elpg_enable);
 	error |= device_create_file(dev, &dev_attr_mscg_enable);
 	error |= device_create_file(dev, &dev_attr_emc3d_ratio);
 	error |= device_create_file(dev, &dev_attr_ldiv_slowdown_factor);
-
 	error |= device_create_file(dev, &dev_attr_fmax_at_vmin_safe);
 
+#ifndef CONFIG_NVGPU_EMB_LINUX_PROD_BUILD
 	error |= device_create_file(dev, &dev_attr_counters);
 	error |= device_create_file(dev, &dev_attr_counters_reset);
 	error |= device_create_file(dev, &dev_attr_load);
+	error |= device_create_file(dev, &dev_attr_elpg_enable);
+	error |= device_create_file(dev, &dev_attr_aelpg_param);
+	error |= device_create_file(dev, &dev_attr_aelpg_enable);
+#endif
 	error |= device_create_file(dev, &dev_attr_railgate_delay);
 	error |= device_create_file(dev, &dev_attr_is_railgated);
 #ifdef CONFIG_PM
 	error |= device_create_file(dev, &dev_attr_force_idle);
 	error |= device_create_file(dev, &dev_attr_railgate_enable);
 #endif
-	error |= device_create_file(dev, &dev_attr_aelpg_param);
-	error |= device_create_file(dev, &dev_attr_aelpg_enable);
 	error |= device_create_file(dev, &dev_attr_allow_all);
 	error |= device_create_file(dev, &dev_attr_tpc_fs_mask);
 	error |= device_create_file(dev, &dev_attr_tpc_pg_mask);

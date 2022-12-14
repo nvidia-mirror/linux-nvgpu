@@ -61,6 +61,20 @@ ifeq ($(CONFIG_NVGPU_IVM_BUILD),y)
 ccflags-y += -DCONFIG_NVGPU_IVM_BUILD
 endif
 
+# On Embedded Linux , tegra_prod_defconfig is used as kernel defconfig
+# to build the production kernel. Used the variable NV_BUILD_KERNEL_CONFIG_NAME to
+# detect the production build, to disable the debug and
+# profiling related stuff on nvgpu
+#
+# Production Defconfig is available on below mentioned path
+# https://lmi-hub/source/xref/stage-main_automotive/kernel/kernel-5.10/arch/arm64/configs/tegra_prod_defconfig
+#
+# The makefile which sets NV_BUILD_KERNEL_CONFIG_NAME is present on
+# https://git-master.nvidia.com/r/plugins/gitiles/tegra/build/make/+/refs/changes/74/2809974/8/umbrella/parts/Makefile.kernel
+ifeq ($(CONFIG_NVGPU_EMB_LINUX_PROD_BUILD),y)
+ccflags-y += -DCONFIG_NVGPU_EMB_LINUX_PROD_BUILD
+endif
+
 ccflags-y += -DCONFIG_NVGPU_DETERMINISTIC_CHANNELS
 ccflags-y += -DCONFIG_NVGPU_STATIC_POWERGATE
 ccflags-y += -DCONFIG_NVGPU_ACR_LEGACY
@@ -510,7 +524,6 @@ nvgpu-$(CONFIG_DEBUG_FS) += \
 	os/linux/debug_gr.o \
 	os/linux/debug_fifo.o \
 	os/linux/debug_ce.o \
-	os/linux/debug_pmu.o \
 	os/linux/debug_pmgr.o \
 	os/linux/debug_sched.o \
 	os/linux/debug_allocator.o \
@@ -521,6 +534,10 @@ nvgpu-$(CONFIG_DEBUG_FS) += \
 	os/linux/debug_s_param.o \
 	os/linux/swprofile_debugfs.o \
 	os/linux/debug_gsp.o
+
+ifneq ($(CONFIG_NVGPU_EMB_LINUX_PROD_BUILD),y)
+nvgpu-$(CONFIG_DEBUG_FS) += os/linux/debug_pmu.o
+endif
 
 nvgpu-$(CONFIG_NVGPU_LOGGING) += os/linux/log.o
 

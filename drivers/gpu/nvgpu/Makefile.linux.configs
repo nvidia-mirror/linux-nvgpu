@@ -134,6 +134,23 @@ CONFIG_NVGPU_NVMAP_NEXT := y
 CONFIG_NVGPU_NVMEM_FUSE := y
 endif
 
+ifeq ($(NV_BUILD_SYSTEM_TYPE),embedded-linux)
+# On Embedded Linux , tegra_prod_defconfig is used as kernel defconfig
+# to build the production kernel. Used the variable NV_BUILD_KERNEL_CONFIG_NAME to
+# detect the production build, to disable the debug and
+# profiling related stuff on nvgpu
+#
+# Production Defconfig is available on below mentioned path
+# https://lmi-hub/source/xref/stage-main_automotive/kernel/kernel-5.10/arch/arm64/configs/tegra_prod_defconfig
+#
+# The makefile which sets NV_BUILD_KERNEL_CONFIG_NAME is present on
+# https://git-master.nvidia.com/r/plugins/gitiles/tegra/build/make/+/refs/changes/74/2809974/8/umbrella/parts/Makefile.kernel
+
+ifeq ($(NV_BUILD_KERNEL_CONFIG_NAME),tegra_prod_defconfig)
+CONFIG_NVGPU_EMB_LINUX_PROD_BUILD := y
+endif
+endif
+
 CONFIG_NVGPU_IVM_BUILD := y
 
 # Set config for OOT module build

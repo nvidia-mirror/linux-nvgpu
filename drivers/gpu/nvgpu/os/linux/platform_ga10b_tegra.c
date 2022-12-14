@@ -1,7 +1,7 @@
 /*
  * GA10B Tegra Platform Interface
  *
- * Copyright (c) 2016-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -749,13 +749,21 @@ struct gk20a_platform ga10b_tegra_platform = {
 	.enable_slcg            = true,
 	.enable_blcg            = true,
 	.enable_elcg            = true,
-	.enable_perfmon         = true,
 
 	/* power management configuration  JIRA NVGPU-4683 */
+#ifndef CONFIG_NVGPU_EMB_LINUX_PROD_BUILD
+	.enable_perfmon         = true,
 	.enable_elpg            = true,
-	.enable_elpg_ms         = false,
 	.can_elpg_init          = true,
 	.enable_aelpg           = true,
+#else
+	/* Disable elpg on embedded linux prod build */
+	.enable_perfmon         = false,
+	.enable_elpg            = false,
+	.can_elpg_init          = false,
+	.enable_aelpg           = false,
+#endif
+	.enable_elpg_ms         = false,
 
 	/* power management callbacks */
 	.suspend = ga10b_tegra_suspend,
