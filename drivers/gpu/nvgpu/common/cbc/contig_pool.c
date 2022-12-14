@@ -24,7 +24,7 @@
 #ifdef __KERNEL__
 
 #include <linux/version.h>
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 15, 0)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 14, 0)
 #include <linux/tegra-ivc.h>
 #else
 #include <soc/tegra/virt/hv-ivc.h>

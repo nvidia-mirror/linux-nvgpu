@@ -15,7 +15,7 @@
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 15, 0)
 #include <soc/tegra/chip-id.h>
 #endif
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 15, 0)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 14, 0)
 #include <soc/tegra/fuse.h>
 #else
 #include <soc/tegra/virt/hv-ivc.h>
@@ -50,7 +50,7 @@ bool nvgpu_is_hypervisor_mode(struct gk20a *g)
 
 bool nvgpu_is_soc_t194_a01(struct gk20a *g)
 {
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 15, 0)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 14, 0)
 	struct device *dev = dev_from_gk20a(g);
 
 	struct gk20a_platform *platform = gk20a_get_platform(dev);
