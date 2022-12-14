@@ -221,8 +221,9 @@ static void ga10b_gsp_clr_intr(struct gk20a *g, u32 intr)
 
 static void ga10b_gsp_handle_interrupts(struct gk20a *g, u32 intr)
 {
+#ifndef CONFIG_NVGPU_MON_PRESENT
 	int err = 0;
-
+#endif
 	nvgpu_log_fn(g, " ");
 
 	/* swgen1 interrupt handle */
@@ -245,6 +246,7 @@ static void ga10b_gsp_handle_interrupts(struct gk20a *g, u32 intr)
 				~pgsp_falcon_exterrstat_valid_m());
 	}
 
+#ifndef CONFIG_NVGPU_MON_PRESENT
 	/* swgen0 interrupt handle */
 	if ((intr & pgsp_falcon_irqstat_swgen0_true_f()) != 0U) {
 		err = nvgpu_gsp_process_message(g);
@@ -253,6 +255,7 @@ static void ga10b_gsp_handle_interrupts(struct gk20a *g, u32 intr)
 				err);
 		}
 	}
+#endif
 }
 
 void ga10b_gsp_isr(struct gk20a *g, struct nvgpu_gsp *gsp)
