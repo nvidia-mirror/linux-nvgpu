@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -47,6 +47,10 @@
 
 #include "driver_common.h"
 #include "dmabuf_priv.h"
+
+#if defined(CONFIG_NVGPU_HAL_NON_FUSA) && defined(CONFIG_NVGPU_NEXT)
+#include <nvgpu_next_chips.h>
+#endif
 
 #define BOOT_GPC2CLK_MHZ	2581U
 
@@ -239,8 +243,32 @@ static struct gk20a_platform nvgpu_pci_device[] = {
 #endif
 		.is_pci_igpu = false,
 	},
-
 };
+
+static int nvgpu_pci_get_platform_data(struct gk20a_platform *platform, int index)
+{
+	struct gk20a_platform nvgpu_next_pci_device[] = {
+#if defined(CONFIG_NVGPU_NEXT) && defined(CONFIG_NVGPU_NON_FUSA)
+		NVGPU_NEXT_PCI_DEVICES
+#endif
+	};
+	int device_cnt = ARRAY_SIZE(nvgpu_pci_device);
+	int next_device_cnt = ARRAY_SIZE(nvgpu_next_pci_device);
+
+	if (index < device_cnt) {
+		nvgpu_memcpy((u8 *)platform,
+			(u8 *)&nvgpu_pci_device[index],
+			sizeof(struct gk20a_platform));
+	} else if (index < device_cnt + next_device_cnt) {
+		nvgpu_memcpy((u8 *)platform,
+			(u8 *)&nvgpu_next_pci_device[index - device_cnt],
+			sizeof(struct gk20a_platform));
+	} else {
+		return -EINVAL;
+	}
+
+	return 0;
+}
 
 #define PCI_DEVICE_INDEX(driver_data) ((driver_data) & 0x0000FFFFU)
 #define PCI_DEVICE_FLAGS(driver_data) ((driver_data) & 0xFFFF0000U)
@@ -325,6 +353,11 @@ static struct pci_device_id nvgpu_pci_table[] = {
 		.class_mask = 0xff << 16,
 		.driver_data = 3,
 	},
+#ifdef CONFIG_NVGPU_NEXT
+#if defined(CONFIG_NVGPU_HAL_NON_FUSA) && defined(CONFIG_NVGPU_NON_FUSA)
+	NVGPU_NEXT_PCI_IDS
+#endif
+#endif
 	{}
 };
 
@@ -514,12 +547,6 @@ static int nvgpu_pci_probe(struct pci_dev *pdev,
 	u32 device_index = PCI_DEVICE_INDEX(pent->driver_data);
 	u32 device_flags = PCI_DEVICE_FLAGS(pent->driver_data);
 
-	/* make sure driver_data is a sane index */
-	if (device_index >= sizeof(nvgpu_pci_device) /
-				 sizeof(nvgpu_pci_device[0])) {
-		return -EINVAL;
-	}
-
 	l = kzalloc(sizeof(*l), GFP_KERNEL);
 	if (!l) {
 		dev_err(&pdev->dev, "couldn't allocate gk20a support");
@@ -544,9 +571,9 @@ static int nvgpu_pci_probe(struct pci_dev *pdev,
 	}
 
 	/* copy detected device data to allocated platform space*/
-	nvgpu_memcpy((u8 *)platform,
-		(u8 *)&nvgpu_pci_device[device_index],
-		sizeof(struct gk20a_platform));
+	err = nvgpu_pci_get_platform_data(platform, device_index);
+	if (err)
+		goto err_free_platform;
 
 
 	g->is_pci_igpu = platform->is_pci_igpu;
