@@ -1879,7 +1879,7 @@ u32 gr_gv11b_pri_pmmgpc_addr(struct gk20a *g, u32 gpc_num,
 static u32 gr_gv11b_pri_pmmgpcrouter_addr(struct gk20a *g, u32 gpc_num,
 	u32 offset)
 {
-	return perf_pmmgpcrouter_base_v() +
+	return g->ops.perf.get_hwpm_gpcrouter_perfmon_regs_base(g) +
 		(gpc_num * g->ops.perf.get_pmmgpcrouter_per_chiplet_offset()) +
 		offset;
 }
@@ -1887,7 +1887,7 @@ static u32 gr_gv11b_pri_pmmgpcrouter_addr(struct gk20a *g, u32 gpc_num,
 static u32 gr_gv11b_pri_pmmfbprouter_addr(struct gk20a *g, u32 fbp_num,
 	u32 offset)
 {
-	return perf_pmmfbprouter_base_v() +
+	return g->ops.perf.get_hwpm_fbprouter_perfmon_regs_base(g) +
 		(fbp_num * g->ops.perf.get_pmmfbprouter_per_chiplet_offset()) +
 		offset;
 }
