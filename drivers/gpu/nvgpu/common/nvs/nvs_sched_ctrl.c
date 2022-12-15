@@ -766,6 +766,9 @@ static int nvgpu_nvs_ctrl_fifo_scheduler_process_receiver(struct gk20a *g,
 {
 	int result = 0;
 
+	(void)memset(receiver_queue_sender->internal_buffer, 0,
+		NVS_DOMAIN_MESSAGE_MAX_PAYLOAD_SIZE);
+
 	if (send_queue_receiver->msg_type == NVS_DOMAIN_MSG_TYPE_CTRL_GET_CAPS_INFO) {
 		result = nvgpu_nvs_ctrl_fifo_scheduler_process_caps_request(g,
 			send_queue_receiver, receiver_queue_sender);
