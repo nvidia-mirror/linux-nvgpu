@@ -53,6 +53,8 @@ u32 gv11b_perf_get_pmmgpc_per_chiplet_offset(void);
 u32 gv11b_perf_get_pmmgpcrouter_per_chiplet_offset(void);
 u32 gv11b_perf_get_pmmfbp_per_chiplet_offset(void);
 u32 gv11b_perf_get_pmmfbprouter_per_chiplet_offset(void);
+u32 gv11b_get_hwpm_fbprouter_perfmon_regs_base(struct gk20a *g);
+u32 gv11b_get_hwpm_gpcrouter_perfmon_regs_base(struct gk20a *g);
 
 const u32 *gv11b_perf_get_hwpm_sys_perfmon_regs(u32 *count);
 const u32 *gv11b_perf_get_hwpm_gpc_perfmon_regs(u32 *count);

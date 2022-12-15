@@ -56,8 +56,6 @@ const u32 *ga10b_perf_get_hwpm_fbp_perfmon_regs(u32 *count);
 
 u32 ga10b_get_hwpm_fbp_perfmon_regs_base(struct gk20a *g);
 u32 ga10b_get_hwpm_gpc_perfmon_regs_base(struct gk20a *g);
-u32 ga10b_get_hwpm_fbprouter_perfmon_regs_base(struct gk20a *g);
-u32 ga10b_get_hwpm_gpcrouter_perfmon_regs_base(struct gk20a *g);
 
 void ga10b_perf_get_num_hwpm_perfmon(struct gk20a *g, u32 *num_sys_perfmon,
 		u32 *num_fbp_perfmon, u32 *num_gpc_perfmon);

@@ -519,22 +519,11 @@ u32 ga10b_get_hwpm_fbp_perfmon_regs_base(struct gk20a *g)
 	(void)g;
 	return perf_pmmfbp_base_v();
 }
+
 u32 ga10b_get_hwpm_gpc_perfmon_regs_base(struct gk20a *g)
 {
 	(void)g;
 	return perf_pmmgpc_base_v();
-}
-
-u32 ga10b_get_hwpm_fbprouter_perfmon_regs_base(struct gk20a *g)
-{
-	(void)g;
-	return perf_pmmfbprouter_base_v();
-}
-
-u32 ga10b_get_hwpm_gpcrouter_perfmon_regs_base(struct gk20a *g)
-{
-	(void)g;
-	return perf_pmmgpcrouter_base_v();
 }
 
 void ga10b_perf_get_num_hwpm_perfmon(struct gk20a *g, u32 *num_sys_perfmon,
