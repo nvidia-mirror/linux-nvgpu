@@ -72,6 +72,8 @@ void gr_gv11b_set_alpha_circular_buffer_size(struct gk20a *g, u32 data)
 	u32 alpha_cb_size = data * 4U;
 	u32 alpha_cb_size_max = g->ops.gr.init.get_alpha_cb_size(g,
 		nvgpu_gr_config_get_tpc_count(gr->config));
+	u32 ppc_in_gpc_stride = g->ops.get_litter_value(g,
+					GPU_LIT_PPC_IN_GPC_STRIDE);
 
 	nvgpu_log_fn(g, " ");
 
@@ -95,23 +97,21 @@ void gr_gv11b_set_alpha_circular_buffer_size(struct gk20a *g, u32 data)
 	for (gpc_index = 0;
 	     gpc_index < nvgpu_gr_config_get_gpc_count(gr->config);
 	     gpc_index++) {
-		stride = proj_gpc_stride_v() * gpc_index;
+		stride = g->ops.get_litter_value(g, GPU_LIT_GPC_STRIDE) * gpc_index;
 
 		for (ppc_index = 0;
 		     ppc_index < nvgpu_gr_config_get_gpc_ppc_count(gr->config, gpc_index);
 		     ppc_index++) {
 
 			val = gk20a_readl(g, gr_gpc0_ppc0_cbm_alpha_cb_size_r() +
-				stride +
-				proj_ppc_in_gpc_stride_v() * ppc_index);
+				stride + ppc_in_gpc_stride * ppc_index);
 
 			val = set_field(val, gr_gpc0_ppc0_cbm_alpha_cb_size_v_m(),
 					gr_gpc0_ppc0_cbm_alpha_cb_size_v_f(alpha_cb_size *
 						nvgpu_gr_config_get_pes_tpc_count(gr->config, gpc_index, ppc_index)));
 
 			gk20a_writel(g, gr_gpc0_ppc0_cbm_alpha_cb_size_r() +
-				stride +
-				proj_ppc_in_gpc_stride_v() * ppc_index, val);
+				stride + ppc_in_gpc_stride * ppc_index, val);
 		}
 	}
 }
