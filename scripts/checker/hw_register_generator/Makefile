@@ -22,7 +22,7 @@
 
 repo_path := $(abspath $(shell dirname $(lastword $(MAKEFILE_LIST)))/../../../../..)
 kernel_path := $(repo_path)/kernel
-checker_path := $(repo_path)/qnx/src/resmgrs/nvrm/nvgpu_rmos/checker
+checker_path := $(repo_path)/qnx/src/resmgrs/nvrm/nvgpu_rmos/libnvgpu/src/checker
 
 flags := -I$(kernel_path)/nvgpu/drivers/gpu/nvgpu/include
 

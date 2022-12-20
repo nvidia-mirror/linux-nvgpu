@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -103,7 +103,7 @@ void nvgpu_checker_print_runlist_reg_list(FILE *header)
 	};
 
 	u32 runlist_intr_values[NVGPU_RUNLIST_SIZE] = {
-		0xf0, 0x30, 0x0, 0x30
+		0x0, 0x0, 0x0, 0x0
 	};
 
 	u32 runlist_intr_vector_0_values[NVGPU_RUNLIST_SIZE] = {
@@ -137,10 +137,11 @@ void nvgpu_checker_print_runlist_reg_list(FILE *header)
 			nvgpu_safe_add_u32(runlist_pri_base,
 			runlist_intr_0_en_clear_tree_r(intr_tree_1)), 0x0);
 
-		nvgpu_checker_insert_reg_data(header, "runlist_intr_0_r", -1,
+		nvgpu_checker_insert_reg_data_with_mask(header,
+			"runlist_intr_0_r", -1,
 			nvgpu_safe_add_u32(runlist_pri_base,
 			runlist_intr_0_r()),
-			runlist_intr_values[runlist_id]);
+			runlist_intr_values[runlist_id], 0xFFFFFF0F);
 
 		nvgpu_checker_insert_reg_data(header,
                         "runlist_intr_vectorid_r", intr_tree_0,
