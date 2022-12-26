@@ -1,7 +1,7 @@
 /*
  * GA10B Tegra HAL interface
  *
- * Copyright (c) 2020-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1963,6 +1963,7 @@ int ga10b_init_hal(struct gk20a *g)
 	 * enable gsp scheduler
 	 */
 	nvgpu_set_enabled(g, NVGPU_SUPPORT_GSP_SCHED, true);
+	nvgpu_set_enabled(g, NVGPU_SUPPORT_GSP_STEST, true);
 #endif
 
 	/*

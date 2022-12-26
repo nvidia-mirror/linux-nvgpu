@@ -1,7 +1,7 @@
 /*
  * GK20A Graphics
  *
- * Copyright (c) 2011-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -1094,7 +1094,9 @@ void gk20a_remove_support(struct gk20a *g)
 #endif
 #ifndef CONFIG_NVGPU_DGPU
 #ifdef CONFIG_NVGPU_GSP_STRESS_TEST
-	nvgpu_gsp_test_sw_deinit(g);
+	if (nvgpu_is_enabled(g, NVGPU_SUPPORT_GSP_STEST)) {
+		nvgpu_gsp_test_sw_deinit(g);
+	endif
 #endif
 #endif
 

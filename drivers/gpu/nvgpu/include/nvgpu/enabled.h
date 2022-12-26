@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -221,20 +221,22 @@ struct gk20a;
 			"Set L2 Max Ways Evict Last support"),		\
 	DEFINE_FLAG(NVGPU_CLK_ARB_ENABLED, "CLK_ARB support"),          \
 	DEFINE_FLAG(NVGPU_SUPPORT_VAB_ENABLED, "VAB feature supported"), \
-	DEFINE_FLAG(NVGPU_SUPPORT_ROP_IN_GPC, "ROP is part of GPC"), \
+	DEFINE_FLAG(NVGPU_SUPPORT_ROP_IN_GPC, "ROP is part of GPC"),	\
 	DEFINE_FLAG(NVGPU_SUPPORT_BUFFER_METADATA, "Buffer metadata support"), \
-	DEFINE_FLAG(NVGPU_SUPPORT_NVS, "Domain scheduler support"), \
-	DEFINE_FLAG(NVGPU_SUPPORT_TEGRA_RAW, \
-			"TEGRA_RAW format support"), \
-	DEFINE_FLAG(NVGPU_SUPPORT_EMULATE_MODE, \
-			"Emulate mode support"), \
-	DEFINE_FLAG(NVGPU_SUPPORT_PES_FS, \
-			"PES Floorsweeping"), \
-	DEFINE_FLAG(NVGPU_SCHED_EXIT_WAIT_FOR_ERRBAR_SUPPORTED,               \
-			"Implicit ERRBAR support"),		\
-	DEFINE_FLAG(NVGPU_SUPPORT_GSP_SCHED, "To enable gsp sheduler"),			\
-	DEFINE_FLAG(NVGPU_SUPPORT_MULTI_PROCESS_TSG_SHARING, \
-			"Multi process TSG sharing support"), \
+	DEFINE_FLAG(NVGPU_SUPPORT_NVS, "Domain scheduler support"),	\
+	DEFINE_FLAG(NVGPU_SUPPORT_TEGRA_RAW,				\
+			"TEGRA_RAW format support"),			\
+	DEFINE_FLAG(NVGPU_SUPPORT_EMULATE_MODE,				\
+			"Emulate mode support"),			\
+	DEFINE_FLAG(NVGPU_SUPPORT_PES_FS,				\
+			"PES Floorsweeping"),				\
+	DEFINE_FLAG(NVGPU_SCHED_EXIT_WAIT_FOR_ERRBAR_SUPPORTED,		\
+			"Implicit ERRBAR support"),			\
+	DEFINE_FLAG(NVGPU_SUPPORT_GSP_SCHED, "To enable gsp sheduler"),	\
+	DEFINE_FLAG(NVGPU_SUPPORT_GSP_STEST,				\
+		"Support GSP stress test"),				\
+	DEFINE_FLAG(NVGPU_SUPPORT_MULTI_PROCESS_TSG_SHARING,		\
+			"Multi process TSG sharing support"),		\
 	DEFINE_FLAG(NVGPU_MAX_ENABLED_BITS, "Marks max number of flags"),
 
 /**

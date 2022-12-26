@@ -1,7 +1,7 @@
 /*
  * GK20A Graphics
  *
- * Copyright (c) 2011-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1020,7 +1020,7 @@ int nvgpu_finalize_poweron(struct gk20a *g)
 #ifndef CONFIG_NVGPU_DGPU
 #ifdef CONFIG_NVGPU_GSP_STRESS_TEST
 		NVGPU_INIT_TABLE_ENTRY(&nvgpu_gsp_stress_test_sw_init,
-				NO_FLAG),
+				NVGPU_SUPPORT_GSP_STEST),
 #endif
 #endif
 	};
