@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -521,6 +521,7 @@ int nvgpu_runlist_update_locked(struct gk20a *g, struct nvgpu_runlist *rl,
 				struct nvgpu_channel *ch, bool add,
 				bool wait_for_finish)
 {
+	bool can_update_tsg_state = false;
 	int ret = 0;
 	(void)wait_for_finish;
 	/*
@@ -532,14 +533,33 @@ int nvgpu_runlist_update_locked(struct gk20a *g, struct nvgpu_runlist *rl,
 	}
 
 	if (domain != rl->shadow_rl_domain) {
-		/* Avoid duplicate updates to the TSG state in nvgpu_runlist_modify_active_locked */
-		ret = nvgpu_runlist_update_mem_locked(g, rl, rl->shadow_rl_domain, ch, add, false);
+	/* Changes enclosed here in CONFIG_NVS_ROUND_ROBIN_SCHEDULER_DISABLE
+	 * enabled for manual mode schedulers which is supported by embedded
+	 * platforms currently. This change will not have any impact on l4t as
+	 * l4t uses RR scheduling. Once l4t migrates to manual mode scheduling
+	 * these flags can be removed which will eventually enabled the change
+	 * for l4t as well.
+	 */
+#ifdef CONFIG_NVS_ROUND_ROBIN_SCHEDULER_DISABLE
+		/* Avoid duplicate updates to the TSG state in
+		 * nvgpu_runlist_modify_active_locked and suppose to be updated
+		 * with shadow domain as shadow domain updates the tsg state
+		 * first.
+		 */
+		can_update_tsg_state = true;
+#endif
+		ret = nvgpu_runlist_update_mem_locked(g, rl,
+			rl->shadow_rl_domain, ch, add, can_update_tsg_state);
 		if (ret != 0) {
 			return ret;
 		}
+#ifdef CONFIG_NVS_ROUND_ROBIN_SCHEDULER_DISABLE
+		nvgpu_runlist_swap_mem(g, rl->shadow_rl_domain);
+#endif
 	}
 
-	ret = nvgpu_runlist_update_mem_locked(g, rl, domain, ch, add, true);
+	ret = nvgpu_runlist_update_mem_locked(g, rl, domain, ch, add,
+		!can_update_tsg_state);
 	if (ret != 0) {
 		return ret;
 	}
