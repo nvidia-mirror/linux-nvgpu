@@ -141,10 +141,12 @@ int nvgpu_ecc_finalize_support(struct gk20a *g)
 	}
 
 #ifdef CONFIG_NVGPU_SYSFS
-	err = nvgpu_ecc_sysfs_init(g);
-	if (err != 0) {
-		nvgpu_ecc_free(g);
-		return err;
+	if (!nvgpu_is_enabled(g, NVGPU_DISABLE_ECC_STATS)) {
+		err = nvgpu_ecc_sysfs_init(g);
+		if (err != 0) {
+			nvgpu_ecc_free(g);
+			return err;
+		}
 	}
 #endif
 
