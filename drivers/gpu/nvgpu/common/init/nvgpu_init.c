@@ -415,6 +415,11 @@ static bool have_static_pg_lock = false;
 
 static int nvgpu_init_acquire_static_pg_lock(struct gk20a *g)
 {
+	if (nvgpu_is_enabled(g, NVGPU_DISABLE_STATIC_POWERGATE)) {
+		nvgpu_log_info(g, "skipping static pg lock acquire");
+		return 0;
+	}
+
 	nvgpu_mutex_acquire(&g->static_pg_lock);
 	have_static_pg_lock = true;
 	return 0;
@@ -422,6 +427,11 @@ static int nvgpu_init_acquire_static_pg_lock(struct gk20a *g)
 
 static int nvgpu_init_release_static_pg_lock(struct gk20a *g)
 {
+	if (nvgpu_is_enabled(g, NVGPU_DISABLE_STATIC_POWERGATE)) {
+		nvgpu_log_info(g, "skipping static pg lock release");
+		return 0;
+	}
+
 	nvgpu_mutex_release(&g->static_pg_lock);
 	have_static_pg_lock = false;
 	return 0;
@@ -464,6 +474,11 @@ static int nvgpu_init_fbpa_ecc(struct gk20a *g)
 static int nvgpu_init_power_gate(struct gk20a *g)
 {
 	int err;
+
+	if (nvgpu_is_enabled(g, NVGPU_DISABLE_STATIC_POWERGATE)) {
+		nvgpu_log_info(g, "skipping static power gate init");
+		return 0;
+	}
 
 	/*
 	 * Pre-Silicon - Static pg feature related settings
@@ -517,6 +532,11 @@ static int nvgpu_init_power_gate(struct gk20a *g)
 
 static int nvgpu_init_power_gate_gr(struct gk20a *g)
 {
+	if (nvgpu_is_enabled(g, NVGPU_DISABLE_STATIC_POWERGATE)) {
+		nvgpu_log_info(g, "skipping static power gate init of GR");
+		return 0;
+	}
+
 	/*
 	 * Pre-Silicon - Static pg feature related settings
 	 * are done in nvgpu driver.

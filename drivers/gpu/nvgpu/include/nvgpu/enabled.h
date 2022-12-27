@@ -134,6 +134,8 @@ struct gk20a;
 		"Supports Second Level Clock Gating"),			\
 	DEFINE_FLAG(NVGPU_GPU_CAN_ELCG,					\
 		"Supports Engine Level Clock Gating"),			\
+	DEFINE_FLAG(NVGPU_DISABLE_STATIC_POWERGATE,			\
+		"Disable static power gating"),				\
 	DEFINE_FLAG(NVGPU_SUPPORT_CLOCK_CONTROLS,			\
 		"Clock control support"),				\
 	DEFINE_FLAG(NVGPU_SUPPORT_GET_VOLTAGE,				\
