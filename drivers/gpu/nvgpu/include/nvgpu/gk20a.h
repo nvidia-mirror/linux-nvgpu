@@ -840,7 +840,7 @@ struct gk20a {
 	bool is_fusa_sku;
 
 	u16 pci_class;
-#ifdef CONFIG_NVGPU_DGPU
+#if defined(CONFIG_NVGPU_DGPU) || defined(CONFIG_NVGPU_PCI_IGPU)
 	/* PCI device identifier */
 	u16 pci_vendor_id, pci_device_id;
 	u16 pci_subsystem_vendor_id, pci_subsystem_device_id;

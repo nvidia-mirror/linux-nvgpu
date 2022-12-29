@@ -150,6 +150,8 @@ endif
 
 # Enable support for GPUs on PCIe bus.
 ifeq ($(CONFIG_PCI),y)
+# Support for pci probe of IGPU
+CONFIG_NVGPU_PCI_IGPU := y
 # Support for NVGPU DGPU
 CONFIG_NVGPU_DGPU := y
 endif
@@ -291,6 +293,9 @@ ccflags-y += -DCONFIG_NVGPU_NVMAP_NEXT
 endif
 ifeq ($(CONFIG_NVGPU_DGPU),y)
 ccflags-y += -DCONFIG_NVGPU_DGPU
+endif
+ifeq ($(CONFIG_NVGPU_PCI_IGPU),y)
+ccflags-y += -DCONFIG_NVGPU_PCI_IGPU
 endif
 ifeq ($(CONFIG_GK20A_TRACE_PRINTK),y)
 ccflags-y += -DCONFIG_GK20A_TRACE_PRINTK

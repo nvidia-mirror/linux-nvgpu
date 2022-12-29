@@ -144,7 +144,15 @@ obj-$(CONFIG_GK20A) := nvgpu.o
 ifeq ($(CONFIG_NVGPU_DGPU),y)
 nvgpu-$(CONFIG_NVGPU_DGPU) += \
 	os/linux/pci.o \
-	os/linux/pci_power.o \
+	os/linux/pci_power.o
+else ifeq ($(CONFIG_NVGPU_PCI_IGPU),y)
+nvgpu-$(CONFIG_NVGPU_PCI_IGPU) += \
+	os/linux/pci.o \
+	os/linux/pci_power.o
+endif
+
+ifeq ($(CONFIG_NVGPU_DGPU),y)
+nvgpu-$(CONFIG_NVGPU_DGPU) += \
 	os/linux/dmabuf_vidmem.o \
 	os/linux/dmabuf_nvs.o \
 	os/linux/os_ops_gv100.o \
