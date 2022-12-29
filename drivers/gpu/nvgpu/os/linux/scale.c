@@ -618,7 +618,7 @@ void gk20a_scale_exit(struct device *dev)
 	struct nvgpu_os_linux *l = nvgpu_os_linux_from_gk20a(g);
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)
 	struct devfreq *devfreq = l->devfreq;
-	struct gk20a_scale_profile *profile;
+	struct gk20a_scale_profile *profile = NULL;
 #endif
 	int err;
 
