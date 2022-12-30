@@ -17,8 +17,11 @@
 #include <linux/pci.h>
 #include <linux/interrupt.h>
 #include <linux/pm_runtime.h>
+#include <linux/reset.h>
 #include <linux/of_platform.h>
 #include <linux/of_address.h>
+#include <linux/reboot.h>
+#include <linux/notifier.h>
 
 #include <nvgpu/nvhost.h>
 #include <nvgpu/nvgpu_common.h>
@@ -575,7 +578,6 @@ static int nvgpu_pci_probe(struct pci_dev *pdev,
 	if (err)
 		goto err_free_platform;
 
-
 	g->is_pci_igpu = platform->is_pci_igpu;
 	nvgpu_info(g, "is_pci_igpu: %s", g->is_pci_igpu ? "true" : "false");
 	pci_set_drvdata(pdev, platform);
@@ -598,9 +600,14 @@ static int nvgpu_pci_probe(struct pci_dev *pdev,
 		nvgpu_set_enabled(g, NVGPU_SUPPORT_IO_COHERENCE, true);
 	}
 
-	err = pci_enable_device(pdev);
-	if (err)
-		goto err_free_platform;
+	if (!g->is_pci_igpu) {
+		err = pci_enable_device(pdev);
+		if (err)
+			goto err_free_platform;
+	} else {
+		if (nvgpu_platform_is_simulation(g))
+			nvgpu_set_enabled(g, NVGPU_IS_FMODEL, true);
+	}
 	pci_set_master(pdev);
 
 	g->pci_vendor_id = pdev->vendor;
@@ -672,6 +679,20 @@ static int nvgpu_pci_probe(struct pci_dev *pdev,
 	if (err)
 		goto err_free_irq;
 
+	if (g->is_pci_igpu) {
+		err = nvgpu_read_fuse_overrides(g);
+#ifdef CONFIG_RESET_CONTROLLER
+		platform->reset_control = devm_reset_control_get(&pdev->dev, NULL);
+		if (IS_ERR(platform->reset_control))
+			platform->reset_control = NULL;
+#endif
+		err = gk20a_pm_init(&pdev->dev);
+		if (err) {
+			dev_err(&pdev->dev, "pm init failed");
+			goto err_free_irq;
+		}
+	}
+
 	if (strchr(dev_name(&pdev->dev), '%')) {
 		nvgpu_err(g, "illegal character in device name");
 		err = -EINVAL;
@@ -682,10 +703,12 @@ static int nvgpu_pci_probe(struct pci_dev *pdev,
 	if (err)
 		goto err_free_irq;
 
-	err = nvgpu_pci_pm_init(&pdev->dev);
-	if (err) {
-		nvgpu_err(g, "pm init failed");
-		goto err_free_irq;
+	if (!g->is_pci_igpu) {
+		err = nvgpu_pci_pm_init(&pdev->dev);
+		if (err) {
+			nvgpu_err(g, "pm init failed");
+			goto err_free_irq;
+		}
 	}
 
 	if (!platform->disable_nvlink) {
@@ -716,17 +739,29 @@ static int nvgpu_pci_probe(struct pci_dev *pdev,
 	}
 #endif
 
-	err = nvgpu_get_dt_clock_limit(g, &g->dgpu_max_clk);
-	if (err != 0) {
-		nvgpu_info(g, "Missing nvgpu node");
-	}
+	if (g->is_pci_igpu) {
+		err = gk20a_pm_late_init(&pdev->dev);
+		if (err) {
+			dev_err(&pdev->dev, "pm late_init failed");
+			goto err_free_irq;
+		}
 
-	err = nvgpu_pci_add_pci_power(pdev);
-	if (err) {
-		nvgpu_err(g, "add pci power failed (%d).", err);
-		goto err_free_irq;
-	}
+		l->nvgpu_reboot_nb.notifier_call =
+			nvgpu_kernel_shutdown_notification;
+		err = register_reboot_notifier(&l->nvgpu_reboot_nb);
+		if (err)
+			goto err_free_irq;
+	} else {
+		err = nvgpu_get_dt_clock_limit(g, &g->dgpu_max_clk);
+		if (err != 0)
+			nvgpu_info(g, "Missing nvgpu node");
 
+		err = nvgpu_pci_add_pci_power(pdev);
+		if (err) {
+			nvgpu_err(g, "add pci power failed (%d).", err);
+			goto err_free_irq;
+		}
+	}
 	nvgpu_mutex_init(&l->dmabuf_priv_list_lock);
 	nvgpu_init_list_node(&l->dmabuf_priv_list);
 
@@ -749,6 +784,9 @@ err_free_errata:
 err_free_platform:
 	nvgpu_kfree(g, platform);
 err_free_l:
+
+	if (g->is_pci_igpu)
+		nvgpu_kmem_fini(g, NVGPU_KMEM_FINI_FORCE_CLEANUP);
 	kfree(l);
 	return err;
 }
@@ -782,8 +820,10 @@ static void nvgpu_pci_remove(struct pci_dev *pdev)
 #endif
 	nvgpu_mutex_destroy(&l->dmabuf_priv_list_lock);
 
-	err = nvgpu_pci_clear_pci_power(dev_name(dev));
-	WARN(err, "gpu failed to clear pci power");
+	if (!g->is_pci_igpu) {
+		err = nvgpu_pci_clear_pci_power(dev_name(dev));
+		WARN(err, "gpu failed to clear pci power");
+	}
 
 	err = nvgpu_nvlink_deinit(g);
 	/* ENODEV is a legal error if there is no NVLINK */
@@ -817,7 +857,10 @@ static void nvgpu_pci_remove(struct pci_dev *pdev)
 	}
 #endif
 
-	nvgpu_pci_pm_deinit(&pdev->dev);
+	if (!g->is_pci_igpu)
+		nvgpu_pci_pm_deinit(&pdev->dev);
+	else
+		gk20a_pm_deinit(dev);
 
 	/* free allocated platform data space */
 	gk20a_get_platform(&pdev->dev)->g = NULL;

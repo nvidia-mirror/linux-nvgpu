@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -17,6 +17,13 @@ struct gk20a;
 struct device;
 struct platform_device;
 struct nvgpu_os_linux;
+
+int gk20a_pm_init(struct device *dev);
+int gk20a_pm_deinit(struct device *dev);
+int gk20a_pm_late_init(struct device *dev);
+int nvgpu_read_fuse_overrides(struct gk20a *g);
+int nvgpu_kernel_shutdown_notification(struct notifier_block *nb,
+					unsigned long event, void *unused);
 
 int gk20a_pm_finalize_poweron(struct device *dev);
 int nvgpu_finalize_poweron_linux(struct nvgpu_os_linux *l);

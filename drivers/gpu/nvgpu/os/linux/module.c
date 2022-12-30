@@ -143,7 +143,7 @@ static int nvgpu_wait_for_idle(struct gk20a *g)
 	return 0;
 }
 
-static int nvgpu_kernel_shutdown_notification(struct notifier_block *nb,
+int nvgpu_kernel_shutdown_notification(struct notifier_block *nb,
 					unsigned long event, void *unused)
 {
 	struct nvgpu_os_linux *l = container_of(nb, struct nvgpu_os_linux,
@@ -1561,7 +1561,7 @@ static const struct dev_pm_ops gk20a_pm_ops = {
 };
 #endif
 
-static int gk20a_pm_init(struct device *dev)
+int gk20a_pm_init(struct device *dev)
 {
 	struct gk20a *g = get_gk20a(dev);
 	int err = 0;
@@ -1578,7 +1578,7 @@ static int gk20a_pm_init(struct device *dev)
 	return err;
 }
 
-static int gk20a_pm_late_init(struct device *dev)
+int gk20a_pm_late_init(struct device *dev)
 {
 	struct gk20a *g = get_gk20a(dev);
 	int err = 0;
@@ -1603,7 +1603,7 @@ static int gk20a_pm_late_init(struct device *dev)
 	return err;
 }
 
-static int gk20a_pm_deinit(struct device *dev)
+int gk20a_pm_deinit(struct device *dev)
 {
 	pm_runtime_dont_use_autosuspend(dev);
 	pm_runtime_disable(dev);
@@ -1673,7 +1673,7 @@ static inline void set_gk20a(struct platform_device *pdev, struct gk20a *gk20a)
 	gk20a_get_platform(&pdev->dev)->g = gk20a;
 }
 
-static int nvgpu_read_fuse_overrides(struct gk20a *g)
+int nvgpu_read_fuse_overrides(struct gk20a *g)
 {
 #ifdef CONFIG_NVGPU_TEGRA_FUSE
 	struct device_node *np = nvgpu_get_node(g);
