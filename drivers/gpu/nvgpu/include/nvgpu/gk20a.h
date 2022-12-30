@@ -936,6 +936,8 @@ struct gk20a {
 #ifdef CONFIG_NVGPU_ENABLE_MISC_EC
 	bool enable_polling;
 #endif
+	/** Check if igpu is available as pci device. */
+	bool is_pci_igpu;
 };
 
 /**

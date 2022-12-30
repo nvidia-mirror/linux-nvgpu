@@ -1,7 +1,7 @@
 /*
  * GK20A Platform (SoC) Interface
  *
- * Copyright (c) 2014-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -355,6 +355,9 @@ struct gk20a_platform {
 
 	/* synchronized access to platform->clks */
 	struct nvgpu_mutex clks_lock;
+
+	/* Check if igpu is available as pci device. */
+	bool is_pci_igpu;
 };
 
 static inline struct gk20a_platform *gk20a_get_platform(

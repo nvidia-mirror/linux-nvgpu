@@ -115,6 +115,7 @@ static struct gk20a_platform nvgpu_pci_device[] = {
 		.dma_mask = DMA_BIT_MASK(40),
 		.hardcode_sw_threshold = false,
 		.unified_memory = false,
+		.is_pci_igpu = false,
 	},
 
 	/* 0x1eba, 0x1efa, 0x1ebb, 0x1efb */
@@ -156,6 +157,7 @@ static struct gk20a_platform nvgpu_pci_device[] = {
 #ifdef CONFIG_TEGRA_GK20A_NVHOST
 		.has_syncpoints = true,
 #endif
+		.is_pci_igpu = false,
 	},
 
 	/* 0x1eb0 (RTX 5000 : TU104 based) */
@@ -195,6 +197,7 @@ static struct gk20a_platform nvgpu_pci_device[] = {
 #ifdef CONFIG_TEGRA_GK20A_NVHOST
 		.has_syncpoints = true,
 #endif
+		.is_pci_igpu = false,
 	},
 	/* PG209 */
 	{
@@ -234,6 +237,7 @@ static struct gk20a_platform nvgpu_pci_device[] = {
 #ifdef CONFIG_TEGRA_GK20A_NVHOST
 		.has_syncpoints = true,
 #endif
+		.is_pci_igpu = false,
 	},
 
 };
@@ -544,6 +548,9 @@ static int nvgpu_pci_probe(struct pci_dev *pdev,
 		(u8 *)&nvgpu_pci_device[device_index],
 		sizeof(struct gk20a_platform));
 
+
+	g->is_pci_igpu = platform->is_pci_igpu;
+	nvgpu_info(g, "is_pci_igpu: %s", g->is_pci_igpu ? "true" : "false");
 	pci_set_drvdata(pdev, platform);
 
 	err = nvgpu_init_errata_flags(g);
