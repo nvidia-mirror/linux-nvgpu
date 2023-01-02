@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2022-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -576,10 +576,14 @@ void nvgpu_nvs_buffer_free(struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl,
 
 	if (mask == NVGPU_NVS_CTRL_FIFO_QUEUE_EXCLUSIVE_CLIENT_WRITE) {
 		nvgpu_nvs_domain_ctrl_fifo_set_receiver(g, NULL);
-		nvs_control_fifo_receiver_exit(g, send_queue_receiver);
+		if (send_queue_receiver != NULL) {
+			nvs_control_fifo_receiver_exit(g, send_queue_receiver);
+		}
 	} else if (mask == NVGPU_NVS_CTRL_FIFO_QUEUE_EXCLUSIVE_CLIENT_READ) {
 		nvgpu_nvs_domain_ctrl_fifo_set_sender(g, NULL);
-		nvs_control_fifo_sender_exit(g, receiver_queue_sender);
+		if (receiver_queue_sender != NULL) {
+			nvs_control_fifo_sender_exit(g, receiver_queue_sender);
+		}
 	}
 #endif
 
