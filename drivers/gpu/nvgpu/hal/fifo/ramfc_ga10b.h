@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,6 +30,10 @@ struct nvgpu_channel_dump_info;
 
 int ga10b_ramfc_setup(struct nvgpu_channel *ch, u64 gpfifo_base,
 		u32 gpfifo_entries, u64 pbdma_acquire_timeout, u32 flags);
+void ga10b_ramfc_capture_ram_dump_1(struct gk20a *g,
+		struct nvgpu_channel *ch, struct nvgpu_channel_dump_info *info);
+void ga10b_ramfc_capture_ram_dump_2(struct gk20a *g,
+		struct nvgpu_channel *ch, struct nvgpu_channel_dump_info *info);
 void ga10b_ramfc_capture_ram_dump(struct gk20a *g, struct nvgpu_channel *ch,
 				  struct nvgpu_channel_dump_info *info);
 #endif /* NVGPU_RAMFC_GA10B_H */

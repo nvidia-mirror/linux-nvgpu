@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -131,14 +131,21 @@ int ga10b_ramfc_setup(struct nvgpu_channel *ch, u64 gpfifo_base,
 	return 0;
 }
 
-void ga10b_ramfc_capture_ram_dump(struct gk20a *g, struct nvgpu_channel *ch,
-				  struct nvgpu_channel_dump_info *info)
+void ga10b_ramfc_capture_ram_dump_1(struct gk20a *g,
+		struct nvgpu_channel *ch, struct nvgpu_channel_dump_info *info)
 {
 	struct nvgpu_mem *mem = &ch->inst_block;
 
 	info->inst.pb_top_level_get = nvgpu_mem_rd32_pair(g, mem,
 			ram_fc_pb_top_level_get_w(),
 			ram_fc_pb_top_level_get_hi_w());
+}
+
+void ga10b_ramfc_capture_ram_dump_2(struct gk20a *g,
+		struct nvgpu_channel *ch, struct nvgpu_channel_dump_info *info)
+{
+	struct nvgpu_mem *mem = &ch->inst_block;
+
 	info->inst.pb_put = nvgpu_mem_rd32_pair(g, mem,
 			ram_fc_pb_put_w(),
 			ram_fc_pb_put_hi_w());
@@ -157,4 +164,11 @@ void ga10b_ramfc_capture_ram_dump(struct gk20a *g, struct nvgpu_channel *ch,
 			ram_fc_sem_payload_hi_w());
 	info->inst.sem_execute = nvgpu_mem_rd32(g, mem,
 			ram_fc_sem_execute_w());
+}
+
+void ga10b_ramfc_capture_ram_dump(struct gk20a *g, struct nvgpu_channel *ch,
+				  struct nvgpu_channel_dump_info *info)
+{
+	ga10b_ramfc_capture_ram_dump_1(g, ch, info);
+	ga10b_ramfc_capture_ram_dump_2(g, ch, info);
 }
