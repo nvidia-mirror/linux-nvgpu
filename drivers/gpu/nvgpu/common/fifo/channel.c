@@ -1,7 +1,7 @@
 /*
  * GK20A Graphics channel
  *
- * Copyright (c) 2011-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -441,9 +441,13 @@ clean_up:
 static inline u32 channel_update_gpfifo_get(struct gk20a *g,
 				struct nvgpu_channel *c)
 {
-	u32 new_get = g->ops.userd.gp_get(g, c);
+	u32 new_get = 0U;
 
-	c->gpfifo.get = new_get;
+	if (g->ops.userd.gp_get != NULL) {
+		new_get = g->ops.userd.gp_get(g, c);
+		c->gpfifo.get = new_get;
+	}
+
 	return new_get;
 }
 

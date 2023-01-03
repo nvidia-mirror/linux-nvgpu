@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2015-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -51,8 +51,13 @@ static struct nvgpu_channel_wdt_state nvgpu_channel_collect_wdt_state(
 		 * accesses. The kernel mem for userd may not even exist; this
 		 * channel could be in usermode submit mode.
 		 */
-		state.gp_get = g->ops.userd.gp_get(g, ch);
-		state.pb_get = g->ops.userd.pb_get(g, ch);
+		if (g->ops.userd.gp_get != NULL) {
+			state.gp_get = g->ops.userd.gp_get(g, ch);
+		}
+
+		if (g->ops.userd.pb_get != NULL) {
+			state.pb_get = g->ops.userd.pb_get(g, ch);
+		}
 	}
 
 	return state;
