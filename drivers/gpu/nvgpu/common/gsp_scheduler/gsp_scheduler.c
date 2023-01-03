@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -221,6 +221,7 @@ int nvgpu_gsp_sched_bootstrap_hs(struct gk20a *g)
 		goto de_init;
 	}
 
+	nvgpu_info(g, "gsp scheduler bootstrapped.\n");
 	return status;
 de_init:
 	nvgpu_gsp_sched_sw_deinit(g);

@@ -59,7 +59,7 @@ endif
 # Support for remap
 CONFIG_NVGPU_REMAP := y
 
-ifeq ($(NV_BUILD_CONFIGURATION_VARIANT_IS_EMBEDDED),1)
+ifeq ($(NV_BUILD_SYSTEM_TYPE),embedded-linux))
 # Enable gsp scheduler support
 CONFIG_NVGPU_GSP_SCHEDULER := y
 endif
