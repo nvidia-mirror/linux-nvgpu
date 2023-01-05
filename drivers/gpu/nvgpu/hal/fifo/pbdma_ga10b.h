@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -69,4 +69,8 @@ void ga10b_pbdma_dump_status(struct gk20a *g, struct nvgpu_debug_context *o);
 u32 ga10b_pbdma_get_mmu_fault_id(struct gk20a *g, u32 pbdma_id);
 u32 ga10b_pbdma_get_num_of_pbdmas(void);
 
+u32 ga10b_pbdma_intr_0_en_set_tree_mask(void);
+u32 ga10b_pbdma_intr_0_en_clear_tree_mask(void);
+u32 ga10b_pbdma_intr_1_en_set_tree_mask(void);
+u32 ga10b_pbdma_intr_1_en_clear_tree_mask(void);
 #endif /* NVGPU_PBDMA_GA10B_H */

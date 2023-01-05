@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -40,7 +40,7 @@
 
 #include <nvgpu/hw/ga10b/hw_pbdma_ga10b.h>
 
-static u32 pbdma_intr_0_en_set_tree_mask(void)
+u32 ga10b_pbdma_intr_0_en_set_tree_mask(void)
 {
 	u32 mask = pbdma_intr_0_en_set_tree_gpfifo_enabled_f()    |
 			pbdma_intr_0_en_set_tree_gpptr_enabled_f()     |
@@ -61,7 +61,7 @@ static u32 pbdma_intr_0_en_set_tree_mask(void)
 	return mask;
 }
 
-static u32 pbdma_intr_0_en_clear_tree_mask(void)
+u32 ga10b_pbdma_intr_0_en_clear_tree_mask(void)
 {
 	u32 mask = pbdma_intr_0_en_clear_tree_gpfifo_enabled_f()    |
 			pbdma_intr_0_en_clear_tree_gpptr_enabled_f()     |
@@ -82,7 +82,7 @@ static u32 pbdma_intr_0_en_clear_tree_mask(void)
 	return mask;
 }
 
-static u32 pbdma_intr_1_en_set_tree_mask(void)
+u32 ga10b_pbdma_intr_1_en_set_tree_mask(void)
 {	u32 mask = pbdma_intr_1_en_set_tree_hce_re_illegal_op_enabled_f() |
 			pbdma_intr_1_en_set_tree_hce_re_alignb_enabled_f()     |
 			pbdma_intr_1_en_set_tree_hce_priv_enabled_f()          |
@@ -93,7 +93,7 @@ static u32 pbdma_intr_1_en_set_tree_mask(void)
 	return mask;
 }
 
-static u32 pbdma_intr_1_en_clear_tree_mask(void)
+u32 ga10b_pbdma_intr_1_en_clear_tree_mask(void)
 {
 	u32 mask = pbdma_intr_1_en_clear_tree_hce_re_illegal_op_enabled_f() |
 			pbdma_intr_1_en_clear_tree_hce_re_alignb_enabled_f()     |
@@ -204,9 +204,9 @@ static void ga10b_pbdma_disable_all_intr(struct gk20a *g)
 		for (tree = 0U; tree < pbdma_intr_0_en_clear_tree__size_2_v();
 			tree++) {
 			nvgpu_writel(g, pbdma_intr_0_en_clear_tree_r(pbdma_id,
-				tree), pbdma_intr_0_en_clear_tree_mask());
+				tree), g->ops.pbdma.intr_0_en_clear_tree_mask());
 			nvgpu_writel(g, pbdma_intr_1_en_clear_tree_r(pbdma_id,
-				tree), pbdma_intr_1_en_clear_tree_mask());
+				tree), g->ops.pbdma.intr_1_en_clear_tree_mask());
 		}
 	}
 }
@@ -352,9 +352,9 @@ void ga10b_pbdma_intr_enable(struct gk20a *g, bool enable)
 
 		/* enable pbdma interrupts and route to tree_0 */
 		nvgpu_writel(g, pbdma_intr_0_en_set_tree_r(pbdma_id,
-			tree), pbdma_intr_0_en_set_tree_mask());
+			tree), g->ops.pbdma.intr_0_en_set_tree_mask());
 		nvgpu_writel(g, pbdma_intr_1_en_set_tree_r(pbdma_id,
-			tree), pbdma_intr_1_en_set_tree_mask());
+			tree), g->ops.pbdma.intr_1_en_set_tree_mask());
 	}
 }
 

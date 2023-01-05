@@ -1,7 +1,7 @@
 /*
  * GA100 Tegra HAL interface
  *
- * Copyright (c) 2020-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1043,6 +1043,10 @@ static const struct gops_pbdma ga100_ops_pbdma = {
 	.cleanup_sw = nvgpu_pbdma_cleanup_sw,
 	.setup_hw = NULL,
 	.intr_enable = ga10b_pbdma_intr_enable,
+	.intr_0_en_set_tree_mask = ga10b_pbdma_intr_0_en_set_tree_mask,
+	.intr_0_en_clear_tree_mask = ga10b_pbdma_intr_0_en_clear_tree_mask,
+	.intr_1_en_set_tree_mask = ga10b_pbdma_intr_1_en_set_tree_mask,
+	.intr_1_en_clear_tree_mask = ga10b_pbdma_intr_1_en_clear_tree_mask,
 	.acquire_val = gm20b_pbdma_acquire_val,
 	.get_signature = gp10b_pbdma_get_signature,
 #ifdef CONFIG_NVGPU_HAL_NON_FUSA

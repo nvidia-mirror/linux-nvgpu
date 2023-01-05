@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -45,6 +45,10 @@ struct gops_pbdma {
 	void (*cleanup_sw)(struct gk20a *g);
 	void (*setup_hw)(struct gk20a *g);
 	void (*intr_enable)(struct gk20a *g, bool enable);
+	u32 (*intr_0_en_set_tree_mask)(void);
+	u32 (*intr_0_en_clear_tree_mask)(void);
+	u32 (*intr_1_en_set_tree_mask)(void);
+	u32 (*intr_1_en_clear_tree_mask)(void);
 	bool (*handle_intr_0)(struct gk20a *g,
 			u32 pbdma_id, u32 pbdma_intr_0,
 			u32 *error_notifier);
