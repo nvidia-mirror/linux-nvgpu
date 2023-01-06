@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2021-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -206,6 +206,7 @@ static void nvgpu_nvs_worker_wakeup_process_item(struct nvgpu_list_node *work_it
 	struct nvs_domain *nvs_domain;
 	struct nvgpu_runlist *runlist = work->rl;
 	struct nvgpu_runlist_domain *rl_domain = work->rl_domain;
+	bool is_shadow_part_remove = false;
 
 	nvgpu_mutex_acquire(&g->sched_mutex);
 
@@ -223,11 +224,24 @@ static void nvgpu_nvs_worker_wakeup_process_item(struct nvgpu_list_node *work_it
 		} else {
 			nvs_domain = nvgpu_nvs_domain->parent;
 		}
+
+		if ((sched->active_domain->id == SHADOW_DOMAIN_ID) &&
+				rl_domain->remove) {
+			rl_domain = runlist->shadow_rl_domain;
+			is_shadow_part_remove = true;
+			nvs_dbg(g, "remove flag is set for domain %llu",
+				rl_domain->domain_id);
+		}
 	}
 
 	nvs_dbg(g, "Thread sync started");
-
-	if (sched->active_domain == nvs_domain->priv) {
+	/*
+	 * There can be two cases where sync_submit is going to be triggered.
+	 * 1. Active domain is same as the domain for which work has submitted, or
+	 * 2. Shadow domain is active and remove flag is set for the domain for
+	 * which work is submitted.
+	 */
+	if ((sched->active_domain == nvs_domain->priv) || is_shadow_part_remove) {
 		/* Instantly switch domain and force runlist updates */
 		ret = nvgpu_rl_domain_sync_submit(g, runlist, rl_domain, work->wait_for_finish);
 		nvs_dbg(g, "Active thread updated");

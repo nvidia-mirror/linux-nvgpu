@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -129,6 +129,8 @@ struct nvgpu_runlist_domain {
 	 * Placeholder for metadata that will come in further patches.
 	 */
 	u64 domain_id;
+	/* Set to true if any channel belongs this domain get removed. */
+	bool remove;
 	/**
 	 * All created domains are tracked in a list.
 	 *

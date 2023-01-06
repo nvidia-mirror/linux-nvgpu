@@ -683,6 +683,12 @@ static int nvgpu_runlist_do_update(struct gk20a *g, struct nvgpu_runlist *rl,
 		* and can be disabled.
 		*/
 #if defined(CONFIG_KMD_SCHEDULING_WORKER_THREAD)
+		if ((domain != NULL) && (domain->domain_id != SHADOW_DOMAIN_ID)) {
+			domain->remove = !add;
+			rl_dbg(g, "domain-id %llu is_remove %d",
+					domain->domain_id, domain->remove);
+		}
+
 		ret = g->nvs_worker_submit(g, rl, domain, wait_for_finish);
 		/* Deferred Update */
 		if (ret == 1) {
