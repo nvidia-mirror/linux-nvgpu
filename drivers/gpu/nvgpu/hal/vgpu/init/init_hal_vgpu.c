@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,10 +32,21 @@
 #include "vgpu_hal_ga10b.h"
 #endif
 
+#if defined(CONFIG_NVGPU_NON_FUSA) && defined(CONFIG_NVGPU_NEXT)
+#include <nvgpu_next_hal_init.h>
+#endif
+
 int vgpu_init_hal(struct gk20a *g)
 {
 	u32 ver = g->params.gpu_arch + g->params.gpu_impl;
 	int err;
+
+#if defined(CONFIG_NVGPU_HAL_NON_FUSA) && defined(CONFIG_NVGPU_NEXT)
+	err = vgpu_next_init_hal(g);
+	if (err != -ENODEV) {
+		return err;
+	}
+#endif
 
 	switch (ver) {
 #ifdef CONFIG_NVGPU_HAL_NON_FUSA
