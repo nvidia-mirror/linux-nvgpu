@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -138,7 +138,7 @@ int nvgpu_pmu_wait_fw_ack_status(struct gk20a *g, struct nvgpu_pmu *pmu,
 			 * "GPU has disappeared from bus".
 			 */
 			*(volatile u8 *)var = val;
-			return 0;
+			return PMU_FW_ACK_STATE_OFF;
 		}
 
 		if (nvgpu_can_busy(g) == 0) {
@@ -151,7 +151,7 @@ int nvgpu_pmu_wait_fw_ack_status(struct gk20a *g, struct nvgpu_pmu *pmu,
 			 */
 
 			*(volatile u8 *)var = val;
-			return 0;
+			return PMU_FW_ACK_DRIVER_SHUTDOWN;
 		}
 
 		if (g->ops.pmu.pmu_is_interrupted(pmu)) {
@@ -163,7 +163,7 @@ int nvgpu_pmu_wait_fw_ack_status(struct gk20a *g, struct nvgpu_pmu *pmu,
 
 		/* Confirm ACK from PMU before timeout check */
 		if (*(volatile u8 *)var == val) {
-			return 0;
+			return PMU_FW_ACK_RECEIVED;
 		}
 
 	} while (nvgpu_timeout_expired(&timeout) == 0);

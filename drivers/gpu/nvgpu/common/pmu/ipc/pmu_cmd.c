@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -646,9 +646,11 @@ int nvgpu_pmu_rpc_execute(struct nvgpu_pmu *pmu, u8 *rpc,
 	struct pmu_payload payload;
 	struct rpc_handler_payload *rpc_payload = NULL;
 	struct nv_pmu_rpc_header *rpc_header = NULL;
+	struct pmu_sequence *seq = NULL;
 	pmu_callback callback = NULL;
 	void *rpc_buff = NULL;
 	int status = 0;
+	int fw_ack_status = 0;
 
 	if (nvgpu_can_busy(g) == 0) {
 		return 0;
@@ -725,17 +727,26 @@ int nvgpu_pmu_rpc_execute(struct nvgpu_pmu *pmu, u8 *rpc,
 	 */
 	if (is_copy_back) {
 		/* wait till RPC execute in PMU & ACK */
-		if (nvgpu_pmu_wait_fw_ack_status(g, pmu,
-				nvgpu_get_poll_timeout(g),
-				&rpc_payload->complete, 1U) != 0) {
+		fw_ack_status = nvgpu_pmu_wait_fw_ack_status(g, pmu,
+					nvgpu_get_poll_timeout(g),
+					&rpc_payload->complete, 1U);
+		if (fw_ack_status == -ETIMEDOUT) {
 			nvgpu_err(g, "PMU wait timeout expired.");
 			status = -ETIMEDOUT;
 			goto cleanup;
+		} else if (fw_ack_status == PMU_FW_ACK_DRIVER_SHUTDOWN) {
+			/* free allocated memory */
+			nvgpu_kfree(g, rpc_payload);
+			/* release the sequence */
+			seq = nvgpu_pmu_sequences_get_seq(pmu->sequences,
+							cmd.hdr.seq_id);
+			nvgpu_pmu_seq_release(g, pmu->sequences, seq);
+		} else {
+			/* copy back data to caller */
+			nvgpu_memcpy(rpc, (u8 *)rpc_buff, size_rpc);
+			/* free allocated memory */
+			nvgpu_kfree(g, rpc_payload);
 		}
-		/* copy back data to caller */
-		nvgpu_memcpy(rpc, (u8 *)rpc_buff, size_rpc);
-		/* free allocated memory */
-		nvgpu_kfree(g, rpc_payload);
 	}
 
 	return 0;

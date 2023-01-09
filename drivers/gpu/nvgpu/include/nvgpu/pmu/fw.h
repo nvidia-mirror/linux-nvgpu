@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -49,6 +49,22 @@ struct boardobjgrpmask;
 #define PMU_FW_STATE_LOADING_ZBC	6U /* Loading ZBC buf */
 #define PMU_FW_STATE_STARTED		7U /* Fully unitialized */
 #define PMU_FW_STATE_EXIT			8U /* Exit PMU state machine */
+
+/* ACK status for RPCs from PMU firmware */
+
+/* RPC ACK is recieved from PMU FW */
+#define PMU_FW_ACK_RECEIVED		0
+/*
+ * PMU state is OFF so RPC ACK will not be received.
+ * Set the ACK status as State OFF
+ */
+#define PMU_FW_ACK_STATE_OFF		1
+/*
+ * Driver is shutting down, so we don't wait
+ * for ACK from PMU. Set the ACK status to
+ * Driver Shutdown
+ */
+#define PMU_FW_ACK_DRIVER_SHUTDOWN	2
 
 struct pmu_fw_ver_ops {
 	u32 (*get_cmd_line_args_size)(struct nvgpu_pmu *pmu);
