@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -166,6 +166,21 @@ struct gops_priv_ring {
 	 */
 
 	void (*isr_handle_1)(struct gk20a *g, u32 status1);
+
+	/**
+	 * @brief Writes the unit level INTR_RETRIGGER register.
+	 *
+	 * @param g [in]		Pointer to GPU driver struct.
+	 *
+	 * This function writes the INTR_RETRIGGER register to handle the case
+	 * in which an interrupt is triggered between reading the interrupt
+	 * status register and clearing the interrupts. In this case, the rolled
+	 * up OR of pending interrupts will not change from 0 to 1, so an
+	 * interrupt message would not be sent to GIN. Writing to INTR_RETRIGGER
+	 * ensures that a new message is sent to GIN.
+	 */
+
+	void (*intr_retrigger)(struct gk20a *g);
 
 	/**
 	 * @brief Returns number of enumerated Level Two Cache (LTC) chiplets.

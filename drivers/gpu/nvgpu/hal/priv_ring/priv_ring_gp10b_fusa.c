@@ -1,7 +1,7 @@
 /*
  * GP10B priv ring
  *
- * Copyright (c) 2017-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -239,5 +239,9 @@ void gp10b_priv_ring_isr(struct gk20a *g)
 
 	if (retries == 0U) {
 		nvgpu_err(g, "priv ringmaster intr ack failed");
+	}
+
+	if (g->ops.priv_ring.intr_retrigger != NULL) {
+		g->ops.priv_ring.intr_retrigger(g);
 	}
 }
