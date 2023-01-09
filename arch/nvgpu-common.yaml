@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2022, NVIDIA CORPORATION.  All Rights Reserved.
+# Copyright (c) 2019-2023, NVIDIA CORPORATION.  All Rights Reserved.
 #
 # Common elements and units in nvgpu.
 #
@@ -1166,6 +1166,12 @@ cic:
              common/cic/rm/rm_init.c,
              common/cic/rm/cic_rm_priv.h,
              include/nvgpu/cic_rm.h ]
+
+gin:
+  owner: Austin T
+  safe: no
+  sources: [ include/nvgpu/gops/gin.h,
+             include/nvgpu/gin.h ]
 
 ##
 ## HAL units. Currently they are under common but this needs to change.

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -71,6 +71,7 @@
 #include <nvgpu/gops/ecc.h>
 #include <nvgpu/gops/grmgr.h>
 #include <nvgpu/gops/cic_mon.h>
+#include <nvgpu/gops/gin.h>
 #ifdef CONFIG_NVGPU_NON_FUSA
 #include <nvgpu/gops/mssnvlink.h>
 #endif
@@ -271,6 +272,8 @@ struct gpu_ops {
 	struct gops_grmgr grmgr;
 
 	struct gops_cic_mon cic_mon;
+
+	struct gops_gin gin;
 
 /** @cond DOXYGEN_SHOULD_SKIP_THIS */
 #ifdef CONFIG_NVGPU_NON_FUSA
