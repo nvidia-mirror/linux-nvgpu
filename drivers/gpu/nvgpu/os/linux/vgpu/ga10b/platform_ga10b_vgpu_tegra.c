@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -65,5 +65,5 @@ struct gk20a_platform ga10b_vgpu_tegra_platform = {
 	.resume = vgpu_tegra_resume,
 
 	.unified_memory = true,
-	.dma_mask = DMA_BIT_MASK(36),
+	.dma_mask = DMA_BIT_MASK(39),
 };
