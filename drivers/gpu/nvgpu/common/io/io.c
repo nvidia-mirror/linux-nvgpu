@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -147,18 +147,28 @@ void nvgpu_writel_check(struct gk20a *g, u32 r, u32 v)
 
 void nvgpu_func_writel(struct gk20a *g, u32 r, u32 v)
 {
-	if (g->ops.func.get_full_phys_offset == NULL) {
-		BUG_ON(1);
+	if (unlikely(!g->func_regs)) {
+		nvgpu_warn_on_no_regs(g, r);
+		nvgpu_log(g, gpu_dbg_reg, "f=0x%x v=0x%x (failed)", r, v);
+	} else {
+		nvgpu_os_writel(v, g->func_regs + r);
+		nvgpu_wmb();
+		nvgpu_log(g, gpu_dbg_reg, "f=0x%x v=0x%x", r, v);
 	}
-	nvgpu_writel(g,
-		nvgpu_safe_add_u32(r, g->ops.func.get_full_phys_offset(g)), v);
 }
 
 u32 nvgpu_func_readl(struct gk20a *g, u32 r)
 {
-	if (g->ops.func.get_full_phys_offset == NULL) {
-		BUG_ON(1);
+	u32 v = 0xffffffff;
+
+	if (unlikely(!g->func_regs)) {
+		nvgpu_warn_on_no_regs(g, r);
+		nvgpu_log(g, gpu_dbg_reg, "f=0x%x v=0x%x (failed)", r, v);
+		nvgpu_check_gpu_state(g);
+	} else {
+		v = nvgpu_os_readl(g->func_regs + r);
+		nvgpu_log(g, gpu_dbg_reg, "f=0x%x v=0x%x", r, v);
 	}
-	return nvgpu_readl(g,
-		nvgpu_safe_add_u32(r, g->ops.func.get_full_phys_offset(g)));
+
+	return v;
 }

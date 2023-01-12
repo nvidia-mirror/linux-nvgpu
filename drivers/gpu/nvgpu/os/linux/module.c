@@ -264,6 +264,7 @@ static int gk20a_restore_registers(struct gk20a *g)
 {
 	g->regs = g->regs_saved;
 	g->bar1 = g->bar1_saved;
+	g->func_regs = g->func_regs_saved;
 
 	nvgpu_restore_usermode_registers(g);
 

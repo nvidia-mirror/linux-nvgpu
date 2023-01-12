@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * GK20A Graphics
  *
@@ -401,9 +401,13 @@ struct gk20a {
 	uintptr_t usermode_regs;
 	u64 usermode_regs_bus_addr;
 
+	/** Starting virtual address of mapped func io region. */
+	uintptr_t func_regs;
+
 	uintptr_t regs_saved;
 	uintptr_t bar1_saved;
 	uintptr_t usermode_regs_saved;
+	uintptr_t func_regs_saved;
 
 	/**
 	 * Handle to access nvhost APIs.
