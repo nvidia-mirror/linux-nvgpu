@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2021-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -758,6 +758,9 @@ int nvgpu_nvs_ctrl_fifo_scheduler_handle_requests(struct gk20a *g);
  */
 bool nvgpu_nvs_buffer_is_valid(struct gk20a *g, struct nvgpu_nvs_ctrl_queue *buf);
 
+bool nvgpu_nvs_buffer_is_sendq_valid(struct gk20a *g);
+bool nvgpu_nvs_buffer_is_receiveq_valid(struct gk20a *g);
+bool nvgpu_nvs_buffer_is_eventq_valid(struct gk20a *g);
 /**
  * @brief Allocate DMA memory for shared queues.
  *

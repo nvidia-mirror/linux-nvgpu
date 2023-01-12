@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2021-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -662,30 +662,104 @@ int nvgpu_nvs_ctrl_fifo_ops_release(struct inode *inode, struct file *filp)
 {
 	struct nvgpu_cdev *cdev;
 	struct gk20a *g;
+	struct nvgpu_nvs_ctrl_queue *sendq = NULL, *recvq = NULL, *eventq = NULL;
 	struct nvgpu_nvs_domain_ctrl_fifo_user_linux *linux_user = NULL;
+	enum nvgpu_nvs_ctrl_queue_num num_queue = NVGPU_NVS_INVALID;
+	enum nvgpu_nvs_ctrl_queue_direction queue_direction = NVGPU_NVS_DIR_INVALID;
+	bool is_sendq_remove = false;
+	bool is_eventq_remove = false;
+	bool is_recvq_remove = false;
+	bool is_exclusive_user;
+	u8 mask = 0;
 	int err = 0;
 
 	cdev = container_of(inode->i_cdev, struct nvgpu_cdev, cdev);
 	g = nvgpu_get_gk20a_from_cdev(cdev);
 
 	linux_user = filp->private_data;
+
+	if (g->sched_ctrl_fifo == NULL) {
+		return -EINVAL;
+	}
+
 	if (linux_user == NULL) {
 		return -ENODEV;
 	}
 
+	is_exclusive_user = nvgpu_nvs_ctrl_fifo_is_exclusive_user(
+					g->sched_ctrl_fifo, &linux_user->user);
+	nvgpu_nvs_ctrl_fifo_lock_queues(g);
+	if (is_exclusive_user) {
+		num_queue = NVGPU_NVS_NUM_CONTROL;
+		if (nvgpu_nvs_buffer_is_sendq_valid(g)) {
+			queue_direction = NVGPU_NVS_DIR_CLIENT_TO_SCHEDULER;
+			sendq = nvgpu_nvs_ctrl_fifo_get_queue(g->sched_ctrl_fifo,
+					num_queue, queue_direction, &mask);
+			if ((sendq != NULL) &&
+				nvgpu_nvs_ctrl_fifo_user_is_subscribed_to_queue(
+					&linux_user->user, sendq)) {
+				nvgpu_nvs_ctrl_fifo_user_unsubscribe_queue(
+					&linux_user->user, sendq);
+				is_sendq_remove = true;
+			}
+		}
+		if (nvgpu_nvs_buffer_is_receiveq_valid(g)) {
+			queue_direction = NVGPU_NVS_DIR_SCHEDULER_TO_CLIENT;
+			recvq = nvgpu_nvs_ctrl_fifo_get_queue(g->sched_ctrl_fifo,
+					num_queue, queue_direction, &mask);
+			if (recvq != NULL &&
+				nvgpu_nvs_ctrl_fifo_user_is_subscribed_to_queue(
+					&linux_user->user, recvq)) {
+				nvgpu_nvs_ctrl_fifo_user_unsubscribe_queue(
+					&linux_user->user, recvq);
+				is_recvq_remove = true;
+			}
+		}
+	} else {
+		if (nvgpu_nvs_buffer_is_eventq_valid(g)) {
+			queue_direction = NVGPU_NVS_DIR_SCHEDULER_TO_CLIENT;
+			num_queue = NVGPU_NVS_NUM_EVENT;
+			eventq = nvgpu_nvs_ctrl_fifo_get_queue(g->sched_ctrl_fifo,
+					num_queue, queue_direction, &mask);
+			if (eventq != NULL &&
+				nvgpu_nvs_ctrl_fifo_user_is_subscribed_to_queue(
+					&linux_user->user, eventq)) {
+				nvgpu_nvs_ctrl_fifo_user_unsubscribe_queue(
+					&linux_user->user, eventq);
+				is_eventq_remove = true;
+			}
+		}
+	}
+
 	if (nvgpu_nvs_ctrl_fifo_user_is_active(&linux_user->user)) {
+		nvgpu_err(g, "user is still active");
+		nvgpu_nvs_ctrl_fifo_unlock_queues(g);
 		err = -EBUSY;
 		return err;
 	}
 
-	if (nvgpu_nvs_ctrl_fifo_is_exclusive_user(g->sched_ctrl_fifo, &linux_user->user)) {
-		nvgpu_nvs_ctrl_fifo_reset_exclusive_user(g->sched_ctrl_fifo, &linux_user->user);
+	if (is_exclusive_user) {
+		nvgpu_nvs_ctrl_fifo_reset_exclusive_user(g->sched_ctrl_fifo,
+			&linux_user->user);
+	}
+
+
+	if (is_sendq_remove) {
+		nvgpu_nvs_ctrl_fifo_erase_queue_locked(g, sendq);
+	}
+
+	if (is_recvq_remove) {
+		nvgpu_nvs_ctrl_fifo_erase_queue_locked(g, recvq);
 	}
 
 	nvgpu_nvs_ctrl_fifo_remove_user(g->sched_ctrl_fifo, &linux_user->user);
+
 	if (!nvgpu_nvs_ctrl_fifo_is_busy(g->sched_ctrl_fifo)) {
-		nvgpu_nvs_ctrl_fifo_erase_all_queues(g);
+		if (is_eventq_remove) {
+			nvgpu_nvs_ctrl_fifo_erase_queue_locked(g, eventq);
+		}
 	}
+	nvgpu_nvs_ctrl_fifo_unlock_queues(g);
 
 	filp->private_data = NULL;
 

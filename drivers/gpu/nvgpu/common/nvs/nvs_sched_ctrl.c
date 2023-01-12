@@ -482,6 +482,27 @@ bool nvgpu_nvs_buffer_is_valid(struct gk20a *g, struct nvgpu_nvs_ctrl_queue *buf
 	return buf->valid;
 }
 
+bool nvgpu_nvs_buffer_is_sendq_valid(struct gk20a *g)
+{
+	struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl = g->sched_ctrl_fifo;
+
+	return nvgpu_nvs_buffer_is_valid(g, &sched_ctrl->queues.send);
+}
+
+bool nvgpu_nvs_buffer_is_receiveq_valid(struct gk20a *g)
+{
+	struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl = g->sched_ctrl_fifo;
+
+	return nvgpu_nvs_buffer_is_valid(g, &sched_ctrl->queues.receive);
+}
+
+bool nvgpu_nvs_buffer_is_eventq_valid(struct gk20a *g)
+{
+	struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl = g->sched_ctrl_fifo;
+
+	return nvgpu_nvs_buffer_is_valid(g, &sched_ctrl->queues.event);
+}
+
 int nvgpu_nvs_buffer_alloc(struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl,
 		size_t bytes, u8 mask, struct nvgpu_nvs_ctrl_queue *buf)
 {
