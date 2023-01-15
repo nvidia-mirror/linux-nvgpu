@@ -698,6 +698,7 @@ static int nvgpu_runlist_do_update(struct gk20a *g, struct nvgpu_runlist *rl,
 	ret = nvgpu_runlist_update_locked(g, rl, domain, ch, add, wait_for_finish);
 	if (ret == 0) {
 #if defined(CONFIG_NVS_PRESENT)
+		ret = nvgpu_rl_domain_sync_submit(g, rl, rl->domain, wait_for_finish);
 		/*
 		* This path(CONFIG_KMD_SCHEDULING_WORKER_THREAD) contains the CPU based
 		* Manual mode scheduler. With GSP enabled, this will be no longer required

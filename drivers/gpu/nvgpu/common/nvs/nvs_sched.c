@@ -38,12 +38,11 @@ static struct nvs_sched_ops nvgpu_nvs_ops = {
 	.recover = NULL,
 };
 
-#ifdef CONFIG_KMD_SCHEDULING_WORKER_THREAD
-
 #ifndef NSEC_PER_MSEC
 #define NSEC_PER_MSEC 1000000U
 #endif
 
+#ifdef CONFIG_KMD_SCHEDULING_WORKER_THREAD
 /*
  * TODO: make use of worker items when
  * 1) the active domain gets modified
@@ -683,9 +682,9 @@ void nvgpu_nvs_remove_support(struct gk20a *g)
 		/* never powered on to init anything */
 		return;
 	}
-
+#ifdef CONFIG_KMD_SCHEDULING_WORKER_THREAD
 	nvgpu_nvs_worker_deinit(g);
-
+#endif
 	nvs_domain_for_each(sched->sched, nvs_dom) {
 		struct nvgpu_nvs_domain *nvgpu_dom = nvs_dom->priv;
 		if (nvgpu_dom->ref != 1U) {
@@ -787,7 +786,10 @@ int nvgpu_nvs_open(struct gk20a *g)
 		}
 
 		g->nvs_worker_submit = nvgpu_nvs_worker_submit;
+#endif
 unlock:
+
+#ifdef CONFIG_KMD_SCHEDULING_WORKER_THREAD
 		if (err) {
 			nvs_dbg(g, "  Failed! Error code: %d", err);
 			if (g->scheduler) {

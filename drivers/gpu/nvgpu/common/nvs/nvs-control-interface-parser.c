@@ -67,6 +67,7 @@ static void nvs_control_atomic64_write(void *address, u64 value)
 	nvgpu_wmb();
 }
 
+#ifdef CONFIG_KMD_SCHEDULING_WORKER_THREAD
 void nvs_control_fifo_sender_write_message(struct nvs_control_fifo_sender *const sender,
 		const u32 msg_number, const u32 msg_sequence_tag,
 		const u64 msg_timestamp_ns)
@@ -320,3 +321,4 @@ void nvs_control_fifo_disable_flow_control(struct nvs_domain_msg_fifo_control *c
 	nvs_control_atomic_write(&control_interface->get,
 		NVS_DOMAIN_MSG_FIFO_CONTROL_GET_FLOW_CTRL_DISABLED);
 }
+#endif

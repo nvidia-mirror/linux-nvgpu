@@ -70,7 +70,7 @@ struct nvs_control_fifo_receiver {
 	u32 get_index;
 	u64 num_queue_entries;
 };
-
+#ifdef CONFIG_KMD_SCHEDULING_WORKER_THREAD
 void nvs_control_fifo_sender_write_message(struct nvs_control_fifo_sender *const sender,
 		u32 const msg_number, u32 const msg_sequence_tag,
 		u64 const msg_timestamp_ns);
@@ -92,5 +92,6 @@ void nvs_control_fifo_sender_exit(struct gk20a *g,
 void nvs_control_fifo_enable_flow_control(struct nvs_domain_msg_fifo_control *control_interface,
 		u32 get_index);
 void nvs_control_fifo_disable_flow_control(struct nvs_domain_msg_fifo_control *control_interface);
+#endif
 
 #endif

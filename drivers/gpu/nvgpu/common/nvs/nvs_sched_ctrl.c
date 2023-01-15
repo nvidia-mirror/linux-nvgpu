@@ -301,7 +301,7 @@ struct nvgpu_nvs_domain_ctrl_fifo *nvgpu_nvs_ctrl_fifo_create(struct gk20a *g)
 	return sched;
 }
 
-
+#ifdef CONFIG_KMD_SCHEDULING_WORKER_THREAD
 void nvgpu_nvs_domain_ctrl_fifo_set_receiver(struct gk20a *g,
 		struct nvs_control_fifo_receiver *receiver)
 {
@@ -355,6 +355,7 @@ struct nvs_control_fifo_sender *nvgpu_nvs_domain_ctrl_fifo_get_sender(struct gk2
 
 	return sched_ctrl->queues.receiver_queue_sender;
 }
+#endif
 
 bool nvgpu_nvs_ctrl_fifo_is_enabled(struct gk20a *g)
 {
@@ -618,6 +619,7 @@ void nvgpu_nvs_buffer_free(struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl,
 
 	/* Sets buf->valid as false */
 	(void)memset(buf, 0, sizeof(*buf));
+	(void)mask;
 }
 
 void nvgpu_nvs_ctrl_fifo_lock_queues(struct gk20a *g)
