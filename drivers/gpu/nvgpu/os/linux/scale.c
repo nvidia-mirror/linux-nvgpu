@@ -1,7 +1,7 @@
 /*
  * gk20a clock scaling profile
  *
- * Copyright (c) 2013-2022, NVIDIA Corporation. All rights reserved.
+ * Copyright (c) 2013-2023, NVIDIA Corporation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -653,9 +653,9 @@ void gk20a_scale_exit(struct device *dev)
 		if (err) {
 			nvgpu_err(g, "failed to remove max freq notifier %d", err);
 		}
-	}
 
-	nvgpu_mutex_destroy(&profile->lock);
+		nvgpu_mutex_destroy(&profile->lock);
+	}
 #else
 	if (platform->qos_notify) {
 		pm_qos_remove_min_notifier(PM_QOS_GPU_FREQ_BOUNDS,
