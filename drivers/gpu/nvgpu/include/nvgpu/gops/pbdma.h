@@ -94,6 +94,8 @@ struct gops_pbdma {
 	u32 (*get_num_of_pbdmas)(void);
 	void (*report_error)(struct gk20a *g, u32 pbdma_id,
 		u32 pbdma_intr_0);
+	bool (*handle_intr_0_acquire)(struct gk20a *g, u32 pbdma_id,
+			u32 pbdma_intr_0, u32 *error_notifier);
 
 	/** NON FUSA */
 	void (*syncpt_debug_dump)(struct gk20a *g,

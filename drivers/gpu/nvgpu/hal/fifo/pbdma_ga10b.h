@@ -68,6 +68,8 @@ void ga10b_pbdma_dump_status(struct gk20a *g, struct nvgpu_debug_context *o);
 
 u32 ga10b_pbdma_get_mmu_fault_id(struct gk20a *g, u32 pbdma_id);
 u32 ga10b_pbdma_get_num_of_pbdmas(void);
+bool ga10b_pbdma_handle_intr_0_acquire(struct gk20a *g, u32 pbdma_id,
+			u32 pbdma_intr_0, u32 *error_notifier);
 
 u32 ga10b_pbdma_intr_0_en_set_tree_mask(void);
 u32 ga10b_pbdma_intr_0_en_clear_tree_mask(void);

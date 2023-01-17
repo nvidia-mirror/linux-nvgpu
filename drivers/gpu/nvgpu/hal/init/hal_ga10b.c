@@ -1072,6 +1072,7 @@ static const struct gops_pbdma ga10b_ops_pbdma = {
 	.dump_status = ga10b_pbdma_dump_status,
 #endif
 	.handle_intr_0 = ga10b_pbdma_handle_intr_0,
+	.handle_intr_0_acquire = ga10b_pbdma_handle_intr_0_acquire,
 	.handle_intr_1 = ga10b_pbdma_handle_intr_1,
 	.handle_intr = ga10b_pbdma_handle_intr,
 	.dump_intr_0 = ga10b_pbdma_dump_intr_0,
