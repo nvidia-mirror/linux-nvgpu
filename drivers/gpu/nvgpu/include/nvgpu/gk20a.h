@@ -945,6 +945,31 @@ struct gk20a {
 };
 
 /**
+ * @brief Check whether nvgpu device is virtual function (VF)
+ *
+ * @param g [in]	The GPU superstructure.
+ * @return true nvgpu device is VF
+ * @return false nvgpu device is not VF
+ */
+static inline bool nvgpu_is_vf(struct gk20a *g)
+{
+	return g->is_virtual && g->func_regs != 0U;
+}
+
+/**
+ * @brief Check whether nvgpu device is legacy vgpu which does not rely on VF.
+ *
+ * @param g [in]	The GPU superstructure.
+ * @return true nvgpu device is legacy vgpu device, for which gpu context is
+ * managed on gpu server
+ * @return false nvgpu device is not legacy vgpu device
+ */
+static inline bool nvgpu_is_legacy_vgpu(struct gk20a *g)
+{
+	return g->is_virtual && g->func_regs == 0U;
+}
+
+/**
  * @brief Check if watchdog and context switch timeouts are enabled.
  *
  * @param g [in]	The GPU superstructure.

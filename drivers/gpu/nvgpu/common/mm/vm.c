@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -763,7 +763,7 @@ static int nvgpu_vm_init_attributes(struct mm_gk20a *mm,
 		g->ops.mm.gmmu.get_mmu_levels(g, vm->big_page_size);
 
 #ifdef CONFIG_NVGPU_GR_VIRTUALIZATION
-	if (g->is_virtual && userspace_managed) {
+	if (nvgpu_is_legacy_vgpu(g) && userspace_managed) {
 		nvgpu_err(g, "vGPU: no userspace managed addr space support");
 		return -ENOSYS;
 	}
@@ -807,7 +807,7 @@ int nvgpu_vm_do_init(struct mm_gk20a *mm,
 	/* Initialize the page table data structures. */
 	(void) strncpy(vm->name, name,
 		       min(strlen(name), (size_t)(sizeof(vm->name)-1ULL)));
-	if (!g->is_virtual) {
+	if (!nvgpu_is_legacy_vgpu(g)) {
 		err = nvgpu_gmmu_init_page_table(vm);
 		if (err != 0) {
 			goto clean_up_gpu_vm;
@@ -985,7 +985,7 @@ static void nvgpu_vm_remove(struct vm_gk20a *vm)
 		nvgpu_alloc_destroy(&vm->user_lp);
 	}
 
-	if (!g->is_virtual) {
+	if (!nvgpu_is_legacy_vgpu(g)) {
 		nvgpu_vm_free_entries(vm, &vm->pdb);
 	}
 

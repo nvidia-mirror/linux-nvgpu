@@ -1,7 +1,7 @@
 /*
  * Virtualized GPU for Linux
  *
- * Copyright (c) 2018-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -95,6 +95,7 @@ static void vgpu_init_vars(struct gk20a *g, struct gk20a_platform *platform)
 	nvgpu_mutex_init(&g->clk_arb_enable_lock);
 	nvgpu_mutex_init(&g->cg_pg_lock);
 	nvgpu_rwsem_init(&g->deterministic_busy);
+	nvgpu_rwsem_init(&(g->ipa_pa_cache.ipa_pa_rw_lock));
 
 	nvgpu_mutex_init(&priv->vgpu_clk_get_freq_lock);
 
@@ -117,6 +118,11 @@ static void vgpu_init_vars(struct gk20a *g, struct gk20a_platform *platform)
 			    platform->unified_memory);
 	nvgpu_set_enabled(g, NVGPU_MM_UNIFY_ADDRESS_SPACES,
 			    platform->unify_address_spaces);
+
+	if (nvgpu_is_vf(g)) {
+		/* only VF needs IPA2PA */
+		nvgpu_init_soc_vars(g);
+	}
 }
 
 static int vgpu_init_support(struct platform_device *pdev)

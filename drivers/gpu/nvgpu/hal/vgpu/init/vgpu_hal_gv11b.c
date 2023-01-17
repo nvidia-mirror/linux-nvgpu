@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -780,7 +780,7 @@ static const struct gops_mm_gmmu vgpu_gv11b_ops_mm_gmmu = {
 
 static const struct gops_mm vgpu_gv11b_ops_mm = {
 	.init_mm_support = nvgpu_init_mm_support,
-	.pd_cache_init = nvgpu_pd_cache_init,
+	.pd_cache_init = NULL,
 	.mm_suspend = nvgpu_mm_suspend,
 	.vm_bind_channel = vgpu_vm_bind_channel,
 	.setup_hw = NULL,

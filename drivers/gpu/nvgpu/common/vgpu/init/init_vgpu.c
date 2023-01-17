@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -224,6 +224,14 @@ int vgpu_finalize_poweron_common(struct gk20a *g)
 	if (err != 0) {
 		nvgpu_err(g, "failed to init gk20a mm");
 		return err;
+	}
+
+	if (g->ops.mm.pd_cache_init != NULL) {
+		err = g->ops.mm.pd_cache_init(g);
+		if (err != 0) {
+			nvgpu_err(g, "failed to init pd_cache");
+			return err;
+		}
 	}
 
 	err = nvgpu_fifo_init_support(g);
