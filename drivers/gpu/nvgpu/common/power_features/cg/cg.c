@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -33,6 +33,11 @@ static void nvgpu_cg_set_mode(struct gk20a *g, u32 cgmode, u32 mode_config)
 	const struct nvgpu_device *dev = NULL;
 	struct nvgpu_fifo *f = &g->fifo;
 
+	if ((g->ops.therm.init_blcg_mode == NULL) &&
+			(g->ops.therm.init_elcg_mode == NULL)) {
+		return;
+	}
+
 	nvgpu_log_fn(g, " ");
 
 	for (n = 0; n < f->num_engines; n++) {
@@ -41,7 +46,7 @@ static void nvgpu_cg_set_mode(struct gk20a *g, u32 cgmode, u32 mode_config)
 #ifdef CONFIG_NVGPU_NON_FUSA
 		/* gr_engine supports both BLCG and ELCG */
 		if ((cgmode == BLCG_MODE) &&
-		    (dev->type == NVGPU_DEVTYPE_GRAPHICS)) {
+			(dev->type == NVGPU_DEVTYPE_GRAPHICS)) {
 			g->ops.therm.init_blcg_mode(g, (u32)mode_config,
 						engine_id);
 			break;
