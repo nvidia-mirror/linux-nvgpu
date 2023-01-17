@@ -73,4 +73,6 @@ u32 ga10b_pbdma_intr_0_en_set_tree_mask(void);
 u32 ga10b_pbdma_intr_0_en_clear_tree_mask(void);
 u32 ga10b_pbdma_intr_1_en_set_tree_mask(void);
 u32 ga10b_pbdma_intr_1_en_clear_tree_mask(void);
+void ga10b_pbdma_report_error(struct gk20a *g, u32 pbdma_id,
+		u32 pbdma_intr_0);
 #endif /* NVGPU_PBDMA_GA10B_H */

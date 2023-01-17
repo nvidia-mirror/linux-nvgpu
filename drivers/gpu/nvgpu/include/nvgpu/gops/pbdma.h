@@ -90,6 +90,8 @@ struct gops_pbdma {
 	u32 (*set_intr_notify)(u32 eng_intr_vector);
 	u32 (*get_mmu_fault_id)(struct gk20a *g, u32 pbdma_id);
 	u32 (*get_num_of_pbdmas)(void);
+	void (*report_error)(struct gk20a *g, u32 pbdma_id,
+		u32 pbdma_intr_0);
 
 	/** NON FUSA */
 	void (*syncpt_debug_dump)(struct gk20a *g,

@@ -293,7 +293,7 @@ u32 ga10b_pbdma_read_data(struct gk20a *g, u32 pbdma_id)
 	return nvgpu_readl(g, pbdma_hdr_shadow_r(pbdma_id));
 }
 
-static void report_pbdma_error(struct gk20a *g, u32 pbdma_id,
+void ga10b_pbdma_report_error(struct gk20a *g, u32 pbdma_id,
 		u32 pbdma_intr_0)
 {
 	u32 err_type = GPU_HOST_INVALID_ERROR;
@@ -501,7 +501,11 @@ bool ga10b_pbdma_handle_intr_0(struct gk20a *g, u32 pbdma_id, u32 pbdma_intr_0,
 				 pbdma_id);
 		recover = true;
 	}
-	report_pbdma_error(g, pbdma_id, pbdma_intr_0);
+
+	if (g->ops.pbdma.report_error != NULL) {
+		g->ops.pbdma.report_error(g, pbdma_id, pbdma_intr_0);
+	}
+
 	return recover;
 }
 

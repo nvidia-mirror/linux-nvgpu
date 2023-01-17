@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -33,7 +33,7 @@
 #include "pbdma_gm20b.h"
 #include "pbdma_gv11b.h"
 
-static void report_pbdma_error(struct gk20a *g, u32 pbdma_id,
+void gv11b_pbdma_report_error(struct gk20a *g, u32 pbdma_id,
 		u32 pbdma_intr_0)
 {
 	u32 err_type = GPU_HOST_INVALID_ERROR;
@@ -149,7 +149,11 @@ bool gv11b_pbdma_handle_intr_0(struct gk20a *g, u32 pbdma_id, u32 pbdma_intr_0,
 				 pbdma_id);
 		recover = true;
 	}
-	report_pbdma_error(g, pbdma_id, pbdma_intr_0);
+
+	if (g->ops.pbdma.report_error != NULL) {
+		g->ops.pbdma.report_error(g, pbdma_id, pbdma_intr_0);
+	}
+
 	return recover;
 }
 

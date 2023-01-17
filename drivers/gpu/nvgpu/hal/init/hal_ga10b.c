@@ -1096,6 +1096,7 @@ static const struct gops_pbdma ga10b_ops_pbdma = {
 	.set_channel_info_veid = gv11b_pbdma_set_channel_info_veid,
 	.set_channel_info_chid = ga10b_pbdma_set_channel_info_chid,
 	.set_intr_notify = ga10b_pbdma_set_intr_notify,
+	.report_error = ga10b_pbdma_report_error,
 	.config_userd_writeback_enable = gv11b_pbdma_config_userd_writeback_enable,
 	.get_mmu_fault_id = ga10b_pbdma_get_mmu_fault_id,
 	.get_num_of_pbdmas = ga10b_pbdma_get_num_of_pbdmas,

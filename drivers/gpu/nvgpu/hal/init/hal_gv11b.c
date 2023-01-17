@@ -1,7 +1,7 @@
 /*
  * GV11B Tegra HAL interface
  *
- * Copyright (c) 2016-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -919,6 +919,7 @@ static const struct gops_pbdma gv11b_ops_pbdma = {
 	.get_config_auth_level_privileged = gp10b_pbdma_get_config_auth_level_privileged,
 	.set_channel_info_veid = gv11b_pbdma_set_channel_info_veid,
 	.config_userd_writeback_enable = gv11b_pbdma_config_userd_writeback_enable,
+	.report_error = gv11b_pbdma_report_error,
 };
 
 #ifdef CONFIG_TEGRA_GK20A_NVHOST

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -39,5 +39,7 @@ u32 gv11b_pbdma_get_fc_pb_header(void);
 u32 gv11b_pbdma_get_fc_target(const struct nvgpu_device *dev);
 u32 gv11b_pbdma_set_channel_info_veid(u32 subctx_id);
 u32 gv11b_pbdma_config_userd_writeback_enable(u32 v);
+void gv11b_pbdma_report_error(struct gk20a *g, u32 pbdma_id,
+		u32 pbdma_intr_0);
 
 #endif /* NVGPU_PBDMA_GV11B_H */
