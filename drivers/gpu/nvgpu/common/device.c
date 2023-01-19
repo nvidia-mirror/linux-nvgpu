@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -54,6 +54,21 @@ static inline const char *nvgpu_device_type_to_str(const struct nvgpu_device *de
 		break;
 	case NVGPU_DEVTYPE_LCE:
 		str = "LCE";
+		break;
+	case NVGPU_DEVTYPE_SEC:
+		str = "SEC";
+		break;
+	case NVGPU_DEVTYPE_NVENC:
+		str = "NVENC";
+		break;
+	case NVGPU_DEVTYPE_NVDEC:
+		str = "NVDEC";
+		break;
+	case NVGPU_DEVTYPE_NVJPG:
+		str = "NVJPG";
+		break;
+	case NVGPU_DEVTYPE_NVOFA:
+		str = "NVOFA";
 		break;
 	default:
 		break;
@@ -336,4 +351,39 @@ bool nvgpu_device_is_graphics(struct gk20a *g, const struct nvgpu_device *dev)
 	(void)g;
 
 	return dev->type == NVGPU_DEVTYPE_GRAPHICS;
+}
+
+bool nvgpu_device_is_sec(struct gk20a *g, const struct nvgpu_device *dev)
+{
+	(void)g;
+
+	return dev->type == NVGPU_DEVTYPE_SEC;
+}
+
+bool nvgpu_device_is_nvenc(struct gk20a *g, const struct nvgpu_device *dev)
+{
+	(void)g;
+
+	return dev->type == NVGPU_DEVTYPE_NVENC;
+}
+
+bool nvgpu_device_is_nvdec(struct gk20a *g, const struct nvgpu_device *dev)
+{
+	(void)g;
+
+	return dev->type == NVGPU_DEVTYPE_NVDEC;
+}
+
+bool nvgpu_device_is_nvjpg(struct gk20a *g, const struct nvgpu_device *dev)
+{
+	(void)g;
+
+	return dev->type == NVGPU_DEVTYPE_NVJPG;
+}
+
+bool nvgpu_device_is_nvofa(struct gk20a *g, const struct nvgpu_device *dev)
+{
+	(void)g;
+
+	return dev->type == NVGPU_DEVTYPE_NVOFA;
 }

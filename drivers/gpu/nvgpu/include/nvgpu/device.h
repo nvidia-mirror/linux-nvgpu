@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -75,6 +75,27 @@ struct gk20a;
 /**
  * @ingroup NVGPU_TOP_DEVICE_INFO_DEFINES
  *
+ * Device type for SEC engine instances.
+ */
+#define NVGPU_DEVTYPE_SEC		13U
+
+/**
+ * @ingroup NVGPU_TOP_DEVICE_INFO_DEFINES
+ *
+ * Device type for NVENC engine instances.
+ */
+#define NVGPU_DEVTYPE_NVENC		14U
+
+/**
+ * @ingroup NVGPU_TOP_DEVICE_INFO_DEFINES
+ *
+ * Device type for NVDEC engine instances.
+ */
+#define NVGPU_DEVTYPE_NVDEC		16U
+
+/**
+ * @ingroup NVGPU_TOP_DEVICE_INFO_DEFINES
+ *
  * NVLINK IOCTRL device - used by NVLINK on dGPUs.
  */
 #define NVGPU_DEVTYPE_IOCTRL		18U
@@ -86,7 +107,21 @@ struct gk20a;
  */
 #define NVGPU_DEVTYPE_LCE		19U
 
-#define NVGPU_MAX_DEVTYPE		24U
+/**
+ * @ingroup NVGPU_TOP_DEVICE_INFO_DEFINES
+ *
+ * Device type for NVJPG engine instances.
+ */
+#define NVGPU_DEVTYPE_NVJPG		21U
+
+/**
+ * @ingroup NVGPU_TOP_DEVICE_INFO_DEFINES
+ *
+ * Device type for NVOFA engine instances.
+ */
+#define NVGPU_DEVTYPE_NVOFA		22U
+
+#define NVGPU_MAX_DEVTYPE		58U
 
 #define NVGPU_DEVICE_TOKEN_INIT		0U
 
@@ -286,6 +321,56 @@ bool nvgpu_device_is_ce(struct gk20a *g, const struct nvgpu_device *dev);
  * @return true if \a dev matches the graphics device type.
  */
 bool nvgpu_device_is_graphics(struct gk20a *g, const struct nvgpu_device *dev);
+
+/**
+ * @brief Return true if dev is a security controller engine device.
+ *
+ * @param g [in]	The GPU.
+ * @param dev [in]	A device.
+ *
+ * @return true if \a dev matches the security controller device type.
+ */
+bool nvgpu_device_is_sec(struct gk20a *g, const struct nvgpu_device *dev);
+
+/**
+ * @brief Return true if dev is a NVENC engine device.
+ *
+ * @param g [in]	The GPU.
+ * @param dev [in]	A device.
+ *
+ * @return true if \a dev matches the NVENC device type.
+ */
+bool nvgpu_device_is_nvenc(struct gk20a *g, const struct nvgpu_device *dev);
+
+/**
+ * @brief Return true if dev is a NVDEC engine device.
+ *
+ * @param g [in]	The GPU.
+ * @param dev [in]	A device.
+ *
+ * @return true if \a dev matches the NVDEC device type.
+ */
+bool nvgpu_device_is_nvdec(struct gk20a *g, const struct nvgpu_device *dev);
+
+/**
+ * @brief Return true if dev is a NVJPG engine device.
+ *
+ * @param g [in]	The GPU.
+ * @param dev [in]	A device.
+ *
+ * @return true if \a dev matches the NVJPG device type.
+ */
+bool nvgpu_device_is_nvjpg(struct gk20a *g, const struct nvgpu_device *dev);
+
+/**
+ * @brief Return true if dev is a NVOFA engine device.
+ *
+ * @param g [in]	The GPU.
+ * @param dev [in]	A device.
+ *
+ * @return true if \a dev matches the NVOFA device type.
+ */
+bool nvgpu_device_is_nvofa(struct gk20a *g, const struct nvgpu_device *dev);
 
 /**
  * @brief Get all the copy engine pointers for this chip.
