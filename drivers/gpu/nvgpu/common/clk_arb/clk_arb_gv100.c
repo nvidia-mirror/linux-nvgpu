@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -281,7 +281,7 @@ int gv100_init_clk_arbiter(struct gk20a *g)
 	arb->debug = &arb->debug_pool[0];
 
 	if (!arb->debugfs_set) {
-		if (nvgpu_clk_arb_debugfs_init(g))
+		if (!nvgpu_clk_arb_debugfs_init(g))
 			arb->debugfs_set = true;
 	}
 #endif
