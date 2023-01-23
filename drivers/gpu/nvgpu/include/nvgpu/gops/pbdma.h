@@ -56,6 +56,8 @@ struct gops_pbdma {
 			u32 pbdma_id, u32 pbdma_intr_1,
 			u32 *error_notifier);
 	int (*handle_intr)(struct gk20a *g, u32 pbdma_id, bool recover);
+	void (*dump_intr_0)(struct gk20a *g, u32 pbdma_id,
+				u32 pbdma_intr_0);
 	u32 (*set_clear_intr_offsets) (struct gk20a *g,
 			u32 set_clear_size);
 	u32 (*get_signature)(struct gk20a *g);

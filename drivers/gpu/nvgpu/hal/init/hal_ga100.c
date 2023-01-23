@@ -1056,6 +1056,7 @@ static const struct gops_pbdma ga100_ops_pbdma = {
 	.handle_intr_0 = ga10b_pbdma_handle_intr_0,
 	.handle_intr_1 = ga10b_pbdma_handle_intr_1,
 	.handle_intr = ga10b_pbdma_handle_intr,
+	.dump_intr_0 = ga10b_pbdma_dump_intr_0,
 	.set_clear_intr_offsets = ga100_pbdma_set_clear_intr_offsets,
 	.read_data = ga100_pbdma_read_data,
 	.reset_header = ga10b_pbdma_reset_header,

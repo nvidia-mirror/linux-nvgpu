@@ -230,7 +230,7 @@ void ga10b_pbdma_disable_and_clear_all_intr(struct gk20a *g)
 	}
 }
 
-static void ga10b_pbdma_dump_intr_0(struct gk20a *g, u32 pbdma_id,
+void ga10b_pbdma_dump_intr_0(struct gk20a *g, u32 pbdma_id,
 				u32 pbdma_intr_0)
 {
 	u32 header = nvgpu_readl(g, pbdma_pb_header_r(pbdma_id));
@@ -430,7 +430,9 @@ static bool ga10b_pbdma_handle_intr_0_legacy(struct gk20a *g, u32 pbdma_id,
 				pbdma_intr_fault_type_desc[bit]);
 		}
 
-		ga10b_pbdma_dump_intr_0(g, pbdma_id, pbdma_intr_0);
+		if (g->ops.pbdma.dump_intr_0 != NULL) {
+			g->ops.pbdma.dump_intr_0(g, pbdma_id, pbdma_intr_0);
+		}
 
 		recover = true;
 	}
