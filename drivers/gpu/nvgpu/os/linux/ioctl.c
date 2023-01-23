@@ -1,7 +1,7 @@
 /*
  * NVGPU IOCTLs
  *
- * Copyright (c) 2011-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -253,8 +253,18 @@ static char *nvgpu_pci_devnode_v2(struct device *dev, umode_t *mode)
 static char *nvgpu_pci_devnode_v2(const struct device *dev, umode_t *mode)
 #endif
 {
-	return kasprintf(GFP_KERNEL, "nvgpu/dgpu-%s/%s", dev_name(dev->parent),
-			dev_name(dev));
+	return kasprintf(GFP_KERNEL, "nvgpu/dgpu-%s/%s",
+			dev_name(dev->parent), dev_name(dev));
+}
+
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(6, 2, 0))
+static char *nvgpu_pci_igpu_devnode_v2(struct device *dev, umode_t *mode)
+#else
+static char *nvgpu_pci_igpu_devnode_v2(const struct device *dev, umode_t *mode)
+#endif
+{
+	return kasprintf(GFP_KERNEL, "nvgpu/igpu-%s/%s",
+			dev_name(dev->parent), dev_name(dev));
 }
 
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(6, 2, 0))
@@ -553,7 +563,12 @@ static int nvgpu_prepare_default_dev_node_class_list(struct gk20a *g,
 		if (class == NULL) {
 			return -ENOMEM;
 		}
-		class->class->devnode = nvgpu_pci_devnode_v2;
+
+		if (g->is_pci_igpu) {
+			class->class->devnode = nvgpu_pci_igpu_devnode_v2;
+		} else {
+			class->class->devnode = nvgpu_pci_devnode_v2;
+		}
 		count++;
 	} else {
 		if (power_node) {
