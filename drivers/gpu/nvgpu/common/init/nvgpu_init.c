@@ -239,10 +239,12 @@ static int nvgpu_falcons_sw_init(struct gk20a *g)
 {
 	int err;
 
-	err = g->ops.falcon.falcon_sw_init(g, FALCON_ID_PMU);
-	if (err != 0) {
-		nvgpu_err(g, "failed to sw init FALCON_ID_PMU");
-		return err;
+	if (g->ops.pmu.is_pmu_supported != NULL) {
+		err = g->ops.falcon.falcon_sw_init(g, FALCON_ID_PMU);
+		if (err != 0) {
+			nvgpu_err(g, "failed to sw init FALCON_ID_PMU");
+			return err;
+		}
 	}
 
 	err = g->ops.falcon.falcon_sw_init(g, FALCON_ID_FECS);
@@ -282,7 +284,9 @@ done_fecs:
 #endif
 	g->ops.falcon.falcon_sw_free(g, FALCON_ID_FECS);
 done_pmu:
-	g->ops.falcon.falcon_sw_free(g, FALCON_ID_PMU);
+	if (g->ops.pmu.is_pmu_supported != NULL) {
+		g->ops.falcon.falcon_sw_free(g, FALCON_ID_PMU);
+	}
 
 	return err;
 }
@@ -290,7 +294,9 @@ done_pmu:
 /* handle poweroff and error case for all falcons interface layer support */
 static void nvgpu_falcons_sw_free(struct gk20a *g)
 {
-	g->ops.falcon.falcon_sw_free(g, FALCON_ID_PMU);
+	if (g->ops.pmu.is_pmu_supported != NULL) {
+		g->ops.falcon.falcon_sw_free(g, FALCON_ID_PMU);
+	}
 	g->ops.falcon.falcon_sw_free(g, FALCON_ID_FECS);
 
 #ifdef CONFIG_NVGPU_DGPU
