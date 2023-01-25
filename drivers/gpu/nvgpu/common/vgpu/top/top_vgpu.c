@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -59,6 +59,7 @@ struct nvgpu_device *vgpu_top_parse_next_dev(struct gk20a *g, u32 *token)
 	dev->intr_id    = nvgpu_ffs(engines->info[*token].intr_mask) - 1;
 	dev->reset_id   = nvgpu_ffs(engines->info[*token].reset_mask) - 1;
 	dev->runlist_id = engines->info[*token].runlist_id;
+	dev->rleng_id   = engines->info[*token].rleng_id;
 	dev->pbdma_id   = engines->info[*token].pbdma_id;
 	dev->inst_id    = engines->info[*token].inst_id;
 	dev->pri_base   = engines->info[*token].pri_base;

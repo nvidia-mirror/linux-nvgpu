@@ -1,7 +1,7 @@
 /*
  * Tegra GPU Virtualization Interfaces to Server
  *
- * Copyright (c) 2014-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -448,6 +448,7 @@ struct tegra_vgpu_engines_info {
 		u32 intr_mask;
 		u32 reset_mask;
 		u32 runlist_id;
+		u32 rleng_id;
 		u32 pbdma_id;
 		u32 inst_id;
 		u32 pri_base;
