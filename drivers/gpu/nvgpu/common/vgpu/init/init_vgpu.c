@@ -298,5 +298,13 @@ int vgpu_finalize_poweron_common(struct gk20a *g)
 		return err;
 	}
 
+	if (nvgpu_is_vf(g)) {
+		err = nvgpu_init_syncpt_mem(g);
+		if (err != 0) {
+			nvgpu_err(g, "nvgpu_init_syncpt_mem failed");
+			return err;
+		}
+	}
+
 	return 0;
 }

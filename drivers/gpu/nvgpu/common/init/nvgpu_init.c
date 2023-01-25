@@ -653,7 +653,7 @@ static int nvgpu_init_xve_set_speed(struct gk20a *g)
 	return 0;
 }
 
-static int nvgpu_init_syncpt_mem(struct gk20a *g)
+int nvgpu_init_syncpt_mem(struct gk20a *g)
 {
 #if defined(CONFIG_TEGRA_GK20A_NVHOST)
 	int err;

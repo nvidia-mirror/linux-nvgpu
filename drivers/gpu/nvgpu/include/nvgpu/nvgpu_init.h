@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -393,5 +393,13 @@ void gk20a_idle(struct gk20a *g);
  * @return True if the HW state is determined to be valid. False, otherwise.
  */
 bool is_nvgpu_gpu_state_valid(struct gk20a *g);
+
+/**
+ * @brief Init syncpt mem
+ *
+ * @param g [in] The GPU
+ * @return 0 in case of success
+ */
+int nvgpu_init_syncpt_mem(struct gk20a *g);
 
 #endif /* NVGPU_INIT_H */
