@@ -1086,7 +1086,7 @@ void nvgpu_runlist_init_enginfo(struct gk20a *g, struct nvgpu_fifo *f)
 
 	nvgpu_log_fn(g, " ");
 
-	if (g->is_virtual) {
+	if (nvgpu_is_legacy_vgpu(g)) {
 		return;
 	}
 
@@ -1122,8 +1122,10 @@ void nvgpu_runlist_init_enginfo(struct gk20a *g, struct nvgpu_fifo *f)
 						&runlist->pbdma_bitmask);
 		}
 		else {
-			runlist->pbdma_bitmask =
-				nvgpu_runlist_get_pbdma_mask(g, runlist);
+			if (!nvgpu_is_vf(g)) {
+				runlist->pbdma_bitmask =
+					nvgpu_runlist_get_pbdma_mask(g, runlist);
+			}
 		}
 		nvgpu_log(g, gpu_dbg_info, "  Active engine bitmask: 0x%x", runlist->eng_bitmask);
 		nvgpu_log(g, gpu_dbg_info, "          PBDMA bitmask: 0x%x", runlist->pbdma_bitmask);
@@ -1142,7 +1144,7 @@ static struct nvgpu_runlist_mem *init_rl_mem(struct gk20a *g, u32 runlist_size)
 	}
 
 	err = nvgpu_dma_alloc_flags_sys(g,
-			g->is_virtual ?
+			nvgpu_is_legacy_vgpu(g) ?
 			  0ULL : NVGPU_DMA_PHYSICALLY_ADDRESSED,
 			runlist_size,
 			&mem->mem);
@@ -1457,10 +1459,9 @@ exit:
 s32 nvgpu_runlist_get_device_id(struct gk20a *g, struct nvgpu_runlist *rl, u32 *device_id)
 {
 	s32 err = 0;
-	u32 rleng_id = 0;
 
-	if (g->ops.runlist.get_engine_id_from_rleng_id != NULL) {
-		*device_id = g->ops.runlist.get_engine_id_from_rleng_id(g, rleng_id, rl->runlist_pri_base);
+	if (rl->rl_dev_list[0] != NULL) {
+		*device_id = rl->rl_dev_list[0]->engine_id;
 	} else {
 		err = (s32)(-EINVAL);
 		nvgpu_err(g, "Get device ID failed:");
