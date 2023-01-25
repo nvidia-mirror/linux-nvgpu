@@ -1,7 +1,7 @@
 /*
  * GA10B Fifo
  *
- * Copyright (c) 2020-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -36,7 +36,7 @@
 #include "fifo_ga10b.h"
 #include "fifo_intr_ga10b.h"
 
-static void enable_fifo_interrupts(struct gk20a *g)
+void ga10b_fifo_enable_intr(struct gk20a *g)
 {
 	g->ops.fifo.intr_top_enable(g, NVGPU_CIC_INTR_ENABLE);
 	g->ops.fifo.intr_0_enable(g, true);
@@ -133,7 +133,7 @@ int ga10b_init_fifo_setup_hw(struct gk20a *g)
 
 	g->ops.usermode.setup_hw(g);
 
-	enable_fifo_interrupts(g);
+	ga10b_fifo_enable_intr(g);
 
 	ga10b_fifo_config_userd_writeback_timer(g);
 

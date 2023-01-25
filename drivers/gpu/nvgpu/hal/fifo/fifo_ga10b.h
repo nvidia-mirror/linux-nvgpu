@@ -1,7 +1,7 @@
 /*
  * GA10B Fifo
  *
- * Copyright (c) 2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,5 +32,6 @@ struct gk20a;
 int ga10b_init_fifo_reset_enable_hw(struct gk20a *g);
 int ga10b_init_fifo_setup_hw(struct gk20a *g);
 u32 ga10b_fifo_mmu_fault_id_to_pbdma_id(struct gk20a *g, u32 mmu_fault_id);
+void ga10b_fifo_enable_intr(struct gk20a *g);
 
 #endif /* NVGPU_FIFO_GA10B_H */
