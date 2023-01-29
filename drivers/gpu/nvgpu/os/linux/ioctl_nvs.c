@@ -634,14 +634,17 @@ int nvgpu_nvs_ctrl_fifo_ops_open(struct inode *inode, struct file *filp)
 	}
 
 	pid = nvgpu_current_pid(g);
+	nvgpu_nvs_ctrl_fifo_lock_queues(g);
 	if (nvgpu_nvs_ctrl_fifo_user_exists(g->sched_ctrl_fifo, pid, writable)) {
 		nvgpu_err(g, "User already exists");
+		nvgpu_nvs_ctrl_fifo_unlock_queues(g);
 		gk20a_idle(g);
 		return -EEXIST;
 	}
 
 	linux_user = nvgpu_kzalloc(g, sizeof(*linux_user));
 	if (linux_user == NULL) {
+		nvgpu_nvs_ctrl_fifo_unlock_queues(g);
 		gk20a_idle(g);
 		return -ENOMEM;
 	}
@@ -652,6 +655,7 @@ int nvgpu_nvs_ctrl_fifo_ops_open(struct inode *inode, struct file *filp)
 		linux_user->user.has_write_access = true;
 
 	nvgpu_nvs_ctrl_fifo_add_user(g->sched_ctrl_fifo, &linux_user->user);
+	nvgpu_nvs_ctrl_fifo_unlock_queues(g);
 
 	filp->private_data = linux_user;
 
@@ -686,9 +690,9 @@ int nvgpu_nvs_ctrl_fifo_ops_release(struct inode *inode, struct file *filp)
 		return -ENODEV;
 	}
 
+	nvgpu_nvs_ctrl_fifo_lock_queues(g);
 	is_exclusive_user = nvgpu_nvs_ctrl_fifo_is_exclusive_user(
 					g->sched_ctrl_fifo, &linux_user->user);
-	nvgpu_nvs_ctrl_fifo_lock_queues(g);
 	if (is_exclusive_user) {
 		num_queue = NVGPU_NVS_NUM_CONTROL;
 		if (nvgpu_nvs_buffer_is_sendq_valid(g)) {
@@ -852,13 +856,12 @@ static int nvgpu_nvs_ctrl_fifo_create_queue(struct gk20a *g,
 	size_t queue_size;
 	u8 mask = 0;
 
+	nvgpu_nvs_ctrl_fifo_lock_queues(g);
 	err = nvgpu_nvs_ctrl_fifo_create_queue_verify_flags(g, user, args);
 	if (err != 0) {
 		args->dmabuf_fd = -1;
-		return err;
+		goto fail;
 	}
-
-	nvgpu_nvs_ctrl_fifo_lock_queues(g);
 
 	num_queue = nvgpu_nvs_translate_queue_num(args->queue_num);
 	queue_direction = nvgpu_nvs_translate_queue_direction(args->direction);
