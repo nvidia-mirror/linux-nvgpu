@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -44,10 +44,17 @@ struct gops_pmu {
 	/**
 	 * @brief Initialize PMU unit ECC support.
 	 *
-	 * @param g [in]		Pointer to GPU driver struct.
+	 * @param g      [in] Pointer to GPU driver struct. This function does
+	 *                    not perform any validation of this input parameter.
 	 *
 	 * This function allocates memory to track the ecc error counts
 	 * for PMU unit.
+	 * + Call \ref nvgpu_ecc_counter_init
+	 *   "nvgpu_ecc_counter_init(g, &g->ecc.pmu.stat, pmu_ecc_uncorrected_err_count)"
+	 *   and return if failed.
+	 * + Call \ref nvgpu_ecc_counter_init
+	 *   "nvgpu_ecc_counter_init(g, &g->ecc.pmu.stat, pmu_ecc_corrected_err_count)"
+	 *   and return if failed.
 	 *
 	 * @return 0 in case of success, < 0 in case of failure.
 	 * @retval -ENOMEM if memory allocation for ecc stats fails.
@@ -57,52 +64,235 @@ struct gops_pmu {
 	/**
 	 * @brief Free PMU unit ECC support.
 	 *
-	 * @param g [in]		Pointer to GPU driver struct.
+	 * @param g   [in] Pointer to GPU driver struct. This function does
+	 *                 not perform any validation of this input parameter.
 	 *
 	 * This function deallocates memory allocated for ecc error counts
 	 * for PMU unit.
+	 * + Assign *ecc = &g->ecc.
+	 * + Free \a pmu_ecc_corrected_err_count by calling \ref
+	 *   nvgpu_kfree(g, ecc->pmu.pmu_ecc_corrected_err_count).
+	 * + Free \a pmu_ecc_uncorrected_err_count by calling \ref
+	 *   nvgpu_kfree(g, ecc->pmu.pmu_ecc_uncorrected_err_count);
 	 */
 	void (*ecc_free)(struct gk20a *g);
 
 	/**
 	 * @brief Interrupt handler for PMU interrupts.
 	 *
-	 * @param g   [in] The GPU driver struct.
+	 * @param g   [in] The GPU driver struct. This function does
+	 *                 not perform any validation of this input parameter.
 	 *
-	 * Steps:
-	 *  + Acquire mutex g->pmu->isr_mutex.
-	 *  + If PMU interrupts are not enabled release isr_mutex and return.
-	 *  + Prepare mask by AND'ing registers pwr_falcon_irqmask_r and
-	 *    pwr_falcon_irqdest_r.
-	 *  + Read interrupts status register pwr_falcon_irqstat_r.
-	 *  + Determine interrupts to be handled by AND'ing value read in
-	 *    the previous step with the mask computed earlier.
-	 *  + If no interrupts are to be handled release isr_mutex and return.
-	 *  + Handle ECC interrupt if it is pending.
-	 *  + Clear the pending interrupts to be handled by writing the
-	 *    pending interrupt mask to the register pwr_falcon_irqsclr_r.
-	 *  + Release mutex g->pmu->isr_mutex.
+	 * This function is responsible for handling all PMU interrupts enabled by
+	 * \ref gpos_pmu.pmu_enable_irq "g->ops.pmu.pmu_enable_irq()
+	 *  + Assign *pmu = g->pmu.
+	 *  + Acquire mutex \a &g->pmu->isr_mutex by calling \ref nvgpu_mutex_acquire().
+	 *  + Check if \a pmu->isr_enabled is false which implies PMU interrupts are not
+	 *    enabled, release \a &g->pmu->isr_mutex by calling
+	 *    \ref nvgpu_mutex_release() and return.
+	 *  + Prepare mask by AND'ing values obtained by reading registers
+	 *    pwr_falcon_irqmask_r() and pwr_falcon_irqdest_r().
+	 *  + Read interrupt status register pwr_falcon_irqstat_r() and assign the
+	 *    value to intr.
+	 *  + Determine interrupts to be handled by AND'ing intr and mask obtained in
+	 *    previous steps and assign the value to intr.
+	 *  + If no interrupts are to be handled release \a &g->pmu->isr_mutex by calling
+	 *    \ref nvgpu_mutex_release() and return.
+	 *  + Handle ECC interrupt by calling \ref gops_pmu.handle_ext_irq
+	 *    "g->ops.pmu.handle_ext_irq(g, intr)". Before calling check this
+	 *    function pointer is not NULL.
+	 *  + Clear the pending interrupts to be handled by writing the value of
+	 *    intr to the register pwr_falcon_irqsclr_r().
+	 *  + Release \a &g->pmu->isr_mutex by calling \ref nvgpu_mutex_release().
 	 */
 	void (*pmu_isr)(struct gk20a *g);
 
 	/**
-	 * @brief PMU early initialization to allocate memory for PMU unit,
-	 *        set PMU Engine h/w properties and set supporting data structs.
+	 * @brief PMU early initialization to allocate memory for PMU unit & set PMU
+     *        Engine h/w properties, data structs, sub-unit's data structs based
+     *        on the detected chip
 	 *
-	 * @param g   [in] The GPU driver struct.
+	 * @param g   [in] The GPU driver struct. This function does
+	 *                 not perform any validation of this input parameter.
 	 *
-	 * Initializes PMU unit data structs in the GPU driver based on detected
-	 * chip.
-	 *  + Allocate memory for #nvgpu_pmu data struct.
-	 *  + set PMU Engine h/w properties.
-	 *  + set PMU RTOS supporting data structs.
-	 *  + set sub-unit's data structs.
-	 *  + ops of the PMU unit.
-	 *
-	 * @return 0 in case of success, < 0 in case of failure.
-	 * @retval -ENOMEM if memory allocation fail for any unit.
+	 * This is gops function pointer to \ref nvgpu_pmu_early_init
+	 * "nvgpu_pmu_early_init()" public function.
 	 */
 	int (*pmu_early_init)(struct gk20a *g);
+
+	/**
+	 * @brief Enable/Disable PMU ECC interrupts.
+	 *
+	 * @param pmu    [in] The PMU unit struct. This function does
+	 *                    not perform any validation of this input parameter.
+	 * @param enable [in] boolean parameter to enable/disable. This function does
+	 *                    not perform any validation of this input parameter.
+	 *
+	 * + Disable stall interrupts at the master level by calling
+	 *   \ref nvgpu_mc_intr_stall_unit_config
+	 *   "nvgpu_mc_intr_stall_unit_config(pmu->g, MC_INTR_UNIT_PMU, MC_INTR_DISABLE)"
+	 * + Disable PMU ECC interrupt by calling \ref nvgpu_falcon_set_irq
+	 *   "nvgpu_falcon_set_irq(pmu->flcn, false, 0x0, 0x0)"
+	 * + If enable parameter is set to true then do the following
+	 *   + get intr_dest by calling \ref gops_pmu.get_irqdest "gops_pmu.get_irqdest(pmu->g)".
+	 *   + Enable stall interrupts at the master level by calling
+	 *     \ref nvgpu_mc_intr_stall_unit_config
+	 *     "nvgpu_mc_intr_stall_unit_config(pmu->g, MC_INTR_UNIT_PMU, MC_INTR_ENABLE)"
+	 *   + Assign intr_mask = pwr_falcon_irqmset_ext_ecc_parity_f(1).
+	 *   + Enable PMU ECC interrupt by calling \ref nvgpu_falcon_set_irq
+	 *     "nvgpu_falcon_set_irq(pmu->flcn, true, intr_mask, intr_dest)"
+	 */
+	void (*pmu_enable_irq)(struct nvgpu_pmu *pmu, bool enable);
+
+	/**
+	 * @brief Provide ECC interrupt destination fields
+	 *
+	 * @param g   [in] The GPU driver struct. This function does
+	 *                 not perform any validation of this input parameter.
+	 *
+	 * Provide ECC interrupt destination fields
+	 * + Assign intr_dest to the value obtained by OR'ing
+	 *   pwr_falcon_irqdest_host_ext_ecc_parity_f(1) and
+	 *   pwr_falcon_irqdest_target_ext_ecc_parity_f(0).
+	 * + Return intr_dest.
+	 */
+	u32 (*get_irqdest)(struct gk20a *g);
+
+	/**
+	 * @brief Change the PMU Engine reset state.
+	 *
+	 * @param g        [in] The GPU driver struct. This function does
+	 *                 not perform any validation of this input parameter.
+	 * @param do_reset [in] The GPU driver struct. This function does
+	 *                 not perform any validation of this input parameter.
+	 *
+	 * PMU Engine reset state change as per input parameter do_reset.
+	 * If do_reset is
+	 *  + True  - Bring PMU engine out of reset by writing false to
+	 *            pwr_falcon_engine_r() register
+	 *  + False - Keep PMU falcon/engine in reset by writing true to
+	 *            pwr_falcon_engine_r() register
+	 */
+	void (*reset_engine)(struct gk20a *g, bool do_reset);
+
+	/**
+	 * @brief Query the PMU Engine reset state.
+	 *
+	 * @param g   [in] The GPU driver struct. This function does
+	 *            not perform any validation of this input parameter.
+	 *
+	 * PMU Engine reset state is read and return as below,
+	 *  + True  - If PMU engine in reset.
+	 *  + False - If PMU engine is out of reset.
+	 *
+	 * @return True if in reset else False.
+	 */
+	bool (*is_engine_in_reset)(struct gk20a *g);
+
+	/**
+	 * @brief Setup the normal PMU apertures for standardized access.
+	 *
+	 * @param g   [in] The GPU driver struct. This function does
+	 *            not perform any validation of this input parameter.
+	 *
+	 * Creates a memory aperture that the PMU may use to access memory in
+	 * a specific address-space or mapped into the PMU's virtual-address
+	 * space. The aperture is identified using a unique index that will
+	 * correspond to a single dmaidx in the PMU framebuffer interface.
+	 *    + Assign *mm = &g->mm
+	 *    + Assign *inst_block = &mm->pmu.inst_block
+	 *    + Get ret_mask by calling \ref nvgpu_aperture_mask
+	 *      "nvgpu_aperture_mask (g, inst_block,
+	 *      pwr_fbif_transcfg_target_noncoherent_sysmem_f(),
+	 *      pwr_fbif_transcfg_target_coherent_sysmem_f(),
+	 *      pwr_fbif_transcfg_target_local_fb_f()))"
+	 *    + Write value (pwr_fbif_transcfg_mem_type_physical_f() | ret_mask) to
+	 *      pwr_fbif_transcfg_r(GK20A_PMU_DMAIDX_UCODE) register.
+	 *    + Write value pwr_fbif_transcfg_mem_type_virtual_f() to register
+	 *      pwr_fbif_transcfg_r(GK20A_PMU_DMAIDX_VIRT)
+	 *    + Write value (pwr_fbif_transcfg_mem_type_physical_f() | ret_mask) to
+	 *      pwr_fbif_transcfg_r(GK20A_PMU_DMAIDX_PHYS_VID) register.
+	 *    + Write value (pwr_fbif_transcfg_mem_type_physical_f() |
+	 *      pwr_fbif_transcfg_target_coherent_sysmem_f()) to
+	 *      pwr_fbif_transcfg_r(GK20A_PMU_DMAIDX_PHYS_SYS_COH) register.
+	 *    + Write value (pwr_fbif_transcfg_mem_type_physical_f() |
+	 *      pwr_fbif_transcfg_target_noncoherent_sysmem_f()) to
+	 *      pwr_fbif_transcfg_r(GK20A_PMU_DMAIDX_PHYS_SYS_NCOH) register.
+	 */
+	void (*setup_apertures)(struct gk20a *g);
+
+	/**
+	 * @brief Handle PMU ECC errors.
+	 *
+	 * @param g   [in] The GPU driver struct. This function does
+	 *            not perform any validation of this input parameter.
+	 *
+	 * This function handles PMU ECC corrected and un-corrected errors.
+	 * + Check and proceed only if pwr_falcon_irqstat_ext_ecc_parity_true_f() bit
+	 *   inside parameter \a intr is set to true.
+	 * + Assign \a intr1 to the value obtained by reading interrupt stats register
+	 *   pwr_pmu_ecc_intr_status_r().
+	 * + Check if any corrected and un-corrected ecc errors present in interrupt status
+	 *   by AND'ing \a intr1 with (pwr_pmu_ecc_intr_status_corrected_m() |
+	 *   pwr_pmu_ecc_intr_status_uncorrected_m()). If no interrupt present return.
+	 * + Assign \a ecc_status to the value obtained by reading register
+	 *   pwr_pmu_falcon_ecc_status_r().
+	 * + Assign \a ecc_addr to the value obtained by reading register
+	 *   pwr_pmu_falcon_ecc_address_r().
+	 * + Assign \a corrected_cnt to the value obtained by reading register
+	 *   pwr_pmu_falcon_ecc_corrected_err_count_r.
+	 * + Assign \a uncorrected_cnt to the value obtained by reading register
+	 *   pwr_pmu_falcon_ecc_uncorrected_err_count_r.
+	 * + Assign corrected_delta = (corrected_cnt & 0xffffU).
+	 * + Assign uncorrected_delta = (uncorrected_cnt & 0xffffU).
+	 * + Assign \a corrected_overflow to the value obtained by AND'ing ecc_status
+	 *   with (U32(0x1U) << 16U)
+	 * + Assign \a uncorrected_overflow to the value obtained by AND'ing ecc_status
+	 *   with (U32(0x1U) << 18U)
+	 * + if \a corrected_overflow is not zero OR pwr_pmu_ecc_intr_status_corrected_m
+	 *   bit in \a intr1 is enabled then clear the interrupt by writing to zero to
+	 *   pwr_pmu_falcon_ecc_corrected_err_count_r() register.
+	 * + if \a uncorrected_overflow is not zero OR pwr_pmu_ecc_intr_status_uncorrected_m
+	 *   bit in \a intr1 is enabled then clear the interrupt by writing to zero to
+	 *   pwr_pmu_falcon_ecc_uncorrected_err_count_r() register.
+	 * + Write pwr_pmu_falcon_ecc_status_r() register with value
+	 *   pwr_pmu_falcon_ecc_status_reset_task_f.
+	 * + If \a corrected_overflow is not zero then update the counters per slice by
+	 *   adding pwr_pmu_falcon_ecc_corrected_err_count_total_s value to
+	 *   \a corrected_delta and updating it to the new value.
+	 * + If \a uncorrected_overflow is not zero then update the counters per slice
+	 *   by adding pwr_pmu_falcon_ecc_uncorrected_err_count_total_s value to
+	 *   \a uncorrected_delta and updating it to the new value.
+	 * + Add \a corrected_overflow value to \a
+	 *   g->ecc.pmu.pmu_ecc_corrected_err_count[0].counter and updating it to
+	 *   the new value.
+	 * + Add \a uncorrected_overflow value to \a
+	 *   g->ecc.pmu.pmu_ecc_uncorrected_err_count[0].counter and updating it to
+	 *   the new value.
+	 * + Check the corresponding bit in \a ecc_status and if enabled do the
+	 *   following
+	 *   + bit pwr_pmu_falcon_ecc_status_corrected_err_imem_m() then report
+	 *     error by calling \ref nvgpu_report_ecc_err
+	 *     "nvgpu_report_ecc_err(g, NVGPU_ERR_MODULE_PMU, 0,
+	 *     GPU_PMU_FALCON_IMEM_ECC_CORRECTED, ecc_addr,
+	 *     g->ecc.pmu.pmu_ecc_corrected_err_count[0].counter)".
+	 *   + bit pwr_pmu_falcon_ecc_status_uncorrected_err_imem_m() then report
+	 *     error by calling \ref nvgpu_report_ecc_err "nvgpu_report_ecc_err (g,
+	 *     NVGPU_ERR_MODULE_PMU, 0, GPU_PMU_FALCON_IMEM_ECC_UNCORRECTED, ecc_addr,
+	 *     g->ecc.pmu.pmu_ecc_uncorrected_err_count[0].counter)" and return -EFAULT.
+	 *   + bit pwr_pmu_falcon_ecc_status_corrected_err_dmem_m(), as this is
+	 *     not expected and considered as fatal error, release the mutex
+	 *     \a &g->pmu->isr_mutex by calling \ref nvgpu_mutex_release() and then
+	 *     call BUG().
+	 *   + bit pwr_pmu_falcon_ecc_status_uncorrected_err_dmem_m() the report error
+	 *     by calling \ref nvgpu_report_ecc_err "nvgpu_report_ecc_err (g,
+	 *     NVGPU_ERR_MODULE_PMU, 0, GPU_PMU_FALCON_DMEM_ECC_UNCORRECTED, ecc_addr,
+	 *     g->ecc.pmu.pmu_ecc_uncorrected_err_count[0].counter)" and return -EFAULT.
+	 *
+	 *@retval -EFAULT in case of uncorrected ecc err.
+	 *@return 0 in case of success.
+	 */
+	void (*handle_ext_irq)(struct gk20a *g, u32 intr);
 
 #ifdef CONFIG_NVGPU_POWER_PG
 	int (*pmu_restore_golden_img_state)(struct gk20a *g);
@@ -154,42 +344,6 @@ struct gops_pmu {
 	 * @retval -ETIMEDOUT if PMU engine reset times out.
 	 */
 	int (*pmu_reset)(struct gk20a *g);
-
-	/**
-	 * @brief Change the PMU Engine reset state.
-	 *
-	 * @param g   [in] The GPU driver struct.
-	 *
-	 * PMU Engine reset state change as per input parameter.
-	 *  + True  - Bring PMU engine out of reset.
-	 *  + False - Keep PMU falcon/engine in reset.
-	 */
-	void (*reset_engine)(struct gk20a *g, bool do_reset);
-
-	/**
-	 * @brief Query the PMU Engine reset state.
-	 *
-	 * @param g   [in] The GPU driver struct.
-	 *
-	 * PMU Engine reset state is read and return as below,
-	 *  + True  - If PMU engine in reset.
-	 *  + False - If PMU engine is out of reset.
-	 *
-	 * @return True if in reset else False.
-	 */
-	bool (*is_engine_in_reset)(struct gk20a *g);
-
-	/**
-	 * @brief Setup the normal PMU apertures for standardized access.
-	 *
-	 * @param g   [in] The GPU driver struct.
-	 *
-	 * Creates a memory aperture that the PMU may use to access memory in
-	 * a specific address-space or mapped into the PMU's virtual-address
-	 * space. The aperture is identified using a unique index that will
-	 * correspond to a single dmaidx in the PMU framebuffer interface.
-	 */
-	void (*setup_apertures)(struct gk20a *g);
 
 	/**
 	 * @brief Clears the PMU BAR0 error status.
@@ -314,11 +468,7 @@ struct gops_pmu {
 	bool (*validate_mem_integrity)(struct gk20a *g);
 
 	/** @cond DOXYGEN_SHOULD_SKIP_THIS */
-	void (*handle_ext_irq)(struct gk20a *g, u32 intr);
 	void (*handle_swgen1_irq)(struct gk20a *g, u32 intr);
-
-	void (*pmu_enable_irq)(struct nvgpu_pmu *pmu, bool enable);
-	u32 (*get_irqdest)(struct gk20a *g);
 	u32 (*get_irqmask)(struct gk20a *g);
 
 #ifdef CONFIG_NVGPU_LS_PMU

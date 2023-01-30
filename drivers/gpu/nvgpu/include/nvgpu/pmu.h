@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -459,12 +459,20 @@ s32 nvgpu_pmu_next_core_rtos_args_allocate(struct gk20a *g,
 /**
  * @brief Report PMU BAR0 error to 3LSS.
  *
- * @param g           [in] The GPU driver struct.
- * @param bar0_status [in] bar0 error status value.
- * @param err_type    [in] Error type.
+ * @param g           [in] The GPU driver struct. This function does
+ *                         not perform any validation of this input parameter.
+ * @param bar0_status [in] bar0 error status value. This function does
+ *                         not perform any validation of this input parameter.
+ * @param err_type    [in] Error type. This function does
+ *                         not perform any validation of this input parameter.
  *
- * This function reports PMU BAR0 error to 3LSS.
- *
+ * This function reports PMU BAR0 error to 3LSS by calling
+ * \ref nvgpu_report_pmu_err() with following parameters
+ * + g: The GPU driver struct
+ * + hw_unit: \ref #NVGPU_ERR_MODULE_PMU
+ * + err_id: \ref #GPU_PMU_BAR0_ERROR_TIMEOUT
+ * + sub_err_type: err_type
+ * + status: bar0_status
  */
 void nvgpu_pmu_report_bar0_pri_err_status(struct gk20a *g, u32 bar0_status,
 	u32 error_type);
@@ -472,27 +480,36 @@ void nvgpu_pmu_report_bar0_pri_err_status(struct gk20a *g, u32 bar0_status,
 /**
  * @brief Enable/Disable PMU ECC interrupt.
  *
- * @param g		[in] The GPU driver struct.
- * @param enable	[in] boolean parameter to enable/disable.
+ * @param g         [in] The GPU driver struct. This function does
+ *                       not perform any validation of this input parameter.
+ * @param enable    [in] boolean parameter to enable/disable. This function does
+ *                       not perform any validation of this input parameter.
  *
- * Enable/Disable PMU ECC interrupt.
- *  + Check that g->pmu and g->ops.pmu.pmu_enable_irq are not null.
- *  + Acquire the mutex g->pmu->isr_mutex.
- *  + Disable the PMU interrupts at MC and PMU level.
- *  + If enabling, enable ECC interrupt in PMU interrupt configuration
- *    registers and enable PMU interrupts at MC level.
- *  + Release the mutex g->pmu->isr_mutex.
+ *  + Check that \ref gk20a.pmu "g->pmu" and \a g->ops.pmu.pmu_enable_irq are
+ *    not null.
+ *  + Acquire the mutex \a &g->pmu->isr_mutex by calling
+ *    \ref nvgpu_mutex_acquire().
+ *  + Disable and Enable the PMU interrupts at MC and PMU level by calling
+ *    \ref gops_pmu.pmu_enable_irq "gops_pmu.pmu_enable_irq(g->pmu, enable)"
+ *  + Assign g->pmu->isr_enabled = enable.
+ *  + Release the mutex \a &g->pmu->isr_mutex by calling
+ *    \ref nvgpu_mutex_release().
  */
 void nvgpu_pmu_enable_irq(struct gk20a *g, bool enable);
 
 /**
  * @brief Reset the PMU Engine.
  *
- * @param g   [in] The GPU driver struct.
+ * @param g   [in] The GPU driver struct. This function does
+ *                 not perform any validation of this input parameter.
  *
  * Does the PMU Engine reset to bring into good known state. The reset sequence
  * also configures PMU Engine clock gating & interrupts if interrupt support is
  * enabled.
+ * + Assign pmu = g->pmu.
+ * + Call \ref pmu_enable "pmu_enable(pmu, false)" to keep PMU engine in reset.
+ * + Call \ref pmu_enable "pmu_enable(pmu, true)" to reset PMU engine and
+ *   configure PMU Engine clock gating & interrupts.
  *
  * @return 0 in case of success, < 0 in case of failure.
  * @retval -ETIMEDOUT if PMU engine reset times out.
@@ -505,25 +522,43 @@ int nvgpu_pmu_reset(struct gk20a *g);
  *        data structs & ops of the PMU unit by populating data based on the
  *        detected chip,
  *
- * @param g         [in] The GPU driver struct.
+ * @param g         [in] The GPU driver struct. This function does not
+ *                       perform any validation of this parameter.
  *
- * Initializes PMU unit data struct in the GPU driver based on detected chip.
- * Allocate memory for #nvgpu_pmu data struct & set PMU Engine h/w properties,
- * PMU RTOS supporting data structs & ops of the PMU unit by populating data
- * based on the detected chip. Allocates memory for ECC counters for PMU
- * unit. Initializes the isr_mutex.
+ * + Allocate memory for pmu unit software state pmu(\ref nvgpu_pmu) by calling
+ *   \ref nvgpu_kzalloc(g, sizeof(struct nvgpu_pmu)). Skip allocation for
+ *   unrailgate sequence. Return -ENOMEM if allocation fails.
+ * + Assign \ref gk20a.pmu "g->pmu" = pmu.
+ * + Assign pmu->g = g.
+ * + Assign Engine software state pmu->flcn = g->pmu_flcn.
+ * + Allocates memory for ECC counters to track ecc error counts for PMU unit by
+ *   calling \ref gops_pmu.ecc_init "g->ops.pmu.ecc_init(g)" function. If memory
+ *   allocation fails then free pmu unit software state(\ref gk20a.pmu "g->pmu")
+ *   by calling \ref nvgpu_kfree(g, pmu) and return. \ref gops_pmu.ecc_init
+ *   "g->ops.pmu.ecc_init(g)" function should be called only if the following is
+ *    true
+ *   + \ref gops_pmu.ecc_init "g->ops.pmu.ecc_init" function pointer is not NULL
+ *   + ECC intialization not completed which can be checked by reading
+ *     initialized parameter(\a g->ecc.initialized) in \ref #nvgpu_ecc.
+ * + Initialize \a pmu->isr_mutex by calling \ref #nvgpu_mutex_init
+ *   "nvgpu_mutex_init(&pmu->isr_mutex)".
  *
  * @return 0 in case of success, < 0 in case of failure.
- * @retval -ENOMEM if memory allocation for struct #nvgpu_pmu fails.
+ * @retval -ENOMEM if memory allocation fails.
  */
 int nvgpu_pmu_early_init(struct gk20a *g);
 
 /**
  * @brief PMU remove to free space allocted for PMU unit
  *
- * @param g [in] The GPU
- * @param nvgpu_pmu [in] The PMU unit.
+ * @param g         [in] The GPU driver struct. This function does not
+ *                  perform any validation of this parameter.
+ * @param nvgpu_pmu [in] The PMU unit. This function does not
+ *                  perform any validation of this parameter.
  *
+ * + Destroy mutex \a &pmu->isr_mutex by calling \ref #nvgpu_mutex_destroy().
+ * + Free pmu unit software state(\ref gk20a.pmu "g->pmu") by calling
+ *   \ref nvgpu_kfree(g, pmu).
  */
 void nvgpu_pmu_remove_support(struct gk20a *g, struct nvgpu_pmu *pmu);
 

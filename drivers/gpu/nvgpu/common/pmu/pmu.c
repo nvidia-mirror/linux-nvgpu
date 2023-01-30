@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -42,7 +42,34 @@ void nvgpu_pmu_report_bar0_pri_err_status(struct gk20a *g, u32 bar0_status,
 			"error_type(0x%x)", bar0_status, error_type);
 }
 
-/* PMU engine reset functions */
+/**
+ * @brief Enable/Disable PMU hardware
+ *
+ * @param pmu    [in] The PMU unit struct. This function does
+ *                    not perform any validation of this input parameter.
+ * @param enable [in] boolean parameter to enable/disable. This function does
+ *                    not perform any validation of this input parameter.
+ *
+ * Assign g = pmu->g.
+ * This function is used to enable the PMU by doing engine reset, configuring
+ * PMU Engine clock gating and waiting for IMEM/DMEM memory scrubbing for reset
+ * request. This function can also be used to disable PMU by keeping the engine
+ * in reset state. The parameter \a enable will be used to decide the path.
+ * + If parameter \a enable is true do the following
+ *   + Reset PMU engine by calling \ref gops_pmu.reset_engine
+ *     "g->ops.pmu.reset_engine(g, true)".
+ *   + Call \ref nvgpu_cg_slcg_pmu_load_enable "nvgpu_cg_slcg_pmu_load_enable(g)"
+ *   + Call \ref nvgpu_cg_blcg_pmu_load_enable "nvgpu_cg_blcg_pmu_load_enable(g)"
+ *   + Call \ref nvgpu_falcon_mem_scrub_wait "nvgpu_falcon_mem_scrub_wait(pmu->flcn)".
+ *     if return value is not equal to zero then keep the PMU engine in reset by
+ *     calling \ref gops_pmu.reset_engine "g->ops.pmu.reset_engine(g, false))"
+ *     and return -ETIMEDOUT.
+ * + If parameter \a enable is false then keep the PMU engine in reset by calling
+ *   \ref gops_pmu.reset_engine "g->ops.pmu.reset_engine(g, false))".
+ *
+ *@return 0 in case of success. <0 in case of failure.
+ *@retval -ETIMEDOUT in case of memory scrub failure.
+ */
 static int pmu_enable_hw(struct nvgpu_pmu *pmu, bool enable)
 {
 	struct gk20a *g = pmu->g;
@@ -85,6 +112,29 @@ void nvgpu_pmu_enable_irq(struct gk20a *g, bool enable)
 	}
 }
 
+/**
+ * @brief Enable/Disable PMU
+ *
+ * @param pmu    [in] The PMU unit struct. This function does
+ *                    not perform any validation of this input parameter.
+ * @param enable [in] boolean parameter to enable/disable. This function does
+ *                    not perform any validation of this input parameter.
+ *
+ * Assign g = pmu->g.
+ * This function is used to enable/disable the PMU engine and configuring the
+ * PMU ECC interrupts.
+ * + If parameter \a enable is true do the following, in case of failure return error.
+ *   + Call \ref pmu_enable_hw "pmu_enable_hw(pmu, true)".
+ *   + Call \ref nvgpu_falcon_wait_idle "nvgpu_falcon_wait_idle(pmu->flcn)".
+ *   + Call \ref nvgpu_pmu_enable_irq "nvgpu_pmu_enable_irq(g, true)".
+ * + If parameter \a enable is false do the following, in case of failure return error.
+ *   + Check if PMU engine is in reset by calling \ref gops_pmu.is_engine_in_reset()
+ *     and proceed only if engine not in reset, else return.
+ *   + Call \ref nvgpu_pmu_enable_irq "nvgpu_pmu_enable_irq(g, false)".
+ *   + Call \ref pmu_enable_hw "pmu_enable_hw(pmu, false)".
+ *
+ *@return 0 in case of success, < 0 in case of failure.
+ */
 static int pmu_enable(struct nvgpu_pmu *pmu, bool enable)
 {
 	struct gk20a *g = pmu->g;
