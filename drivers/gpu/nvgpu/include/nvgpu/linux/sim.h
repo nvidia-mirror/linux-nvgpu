@@ -2,7 +2,7 @@
  *
  * nvgpu sim support
  *
- * Copyright (c) 2018-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -21,6 +21,7 @@
 #define __SIM_LINUX_H__
 
 struct platform_device;
+struct gk20a_platform;
 
 struct sim_nvgpu_linux {
 	struct sim_nvgpu sim;
@@ -30,5 +31,7 @@ struct sim_nvgpu_linux {
 
 int nvgpu_init_sim_support_linux(struct gk20a *g,
 		struct platform_device *dev);
+int nvgpu_init_sim_support_linux_igpu_pci(struct gk20a *g,
+		struct gk20a_platform *platform);
 void nvgpu_remove_sim_support_linux(struct gk20a *g);
 #endif

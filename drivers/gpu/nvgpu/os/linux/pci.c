@@ -38,6 +38,7 @@
 #include <nvgpu/string.h>
 #include <nvgpu/gr/gr.h>
 #include <nvgpu/nvgpu_init.h>
+#include <nvgpu/linux/sim.h>
 
 #include "nvlink.h"
 #include "module.h"
@@ -394,8 +395,9 @@ static irqreturn_t nvgpu_pci_intr_thread(int irq, void *dev_id)
 	return IRQ_HANDLED;
 }
 
-static int nvgpu_pci_init_support(struct pci_dev *pdev)
+static int nvgpu_pci_init_support(struct pci_dev *pdev, bool is_pci_igpu)
 {
+	struct gk20a_platform *platform = pci_get_drvdata(pdev);
 	int err = 0;
 	struct gk20a *g = get_gk20a(&pdev->dev);
 	struct device *dev = &pdev->dev;
@@ -427,17 +429,29 @@ static int nvgpu_pci_init_support(struct pci_dev *pdev)
 	}
 	g->bar1 = (uintptr_t)addr;
 
-	err = nvgpu_init_sim_support_linux_pci(g);
-	if (err)
-		goto fail;
-	err = nvgpu_init_sim_support_pci(g);
-	if (err)
-		goto fail_sim;
+	if (is_pci_igpu) {
+		err = nvgpu_init_sim_support_linux_igpu_pci(g, platform);
+		if (err)
+			goto fail;
+		err = nvgpu_init_sim_support(g);
+		if (err)
+			goto fail_sim;
+	} else {
+		err = nvgpu_init_sim_support_linux_pci(g);
+		if (err)
+			goto fail;
+		err = nvgpu_init_sim_support_pci(g);
+		if (err)
+			goto fail_sim;
+	}
 
 	return 0;
 
  fail_sim:
-	nvgpu_remove_sim_support_linux_pci(g);
+	if (is_pci_igpu)
+		nvgpu_remove_sim_support_linux(g);
+	else
+		nvgpu_remove_sim_support_linux_pci(g);
  fail:
 	if (g->regs)
 		g->regs = 0U;
@@ -675,7 +689,7 @@ static int nvgpu_pci_probe(struct pci_dev *pdev,
 	}
 	nvgpu_disable_irqs(g);
 
-	err = nvgpu_pci_init_support(pdev);
+	err = nvgpu_pci_init_support(pdev, g->is_pci_igpu);
 	if (err)
 		goto err_free_irq;
 

@@ -358,6 +358,11 @@ struct gk20a_platform {
 
 	/* Check if igpu is available as pci device. */
 	bool is_pci_igpu;
+
+#ifdef CONFIG_NVGPU_SIM
+	u32 fake_rpc_base;
+	u32 fake_rpc_size;
+#endif
 };
 
 static inline struct gk20a_platform *gk20a_get_platform(
