@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -141,7 +141,7 @@ struct gops_channel {
 	void (*abort_clean_up)(struct nvgpu_channel *ch);
 	void (*reset_faulted)(struct gk20a *g, struct nvgpu_channel *ch,
 			bool eng, bool pbdma);
-	void (*clear)(struct nvgpu_channel *ch);
+	void (*clear)(struct gk20a *g, u32 runlist_id, u32 chid);
 	int (*get_vmid)(struct nvgpu_channel *ch, u32 *vmid);
 
 #ifdef CONFIG_NVGPU_KERNEL_MODE_SUBMIT

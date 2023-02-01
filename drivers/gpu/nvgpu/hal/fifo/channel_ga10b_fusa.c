@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -83,10 +83,7 @@ void ga10b_channel_disable(struct nvgpu_channel *ch)
 void ga10b_channel_bind(struct nvgpu_channel *ch)
 {
 	struct gk20a *g = ch->g;
-	struct nvgpu_runlist *runlist = NULL;
 	int err;
-
-	runlist = ch->runlist;
 
 	/* Enable subcontext */
 	if (g->ops.tsg.add_subctx_channel_hw != NULL) {
@@ -98,9 +95,7 @@ void ga10b_channel_bind(struct nvgpu_channel *ch)
 	}
 
 	/* Enable channel */
-	nvgpu_chram_bar0_writel(g, runlist, runlist_chram_channel_r(ch->chid),
-		runlist_chram_channel_update_f(
-			runlist_chram_channel_update_enable_channel_v()));
+	g->ops.channel.enable(ch);
 
 	nvgpu_atomic_set(&ch->bound, CHANNEL_BOUND);
 }
@@ -149,11 +144,17 @@ void ga10b_channel_unbind(struct nvgpu_channel *ch)
 
 	if (nvgpu_atomic_cmpxchg(&ch->bound, CHANNEL_BOUND, CHANNEL_UNBOUND) !=
 			0) {
-		nvgpu_chram_bar0_writel(g, runlist,
-			runlist_chram_channel_r(ch->chid),
-			runlist_chram_channel_update_f(
-			runlist_chram_channel_update_clear_channel_v()));
+		g->ops.channel.clear(g, runlist->id, ch->chid);
 	}
+}
+
+void ga10b_channel_clear(struct gk20a *g, u32 runlist_id, u32 chid)
+{
+	nvgpu_chram_bar0_writel(g,
+		g->fifo.runlists[runlist_id],
+		runlist_chram_channel_r(chid),
+		runlist_chram_channel_update_f(
+			runlist_chram_channel_update_clear_channel_v()));
 }
 
 #define NUM_STATUS_STR		8U

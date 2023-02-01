@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -598,7 +598,7 @@ static int nvgpu_tsg_unbind_channel_common(struct nvgpu_tsg *tsg,
 	}
 
 	if (g->ops.channel.clear != NULL) {
-		g->ops.channel.clear(ch);
+		g->ops.channel.clear(g, ch->runlist->id, ch->chid);
 	}
 
 	/* Channel should be seen as TSG channel while updating runlist */
@@ -743,7 +743,7 @@ fail_common:
 	nvgpu_tsg_abort(g, tsg, true);
 
 	if (g->ops.channel.clear != NULL) {
-		g->ops.channel.clear(ch);
+		g->ops.channel.clear(g, ch->runlist->id, ch->chid);
 	}
 
 	/* If channel unbind fails, channel is still part of runlist */
