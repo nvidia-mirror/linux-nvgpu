@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -155,6 +155,8 @@ int nvgpu_gr_alloc(struct gk20a *g);
  * during deinitialization.
  */
 void nvgpu_gr_free(struct gk20a *g);
+
+int nvgpu_gr_init_ctx_bufs(struct gk20a *g, struct nvgpu_gr *gr);
 
 /**
  * @brief Reset and enable GR engine HW as phase 2 of GR engine

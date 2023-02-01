@@ -1,7 +1,7 @@
 /*
  * Virtualized GPU Graphics
  *
- * Copyright (c) 2014-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -674,14 +674,21 @@ static int vgpu_gr_init_gr_setup_sw(struct gk20a *g)
 	}
 #endif
 
-	err = vgpu_gr_alloc_global_ctx_buffers(g);
-	if (err) {
-		goto clean_up;
-	}
+	if (nvgpu_is_vf(g)) {
+		err = nvgpu_gr_init_ctx_bufs(g, gr);
+		if (err) {
+			goto clean_up;
+		}
+	} else {
+		err = vgpu_gr_alloc_global_ctx_buffers(g);
+		if (err) {
+			goto clean_up;
+		}
 
-	gr->gr_ctx_desc = nvgpu_gr_ctx_desc_alloc(g);
-	if (gr->gr_ctx_desc == NULL) {
-		goto clean_up;
+		gr->gr_ctx_desc = nvgpu_gr_ctx_desc_alloc(g);
+		if (gr->gr_ctx_desc == NULL) {
+			goto clean_up;
+		}
 	}
 
 #ifdef CONFIG_NVGPU_GRAPHICS

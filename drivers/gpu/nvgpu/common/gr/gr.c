@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -425,7 +425,7 @@ static int nvgpu_gr_init_ctx_state(struct gk20a *g, struct nvgpu_gr *gr)
 	return err;
 }
 
-static int gr_init_ctx_bufs(struct gk20a *g, struct nvgpu_gr *gr)
+int nvgpu_gr_init_ctx_bufs(struct gk20a *g, struct nvgpu_gr *gr)
 {
 	int err = 0;
 
@@ -509,7 +509,7 @@ static int gr_init_setup_sw(struct gk20a *g, struct nvgpu_gr *gr)
 	}
 #endif
 
-	err = gr_init_ctx_bufs(g, gr);
+	err = nvgpu_gr_init_ctx_bufs(g, gr);
 	if (err != 0) {
 		goto clean_up;
 	}
