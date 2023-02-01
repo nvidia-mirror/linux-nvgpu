@@ -33,6 +33,9 @@ struct gk20a_platform ga10b_vgpu_tegra_platform = {
 	.has_syncpoints = true,
 #endif
 
+	/* ptimer src frequency in hz*/
+	.ptimer_src_freq = 31250000,
+
 	/* power management configuration */
 	.can_railgate_init      = false,
 	.can_elpg_init          = false,
