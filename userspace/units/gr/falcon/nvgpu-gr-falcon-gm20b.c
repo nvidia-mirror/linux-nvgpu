@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -44,6 +44,8 @@
 
 #include "../nvgpu-gr.h"
 #include "nvgpu-gr-falcon-gm20b.h"
+
+#define INVALID_METHOD 0xFF
 
 struct gr_falcon_gm20b_fecs_op {
 	u32 id;
@@ -164,7 +166,7 @@ static int gr_falcon_gm20b_submit_fecs_mthd_op(struct unit_module *m,
 		op.cond.ok = fecs_op_stat[i].cond_ok;
 		op.cond.fail = fecs_op_stat[i].cond_fail;
 
-		err = gm20b_gr_falcon_submit_fecs_method_op(g, op, false);
+		err = gm20b_gr_falcon_submit_fecs_method_op(g, op, false, INVALID_METHOD);
 		if ((fecs_op_stat[i].result == 0) && err) {
 			unit_return_fail(m, "submit_fecs_method_op failed\n");
 		} else if (fecs_op_stat[i].result && (err == 0)){

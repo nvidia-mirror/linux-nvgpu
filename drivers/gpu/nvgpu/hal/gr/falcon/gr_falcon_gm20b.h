@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -50,7 +50,7 @@ void gm20b_gr_falcon_bind_instblk(struct gk20a *g,
 int gm20b_gr_falcon_wait_mem_scrubbing(struct gk20a *g);
 int gm20b_gr_falcon_wait_ctxsw_ready(struct gk20a *g);
 int gm20b_gr_falcon_submit_fecs_method_op(struct gk20a *g,
-	struct nvgpu_fecs_method_op op, u32 flags);
+	struct nvgpu_fecs_method_op op, u32 flags, u32 fecs_method);
 int gm20b_gr_falcon_ctrl_ctxsw(struct gk20a *g, u32 fecs_method,
 						u32 data, u32 *ret_val);
 int gm20b_gr_falcon_ctrl_ctxsw_internal(struct gk20a *g, u32 fecs_method,
@@ -62,6 +62,10 @@ u32 gm20b_gr_falcon_get_fecs_current_ctx_data(struct gk20a *g,
 						struct nvgpu_mem *inst_block);
 int gm20b_gr_falcon_init_ctx_state(struct gk20a *g,
 		struct nvgpu_gr_falcon_query_sizes *sizes);
+#ifdef CONFIG_NVGPU_GRAPHICS
+int gm20b_gr_falcon_get_zcull_image_size(struct gk20a *g,
+                struct nvgpu_gr_falcon_query_sizes *sizes);
+#endif
 u32 gm20b_gr_falcon_read_status0_fecs_ctxsw(struct gk20a *g);
 u32 gm20b_gr_falcon_read_status1_fecs_ctxsw(struct gk20a *g);
 #ifdef CONFIG_NVGPU_GRAPHICS

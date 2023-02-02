@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,6 +32,11 @@ u32 ga10b_gr_falcon_get_fecs_ctxsw_mailbox_size(void);
 void ga10b_gr_falcon_fecs_ctxsw_clear_mailbox(struct gk20a *g,
 						u32 reg_index, u32 clear_val);
 void ga10b_gr_falcon_dump_stats(struct gk20a *g);
+#ifndef CONFIG_NVGPU_HAL_NON_FUSA
+void ga10b_gr_falcon_set_null_fecs_method_data(struct gk20a *g,
+				struct nvgpu_fecs_method_op *op,
+		                u32 fecs_method);
+#endif
 #ifdef CONFIG_NVGPU_GR_FALCON_NON_SECURE_BOOT
 void ga10b_gr_falcon_gpccs_dmemc_write(struct gk20a *g, u32 port, u32 offs,
 	u32 blk, u32 ainc);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -150,7 +150,7 @@ int gv11b_gr_falcon_ctrl_ctxsw(struct gk20a *g, u32 fecs_method,
 		}
 		flags |= NVGPU_GR_FALCON_SUBMIT_METHOD_F_LOCKED;
 
-		ret = gm20b_gr_falcon_submit_fecs_method_op(g, op, flags);
+		ret = gm20b_gr_falcon_submit_fecs_method_op(g, op, flags, fecs_method);
 		break;
 
 	default:

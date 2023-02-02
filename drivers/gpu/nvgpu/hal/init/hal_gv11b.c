@@ -654,6 +654,9 @@ static const struct gops_gr_falcon gv11b_ops_gr_falcon = {
 	.get_ctx_ptr = gm20b_gr_falcon_get_ctx_ptr,
 	.get_fecs_current_ctx_data = gm20b_gr_falcon_get_fecs_current_ctx_data,
 	.init_ctx_state = gp10b_gr_falcon_init_ctx_state,
+#ifdef CONFIG_NVGPU_HAL_NON_FUSA
+	.get_zcull_image_size = gm20b_gr_falcon_get_zcull_image_size,
+#endif
 	.fecs_host_int_enable = gv11b_gr_falcon_fecs_host_int_enable,
 	.read_fecs_ctxsw_status0 = gm20b_gr_falcon_read_status0_fecs_ctxsw,
 	.read_fecs_ctxsw_status1 = gm20b_gr_falcon_read_status1_fecs_ctxsw,

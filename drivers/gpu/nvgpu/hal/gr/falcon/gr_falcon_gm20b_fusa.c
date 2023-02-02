@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -536,6 +536,28 @@ int gm20b_gr_falcon_wait_ctxsw_ready(struct gk20a *g)
 	return 0;
 }
 
+#ifdef CONFIG_NVGPU_GRAPHICS
+int gm20b_gr_falcon_get_zcull_image_size(struct gk20a *g,
+		struct nvgpu_gr_falcon_query_sizes *sizes)
+{
+	int ret = 0;
+
+	if (!nvgpu_is_enabled(g, NVGPU_SUPPORT_MIG)) {
+		ret = g->ops.gr.falcon.ctrl_ctxsw(g,
+			NVGPU_GR_FALCON_METHOD_CTXSW_DISCOVER_ZCULL_IMAGE_SIZE,
+			0, &sizes->zcull_image_size);
+		if (ret != 0) {
+			nvgpu_err(g,
+				"query zcull ctx image size failed");
+			return ret;
+		}
+	}
+
+	nvgpu_log(g, gpu_dbg_gr, "ZCULL image size = %u", sizes->zcull_image_size);
+	return ret;
+}
+#endif
+
 int gm20b_gr_falcon_init_ctx_state(struct gk20a *g,
 		struct nvgpu_gr_falcon_query_sizes *sizes)
 {
@@ -573,21 +595,14 @@ defined(CONFIG_NVGPU_CTXSW_FW_ERROR_CODE_TESTING)
 
 	nvgpu_log(g, gpu_dbg_gr, "PM CTXSW image size = %u", sizes->pm_ctxsw_image_size);
 #endif
-
-#ifdef CONFIG_NVGPU_NON_FUSA
-	if (!nvgpu_is_enabled(g, NVGPU_SUPPORT_MIG)) {
-		ret = g->ops.gr.falcon.ctrl_ctxsw(g,
-			NVGPU_GR_FALCON_METHOD_CTXSW_DISCOVER_ZCULL_IMAGE_SIZE,
-			0, &sizes->zcull_image_size);
-		if (ret != 0) {
-			nvgpu_err(g,
-				"query zcull ctx image size failed");
-			return ret;
-		}
+#ifdef CONFIG_NVGPU_GRAPHICS
+	if (g->ops.gr.falcon.get_zcull_image_size != NULL) {
+		ret = g->ops.gr.falcon.get_zcull_image_size(g, sizes);
 	}
-
-	nvgpu_log(g, gpu_dbg_gr, "ZCULL image size = %u", sizes->zcull_image_size);
 #endif
+	if (ret != 0) {
+		nvgpu_err(g, "query zcull image size failed");
+	}
 
 	nvgpu_log(g, gpu_dbg_fn | gpu_dbg_gr, "done");
 	return 0;
@@ -665,12 +680,18 @@ void gm20b_gr_falcon_set_current_ctx_invalid(struct gk20a *g)
  * We should replace most, if not all, fecs method calls to this instead.
  */
 int gm20b_gr_falcon_submit_fecs_method_op(struct gk20a *g,
-		struct nvgpu_fecs_method_op op, u32 flags)
+		struct nvgpu_fecs_method_op op, u32 flags, u32 fecs_method)
 {
 	int ret;
 	struct nvgpu_gr_falcon *gr_falcon = nvgpu_gr_get_falcon_ptr(g);
 	bool sleepduringwait =
 			(flags & NVGPU_GR_FALCON_SUBMIT_METHOD_F_SLEEP) != 0U;
+
+#ifndef CONFIG_NVGPU_HAL_NON_FUSA
+	if (g->ops.gr.falcon.set_null_fecs_method_data != NULL) {
+		g->ops.gr.falcon.set_null_fecs_method_data(g, &op, fecs_method);
+	}
+#endif
 
 	if ((flags & NVGPU_GR_FALCON_SUBMIT_METHOD_F_LOCKED) == 0U) {
 		nvgpu_mutex_acquire(&gr_falcon->fecs_mutex);
@@ -699,8 +720,8 @@ int gm20b_gr_falcon_submit_fecs_method_op(struct gk20a *g,
 				      op.cond.fail, op.mailbox.fail,
 				      sleepduringwait);
 	if (ret != 0) {
-		nvgpu_err(g, "fecs method: data=0x%08x push adr=0x%08x",
-			op.method.data, op.method.addr);
+		nvgpu_err(g, "fecs method: %d data=0x%08x push adr=0x%08x",
+			fecs_method, op.method.data, op.method.addr);
 	}
 
 	if ((flags & NVGPU_GR_FALCON_SUBMIT_METHOD_F_LOCKED) == 0U) {
@@ -846,7 +867,7 @@ defined(CONFIG_NVGPU_CTXSW_FW_ERROR_CODE_TESTING)
 		break;
 	}
 
-	return gm20b_gr_falcon_submit_fecs_method_op(g, op, flags);
+	return gm20b_gr_falcon_submit_fecs_method_op(g, op, flags, fecs_method);
 }
 
 int gm20b_gr_falcon_ctrl_ctxsw_internal(struct gk20a *g, u32 fecs_method,
@@ -867,7 +888,7 @@ int gm20b_gr_falcon_ctrl_ctxsw_internal(struct gk20a *g, u32 fecs_method,
 		nvgpu_log_info(g, "fecs method %d data 0x%x ret_value %p",
 							fecs_method, data, ret_val);
 
-		return gm20b_gr_falcon_submit_fecs_method_op(g, op, flags);
+		return gm20b_gr_falcon_submit_fecs_method_op(g, op, flags, fecs_method);
 	}
 #endif
 

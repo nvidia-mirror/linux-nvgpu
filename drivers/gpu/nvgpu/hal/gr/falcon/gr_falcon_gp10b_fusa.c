@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -85,7 +85,7 @@ int gp10b_gr_falcon_ctrl_ctxsw(struct gk20a *g, u32 fecs_method,
 		op.method.addr =
 			gr_fecs_method_push_adr_discover_preemption_image_size_v();
 		op.mailbox.ret = ret_val;
-		ret = gm20b_gr_falcon_submit_fecs_method_op(g, op, 0U);
+		ret = gm20b_gr_falcon_submit_fecs_method_op(g, op, 0U, fecs_method);
 	break;
 #endif
 

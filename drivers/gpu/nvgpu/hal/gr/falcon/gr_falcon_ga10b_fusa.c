@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,10 +25,12 @@
 #include <nvgpu/static_analysis.h>
 #include <nvgpu/gr/gr_utils.h>
 #include <nvgpu/gr/config.h>
+#include <nvgpu/gr/gr_falcon.h>
 #include <nvgpu/falcon.h>
 #include <nvgpu/soc.h>
 
 #include "gr_falcon_ga10b.h"
+#include "common/gr/gr_falcon_priv.h"
 
 #include <nvgpu/hw/ga10b/hw_gr_ga10b.h>
 
@@ -38,6 +40,8 @@
 #define NVGPU_FECS_ENCRYPT_PROD_UCODE_IMAGE	    "fecs_encrypt_prod.bin"
 #define NVGPU_GPCCS_ENCRYPT_DBG_UCODE_IMAGE	    "gpccs_encrypt_dbg.bin"
 #define NVGPU_GPCCS_ENCRYPT_PROD_UCODE_IMAGE	"gpccs_encrypt_prod.bin"
+
+#define NVGPU_NULL_METHOD_DATA 0xDEADCA11U
 
 void ga10b_gr_falcon_get_fw_name(struct gk20a *g, const char **ucode_name, u32 falcon_id)
 {
@@ -136,6 +140,25 @@ static void ga10b_gr_falcon_gpccs_dump_stats(struct gk20a *g)
 		}
 	}
 }
+
+#ifndef CONFIG_NVGPU_HAL_NON_FUSA
+void ga10b_gr_falcon_set_null_fecs_method_data(struct gk20a *g,
+		struct nvgpu_fecs_method_op *op,
+		u32 fecs_method)
+{
+	switch (fecs_method) {
+		case NVGPU_GR_FALCON_METHOD_CTXSW_DISCOVER_IMAGE_SIZE:
+#ifdef CONFIG_NVGPU_GRAPHICS
+		case NVGPU_GR_FALCON_METHOD_CTXSW_DISCOVER_ZCULL_IMAGE_SIZE:
+#endif
+			op->method.data = NVGPU_NULL_METHOD_DATA;
+			break;
+		default:
+			nvgpu_log(g, gpu_dbg_gpu_dbg, "fecs method: %d", fecs_method);
+			break;
+	}
+}
+#endif
 
 void ga10b_gr_falcon_dump_stats(struct gk20a *g)
 {

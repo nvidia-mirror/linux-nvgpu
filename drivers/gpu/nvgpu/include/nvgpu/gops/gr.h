@@ -383,6 +383,8 @@ struct gops_gr_falcon {
 					 struct nvgpu_mem *inst_block);
 	int (*init_ctx_state)(struct gk20a *g,
 			struct nvgpu_gr_falcon_query_sizes *sizes);
+	int (*get_zcull_image_size)(struct gk20a *g,
+			struct nvgpu_gr_falcon_query_sizes *sizes);
 	void (*fecs_host_int_enable)(struct gk20a *g);
 	u32 (*read_fecs_ctxsw_status0)(struct gk20a *g);
 	u32 (*read_fecs_ctxsw_status1)(struct gk20a *g);
@@ -418,6 +420,10 @@ struct gops_gr_falcon {
 	void (*configure_fmodel)(struct gk20a *g);
 #endif
 	void (*get_fw_name)(struct gk20a *g, const char **ucode_name, u32 falcon_id);
+#ifndef CONFIG_NVGPU_HAL_NON_FUSA
+	void (*set_null_fecs_method_data)(struct gk20a *g,
+			struct nvgpu_fecs_method_op *op, u32 fecs_method);
+#endif
 	/** @endcond */
 
 };
