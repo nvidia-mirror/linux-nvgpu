@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1209,8 +1209,14 @@ int nvgpu_pmu_pg_buf_alloc(struct gk20a *g, struct nvgpu_pmu *pmu, u32 size)
 
 int nvgpu_pmu_restore_golden_img_state(struct gk20a *g)
 {
-	struct nvgpu_pmu *pmu = g->pmu;
+	struct nvgpu_pmu *pmu;
 	int err = 0;
+
+	if (!g->support_ls_pmu) {
+		return 0;
+	}
+
+	pmu = g->pmu;
 
 	if (!is_pg_supported(g, pmu->pg)) {
 		goto out;
