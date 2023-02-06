@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2022-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -141,7 +141,7 @@ int nvgpu_gr_ctx_mappings_map_ctx_buffer(struct gk20a *g,
 	return 0;
 }
 
-static void nvgpu_gr_ctx_mappings_unmap_ctx_buffer(struct nvgpu_gr_ctx *ctx,
+void nvgpu_gr_ctx_mappings_unmap_ctx_buffer(struct nvgpu_gr_ctx *ctx,
 	u32 index, struct nvgpu_gr_ctx_mappings *mappings)
 {
 	struct vm_gk20a *vm = mappings->vm;
@@ -419,7 +419,7 @@ static int nvgpu_gr_ctx_mappings_map_global_ctx_buffer(
 	bool vpr, struct nvgpu_gr_ctx_mappings *mappings)
 {
 	struct vm_gk20a *vm = mappings->vm;
-	struct gk20a *g = mappings->tsg->g;
+	struct gk20a *g = vm->mm->g;
 	u64 *g_bfr_va;
 	u32 *g_bfr_index;
 	u64 gpu_va = 0ULL;
@@ -463,7 +463,7 @@ clean_up:
 	return -ENOMEM;
 }
 
-static void nvgpu_gr_ctx_mappings_unmap_global_ctx_buffers(
+void nvgpu_gr_ctx_mappings_unmap_global_ctx_buffers(
 	struct nvgpu_gr_global_ctx_buffer_desc *global_ctx_buffer,
 	struct nvgpu_gr_ctx_mappings *mappings)
 {
@@ -483,9 +483,9 @@ static void nvgpu_gr_ctx_mappings_unmap_global_ctx_buffers(
 	(void) memset(g_bfr_index, 0, sizeof(mappings->global_ctx_buffer_index));
 }
 
-static int nvgpu_gr_ctx_mappings_map_global_ctx_buffers(struct gk20a *g,
+int nvgpu_gr_ctx_mappings_map_global_ctx_buffers(struct gk20a *g,
 	struct nvgpu_gr_global_ctx_buffer_desc *global_ctx_buffer,
-	struct nvgpu_tsg_subctx *subctx,
+	bool support_gfx,
 	struct nvgpu_gr_ctx_mappings *mappings,
 	bool vpr)
 {
@@ -496,7 +496,7 @@ static int nvgpu_gr_ctx_mappings_map_global_ctx_buffers(struct gk20a *g,
 	 * Allocate BUNDLE_CB, PAGEPOOL, ATTRIBUTE_CB and RTV_CB
 	 * if 2D/3D/I2M classes(graphics) are supported.
 	 */
-	if (nvgpu_gr_obj_ctx_is_gfx_engine(g, subctx)) {
+	if (support_gfx) {
 		/* Circular Buffer */
 		err = nvgpu_gr_ctx_mappings_map_global_ctx_buffer(
 					global_ctx_buffer,
@@ -624,7 +624,9 @@ int nvgpu_gr_ctx_mappings_map_gr_ctx_buffers(struct gk20a *g,
 	}
 
 	err = nvgpu_gr_ctx_mappings_map_global_ctx_buffers(g,
-			global_ctx_buffer, subctx, mappings, vpr);
+			global_ctx_buffer,
+			nvgpu_gr_obj_ctx_is_gfx_engine(g, subctx),
+			mappings, vpr);
 	if (err != 0) {
 		nvgpu_err(g, "fail to map global ctx buffer");
 		nvgpu_gr_ctx_mappings_unmap_ctx_buffers(gr_ctx, subctx, mappings);

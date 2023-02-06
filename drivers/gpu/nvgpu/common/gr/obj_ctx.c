@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -38,6 +38,7 @@
 #include <nvgpu/gr/obj_ctx.h>
 #include <nvgpu/gr/config.h>
 #include <nvgpu/gr/ctx.h>
+#include <nvgpu/gr/gr_instances.h>
 #include <nvgpu/netlist.h>
 #include <nvgpu/gr/gr_falcon.h>
 #include <nvgpu/gr/fs_state.h>
@@ -50,6 +51,10 @@
 #include <nvgpu/vm.h>
 
 #include "obj_ctx_priv.h"
+#include "gr_priv.h"
+#include "ctx_mappings_priv.h"
+#include "ctx_priv.h"
+#include "subctx_priv.h"
 
 void nvgpu_gr_obj_ctx_commit_inst_gpu_va(struct gk20a *g,
 	struct nvgpu_mem *inst_block, u64 gpu_va)
@@ -59,9 +64,8 @@ void nvgpu_gr_obj_ctx_commit_inst_gpu_va(struct gk20a *g,
 
 #ifdef CONFIG_NVGPU_DEBUGGER
 static void nvgpu_gr_obj_ctx_set_pm_ctx_gpu_va(struct gk20a *g,
-	struct nvgpu_gr_ctx *gr_ctx, struct nvgpu_tsg_subctx *tsg_subctx)
+	struct nvgpu_gr_ctx *gr_ctx, struct nvgpu_gr_subctx *subctx)
 {
-	struct nvgpu_gr_subctx *subctx;
 	bool set_pm_ctx_gpu_va;
 
 	nvgpu_log(g, gpu_dbg_fn | gpu_dbg_gr, " ");
@@ -70,7 +74,6 @@ static void nvgpu_gr_obj_ctx_set_pm_ctx_gpu_va(struct gk20a *g,
 				g->ops.gr.ctxsw_prog.hw_get_pm_mode_no_ctxsw();
 
 	if (nvgpu_is_enabled(g, NVGPU_SUPPORT_TSG_SUBCONTEXTS)) {
-		subctx = nvgpu_tsg_subctx_get_gr_subctx(tsg_subctx);
 		nvgpu_gr_subctx_set_hwpm_ptr(g, subctx,
 					     set_pm_ctx_gpu_va);
 	} else {
@@ -82,21 +85,19 @@ static void nvgpu_gr_obj_ctx_set_pm_ctx_gpu_va(struct gk20a *g,
 #endif
 
 void nvgpu_gr_obj_ctx_commit_inst(struct gk20a *g, struct nvgpu_mem *inst_block,
-	struct nvgpu_gr_ctx *gr_ctx, struct nvgpu_tsg_subctx *tsg_subctx,
+	struct nvgpu_gr_ctx *gr_ctx, struct nvgpu_gr_subctx *subctx,
 	struct nvgpu_gr_ctx_mappings *mappings)
 {
-	struct nvgpu_gr_subctx *subctx;
 	struct nvgpu_mem *ctxheader;
 	u64 gpu_va;
 
 	nvgpu_log(g, gpu_dbg_fn | gpu_dbg_gr, " ");
 
 #ifdef CONFIG_NVGPU_DEBUGGER
-	nvgpu_gr_obj_ctx_set_pm_ctx_gpu_va(g, gr_ctx, tsg_subctx);
+	nvgpu_gr_obj_ctx_set_pm_ctx_gpu_va(g, gr_ctx, subctx);
 #endif
 
 	if (nvgpu_is_enabled(g, NVGPU_SUPPORT_TSG_SUBCONTEXTS)) {
-		subctx = nvgpu_tsg_subctx_get_gr_subctx(tsg_subctx);
 		nvgpu_gr_subctx_load_ctx_header(g, subctx, gr_ctx, mappings);
 
 		ctxheader = nvgpu_gr_subctx_get_ctx_header(subctx);
@@ -451,7 +452,7 @@ void nvgpu_gr_obj_ctx_commit_global_ctx_buffers(struct gk20a *g,
 	struct nvgpu_gr_global_ctx_buffer_desc *global_ctx_buffer,
 	struct nvgpu_gr_config *config,
 	struct nvgpu_gr_ctx *gr_ctx,
-	struct nvgpu_tsg_subctx *subctx,
+	bool support_gfx,
 	struct nvgpu_gr_ctx_mappings *mappings,
 	bool patch)
 {
@@ -469,7 +470,7 @@ void nvgpu_gr_obj_ctx_commit_global_ctx_buffers(struct gk20a *g,
 	 * Skip BUNDLE_CB, PAGEPOOL, ATTRIBUTE_CB and RTV_CB
 	 * if 2D/3D/I2M classes(graphics) are not supported.
 	 */
-	if (nvgpu_gr_obj_ctx_is_gfx_engine(g, subctx)) {
+	if (support_gfx) {
 		if (patch && nvgpu_gr_obj_ctx_global_ctx_buffers_patched(gr_ctx)) {
 			goto commit_sm_id;
 		}
@@ -682,7 +683,7 @@ clean_up:
 static int nvgpu_gr_obj_ctx_commit_hw_state(struct gk20a *g,
 	struct nvgpu_gr_global_ctx_buffer_desc *global_ctx_buffer,
 	struct nvgpu_gr_config *config, struct nvgpu_gr_ctx *gr_ctx,
-	struct nvgpu_tsg_subctx *subctx, struct nvgpu_gr_ctx_mappings *mappings)
+	bool support_gfx, struct nvgpu_gr_ctx_mappings *mappings)
 {
 	int err = 0;
 	struct netlist_av_list *sw_method_init =
@@ -698,7 +699,7 @@ static int nvgpu_gr_obj_ctx_commit_hw_state(struct gk20a *g,
 	g->ops.gr.init.fe_go_idle_timeout(g, false);
 
 	nvgpu_gr_obj_ctx_commit_global_ctx_buffers(g, global_ctx_buffer,
-		config, gr_ctx, subctx, mappings, false);
+		config, gr_ctx, support_gfx, mappings, false);
 
 	if (!nvgpu_is_enabled(g, NVGPU_SUPPORT_MIG)) {
 		/* override a few ctx state registers */
@@ -843,7 +844,7 @@ int nvgpu_gr_obj_ctx_alloc_golden_ctx_image(struct gk20a *g,
 	struct nvgpu_gr_global_ctx_buffer_desc *global_ctx_buffer,
 	struct nvgpu_gr_config *config,
 	struct nvgpu_gr_ctx *gr_ctx,
-	struct nvgpu_tsg_subctx *subctx,
+	bool support_gfx,
 	struct nvgpu_gr_ctx_mappings *mappings,
 	struct nvgpu_mem *inst_block)
 {
@@ -867,13 +868,13 @@ int nvgpu_gr_obj_ctx_alloc_golden_ctx_image(struct gk20a *g,
 	}
 
 	err = nvgpu_gr_obj_ctx_commit_hw_state(g, global_ctx_buffer,
-					config, gr_ctx, subctx, mappings);
+				config, gr_ctx, support_gfx, mappings);
 	if (err != 0) {
 		goto clean_up;
 	}
 
 #ifdef CONFIG_NVGPU_GRAPHICS
-	if (nvgpu_gr_obj_ctx_is_gfx_engine(g, subctx)) {
+	if (support_gfx) {
 		err = nvgpu_gr_ctx_init_zcull(g, gr_ctx);
 		if (err != 0) {
 			goto clean_up;
@@ -963,11 +964,13 @@ static int nvgpu_gr_obj_ctx_alloc_buffers(struct gk20a *g,
 	}
 
 #if defined(CONFIG_NVGPU_GFXP) || defined(CONFIG_NVGPU_CILP)
-	err = nvgpu_gr_obj_ctx_init_ctxsw_preemption(g, ch, config,
-		gr_ctx_desc, gr_ctx, class_num, flags);
-	if (err != 0) {
-		nvgpu_err(g, "fail to init preemption mode");
-		return err;
+	if (ch != NULL) {
+		err = nvgpu_gr_obj_ctx_init_ctxsw_preemption(g, ch, config,
+			gr_ctx_desc, gr_ctx, class_num, flags);
+		if (err != 0) {
+			nvgpu_err(g, "fail to init preemption mode");
+			return err;
+		}
 	}
 #endif
 
@@ -982,18 +985,169 @@ static int nvgpu_gr_obj_ctx_alloc_buffers(struct gk20a *g,
 	return err;
 }
 
+static int nvgpu_gr_golden_ctx_prepare_inst_block(
+			struct gk20a *g,
+			struct nvgpu_mem *inst_block,
+			struct vm_gk20a *vm)
+{
+	int err;
+
+	/* create inst block */
+	err = nvgpu_alloc_inst_block(g, inst_block);
+	if (err != 0) {
+		nvgpu_err(g, "inst block allocate error %d", err);
+		return err;
+	}
+	/* bind the inst block to the vm */
+	g->ops.mm.init_inst_block(inst_block, vm,
+			vm->gmmu_page_sizes[GMMU_PAGE_SIZE_BIG]);
+
+	/*
+	 * skiping below because golden image does not use host states
+	 * - g->ops.ramin.set_eng_method_buffer()
+	 * - g->ops.ramfc.setup()
+	 */
+
+	if (g->ops.ramin.set_subctx_pdb_info != NULL) {
+		u32 max_subctx_count = g->ops.gr.init.get_max_subctx_count();
+		u32 *subctx_pdb_map = nvgpu_kzalloc(g, max_subctx_count * sizeof(u32) * 4U);
+		unsigned long *subctx_mask = nvgpu_kzalloc(g,
+				BITS_TO_LONGS(max_subctx_count) *
+				sizeof(unsigned long));
+
+		if (subctx_pdb_map == NULL || subctx_mask == NULL) {
+			err = -ENOMEM;
+			if (subctx_pdb_map != NULL) {
+				nvgpu_kfree(g, subctx_pdb_map);
+			}
+			nvgpu_free_inst_block(g, inst_block);
+			return err;
+		}
+		subctx_mask[0] = 1U;
+		g->ops.ramin.set_subctx_pdb_info(g, 0, vm->pdb.mem,
+				false, true, subctx_pdb_map);
+		g->ops.ramin.init_subctx_pdb(g, inst_block, subctx_pdb_map);
+		g->ops.ramin.init_subctx_mask(g, inst_block, subctx_mask);
+		nvgpu_kfree(g, subctx_pdb_map);
+		nvgpu_kfree(g, subctx_mask);
+	}
+
+	return 0;
+}
+
+static int nvgpu_gr_golden_ctx_prepare_gr_ctx(
+			struct gk20a *g,
+			struct nvgpu_gr_subctx **psubctx,
+			struct nvgpu_gr_ctx *gr_ctx,
+			struct nvgpu_gr_ctx_mappings *mappings,
+			struct vm_gk20a *vm)
+{
+	struct nvgpu_gr_obj_ctx_golden_image *golden_image =
+					nvgpu_gr_get_golden_image_ptr(g);
+	struct nvgpu_gr *gr = nvgpu_gr_get_cur_instance_ptr(g);
+	struct nvgpu_gr_subctx *subctx = NULL;
+	u32 obj_class, i;
+	int err;
+
+#ifdef CONFIG_NVGPU_HAL_NON_FUSA
+	obj_class = MAXWELL_B;
+#else
+	obj_class = VOLTA_A;
+#endif
+
+	if (nvgpu_is_enabled(g, NVGPU_SUPPORT_TSG_SUBCONTEXTS)) {
+		subctx = nvgpu_gr_subctx_alloc(g);
+		if (subctx == NULL) {
+			err = -ENOMEM;
+			return err;
+		}
+		err = nvgpu_gr_subctx_setup_header(g, subctx, vm);
+		if (err != 0) {
+			goto free_gr_subctx;
+		}
+	}
+
+	mappings->vm = vm;
+	gr_ctx->mappings = mappings;
+
+	err = nvgpu_gr_obj_ctx_alloc_buffers(g, NULL, golden_image, gr->gr_ctx_desc,
+					     gr->config, gr_ctx, obj_class, 0);
+	if (err != 0) {
+		nvgpu_err(g, "ctx buffers alloc failed, err=%d", err);
+		goto free_gr_subctx;
+	}
+	nvgpu_gr_ctx_init_ctx_buffers_mapping_flags(g, gr_ctx);
+	for (i = 0; i < NVGPU_GR_CTX_PATCH_CTX + 1U; i++) {
+		err = nvgpu_gr_ctx_mappings_map_ctx_buffer(g, gr_ctx, i, mappings);
+		if (err != 0) {
+			nvgpu_err(g, "map ctx buffer failed err=%d", err);
+			goto unmap_ctx_buffer;
+		}
+	}
+	err = nvgpu_gr_ctx_mappings_map_global_ctx_buffers(g,
+			gr->global_ctx_buffer, true, mappings, false);
+	if (err != 0) {
+		nvgpu_err(g, "map global ctx buffers failed err=%d", err);
+		goto unmap_ctx_buffer;
+	}
+
+	*psubctx = subctx;
+
+	return 0;
+
+unmap_ctx_buffer:
+	for (i = 0; i < NVGPU_GR_CTX_PATCH_CTX + 1U; i++) {
+		nvgpu_gr_ctx_mappings_unmap_ctx_buffer(gr_ctx, i, mappings);
+
+	}
+	nvgpu_gr_ctx_free_ctx_buffers(g, gr_ctx);
+free_gr_subctx:
+	if (nvgpu_is_enabled(g, NVGPU_SUPPORT_TSG_SUBCONTEXTS)) {
+		nvgpu_golden_ctx_gr_subctx_free(g, subctx, vm);
+	}
+
+	return err;
+}
+
+static void nvgpu_gr_golden_ctx_unprepare_gr_ctx(
+			struct gk20a *g,
+			struct nvgpu_gr_subctx *subctx,
+			struct nvgpu_gr_ctx *gr_ctx,
+			struct nvgpu_gr_ctx_mappings *mappings)
+{
+	struct nvgpu_gr *gr = nvgpu_gr_get_cur_instance_ptr(g);
+	struct vm_gk20a *vm = mappings->vm;
+	u32 i;
+
+	nvgpu_gr_ctx_mappings_unmap_global_ctx_buffers(gr->global_ctx_buffer,
+			mappings);
+	for (i = 0; i < NVGPU_GR_CTX_PATCH_CTX + 1U; i++) {
+		nvgpu_gr_ctx_mappings_unmap_ctx_buffer(gr_ctx, i, mappings);
+
+	}
+	nvgpu_gr_ctx_free_ctx_buffers(g, gr_ctx);
+	if (nvgpu_is_enabled(g, NVGPU_SUPPORT_TSG_SUBCONTEXTS)) {
+		nvgpu_golden_ctx_gr_subctx_free(g, subctx, vm);
+	}
+}
+
 int nvgpu_gr_obj_ctx_init_golden_context_image(struct gk20a *g)
 {
 	struct nvgpu_gr_obj_ctx_golden_image *golden_image =
 					nvgpu_gr_get_golden_image_ptr(g);
-	struct nvgpu_setup_bind_args setup_bind_args;
-	struct nvgpu_channel *veid0_ch;
 	u64 user_size, kernel_size;
-	struct nvgpu_tsg *tsg;
 	struct vm_gk20a *vm;
 	u32 big_page_size;
-	u32 obj_class;
+	struct nvgpu_gr *gr = nvgpu_gr_get_cur_instance_ptr(g);
+	struct nvgpu_mem inst_block = {};
+	struct nvgpu_gr_subctx *subctx = NULL;
+	struct nvgpu_gr_ctx_mappings mappings = {};
+	struct nvgpu_gr_ctx gr_ctx = {};
 	int err = 0;
+
+	if (g->is_virtual) {
+		return 0;
+	}
 
 	err = gk20a_busy(g);
 	if (err != 0) {
@@ -1009,14 +1163,6 @@ int nvgpu_gr_obj_ctx_init_golden_context_image(struct gk20a *g)
 
 	big_page_size = g->ops.mm.gmmu.get_default_big_page_size();
 
-	/* allocate a tsg */
-	tsg = nvgpu_tsg_open(g, 0);
-	if (tsg == NULL) {
-		nvgpu_err(g, "tsg not available");
-		err = -ENOMEM;
-		goto out;
-	}
-
 	/* allocate a VM */
 	g->ops.mm.get_default_va_sizes(NULL, &user_size, &kernel_size);
 	vm = nvgpu_vm_init(g, big_page_size,
@@ -1029,64 +1175,33 @@ int nvgpu_gr_obj_ctx_init_golden_context_image(struct gk20a *g)
 	if (vm == NULL) {
 		nvgpu_err(g, "vm init failed");
 		err = -ENOMEM;
-		goto out_release_tsg;
+		goto out;
 	}
 
-	/* allocate veid0 channel by specifying GR runlist id */
-	veid0_ch = nvgpu_channel_open_new(g, nvgpu_engine_get_gr_runlist_id(g),
-				true, 0, 0);
-	if (veid0_ch == NULL) {
-		nvgpu_err(g, "channel not available");
-		err = -ENOMEM;
-		goto out_release_vm;
-	}
-
-	veid0_ch->golden_ctx_init_ch = true;
-
-	/* bind the channel to the vm */
-	err = g->ops.mm.vm_bind_channel(vm, veid0_ch);
+	err = nvgpu_gr_golden_ctx_prepare_inst_block(g, &inst_block, vm);
 	if (err != 0) {
-		nvgpu_err(g, "could not bind vm");
-		goto out_release_ch;
+		goto free_vm;
 	}
 
-	/* bind the channel to the tsg */
-	err = nvgpu_tsg_bind_channel(tsg, veid0_ch);
+	err = nvgpu_gr_golden_ctx_prepare_gr_ctx(g, &subctx, &gr_ctx,
+		&mappings, vm);
 	if (err != 0) {
-		nvgpu_err(g, "unable to bind to tsg");
-		goto out_release_ch;
+		goto free_inst_block;
 	}
 
-	setup_bind_args.num_gpfifo_entries = 1024;
-	setup_bind_args.num_inflight_jobs = 0;
- #ifdef CONFIG_NVGPU_KERNEL_MODE_SUBMIT
-	setup_bind_args.flags = 0;
- #else
-	/*
-	 * Usermode gpfifo and userd buffers are just allocated here but they
-	 * are not used for submitting any work. Since these buffers are
-	 * nvgpu allocated ones, we don't specify userd_dmabuf_fd and
-	 * gpfifo_dmabuf_fd here.
-	 */
-	setup_bind_args.flags = NVGPU_SETUP_BIND_FLAGS_USERMODE_SUPPORT;
- #endif
-	err = nvgpu_channel_setup_bind(veid0_ch, &setup_bind_args);
-	if (err != 0) {
-		nvgpu_err(g, "unable to setup and bind channel");
-		goto out_release_ch;
-	}
+	nvgpu_gr_obj_ctx_commit_global_ctx_buffers(g, gr->global_ctx_buffer,
+		gr->config, &gr_ctx, true,
+		&mappings, true);
 
-#ifdef CONFIG_NVGPU_HAL_NON_FUSA
-	obj_class = MAXWELL_B;
-#else
-	obj_class = VOLTA_A;
-#endif
-
-	/* allocate obj_ctx to initialize golden image */
-	err = g->ops.gr.setup.alloc_obj_ctx(veid0_ch, obj_class, 0U);
+	/* commit gr ctx buffer */
+	nvgpu_gr_obj_ctx_commit_inst(g, &inst_block, &gr_ctx, subctx, &mappings);
+	err = nvgpu_gr_obj_ctx_alloc_golden_ctx_image(g, golden_image,
+		gr->global_ctx_buffer, gr->config, &gr_ctx,
+		true,
+		&mappings, &inst_block);
 	if (err != 0) {
-		nvgpu_err(g, "unable to alloc obj_ctx");
-		goto out_release_ch;
+		nvgpu_err(g, "create golden image failed err=%d", err);
+		goto unprepare_gr_ctx;
 	}
 
 	/* This state update is needed for vGPU case */
@@ -1094,12 +1209,12 @@ int nvgpu_gr_obj_ctx_init_golden_context_image(struct gk20a *g)
 
 	nvgpu_log(g, gpu_dbg_gr, "Golden context image initialized!");
 
-out_release_ch:
-	nvgpu_channel_close(veid0_ch);
-out_release_vm:
+unprepare_gr_ctx:
+	nvgpu_gr_golden_ctx_unprepare_gr_ctx(g, subctx, &gr_ctx, &mappings);
+free_inst_block:
+	nvgpu_free_inst_block(g, &inst_block);
+free_vm:
 	nvgpu_vm_put(vm);
-out_release_tsg:
-	nvgpu_ref_put(&tsg->refcount, nvgpu_tsg_release);
 out:
 	nvgpu_mutex_release(&golden_image->ctx_mutex);
 	gk20a_idle(g);
@@ -1120,7 +1235,8 @@ static int nvgpu_gr_obj_ctx_load_golden_image(struct gk20a *g,
 
 	/* init golden image */
 	err = nvgpu_gr_obj_ctx_alloc_golden_ctx_image(g, golden_image,
-		global_ctx_buffer, config, gr_ctx, subctx,
+		global_ctx_buffer, config, gr_ctx,
+		nvgpu_gr_obj_ctx_is_gfx_engine(g, subctx),
 		mappings, inst_block);
 	if (err != 0) {
 		nvgpu_err(g, "fail to init golden ctx image");
@@ -1183,10 +1299,14 @@ int nvgpu_gr_obj_ctx_alloc(struct gk20a *g,
 	}
 
 	nvgpu_gr_obj_ctx_commit_global_ctx_buffers(g, global_ctx_buffer,
-			config, gr_ctx, subctx, mappings, true);
+		config, gr_ctx, nvgpu_gr_obj_ctx_is_gfx_engine(g, subctx),
+		mappings, true);
 
 	/* commit gr ctx buffer */
-	nvgpu_gr_obj_ctx_commit_inst(g, inst_block, gr_ctx, subctx, mappings);
+	nvgpu_gr_obj_ctx_commit_inst(g, inst_block, gr_ctx,
+		nvgpu_is_enabled(g, NVGPU_SUPPORT_TSG_SUBCONTEXTS) ?
+			nvgpu_tsg_subctx_get_gr_subctx(subctx) : NULL,
+		mappings);
 
 	if (!nvgpu_gr_ctx_get_ctx_initialized(gr_ctx)) {
 		err = nvgpu_gr_obj_ctx_load_golden_image(g, golden_image,

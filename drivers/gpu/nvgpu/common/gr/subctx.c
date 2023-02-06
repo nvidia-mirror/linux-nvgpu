@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -87,6 +87,15 @@ struct nvgpu_gr_subctx *nvgpu_gr_subctx_alloc(struct gk20a *g)
 	nvgpu_log(g, gpu_dbg_gr, "done");
 
 	return subctx;
+}
+
+void nvgpu_golden_ctx_gr_subctx_free(struct gk20a *g,
+		struct nvgpu_gr_subctx *gr_subctx, struct vm_gk20a *vm)
+{
+	nvgpu_log(g, gpu_dbg_gr, " ");
+	nvgpu_dma_unmap_free(vm, &gr_subctx->ctx_header);
+	nvgpu_kfree(g, gr_subctx);
+	nvgpu_log(g, gpu_dbg_gr, "done");
 }
 
 void nvgpu_gr_subctx_free(struct gk20a *g,

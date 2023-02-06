@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2022-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -65,4 +65,16 @@ struct nvgpu_gr_ctx_mappings {
 	 */
 	struct nvgpu_list_node subctx_list;
 };
+
+int nvgpu_gr_ctx_mappings_map_global_ctx_buffers(struct gk20a *g,
+	struct nvgpu_gr_global_ctx_buffer_desc *global_ctx_buffer,
+	bool support_gfx,
+	struct nvgpu_gr_ctx_mappings *mappings,
+	bool vpr);
+void nvgpu_gr_ctx_mappings_unmap_global_ctx_buffers(
+	struct nvgpu_gr_global_ctx_buffer_desc *global_ctx_buffer,
+	struct nvgpu_gr_ctx_mappings *mappings);
+void nvgpu_gr_ctx_mappings_unmap_ctx_buffer(struct nvgpu_gr_ctx *ctx,
+	u32 index, struct nvgpu_gr_ctx_mappings *mappings);
+
 #endif /* NVGPU_GR_CTX_MAPPINGS_PRIV_H */
