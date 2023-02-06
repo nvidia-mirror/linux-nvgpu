@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -134,6 +134,7 @@ static inline u32 *sim_recv_ring_bfr(struct gk20a *g, u32 byte_offset)
 static int rpc_recv_poll(struct gk20a *g)
 {
 	u64 recv_phys_addr;
+	u64 nvgpu_mem_addr;
 
 	/* XXX This read is not required (?) */
 	/*pVGpu->recv_ring_get = VGPU_REG_RD32(pGpu, NV_VGPU_RECV_GET);*/
@@ -157,10 +158,14 @@ static int rpc_recv_poll(struct gk20a *g)
 		recv_phys_addr = (u64)recv_phys_addr_hi << 32 |
 				 (u64)recv_phys_addr_lo << sim_dma_addr_lo_b();
 
-		if (recv_phys_addr !=
-				nvgpu_mem_get_addr(g, &g->sim->msg_bfr)) {
-			nvgpu_err(g, "%s Error in RPC reply",
-				__func__);
+		nvgpu_mem_addr = nvgpu_mem_get_addr(g, &g->sim->msg_bfr);
+
+		if (recv_phys_addr != nvgpu_mem_addr) {
+			nvgpu_err(g, "%s Error in RPC reply: "
+					"recv_phys_addr(0x%llx), "
+					"nvgpu_mem_addr(0x%llx)",
+					__func__, recv_phys_addr,
+					nvgpu_mem_addr);
 			return -1;
 		}
 
