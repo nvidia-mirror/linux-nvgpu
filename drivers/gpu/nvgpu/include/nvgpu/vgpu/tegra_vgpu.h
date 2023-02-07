@@ -28,6 +28,10 @@
 #include <nvgpu/types.h>
 #include <nvgpu/ecc.h>	/* For NVGPU_ECC_STAT_NAME_MAX_SIZE */
 
+#ifdef CONFIG_NVGPU_NEXT
+#include <tegra_vgpu_next.h>
+#endif
+
 enum {
 	TEGRA_VGPU_MODULE_GPU = 0,
 };
@@ -752,6 +756,9 @@ struct tegra_vgpu_cmd_msg {
 		struct tegra_vgpu_alloc_obj_ctx_params alloc_obj_ctx;
 		struct tegra_vgpu_preemption_mode_params preemption_mode;
 		struct tegra_vgpu_l2_sector_promotion_params l2_promotion;
+#ifdef CONFIG_NVGPU_NEXT
+		TEGRA_VGPU_PARAMS_NEXT
+#endif
 		char padding[184];
 	} params;
 };
