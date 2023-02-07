@@ -64,6 +64,8 @@ struct gops_pbdma {
 	u32 (*acquire_val)(u64 timeout);
 	u32 (*read_data)(struct gk20a *g, u32 pbdma_id);
 	void (*reset_header)(struct gk20a *g, u32 pbdma_id);
+	void (*reset_method)(struct gk20a *g, u32 pbdma_id,
+			u32 pbdma_method_index);
 	u32 (*device_fatal_0_intr_descs)(void);
 	u32 (*channel_fatal_0_intr_descs)(void);
 	u32 (*restartable_0_intr_descs)(void);

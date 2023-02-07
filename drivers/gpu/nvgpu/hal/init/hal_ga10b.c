@@ -1079,6 +1079,7 @@ static const struct gops_pbdma ga10b_ops_pbdma = {
 	.set_clear_intr_offsets = ga10b_pbdma_set_clear_intr_offsets,
 	.read_data = ga10b_pbdma_read_data,
 	.reset_header = ga10b_pbdma_reset_header,
+	.reset_method = ga10b_pbdma_reset_method,
 	.device_fatal_0_intr_descs = ga10b_pbdma_device_fatal_0_intr_descs,
 	.channel_fatal_0_intr_descs = ga10b_pbdma_channel_fatal_0_intr_descs,
 	.restartable_0_intr_descs = gm20b_pbdma_restartable_0_intr_descs,

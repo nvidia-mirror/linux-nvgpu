@@ -444,12 +444,12 @@ static bool ga10b_pbdma_handle_intr_0_legacy(struct gk20a *g, u32 pbdma_id,
 
 	if ((pbdma_intr_0 & pbdma_intr_0_pbentry_pending_f()) != 0U) {
 		g->ops.pbdma.reset_header(g, pbdma_id);
-		ga10b_pbdma_reset_method(g, pbdma_id, 0);
+		g->ops.pbdma.reset_method(g, pbdma_id, 0);
 		recover = true;
 	}
 
 	if ((pbdma_intr_0 & pbdma_intr_0_method_pending_f()) != 0U) {
-		ga10b_pbdma_reset_method(g, pbdma_id, 0);
+		g->ops.pbdma.reset_method(g, pbdma_id, 0);
 		recover = true;
 	}
 
@@ -465,8 +465,7 @@ static bool ga10b_pbdma_handle_intr_0_legacy(struct gk20a *g, u32 pbdma_id,
 		for (i = 0U; i < 4U; i++) {
 			if (g->ops.pbdma.is_sw_method_subch(g,
 					pbdma_id, i)) {
-				ga10b_pbdma_reset_method(g,
-						pbdma_id, i);
+				g->ops.pbdma.reset_method(g, pbdma_id, i);
 			}
 		}
 		recover = true;
