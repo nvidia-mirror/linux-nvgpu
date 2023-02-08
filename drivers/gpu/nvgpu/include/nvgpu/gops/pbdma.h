@@ -96,6 +96,8 @@ struct gops_pbdma {
 		u32 pbdma_intr_0);
 	bool (*handle_intr_0_acquire)(struct gk20a *g, u32 pbdma_id,
 			u32 pbdma_intr_0, u32 *error_notifier);
+	bool (*is_sw_method_subch)(struct gk20a *g, u32 pbdma_id,
+						u32 pbdma_method_index);
 
 	/** NON FUSA */
 	void (*syncpt_debug_dump)(struct gk20a *g,

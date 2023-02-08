@@ -146,7 +146,7 @@ static const char *const pbdma_intr_fault_type_desc[] = {
 	"PBSEG badsplit", "SIGNATURE bad"
 };
 
-static bool ga10b_pbdma_is_sw_method_subch(struct gk20a *g, u32 pbdma_id,
+bool ga10b_pbdma_is_sw_method_subch(struct gk20a *g, u32 pbdma_id,
 						u32 pbdma_method_index)
 {
 	u32 pbdma_method_stride;
@@ -463,7 +463,7 @@ static bool ga10b_pbdma_handle_intr_0_legacy(struct gk20a *g, u32 pbdma_id,
 		g->ops.pbdma.reset_header(g, pbdma_id);
 
 		for (i = 0U; i < 4U; i++) {
-			if (ga10b_pbdma_is_sw_method_subch(g,
+			if (g->ops.pbdma.is_sw_method_subch(g,
 					pbdma_id, i)) {
 				ga10b_pbdma_reset_method(g,
 						pbdma_id, i);

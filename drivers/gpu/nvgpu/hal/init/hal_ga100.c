@@ -1080,6 +1080,7 @@ static const struct gops_pbdma ga100_ops_pbdma = {
 	.set_channel_info_veid = gv11b_pbdma_set_channel_info_veid,
 	.set_channel_info_chid = ga10b_pbdma_set_channel_info_chid,
 	.set_intr_notify = ga10b_pbdma_set_intr_notify,
+	.is_sw_method_subch = ga10b_pbdma_is_sw_method_subch,
 	.report_error = ga10b_pbdma_report_error,
 #ifdef CONFIG_NVGPU_HAL_NON_FUSA
 	.pbdma_force_ce_split = ga100_pbdma_force_ce_split,
