@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -143,6 +143,12 @@ struct nvgpu_gr_config {
 	 * Array is indexed by GPC physical-id.
 	 */
 	u32 *gpc_tpc_mask_physical;
+	/**
+	 * 2D array to map TPC physical id to logical id.
+	 * Array is indexed by GPC physical id and TPC is indexed using
+	 * logical id.
+	 */
+	u32 **gpc_tpc_physical_id_map;
 	/**
 	 * 2-D array to hold mask of TPCs attached to a PES unit
 	 * in a GPC.
