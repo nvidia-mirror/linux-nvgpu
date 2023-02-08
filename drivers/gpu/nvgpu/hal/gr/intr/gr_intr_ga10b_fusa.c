@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -34,6 +34,7 @@
 #include <nvgpu/gr/gr_intr.h>
 
 #include "common/gr/gr_priv.h"
+#include "common/gr/gr_config_priv.h"
 #include "common/gr/gr_intr_priv.h"
 #include "hal/gr/intr/gr_intr_gm20b.h"
 #include "hal/gr/intr/gr_intr_gp10b.h"
@@ -810,11 +811,14 @@ static void ga10b_gr_intr_handle_tpc_sm_rams_ecc_exception(struct gk20a *g,
 {
 	u32 gpc_stride = nvgpu_get_litter_value(g, GPU_LIT_GPC_STRIDE);
 	u32 tpc_in_gpc_stride = nvgpu_get_litter_value(g, GPU_LIT_TPC_IN_GPC_STRIDE);
-	u32 offset;
+	u32 offset, gpc_phys_id, tpc_phys_id;
 	u32 rams_ecc_status;
 	u32 rams_uncorrected_err_count_delta = 0U;
 	bool is_rams_ecc_uncorrected_total_err_overflow = false;
 	struct nvgpu_gr_sm_ecc_status ecc_status;
+	u32 cur_gr_instance = nvgpu_gr_get_cur_instance_id(g);
+	struct nvgpu_gr *gr = nvgpu_gr_get_cur_instance_ptr(g);
+	struct nvgpu_gr_config *config = gr->config;
 
 	offset = nvgpu_safe_add_u32(
 			nvgpu_safe_mult_u32(gpc_stride, gpc),
@@ -852,9 +856,11 @@ static void ga10b_gr_intr_handle_tpc_sm_rams_ecc_exception(struct gk20a *g,
 				rams_uncorrected_err_count_delta,
 				BIT32(gr_pri_gpc0_tpc0_sm_rams_ecc_uncorrected_err_count_total_s()));
 		}
-		g->ecc.gr.sm_rams_ecc_uncorrected_err_count[gpc][tpc].counter =
-		  nvgpu_wrapping_add_u32(
-			g->ecc.gr.sm_rams_ecc_uncorrected_err_count[gpc][tpc].counter,
+		gpc_phys_id = nvgpu_grmgr_get_gr_gpc_phys_id(g, cur_gr_instance, gpc);
+		tpc_phys_id = config->gpc_tpc_physical_id_map[gpc_phys_id][tpc];
+		g->ecc.gr.sm_rams_ecc_uncorrected_err_count[gpc_phys_id][tpc_phys_id].counter =
+			nvgpu_wrapping_add_u32(
+		g->ecc.gr.sm_rams_ecc_uncorrected_err_count[gpc_phys_id][tpc_phys_id].counter,
 			rams_uncorrected_err_count_delta);
 		nvgpu_writel(g, nvgpu_safe_add_u32(
 			gr_pri_gpc0_tpc0_sm_rams_ecc_uncorrected_err_count_r(), offset),
