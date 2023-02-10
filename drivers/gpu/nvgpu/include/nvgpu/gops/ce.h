@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -142,6 +142,8 @@ struct gops_ce {
 	void (*init_prod_values)(struct gk20a *g);
 	void (*halt_engine)(struct gk20a *g, const struct nvgpu_device *dev);
 	void (*request_idle)(struct gk20a *g);
+	void (*init_pce2lce_configs)(struct gk20a *g, u32 *pce2lce_configs);
+	void (*init_grce_configs)(struct gk20a *g, u32 *grce_configs);
 
 	/*
 	 * @brief Enable/disable ce interrupts.
