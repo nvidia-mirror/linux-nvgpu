@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -554,10 +554,6 @@ struct nvgpu_channel {
 	 */
 	bool is_privileged_channel;
 
-	/**
-	 * nvgpu created channel to initialize the golden context image.
-	 */
-	bool golden_ctx_init_ch;
 #ifdef CONFIG_NVGPU_DEBUGGER
 	/**
 	 * MMU Debugger Mode is enabled for this channel if refcnt > 0
