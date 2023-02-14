@@ -453,10 +453,12 @@ static bool ga10b_pbdma_handle_intr_0_legacy(struct gk20a *g, u32 pbdma_id,
 		recover = true;
 	}
 
-	if ((pbdma_intr_0 & pbdma_intr_0_pbcrc_pending_f()) != 0U) {
-		*error_notifier =
-			NVGPU_ERR_NOTIFIER_PBDMA_PUSHBUFFER_CRC_MISMATCH;
-		recover = true;
+	if (g->ops.pbdma.intr_0_pbcrc_pending != NULL) {
+		if ((pbdma_intr_0 & g->ops.pbdma.intr_0_pbcrc_pending()) != 0U) {
+			*error_notifier =
+				NVGPU_ERR_NOTIFIER_PBDMA_PUSHBUFFER_CRC_MISMATCH;
+			recover = true;
+		}
 	}
 
 	if ((pbdma_intr_0 & pbdma_intr_0_device_pending_f()) != 0U) {
@@ -622,6 +624,11 @@ u32 ga10b_pbdma_get_mmu_fault_id(struct gk20a *g, u32 pbdma_id)
 u32 ga10b_pbdma_get_num_of_pbdmas(void)
 {
 	return pbdma_cfg0__size_1_v();
+}
+
+u32 ga10b_pbdma_intr_0_pbcrc_pending(void)
+{
+	return pbdma_intr_0_pbcrc_pending_f();
 }
 
 bool ga10b_pbdma_handle_intr_0_acquire(struct gk20a *g, u32 pbdma_id,

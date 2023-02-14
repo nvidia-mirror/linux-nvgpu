@@ -81,4 +81,5 @@ void ga10b_pbdma_dump_intr_0(struct gk20a *g, u32 pbdma_id,
 				u32 pbdma_intr_0);
 bool ga10b_pbdma_is_sw_method_subch(struct gk20a *g, u32 pbdma_id,
 						u32 pbdma_method_index);
+u32 ga10b_pbdma_intr_0_pbcrc_pending(void);
 #endif /* NVGPU_PBDMA_GA10B_H */
