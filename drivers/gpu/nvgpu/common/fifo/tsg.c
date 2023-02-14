@@ -795,7 +795,7 @@ int nvgpu_tsg_unbind_channel_hw_state_check(struct nvgpu_tsg *tsg,
 	int err = 0;
 
 	nvgpu_rwsem_down_read(&tsg->ch_list_lock);
-	g->ops.channel.read_state(g, ch, &hw_state);
+	g->ops.channel.read_state(g, ch->runlist->id, ch->chid, &hw_state);
 	nvgpu_rwsem_up_read(&tsg->ch_list_lock);
 
 	if (g->ops.tsg.unbind_channel_check_hw_next != NULL) {

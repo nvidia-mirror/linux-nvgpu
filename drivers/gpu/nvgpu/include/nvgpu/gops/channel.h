@@ -135,7 +135,7 @@ struct gops_channel {
 	void (*free_inst)(struct gk20a *g, struct nvgpu_channel *ch);
 	void (*bind)(struct nvgpu_channel *ch);
 	void (*unbind)(struct nvgpu_channel *ch);
-	void (*read_state)(struct gk20a *g, struct nvgpu_channel *ch,
+	void (*read_state)(struct gk20a *g, u32 runlist_id, u32 chid,
 			struct nvgpu_channel_hw_state *state);
 	void (*force_ctx_reload)(struct nvgpu_channel *ch);
 	void (*abort_clean_up)(struct nvgpu_channel *ch);

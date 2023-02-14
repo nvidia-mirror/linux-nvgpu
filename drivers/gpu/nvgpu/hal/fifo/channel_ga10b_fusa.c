@@ -182,7 +182,7 @@ static const char * const chram_status_str[] = {
 	[runlist_chram_channel_acquire_fail_m()] = "acquire_fail",
 };
 
-void ga10b_channel_read_state(struct gk20a *g, struct nvgpu_channel *ch,
+void ga10b_channel_read_state(struct gk20a *g, u32 runlist_id, u32 chid,
 			struct nvgpu_channel_hw_state *state)
 {
 	u32 reg = 0U;
@@ -190,13 +190,11 @@ void ga10b_channel_read_state(struct gk20a *g, struct nvgpu_channel *ch,
 	unsigned long status_str_bits = 0UL;
 	u32 status_str_count = 0U;
 	bool idle = true;
-	struct nvgpu_runlist *runlist = NULL;
-	const char **chram_status_list = NULL;
-
-	runlist = ch->runlist;
+	struct nvgpu_runlist *runlist = g->fifo.runlists[runlist_id];
+	const char *chram_status_list[NUM_STATUS_STR] = {};
 
 	reg = nvgpu_chram_bar0_readl(g, runlist,
-			runlist_chram_channel_r(ch->chid));
+			runlist_chram_channel_r(chid));
 
 	state->next = runlist_chram_channel_next_v(reg) ==
 				runlist_chram_channel_next_true_v();
@@ -217,14 +215,6 @@ void ga10b_channel_read_state(struct gk20a *g, struct nvgpu_channel *ch,
 
 	/* Construct status string for below status fields */
 	status_str_bits = (u64)(reg & ga10b_channel_status_mask());
-
-	/* Allocate memory for status string list */
-	chram_status_list = nvgpu_kzalloc(g, (sizeof(char *) * NUM_STATUS_STR));
-	if (chram_status_list == NULL) {
-		nvgpu_err(g, "Status string list pointer allocation failed");
-		state->status_string[0] = '\0';
-		return;
-	}
 
 	/*
 	 * Status is true if the corresponding bit is set.
@@ -249,15 +239,13 @@ void ga10b_channel_read_state(struct gk20a *g, struct nvgpu_channel *ch,
 
 	nvgpu_log_info(g, "Channel id:%d state next:%s enabled:%s ctx_reload:%s"
 		" busy:%s pending_acquire:%s eng_faulted:%s status_string:%s",
-		ch->chid,
+		chid,
 		state->next ? "true" : "false",
 		state->enabled ? "true" : "false",
 		state->ctx_reload ? "true" : "false",
 		state->busy ? "true" : "false",
 		state->pending_acquire ? "true" : "false",
 		state->eng_faulted ? "true" : "false", state->status_string);
-
-	nvgpu_kfree(g, chram_status_list);
 }
 
 void ga10b_channel_reset_faulted(struct gk20a *g, struct nvgpu_channel *ch,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1671,10 +1671,10 @@ static const char *f_channel_debug_dump[] = {
 	"info_alloc_fail",
 };
 
-static void stub_channel_read_state(struct gk20a *g, struct nvgpu_channel *ch,
+static void stub_channel_read_state(struct gk20a *g, u32 runlist_id, u32 chid,
 		struct nvgpu_channel_hw_state *state)
 {
-	stub[0].chid = ch->chid;
+	stub[0].chid = chid;
 }
 
 static void stub_ramfc_capture_ram_dump(struct gk20a *g,

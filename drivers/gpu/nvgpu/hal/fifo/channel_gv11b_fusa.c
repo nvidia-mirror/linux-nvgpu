@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -92,12 +92,12 @@ u32 gv11b_channel_count(struct gk20a *g)
 	return ccsr_channel__size_1_v();
 }
 
-void gv11b_channel_read_state(struct gk20a *g, struct nvgpu_channel *ch,
+void gv11b_channel_read_state(struct gk20a *g, u32 runlist_id, u32 chid,
 		struct nvgpu_channel_hw_state *state)
 {
-	u32 reg = nvgpu_readl(g, ccsr_channel_r(ch->chid));
+	u32 reg = nvgpu_readl(g, ccsr_channel_r(chid));
 
-	gk20a_channel_read_state(g, ch, state);
+	gk20a_channel_read_state(g, runlist_id, chid, state);
 
 	state->eng_faulted = ccsr_channel_eng_faulted_v(reg) ==
 		ccsr_channel_eng_faulted_true_v();

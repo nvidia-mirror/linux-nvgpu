@@ -2244,7 +2244,8 @@ void nvgpu_channel_debug_dump_all(struct gk20a *g,
 		}
 #endif
 
-		g->ops.channel.read_state(g, ch, &info->hw_state);
+		g->ops.channel.read_state(g, ch->runlist->id, ch->chid,
+					&info->hw_state);
 		g->ops.ramfc.capture_ram_dump(g, ch, info);
 
 		nvgpu_channel_put(ch);

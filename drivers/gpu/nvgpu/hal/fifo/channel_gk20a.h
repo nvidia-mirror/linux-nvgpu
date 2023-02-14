@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,7 +31,7 @@ struct nvgpu_channel_dump_info;
 
 void gk20a_channel_enable(struct nvgpu_channel *ch);
 void gk20a_channel_disable(struct nvgpu_channel *ch);
-void gk20a_channel_read_state(struct gk20a *g, struct nvgpu_channel *ch,
+void gk20a_channel_read_state(struct gk20a *g, u32 runlist_id, u32 chid,
 		struct nvgpu_channel_hw_state *state);
 
 #ifdef CONFIG_NVGPU_HAL_NON_FUSA

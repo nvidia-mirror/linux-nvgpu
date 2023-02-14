@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -195,7 +195,8 @@ int test_gk20a_channel_read_state(struct unit_module *m,
 
 			nvgpu_writel(g, ccsr_channel_r(ch->chid), v);
 
-			gk20a_channel_read_state(g, ch, &state);
+			gk20a_channel_read_state(g, ch->runlist->id, ch->chid,
+						&state);
 
 			unit_assert(state.next == next, goto done);
 			unit_assert(state.enabled == enabled, goto done);

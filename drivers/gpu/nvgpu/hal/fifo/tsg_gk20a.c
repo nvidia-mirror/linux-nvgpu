@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -53,7 +53,8 @@ void gk20a_tsg_enable(struct nvgpu_tsg *tsg)
 	nvgpu_list_for_each_entry(ch, &tsg->ch_list, nvgpu_channel, ch_entry) {
 		struct nvgpu_channel_hw_state hw_state;
 
-		g->ops.channel.read_state(g, ch, &hw_state);
+		g->ops.channel.read_state(g, ch->runlist->id, ch->chid,
+					&hw_state);
 
 		if (hw_state.next || hw_state.ctx_reload) {
 			g->ops.channel.enable(ch);
@@ -63,7 +64,8 @@ void gk20a_tsg_enable(struct nvgpu_tsg *tsg)
 	nvgpu_list_for_each_entry(ch, &tsg->ch_list, nvgpu_channel, ch_entry) {
 		struct nvgpu_channel_hw_state hw_state;
 
-		g->ops.channel.read_state(g, ch, &hw_state);
+		g->ops.channel.read_state(g, ch->runlist->id, ch->chid,
+					&hw_state);
 
 		if (hw_state.next || hw_state.ctx_reload) {
 			continue;
