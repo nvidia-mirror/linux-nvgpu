@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -415,7 +415,7 @@ int test_gr_obj_ctx_error_injection(struct unit_module *m,
 	}
 
 	/* Cleanup */
-	nvgpu_tsg_subctx_unbind_channel(tsg, channel);
+	nvgpu_tsg_subctx_unbind_channel(tsg, channel, false);
 	nvgpu_gr_ctx_free(g, gr_ctx, global_desc);
 	nvgpu_free_gr_ctx_struct(g, gr_ctx);
 	nvgpu_gr_ctx_desc_free(g, desc);

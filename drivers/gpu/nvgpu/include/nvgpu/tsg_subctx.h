@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2022-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,6 +28,27 @@ struct gk20a;
 struct nvgpu_tsg;
 struct nvgpu_tsg_subctx;
 struct nvgpu_channel;
+
+/**
+ * @brief Check if the TSG subcontext has channels bound to it.
+ *
+ * @param tsg [in]		Pointer to TSG struct.
+ * @param subctx_id [in]	Subcontext ID.
+ *
+ * - Loop through the #subctx_list in #tsg to check if the subctx
+ *   exists for the provided subctx_id.
+ * - If it exists, check if the channels list is empty or not and set
+ *   chs_bound accordingly.
+ * - Else return false.
+ *
+ * @return false if subcontext does not exist for supplied subctx_id.
+ * @return false if subcontext exists for supplied subctx_id and ch list
+ *		 is empty.
+ * @return true  if subcontext exists for supplied subctx_id and ch list
+ *		 is not empty.
+ */
+bool nvgpu_tsg_subctx_has_channels_bound(struct nvgpu_tsg *tsg, u32 subctx_id);
+
 /**
  * @brief Bind a channel to the TSG subcontext.
  *
@@ -56,10 +77,12 @@ int nvgpu_tsg_subctx_bind_channel(struct nvgpu_tsg *tsg,
  *
  * @param tsg [in]		Pointer to TSG struct.
  * @param ch [in]		Pointer to Channel struct.
+ * @param force [in]		Free the VEID if force is true.
  *
  * - Validate that #subctx is allocated for the channel #ch.
  * - Remove the channel from the subctx #ch_list.
  * - If the subctx #ch_list is empty
+ *   - Free the VEID corresponding to the channel if force is true.
  *   - Update the instance blocks of all channels to remove the
  *     subctx pdb.
  *   - Invoke g->ops.gr.setup.free_subctx to free the GR subcontext
@@ -70,7 +93,7 @@ int nvgpu_tsg_subctx_bind_channel(struct nvgpu_tsg *tsg,
  *     sequence: mappings -> gr_subctx -> tsg_subctx
  */
 void nvgpu_tsg_subctx_unbind_channel(struct nvgpu_tsg *tsg,
-				     struct nvgpu_channel *ch);
+				     struct nvgpu_channel *ch, bool force);
 
 /**
  * @brief Allocate GR subcontext for a TSG subcontext.

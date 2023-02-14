@@ -317,30 +317,25 @@ int nvgpu_tsg_create_subcontext(struct gk20a *g, struct nvgpu_tsg *tsg,
 	return 0;
 }
 
-int nvgpu_tsg_delete_subcontext(struct gk20a *g, struct nvgpu_tsg *tsg,
-				u32 max_subctx_count, u32 veid)
+void nvgpu_tsg_delete_subcontext(struct gk20a *g, struct nvgpu_tsg *tsg,
+				 u32 veid)
 {
-	if (veid >= max_subctx_count) {
-		nvgpu_err(g, "Invalid VEID specified %u", veid);
-		return -EINVAL;
-	}
-
 	nvgpu_mutex_acquire(&tsg->veid_alloc_lock);
 
 	if (veid == 0U) {
 		if (!tsg->sync_veid) {
-			nvgpu_err(g, "VEID 0 not allocated");
+			nvgpu_log_info(g, "VEID 0 not allocated");
 			nvgpu_mutex_release(&tsg->veid_alloc_lock);
-			return -EINVAL;
+			return;
 		}
 
 		tsg->sync_veid = false;
 		tsg->subctx_vms[veid] = NULL;
 	} else {
 		if (!nvgpu_test_bit(veid - MAX_SYNC_SUBCONTEXTS, tsg->async_veids)) {
-			nvgpu_err(g, "VEID %u not allocated", veid);
+			nvgpu_log_info(g, "VEID %u not allocated", veid);
 			nvgpu_mutex_release(&tsg->veid_alloc_lock);
-			return -EINVAL;
+			return;
 		}
 		nvgpu_clear_bit(veid - MAX_SYNC_SUBCONTEXTS, tsg->async_veids);
 		tsg->subctx_vms[veid - MAX_SYNC_SUBCONTEXTS] = NULL;
@@ -349,6 +344,23 @@ int nvgpu_tsg_delete_subcontext(struct gk20a *g, struct nvgpu_tsg *tsg,
 	nvgpu_mutex_release(&tsg->veid_alloc_lock);
 
 	nvgpu_log_info(g, "Freed VEID %u", veid);
+}
+
+int nvgpu_tsg_user_delete_subcontext(struct gk20a *g, struct nvgpu_tsg *tsg,
+				     u32 max_subctx_count, u32 veid)
+{
+	if (veid >= max_subctx_count) {
+		nvgpu_err(g, "Invalid VEID specified %u", veid);
+		return -EINVAL;
+	}
+
+	if (nvgpu_tsg_subctx_has_channels_bound(tsg, veid)) {
+		nvgpu_err(g, "Channels should be unbound before freeing the"
+			      " subcontext");
+		return -EINVAL;
+	}
+
+	nvgpu_tsg_delete_subcontext(g, tsg, veid);
 
 	return 0;
 }
@@ -564,7 +576,7 @@ static bool nvgpu_tsg_is_multi_channel(struct nvgpu_tsg *tsg)
 }
 
 static int nvgpu_tsg_unbind_channel_common(struct nvgpu_tsg *tsg,
-		struct nvgpu_channel *ch)
+		struct nvgpu_channel *ch, bool force)
 {
 	struct gk20a *g = ch->g;
 	int err;
@@ -635,7 +647,7 @@ static int nvgpu_tsg_unbind_channel_common(struct nvgpu_tsg *tsg,
 
 	nvgpu_rwsem_down_write(&tsg->ch_list_lock);
 	if (!nvgpu_engine_is_multimedia_runlist_id(g, ch->runlist->id)) {
-		nvgpu_tsg_subctx_unbind_channel(tsg, ch);
+		nvgpu_tsg_subctx_unbind_channel(tsg, ch, force);
 	}
 	nvgpu_list_del(&ch->ch_entry);
 	tsg->ch_count = nvgpu_safe_sub_u32(tsg->ch_count, 1U);
@@ -688,7 +700,7 @@ int nvgpu_tsg_unbind_channel(struct nvgpu_tsg *tsg, struct nvgpu_channel *ch,
 	nvgpu_mutex_acquire(&tsg->ctx_init_lock);
 
 	if (!force) {
-		err = nvgpu_tsg_unbind_channel_common(tsg, ch);
+		err = nvgpu_tsg_unbind_channel_common(tsg, ch, force);
 
 		/* Let userspace retry the unbind if HW is busy. */
 		if (err == -EAGAIN) {
@@ -697,7 +709,7 @@ int nvgpu_tsg_unbind_channel(struct nvgpu_tsg *tsg, struct nvgpu_channel *ch,
 		}
 	} else {
 		do {
-			err = nvgpu_tsg_unbind_channel_common(tsg, ch);
+			err = nvgpu_tsg_unbind_channel_common(tsg, ch, force);
 			/*
 			 * Retry for few iterations if the HW is busy before failing unbind
 			 * if the channel is getting killed, otherwise it can lead to faults.
@@ -778,7 +790,7 @@ fail_common:
 	g->ops.channel.unbind(ch);
 
 	nvgpu_rwsem_down_write(&tsg->ch_list_lock);
-	nvgpu_tsg_subctx_unbind_channel(tsg, ch);
+	nvgpu_tsg_subctx_unbind_channel(tsg, ch, force);
 	nvgpu_list_del(&ch->ch_entry);
 	ch->tsgid = NVGPU_INVALID_TSG_ID;
 	tsg->ch_count = nvgpu_safe_sub_u32(tsg->ch_count, 1U);

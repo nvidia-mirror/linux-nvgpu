@@ -353,19 +353,32 @@ int nvgpu_tsg_create_subcontext(struct gk20a *g, struct nvgpu_tsg *tsg,
  *
  * @param g [in]		The GPU driver struct.
  * @param tsg [in]		Pointer to TSG struct.
- * @param max_subctx_count [in] Maximum subcontexts supported for the
- *                              gpu instance.
  * @param veid [in]		VEID to be freed.
  *
- * - Validate #veid. If invalid, return -EINVAL.
- * - Else free the VEID by resetting either #sync_veid or bit from #async_veids
- *   if allocated. If not allocated, return -EINVAL.
+ * - Free the VEID by resetting either #sync_veid or bit from #async_veids
+ *   if allocated.
+ */
+void nvgpu_tsg_delete_subcontext(struct gk20a *g, struct nvgpu_tsg *tsg,
+				 u32 veid);
+
+/**
+ * @brief Free subcontext VEID from a TSG from an ioctl.
+ *
+ * @param g [in]		The GPU driver struct.
+ * @param tsg [in]		Pointer to TSG struct.
+ * @param max_subctx_count [in] Maximum supported subcontexts.
+ * @param veid [in]		VEID to be freed.
+ *
+ * - Validate the veid. If it is not less than max_subctx_count return -EINVAL.
+ * - If the TSG subcontext corresponding to veid has channels bound then return
+ *   error.
+ * - Call nvgpu_tsg_create_subcontext.
  *
  * @return 0 in case of success, < 0 in case of failure.
  * @retval -EINVAL if veid is invalid.
  */
-int nvgpu_tsg_delete_subcontext(struct gk20a *g, struct nvgpu_tsg *tsg,
-				u32 max_subctx_count, u32 veid);
+int nvgpu_tsg_user_delete_subcontext(struct gk20a *g, struct nvgpu_tsg *tsg,
+				     u32 max_subctx_count, u32 veid);
 
 /**
  * @brief Mark sync subctx created if channel is opened with implicit subctx.

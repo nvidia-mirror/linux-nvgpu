@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2022-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -55,6 +55,30 @@ static struct nvgpu_tsg_subctx *nvgpu_tsg_subctx_from_id(struct nvgpu_tsg *tsg,
 	return NULL;
 }
 
+bool nvgpu_tsg_subctx_has_channels_bound(struct nvgpu_tsg *tsg, u32 subctx_id)
+{
+	struct nvgpu_tsg_subctx *subctx = NULL;
+	struct gk20a *g = tsg->g;
+	bool chs_bound;
+
+	nvgpu_log(g, gpu_dbg_gr, " ");
+
+	nvgpu_rwsem_down_read(&tsg->ch_list_lock);
+
+	subctx = nvgpu_tsg_subctx_from_id(tsg, subctx_id);
+	if (subctx == NULL) {
+		nvgpu_log_info(g, "Subctx %u not allocated", subctx_id);
+		nvgpu_rwsem_up_read(&tsg->ch_list_lock);
+		return false;
+	}
+
+	chs_bound = !nvgpu_list_empty(&subctx->ch_list);
+
+	nvgpu_rwsem_up_read(&tsg->ch_list_lock);
+
+	return chs_bound;
+}
+
 int nvgpu_tsg_subctx_bind_channel(struct nvgpu_tsg *tsg,
 				  struct nvgpu_channel *ch)
 {
@@ -103,7 +127,7 @@ add_ch_subctx:
 }
 
 void nvgpu_tsg_subctx_unbind_channel(struct nvgpu_tsg *tsg,
-				     struct nvgpu_channel *ch)
+				     struct nvgpu_channel *ch, bool force)
 {
 	struct nvgpu_tsg_subctx *subctx;
 	struct gk20a *g = tsg->g;
@@ -120,6 +144,10 @@ void nvgpu_tsg_subctx_unbind_channel(struct nvgpu_tsg *tsg,
 	nvgpu_list_del(&ch->subctx_entry);
 
 	if (nvgpu_list_empty(&subctx->ch_list)) {
+		if (force) {
+			nvgpu_tsg_delete_subcontext(g, tsg, ch->subctx_id);
+		}
+
 		if (g->ops.tsg.remove_subctx_channel_hw != NULL) {
 			g->ops.tsg.remove_subctx_channel_hw(ch);
 		}

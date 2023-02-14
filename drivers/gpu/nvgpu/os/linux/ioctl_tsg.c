@@ -1079,7 +1079,8 @@ static int nvgpu_tsg_ioctl_delete_subcontext(struct gk20a *g,
 
 	max_subctx_count = nvgpu_grmgr_get_gpu_instance_max_veid_count(g, gpu_instance_id);
 
-	err = nvgpu_tsg_delete_subcontext(g, tsg, max_subctx_count, args->veid);
+	err = nvgpu_tsg_user_delete_subcontext(g, tsg, max_subctx_count,
+					       args->veid);
 	if (err != 0) {
 		nvgpu_err(g, "Delete subcontext failed %d", err);
 	}
