@@ -1,7 +1,7 @@
 /*
  * GM20B Graphics
  *
- * Copyright (c) 2014-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1023,6 +1023,7 @@ static const struct gops_falcon gm20b_ops_falcon = {
 	.mailbox_write = gk20a_falcon_mailbox_write,
 #ifdef CONFIG_NVGPU_FALCON_DEBUG
 	.dump_falcon_stats = gk20a_falcon_dump_stats,
+	.dump_falcon_info = gk20a_falcon_dump_info,
 #endif
 #ifdef CONFIG_NVGPU_FALCON_NON_FUSA
 	.clear_halt_interrupt_status = gk20a_falcon_clear_halt_interrupt_status,

@@ -1644,6 +1644,7 @@ static const struct gops_falcon ga100_ops_falcon = {
 	.set_irq = gk20a_falcon_set_irq,
 #ifdef CONFIG_NVGPU_FALCON_DEBUG
 	.dump_falcon_stats = gk20a_falcon_dump_stats,
+	.dump_falcon_info = gk20a_falcon_dump_info,
 #endif
 	.clear_halt_interrupt_status = gk20a_falcon_clear_halt_interrupt_status,
 #ifdef CONFIG_NVGPU_FALCON_NON_FUSA

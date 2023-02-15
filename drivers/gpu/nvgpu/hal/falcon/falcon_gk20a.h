@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -86,6 +86,7 @@ void gk20a_falcon_set_irq(struct nvgpu_falcon *flcn, bool enable,
 
 #ifdef CONFIG_NVGPU_FALCON_DEBUG
 void gk20a_falcon_dump_stats(struct nvgpu_falcon *flcn);
+void gk20a_falcon_dump_info(struct nvgpu_falcon *flcn);
 #endif
 
 #if defined(CONFIG_NVGPU_FALCON_DEBUG) || defined(CONFIG_NVGPU_FALCON_NON_FUSA)

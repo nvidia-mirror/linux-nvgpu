@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -70,6 +70,7 @@ struct gops_falcon {
 			u32 intr_mask, u32 intr_dest);
 #ifdef CONFIG_NVGPU_FALCON_DEBUG
 	void (*dump_falcon_stats)(struct nvgpu_falcon *flcn);
+	void (*dump_falcon_info)(struct nvgpu_falcon *flcn);
 #endif
 #if defined(CONFIG_NVGPU_FALCON_DEBUG) || defined(CONFIG_NVGPU_FALCON_NON_FUSA)
 	int (*copy_from_dmem)(struct nvgpu_falcon *flcn,

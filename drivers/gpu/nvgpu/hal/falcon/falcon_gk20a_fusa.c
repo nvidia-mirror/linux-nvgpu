@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -600,6 +600,18 @@ void gk20a_falcon_dump_stats(struct nvgpu_falcon *flcn)
 		nvgpu_falcon_readl(flcn, falcon_falcon_curctx_r()));
 	nvgpu_err(g, "falcon_falcon_nxtctx_r : 0x%x",
 		nvgpu_falcon_readl(flcn, falcon_falcon_nxtctx_r()));
+
+	if (g->ops.falcon.dump_falcon_info != NULL) {
+		g->ops.falcon.dump_falcon_info(flcn);
+	}
+}
+
+void gk20a_falcon_dump_info(struct nvgpu_falcon *flcn)
+{
+	struct gk20a *g = NULL;
+
+	g = flcn->g;
+
 	/*
 	 * Common Falcon code accesses each engine's falcon registers
 	 * using engine's falcon base address + offset.
