@@ -1,6 +1,6 @@
 # -*- mode: makefile -*-
 #
-# Copyright (c) 2018-2022, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2018-2023, NVIDIA CORPORATION.  All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -913,3 +913,7 @@ srcs += \
 	hal/grmgr/grmgr_ga100.c
 endif
 endif
+
+srctree.nvgpu-next := $(NV_SOURCE)/kernel/nvgpu-next
+include $(srctree.nvgpu-next)/drivers/gpu/nvgpu/Makefile.sources
+srcs += $(addprefix ../../../../nvgpu-next/drivers/gpu/nvgpu/,$(srcs_next))
