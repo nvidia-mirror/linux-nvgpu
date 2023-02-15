@@ -96,4 +96,17 @@ int nvgpu_gsp_sched_send_queue_info(struct gk20a *g, struct nvgpu_nvs_ctrl_queue
 exit:
 	return err;
 }
+
+int nvgpu_gsp_sched_erase_ctrl_fifo(struct gk20a *g)
+{
+	int err = 0;
+	struct nv_flcn_cmd_gsp cmd = { };
+
+	err = gsp_send_cmd_and_wait_for_ack(g, &cmd, NV_GSP_UNIT_CONTROL_FIFO_ERASE, 0);
+	if (err != 0) {
+		nvgpu_err(g, "GSP ctrl fifo erase cmd failed");
+	}
+
+	return err;
+};
 #endif /* CONFIG_NVS_PRESENT*/

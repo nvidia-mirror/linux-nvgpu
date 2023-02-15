@@ -95,6 +95,10 @@ static void gsp_handle_cmd_ack(struct gk20a *g, struct nv_flcn_msg_gsp *msg,
 		nvgpu_gsp_dbg(g, "Reply to NV_GSP_UNIT_BIND_CTX_REG");
 		*command_ack = true;
 		break;
+	case NV_GSP_UNIT_CONTROL_FIFO_ERASE:
+		nvgpu_gsp_dbg(g, "Reply to NV_GSP_UNIT_CONTROL_FIFO_ERASE");
+		*command_ack = true;
+		break;
 	default:
 		nvgpu_err(g, "Un-handled response from GSP");
 		*command_ack = false;

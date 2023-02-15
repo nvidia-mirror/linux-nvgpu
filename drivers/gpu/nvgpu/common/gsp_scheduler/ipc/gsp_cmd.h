@@ -50,7 +50,8 @@ struct gk20a;
 #define NV_GSP_UNIT_QUERY_ACTIVE_DOMAIN	0X0CU
 #define NV_GSP_UNIT_CONTROL_INFO_SEND	0X0DU
 #define NV_GSP_UNIT_BIND_CTX_REG		0X0EU
-#define NV_GSP_UNIT_END					0x0FU
+#define NV_GSP_UNIT_CONTROL_FIFO_ERASE	0X0FU
+#define NV_GSP_UNIT_END					0x10U
 
 #define GSP_MSG_HDR_SIZE	U32(sizeof(struct gsp_hdr))
 #define GSP_CMD_HDR_SIZE	U32(sizeof(struct gsp_hdr))
