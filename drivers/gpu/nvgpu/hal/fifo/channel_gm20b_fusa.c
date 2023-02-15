@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -58,11 +58,11 @@ void gm20b_channel_bind(struct nvgpu_channel *c)
 	nvgpu_atomic_set(&c->bound, 1);
 }
 
-void gm20b_channel_force_ctx_reload(struct nvgpu_channel *ch)
+void gm20b_channel_force_ctx_reload(struct gk20a *g, u32 runlist_id, u32 chid)
 {
-	struct gk20a *g = ch->g;
-	u32 reg = nvgpu_readl(g, ccsr_channel_r(ch->chid));
+	u32 reg = nvgpu_readl(g, ccsr_channel_r(chid));
 
-	nvgpu_writel(g, ccsr_channel_r(ch->chid),
+	(void)runlist_id;
+	nvgpu_writel(g, ccsr_channel_r(chid),
 		reg | ccsr_channel_force_ctx_reload_true_f());
 }

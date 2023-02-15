@@ -273,14 +273,11 @@ void ga10b_channel_reset_faulted(struct gk20a *g, struct nvgpu_channel *ch,
 
 }
 
-void ga10b_channel_force_ctx_reload(struct nvgpu_channel *ch)
+void ga10b_channel_force_ctx_reload(struct gk20a *g, u32 runlist_id, u32 chid)
 {
-	struct gk20a *g = ch->g;
-	struct nvgpu_runlist *runlist = NULL;
+	struct nvgpu_runlist *runlist = g->fifo.runlists[runlist_id];
 
-	runlist = ch->runlist;
-
-	nvgpu_chram_bar0_writel(g, runlist, runlist_chram_channel_r(ch->chid),
+	nvgpu_chram_bar0_writel(g, runlist, runlist_chram_channel_r(chid),
 		runlist_chram_channel_update_f(
 			runlist_chram_channel_update_force_ctx_reload_v()));
 }

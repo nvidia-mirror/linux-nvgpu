@@ -826,7 +826,8 @@ void nvgpu_tsg_unbind_channel_ctx_reload_check(struct nvgpu_tsg *tsg,
 		nvgpu_list_for_each_entry(temp_ch, &tsg->ch_list,
 				nvgpu_channel, ch_entry) {
 			if (temp_ch->chid != ch->chid) {
-				g->ops.channel.force_ctx_reload(temp_ch);
+				g->ops.channel.force_ctx_reload(g,
+					temp_ch->runlist->id, temp_ch->chid);
 				break;
 			}
 		}

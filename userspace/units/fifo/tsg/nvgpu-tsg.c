@@ -1002,10 +1002,11 @@ static const char *f_unbind_channel_check_ctx_reload[] = {
 	"chid_match",
 };
 
-static void stub_channel_force_ctx_reload(struct nvgpu_channel *ch)
+static void stub_channel_force_ctx_reload(struct gk20a *g,
+		u32 runlist_id, u32 chid)
 {
 	stub[0].name = __func__;
-	stub[0].chid = ch->chid;
+	stub[0].chid = chid;
 }
 
 int test_tsg_unbind_channel_check_ctx_reload(struct unit_module *m,

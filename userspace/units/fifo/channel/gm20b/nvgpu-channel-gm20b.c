@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -112,13 +112,14 @@ int test_gm20b_channel_force_ctx_reload(struct unit_module *m,
 	unit_assert(ch, goto done);
 
 	nvgpu_writel(g, ccsr_channel_r(ch->chid), 0);
-	gm20b_channel_force_ctx_reload(ch);
+	gm20b_channel_force_ctx_reload(g, ch->runlist->id, ch->chid);
 	unit_assert((nvgpu_readl(g, ccsr_channel_r(ch->chid)) &
 		ccsr_channel_force_ctx_reload_true_f()) != 0, goto done);
 
 	chid = ch->chid;
 	ch->chid = U32_MAX;
-	err = EXPECT_BUG(gm20b_channel_force_ctx_reload(ch));
+	err = EXPECT_BUG(gm20b_channel_force_ctx_reload(g,
+			ch->runlist->id, ch->chid));
 	ch->chid = chid;
 	unit_assert(err != 0, goto done);
 

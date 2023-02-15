@@ -39,6 +39,6 @@ void ga10b_channel_read_state(struct gk20a *g, u32 runlist_id, u32 chid,
 					struct nvgpu_channel_hw_state *state);
 void ga10b_channel_reset_faulted(struct gk20a *g, struct nvgpu_channel *ch,
 		bool eng, bool pbdma);
-void ga10b_channel_force_ctx_reload(struct nvgpu_channel *ch);
+void ga10b_channel_force_ctx_reload(struct gk20a *g, u32 runlist_id, u32 chid);
 
 #endif /* FIFO_CHANNEL_GA10B_H */
