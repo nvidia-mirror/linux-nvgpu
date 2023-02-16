@@ -42,6 +42,7 @@
 
 #ifdef CONFIG_TEGRA_BPMP
 #include <soc/tegra/bpmp.h>
+#include <soc/tegra/bpmp-abi.h>
 #endif /* CONFIG_TEGRA_BPMP */
 
 #include <uapi/linux/nvgpu.h>
@@ -360,7 +361,16 @@ int ga10b_tegra_static_pg_control(struct device *dev, struct tegra_bpmp *bpmp,
 	msg.tx.size = sizeof(*req);
 
 	err = tegra_bpmp_transfer(bpmp, &msg);
-	return err;
+
+	if (msg.rx.ret == -BPMP_EINVAL) {
+		return -EINVAL;
+	} else if (msg.rx.ret == -BPMP_ENODEV) {
+		return -ENODEV;
+	} else if (msg.rx.ret == -BPMP_EACCES) {
+		return -EPERM;
+	} else {
+		return err;
+	}
 }
 #endif
 
@@ -473,11 +483,29 @@ static int ga10b_tegra_unrailgate(struct device *dev)
 	unsigned long max_rate;
 	long rate;
 #endif
-
 #if defined(CONFIG_TEGRA_BPMP)
+	struct gk20a *g = get_gk20a(dev);
+
 	ret = ga10b_tegra_bpmp_mrq_set(dev);
-	if (ret != 0)
+	if (ret == -EINVAL) {
+		nvgpu_err(g, "MRQ incorrect parameters");
 		return ret;
+	} else if (ret == -ENODEV) {
+		nvgpu_log_info(g, "MRQ is not supported by BPMP-FW");
+		/*
+		 * reset the return value to 0
+		 * as the control can go forward
+		 */
+		ret = 0;
+	} else if (ret == -EPERM) {
+		nvgpu_log_info(g, "MRQ not permitted");
+		/*
+		 * reset the return value to 0
+		 * as the control can go forward
+		 */
+		ret = 0;
+	}
+
 #endif
 
 	/* Setting clk controls */
