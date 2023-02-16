@@ -239,6 +239,8 @@ struct gk20a;
 		"To enable kmd sheduling worker thread"),		\
 	DEFINE_FLAG(NVGPU_SUPPORT_MULTI_PROCESS_TSG_SHARING,		\
 			"Multi process TSG sharing support"),		\
+	DEFINE_FLAG(NVGPU_SUPPORT_MULTIMEDIA,				\
+			"Multimedia engine support"),			\
 	DEFINE_FLAG(NVGPU_MAX_ENABLED_BITS, "Marks max number of flags"),
 
 /**

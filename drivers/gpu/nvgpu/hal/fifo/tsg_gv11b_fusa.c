@@ -36,6 +36,7 @@
 /* can be removed after runque support is added */
 #define GR_RUNQUE			0U	/* pbdma 0 */
 #define ASYNC_CE_RUNQUE			2U	/* pbdma 2 */
+#define NVENC_RUNQUE			3U	/* pbdma 3 */
 
 /* TSG enable sequence applicable for Volta and onwards */
 void gv11b_tsg_enable(struct nvgpu_tsg *tsg)
@@ -99,6 +100,8 @@ void gv11b_tsg_bind_channel_eng_method_buffers(struct nvgpu_tsg *tsg,
 
 	if (tsg->runlist->id == nvgpu_engine_get_fast_ce_runlist_id(g)) {
 		gpu_va = tsg->eng_method_buffers[ASYNC_CE_RUNQUE].gpu_va;
+	} else if (tsg->runlist->id == nvgpu_engine_get_nvenc_runlist_id(g)) {
+		gpu_va = tsg->eng_method_buffers[NVENC_RUNQUE].gpu_va;
 	} else {
 		gpu_va = tsg->eng_method_buffers[GR_RUNQUE].gpu_va;
 	}

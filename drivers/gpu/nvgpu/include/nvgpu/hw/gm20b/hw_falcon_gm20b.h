@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -161,6 +161,7 @@
 #define falcon_falcon_dmatrfcmd_write_f(v)               ((U32(v) & 0x1U) << 5U)
 #define falcon_falcon_dmatrfcmd_size_f(v)                ((U32(v) & 0x7U) << 8U)
 #define falcon_falcon_dmatrfcmd_ctxdma_f(v)             ((U32(v) & 0x7U) << 12U)
+#define falcon_falcon_dmatrfcmd_idle_v(r)                   (((r) >> 1U) & 0x1U)
 #define falcon_falcon_dmatrffboffs_r()                             (0x0000011cU)
 #define falcon_falcon_imctl_debug_r()                              (0x0000015cU)
 #define falcon_falcon_imctl_debug_addr_blk_f(v)     ((U32(v) & 0xffffffU) << 0U)

@@ -201,6 +201,7 @@ nvgpu-$(CONFIG_NVGPU_DGPU) += \
 	hal/netlist/netlist_tu104.o \
 	hal/nvdec/nvdec_gp106.o \
 	hal/nvdec/nvdec_tu104.o \
+	hal/nvenc/nvenc_tu104.o \
 	hal/gsp/gsp_tu104.o \
 	hal/sec2/sec2_tu104.o \
 	hal/pramin/pramin_gp10b.o \
@@ -359,6 +360,8 @@ nvgpu-y += \
 	common/cic/mon/mon_report_err.o \
 	common/cic/rm/rm_init.o \
 	common/cic/rm/rm_intr.o \
+	common/multimedia/nvenc.o \
+	common/multimedia/multimedia.o \
 	hal/bus/bus_gk20a.o \
 	hal/class/class_gm20b.o \
 	hal/class/class_gp10b.o \

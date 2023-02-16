@@ -418,7 +418,8 @@ falcon:
              common/falcon/falcon_debug.c,
              common/falcon/falcon_debug.h,
              include/nvgpu/gops/gsp.h,
-             include/nvgpu/gops/nvdec.h ]
+             include/nvgpu/gops/nvdec.h,
+             include/nvgpu/gops/nvenc.h ]
   deps: [ ]
   tags:
 
@@ -1172,6 +1173,25 @@ gin:
   safe: no
   sources: [ include/nvgpu/gops/gin.h,
              include/nvgpu/gin.h ]
+
+multimedia:
+  safe: no
+  owner: santosh B S
+  children:
+    multimedia_common:
+      safe: no
+      gpu: both
+      sources: [ common/multimedia/multimedia.c,
+                 common/multimedia/multimedia_priv.h,
+                 include/nvgpu/multimedia.h ]
+
+    nvenc:
+      safe: no
+      owner: santosh B S
+      gpu: both
+      sources: [ common/multimedia/nvenc.c,
+                 common/multimedia/nvenc_bootstrap.h,
+                 include/nvgpu/nvenc.h ]
 
 ##
 ## HAL units. Currently they are under common but this needs to change.

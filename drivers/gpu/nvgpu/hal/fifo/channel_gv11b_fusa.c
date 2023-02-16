@@ -26,6 +26,7 @@
 #include <nvgpu/atomic.h>
 #include <nvgpu/io.h>
 #include <nvgpu/gk20a.h>
+#include <nvgpu/runlist.h>
 
 #include "channel_gk20a.h"
 #include "channel_gv11b.h"
@@ -43,7 +44,8 @@ void gv11b_channel_bind(struct nvgpu_channel *ch)
 		ch->chid, inst_ptr);
 
 	/* Enable subcontext */
-	if (g->ops.tsg.add_subctx_channel_hw != NULL) {
+	if ((g->ops.tsg.add_subctx_channel_hw != NULL) &&
+		(!nvgpu_engine_is_multimedia_runlist_id(g, ch->runlist->id))) {
 		err = g->ops.tsg.add_subctx_channel_hw(ch, ch->replayable);
 		if (err != 0) {
 			nvgpu_err(g, "Subcontext addition failed %d", err);

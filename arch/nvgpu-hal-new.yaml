@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2022, NVIDIA CORPORATION.  All Rights Reserved.
+# Copyright (c) 2019-2023, NVIDIA CORPORATION.  All Rights Reserved.
 #
 # HAL units. These are the units that have access to HW.
 #
@@ -914,14 +914,23 @@ netlist:
              hal/netlist/netlist_ga100.c,
              hal/netlist/netlist_ga100.h ]
 
-nvdec:
+multimedia:
   safe: no
-  sources: [ hal/nvdec/nvdec_gp106.c,
-             hal/nvdec/nvdec_gp106.h,
-             hal/nvdec/nvdec_tu104.c,
-             hal/nvdec/nvdec_tu104.h,
-             hal/nvdec/nvdec_ga100.c,
-             hal/nvdec/nvdec_ga100.h ]
+  owner: santosh B S
+  children:
+    nvdec:
+      safe: no
+      sources: [ hal/nvdec/nvdec_gp106.c,
+                 hal/nvdec/nvdec_gp106.h,
+                 hal/nvdec/nvdec_tu104.c,
+                 hal/nvdec/nvdec_tu104.h,
+                 hal/nvdec/nvdec_ga100.c,
+                 hal/nvdec/nvdec_ga100.h ]
+
+    nvenc:
+      safe: no
+      sources: [ hal/nvenc/nvenc_tu104.c,
+                 hal/nvenc/nvenc_tu104.h ]
 
 perf:
   safe: no

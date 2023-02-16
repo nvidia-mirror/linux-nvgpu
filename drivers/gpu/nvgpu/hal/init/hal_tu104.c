@@ -171,6 +171,7 @@
 #include "hal/pmu/pmu_tu104.h"
 #include "hal/falcon/falcon_gk20a.h"
 #include "hal/nvdec/nvdec_tu104.h"
+#include "hal/nvenc/nvenc_tu104.h"
 #include "hal/gsp/gsp_tu104.h"
 #ifdef CONFIG_NVGPU_DEBUGGER
 #include "hal/perf/perf_gv11b.h"
@@ -219,6 +220,7 @@
 #include <nvgpu/ce.h>
 #include <nvgpu/ce_app.h>
 #include <nvgpu/pmu.h>
+#include <nvgpu/nvenc.h>
 #ifdef CONFIG_NVGPU_LS_PMU
 #include <nvgpu/pmu/pmu_pstate.h>
 #endif
@@ -787,6 +789,8 @@ static const struct gops_class tu104_ops_gpu_class = {
 #ifdef CONFIG_NVGPU_GRAPHICS
 	.is_valid_gfx = tu104_class_is_valid_gfx,
 #endif
+	.is_valid_multimedia = tu104_class_is_valid_multimedia,
+	.is_valid_nvenc = tu104_class_is_valid_nvenc,
 };
 
 static const struct gops_fb_ecc tu104_ops_fb_ecc = {
@@ -874,6 +878,20 @@ static const struct gops_fb tu104_ops_fb = {
 
 static const struct gops_nvdec tu104_ops_nvdec = {
 	.falcon_base_addr = tu104_nvdec_falcon_base_addr,
+};
+
+static const struct gops_nvenc tu104_ops_nvenc = {
+	.base_addr = tu104_nvenc_base_addr,
+	.init = nvgpu_nvenc_sw_init,
+	.deinit = nvgpu_nvenc_sw_deinit,
+	.setup_boot_config = tu104_nvenc_setup_boot_config,
+	.bootstrap = nvgpu_nvenc_falcon_boot,
+	.halt_engine = tu104_nvenc_halt_engine,
+	.reset = nvgpu_nvenc_reset,
+	.set_irq_regs = tu104_nvenc_set_irq_regs,
+	.interface_enable = tu104_nvenc_interface_enable,
+	.multimedia_alloc_ctx = nvgpu_multimedia_setup_ctx,
+	.multimedia_free_ctx = nvgpu_multimedia_free_ctx,
 };
 
 static const struct gops_cg tu104_ops_cg = {
@@ -1523,6 +1541,7 @@ static const struct gops_falcon tu104_ops_falcon = {
 	.copy_from_imem = gk20a_falcon_copy_from_imem,
 	.get_falcon_ctls = gk20a_falcon_get_ctls,
 #endif
+	.load_ucode = gk20a_falcon_load_ucode_dma,
 };
 #endif
 
@@ -1718,6 +1737,7 @@ int tu104_init_hal(struct gk20a *g)
 	gops->fb.ecc = tu104_ops_fb_ecc;
 	gops->fb.intr = tu104_ops_fb_intr;
 	gops->nvdec = tu104_ops_nvdec;
+	gops->nvenc = tu104_ops_nvenc;
 	gops->cg = tu104_ops_cg;
 	gops->fifo = tu104_ops_fifo;
 	gops->engine = tu104_ops_engine;

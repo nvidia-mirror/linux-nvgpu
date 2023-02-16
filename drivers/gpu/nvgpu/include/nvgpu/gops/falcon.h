@@ -84,6 +84,9 @@ struct gops_falcon {
 				u32 *sctl, u32 *cpuctl);
 #endif
 
+	int (*load_ucode)(struct nvgpu_falcon *flcn,
+			struct nvgpu_mem *mem_desc, u32 *ucode_header);
+
 	/** @endcond DOXYGEN_SHOULD_SKIP_THIS */
 
 };

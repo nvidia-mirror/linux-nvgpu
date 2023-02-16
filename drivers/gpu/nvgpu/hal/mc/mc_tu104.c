@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -222,6 +222,9 @@ static u32 intr_tu104_intr_pending_f(struct gk20a *g, u32 unit)
 		break;
 	case NVGPU_CIC_INTR_UNIT_FBPA:
 		intr_pending_f = mc_intr_pfb_pending_f();
+		break;
+	case NVGPU_CIC_INTR_UNIT_NVENC:
+		intr_pending_f = mc_intr_nvenc0_pending_f();
 		break;
 	default:
 		nvgpu_err(g, "Invalid MC interrupt unit specified !!!");

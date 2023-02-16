@@ -171,6 +171,8 @@ srcs +=	common/device.c \
 	common/cic/mon/mon_report_err.c \
 	common/cic/rm/rm_init.c \
 	common/cic/rm/rm_intr.c \
+	common/multimedia/nvenc.c \
+	common/multimedia/multimedia.c \
 	hal/init/hal_gv11b_litter.c \
 	hal/init/hal_init.c \
 	hal/power_features/cg/gv11b_gating_reglist.c \
@@ -751,6 +753,7 @@ srcs += common/sec2/sec2.c \
 	hal/netlist/netlist_tu104.c \
 	hal/nvdec/nvdec_gp106.c \
 	hal/nvdec/nvdec_tu104.c \
+	hal/nvenc/nvenc_tu104.c \
 	hal/gsp/gsp_tu104.c \
 	hal/sec2/sec2_tu104.c \
 	hal/pramin/pramin_gp10b.c \

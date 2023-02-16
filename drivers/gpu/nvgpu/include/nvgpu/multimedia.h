@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,18 +20,47 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef NVGPU_CLASS_TU104
-#define NVGPU_CLASS_TU104
+#ifndef NVGPU_MULTIMEDIA_H
+#define NVGPU_MULTIMEDIA_H
 
-#include <nvgpu/types.h>
+#include <nvgpu/nvgpu_mem.h>
 
-bool tu104_class_is_valid(u32 class_num);
-bool tu104_class_is_valid_compute(u32 class_num);
-bool tu104_class_is_valid_multimedia(u32 class_num);
-bool tu104_class_is_valid_nvenc(u32 class_num);
+#define UCODE_DMA_ID			(0x6)
 
-#ifdef CONFIG_NVGPU_GRAPHICS
-bool tu104_class_is_valid_gfx(u32 class_num);
+struct nvgpu_tsg;
+struct vm_gk20a;
+struct nvgpu_channel;
+
+/**
+ * Multimedia engine enum types supported from driver.
+ */
+enum nvgpu_multimedia_engine {
+	/** NVENC engine enum */
+	NVGPU_MULTIMEDIA_ENGINE_NVENC     = 0U,
+	/** Invalid engine enum */
+	NVGPU_MULTIMEDIA_ENGINE_MAX
+};
+
+/**
+ * Multimedia engine context data structure.
+ */
+struct nvgpu_multimedia_ctx {
+
+	/** Memory to hold context buffer */
+	struct nvgpu_mem ctx_mem;
+
+	/** TSG associated with this context */
+	struct nvgpu_tsg *tsg;
+
+	/** TSG identifier corresponding to this context */
+	u32 tsgid;
+
+	/** Context buffer initialised? */
+	bool ctx_initialized;
+
+};
+
+int nvgpu_multimedia_setup_ctx(struct nvgpu_channel *ch, u32 class_num, u32 flags);
+void nvgpu_multimedia_free_ctx(struct gk20a *g, struct nvgpu_multimedia_ctx *eng_ctx);
+void nvgpu_multimedia_free_all_ctx(struct nvgpu_tsg *tsg);
 #endif
-
-#endif /* NVGPU_CLASS_TU104 */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -126,6 +126,8 @@
 #define FALCON_ID_GPCCS     (3U)
 /** Falcon ID for NVDEC engine */
 #define FALCON_ID_NVDEC     (4U)
+/** Falcon ID for NVDEC engine */
+#define FALCON_ID_NVENC     (5U)
 /** Falcon ID for SEC2 engine */
 #define FALCON_ID_SEC2      (7U)
 /** Falcon ID for MINION engine */
@@ -199,6 +201,7 @@
 
 struct gk20a;
 struct nvgpu_falcon;
+struct nvgpu_mem;
 
 /**
  * Falcon memory types.
@@ -722,6 +725,8 @@ int nvgpu_falcon_copy_from_emem(struct nvgpu_falcon *flcn,
 	u32 src, u8 *dst, u32 size, u8 port);
 int nvgpu_falcon_copy_to_emem(struct nvgpu_falcon *flcn,
 	u32 dst, u8 *src, u32 size, u8 port);
+s32 nvgpu_falcon_load_ucode(struct nvgpu_falcon *flcn,
+		struct nvgpu_mem *ucode_mem_desc, u32 *ucode_header);
 
 #ifdef CONFIG_NVGPU_FALCON_DEBUG
 void nvgpu_falcon_dump_stats(struct nvgpu_falcon *flcn);

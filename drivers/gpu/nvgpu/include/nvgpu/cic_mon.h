@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2021-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -226,6 +226,11 @@ struct nvgpu_err_desc;
  * CIC interrupt for FBPA unit.
  */
 #define NVGPU_CIC_INTR_UNIT_FBPA	9
+/**
+ * @ingroup NVGPU_CIC_INTR_UNIT_DEFINES
+ * CIC interrupt for NVENC unit.
+ */
+#define NVGPU_CIC_INTR_UNIT_NVENC	10
 
 /**
  * @defgroup NVGPU_CIC_INTR_ENABLE_DEFINES
@@ -413,7 +418,7 @@ int nvgpu_cic_mon_get_num_hw_modules(struct gk20a *g);
 /**
  * @brief Fatal error interrupt handler for safety.
  *
- * @param g [in]	The GPU driver struct.
+ * @param g [in]       The GPU driver struct.
  *
  * This function is invoked by NVGPU_MON_DEVCTL_NOTIFY_INTR devctl raised by nvgpu-mon.
  * It is called to parse the interrupt tree and determine exact error.

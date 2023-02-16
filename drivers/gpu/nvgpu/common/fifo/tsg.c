@@ -42,6 +42,7 @@
 #ifdef CONFIG_NVGPU_PROFILER
 #include <nvgpu/profiler.h>
 #endif
+#include <nvgpu/multimedia.h>
 
 #define MATCH_VEID		true
 #define MATCH_PBDMA_ID		true
@@ -478,11 +479,14 @@ int nvgpu_tsg_bind_channel(struct nvgpu_tsg *tsg, struct nvgpu_channel *ch)
 	}
 
 	nvgpu_rwsem_down_write(&tsg->ch_list_lock);
-	err = nvgpu_tsg_subctx_bind_channel(tsg, ch);
-	if (err != 0) {
-		nvgpu_err(g, "Subcontext %u bind failed", ch->subctx_id);
-		nvgpu_rwsem_up_write(&tsg->ch_list_lock);
-		return err;
+	/* As multimedia engines are non-VEID engines, subctx is not needed */
+	if (!nvgpu_engine_is_multimedia_runlist_id(g, ch->runlist->id)) {
+		err = nvgpu_tsg_subctx_bind_channel(tsg, ch);
+		if (err != 0) {
+			nvgpu_err(g, "Subcontext %u bind failed", ch->subctx_id);
+			nvgpu_rwsem_up_write(&tsg->ch_list_lock);
+			return err;
+		}
 	}
 
 	nvgpu_list_add_tail(&ch->ch_entry, &tsg->ch_list);
@@ -630,7 +634,9 @@ static int nvgpu_tsg_unbind_channel_common(struct nvgpu_tsg *tsg,
 	g->ops.channel.unbind(ch);
 
 	nvgpu_rwsem_down_write(&tsg->ch_list_lock);
-	nvgpu_tsg_subctx_unbind_channel(tsg, ch);
+	if (!nvgpu_engine_is_multimedia_runlist_id(g, ch->runlist->id)) {
+		nvgpu_tsg_subctx_unbind_channel(tsg, ch);
+	}
 	nvgpu_list_del(&ch->ch_entry);
 	tsg->ch_count = nvgpu_safe_sub_u32(tsg->ch_count, 1U);
 	ch->tsgid = NVGPU_INVALID_TSG_ID;
@@ -844,6 +850,7 @@ static void nvgpu_tsg_destroy(struct nvgpu_tsg *tsg)
 	nvgpu_mutex_destroy(&tsg->tsg_share_lock);
 #endif
 	nvgpu_mutex_destroy(&tsg->ctx_init_lock);
+	nvgpu_mutex_destroy(&tsg->eng_ctx_lock);
 	nvgpu_mutex_destroy(&tsg->veid_alloc_lock);
 }
 
@@ -899,6 +906,7 @@ static void nvgpu_tsg_init_support(struct gk20a *g, u32 tsgid)
 	nvgpu_init_list_node(&tsg->gr_ctx_mappings_list);
 	nvgpu_rwsem_init(&tsg->ch_list_lock);
 	nvgpu_mutex_init(&tsg->ctx_init_lock);
+	nvgpu_mutex_init(&tsg->eng_ctx_lock);
 	nvgpu_mutex_init(&tsg->veid_alloc_lock);
 
 #ifdef CONFIG_NVGPU_CHANNEL_TSG_CONTROL
@@ -1465,6 +1473,8 @@ void nvgpu_tsg_release(struct nvgpu_ref *ref)
 	if ((gr_ctx != NULL) && nvgpu_gr_ctx_get_ctx_initialized(gr_ctx)) {
 		g->ops.gr.setup.free_gr_ctx(g, gr_ctx);
 	}
+
+	nvgpu_multimedia_free_all_ctx(tsg);
 
 #ifdef CONFIG_NVGPU_CHANNEL_TSG_CONTROL
 	/* unhook all events created on this TSG */

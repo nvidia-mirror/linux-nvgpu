@@ -672,6 +672,7 @@ struct nvgpu_gpu_get_engine_info_item {
 #define NVGPU_GPU_ENGINE_ID_GR 0
 #define NVGPU_GPU_ENGINE_ID_GR_COPY 1
 #define NVGPU_GPU_ENGINE_ID_ASYNC_COPY 2
+#define NVGPU_GPU_ENGINE_ID_NVENC 5
 	__u32 engine_id;
 
 	__u32 engine_instance;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -47,6 +47,10 @@ void tu104_falcon_engine_dependency_ops(struct nvgpu_falcon *flcn)
 		flcn_eng_dep_ops->copy_from_emem =
 						g->ops.sec2.sec2_copy_from_emem;
 		break;
+	case FALCON_ID_NVENC:
+		flcn_eng_dep_ops->setup_bootstrap_config =
+			g->ops.nvenc.setup_boot_config;
+		break;
 	default:
 		flcn_eng_dep_ops->reset_eng = NULL;
 		break;
@@ -76,6 +80,11 @@ void tu104_falcon_sw_init(struct nvgpu_falcon *flcn)
 		break;
 	case FALCON_ID_NVDEC:
 		flcn->flcn_base = g->ops.nvdec.falcon_base_addr();
+		flcn->is_falcon_supported = true;
+		flcn->is_interrupt_enabled = true;
+		break;
+	case FALCON_ID_NVENC:
+		flcn->flcn_base = g->ops.nvenc.base_addr();
 		flcn->is_falcon_supported = true;
 		flcn->is_interrupt_enabled = true;
 		break;

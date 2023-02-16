@@ -1,7 +1,7 @@
 /*
  * GV100 master
  *
- * Copyright (c) 2016-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -88,6 +88,9 @@ static u32 gv100_mc_unit_reset_mask(struct gk20a *g, u32 unit)
 	case NVGPU_UNIT_NVDEC:
 		mask = mc_enable_nvdec_enabled_f();
 		break;
+	case NVGPU_UNIT_NVENC:
+		mask = mc_enable_nvenc_enabled_f();
+		break;
 	case NVGPU_UNIT_NVLINK:
 		mask = BIT32(g->nvlink.ioctrl_table[0].reset_enum);
 		break;
@@ -144,5 +147,6 @@ int gv100_mc_enable_units(struct gk20a *g, u32 units, bool enable)
 			(enable ? "enable" : "disable"), mask);
 		return -EINVAL;
 	}
+
 	return 0U;
 }

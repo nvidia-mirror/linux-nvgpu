@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -266,9 +266,9 @@ static inline void nvgpu_list_replace_init(struct nvgpu_list_node *old_node,
  * @param type [in]	Type of the entry.
  * @param member [in]	Name of the list entry in \a type.
  */
-#define nvgpu_list_for_each_entry(pos, head, type, member)	\
+#define nvgpu_list_for_each_entry(pos, head, type, member)		\
 	for ((pos) = nvgpu_list_first_entry(head, type, member);	\
-		&(pos)->member != (head);				\
+		((pos) != NULL) && (&(pos)->member != (head));		\
 		(pos) = nvgpu_list_next_entry(pos, type, member))
 
 /**

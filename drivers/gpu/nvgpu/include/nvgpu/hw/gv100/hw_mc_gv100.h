@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -74,6 +74,7 @@
 #define mc_intr_priv_ring_pending_f()                              (0x40000000U)
 #define mc_intr_pbus_pending_f()                                   (0x10000000U)
 #define mc_intr_nvlink_pending_f()                                   (0x400000U)
+#define mc_intr_nvenc0_pending_f()                                    (0x10000U)
 #define mc_intr_en_r(i)\
 		(nvgpu_safe_add_u32(0x00000140U, nvgpu_safe_mult_u32((i), 4U)))
 #define mc_intr_en_set_r(i)\
@@ -101,6 +102,8 @@
 #define mc_enable_hub_enabled_f()                                  (0x20000000U)
 #define mc_enable_nvdec_disabled_v()                               (0x00000000U)
 #define mc_enable_nvdec_enabled_f()                                    (0x8000U)
+#define mc_enable_nvenc_disabled_v()                               (0x00000000U)
+#define mc_enable_nvenc_enabled_f()                                   (0x40000U)
 #define mc_enable_nvlink_disabled_v()                              (0x00000000U)
 #define mc_enable_nvlink_disabled_f()                                     (0x0U)
 #define mc_enable_nvlink_enabled_v()                               (0x00000001U)

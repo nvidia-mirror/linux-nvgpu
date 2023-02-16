@@ -129,7 +129,7 @@ struct nvgpu_gsp_sched;
 #ifdef CONFIG_NVGPU_GSP_STRESS_TEST
 struct nvgpu_gsp_test;
 #endif
-
+struct nvgpu_nvenc;
 #ifdef CONFIG_NVGPU_DGPU
 enum nvgpu_nvlink_minion_dlcmd;
 #endif
@@ -167,6 +167,7 @@ enum nvgpu_profiler_pm_reservation_scope;
 #include <nvgpu/sched.h>
 #include <nvgpu/ipa_pa_cache.h>
 #include <nvgpu/mig.h>
+#include <nvgpu/nvenc.h>
 
 #include <nvgpu/gpu_ops.h>
 
@@ -301,6 +302,8 @@ struct railgate_stats {
 #define GPU_LIT_ROP_IN_GPC_STRIDE		55
 #define GPU_LIT_PERFMON_PMMGPC_ROP_DOMAIN_START	56
 #define GPU_LIT_PERFMON_PMMGPC_ROP_DOMAIN_COUNT	57
+/** NVENC class. */
+#define GPU_LIT_NVENC_CLASS			58
 
 /** Macro to get litter values corresponding to the litter defines. */
 #define nvgpu_get_litter_value(g, v) ((g)->ops.get_litter_value((g), v))
@@ -503,6 +506,8 @@ struct gk20a {
 	struct nvgpu_falcon fecs_flcn;
 	/** Struct holding the gpccs falcon software state. */
 	struct nvgpu_falcon gpccs_flcn;
+	/** Struct holding the nvenc falcon software state. */
+	struct nvgpu_falcon nvenc_flcn;
 #ifdef CONFIG_NVGPU_DGPU
 	struct nvgpu_falcon nvdec_flcn;
 	struct nvgpu_falcon minion_flcn;
@@ -556,6 +561,7 @@ struct gk20a {
 #endif
 	/** Top level struct maintaining ECC unit's software state. */
 	struct nvgpu_ecc ecc;
+	struct nvgpu_nvenc *nvenc;
 #ifdef CONFIG_NVGPU_DGPU
 	struct pmgr_pmupstate *pmgr_pmu;
 	struct nvgpu_sec2 sec2;

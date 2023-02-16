@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -61,8 +61,10 @@ enum nvgpu_fifo_engine {
 	NVGPU_ENGINE_GRCE      = 1U,
 	/** Async CE engine enum */
 	NVGPU_ENGINE_ASYNC_CE  = 2U,
+	/** NVENC engine enum */
+	NVGPU_ENGINE_NVENC     = 3U,
 	/** Invalid engine enum */
-	NVGPU_ENGINE_INVAL     = 3U,
+	NVGPU_ENGINE_INVAL     = 4U,
 };
 
 /**
@@ -274,6 +276,23 @@ u32 nvgpu_engine_get_fast_ce_runlist_id(struct gk20a *g);
  */
 u32 nvgpu_engine_get_gr_runlist_id(struct gk20a *g);
 /**
+ * @brief Get runlist id for the first available #NVGPU_ENGINE_NVENC engine enum
+ *        type.
+ *
+ * @param g [in]		The GPU driver struct.
+ *
+ * - Get h/w engine id for the first available #NVGPU_ENGINE_NVENC engine enum
+ *   type.
+ * -- Get #nvgpu_engine_info for the first available nvenc engine id.
+ * -- Get #nvgpu_engine_info.runlist_id for first available nvenc engine id.
+ *
+ * @return #nvgpu_engine_info.runlist_id for the first available nvenc engine id.
+ * @retval U32_MAX if #NVGPU_ENGINE_NVENC engine enum type is not available.
+ * @retval U32_MAX if pointer to #nvgpu_engine_info for the first available
+ *         nvenc h/w engine id is NULL.
+ */
+u32 nvgpu_engine_get_nvenc_runlist_id(struct gk20a *g);
+/**
  * @brief Check if runlist id corresponds to runlist id of one of the
  *        engine ids supported by h/w.
  *
@@ -290,6 +309,23 @@ u32 nvgpu_engine_get_gr_runlist_id(struct gk20a *g);
  *         any of the runlist ids of engine ids supported by h/w.
  */
 bool nvgpu_engine_is_valid_runlist_id(struct gk20a *g, u32 runlist_id);
+/**
+ * @brief Check if the given runlist id belongs to one of the multimedia engines
+ *        supported by the h/w.
+ *
+ * @param g [in]		The GPU driver struct.
+ * @param runlist_id [in]	Runlist id.
+ *
+ * Check if #runlist_id corresponds to runlist id of one of the multimedia engines
+ * supported by h/w, by checking #nvgpu_engine_info for each of the supported
+ * multimedia engines in #nvgpu_fifo.num_engines engines.
+ *
+ * @return True if #runlist_id is valid.
+ * @return False if #nvgpu_engine_info is NULL for all multimedia engines starting
+ *         with 0 up to #nvgpu_fifo.num_engines or #runlist_id did not match with
+ *         any of the runlist ids of multimedia engine ids supported by h/w.
+ */
+bool nvgpu_engine_is_multimedia_runlist_id(struct gk20a *g, u32 runlist_id);
 /**
  * @brief Get mmu fault id for the engine id.
  *

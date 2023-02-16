@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -476,6 +476,9 @@ struct nvgpu_falcon *nvgpu_falcon_get_instance(struct gk20a *g, u32 flcn_id)
 	case FALCON_ID_NVDEC:
 		flcn = &g->nvdec_flcn;
 		break;
+	case FALCON_ID_NVENC:
+		flcn = &g->nvenc_flcn;
+		break;
 	case FALCON_ID_SEC2:
 		flcn = &g->sec2.flcn;
 		break;
@@ -862,3 +865,27 @@ void nvgpu_falcon_get_ctls(struct nvgpu_falcon *flcn, u32 *sctl, u32 *cpuctl)
 	flcn->g->ops.falcon.get_falcon_ctls(flcn, sctl, cpuctl);
 }
 #endif
+
+s32 nvgpu_falcon_load_ucode(struct nvgpu_falcon *flcn,
+		struct nvgpu_mem *ucode_mem_desc, u32 *ucode_header)
+{
+	s32 status = -EINVAL;
+	struct gk20a *g;
+
+	if (!is_falcon_valid(flcn)) {
+		return -EINVAL;
+	}
+
+	g = flcn->g;
+
+	if (g->ops.falcon.load_ucode == NULL) {
+		nvgpu_err(g, "hal for loading ucode not set");
+		goto exit;
+	}
+
+	/* Load ucode */
+	status = g->ops.falcon.load_ucode(flcn, ucode_mem_desc, ucode_header);
+
+exit:
+	return status;
+}

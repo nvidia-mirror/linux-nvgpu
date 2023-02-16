@@ -32,6 +32,7 @@
 #include <nvgpu/rwsem.h>
 #include <nvgpu/list.h>
 #include <nvgpu/cond.h>
+#include <nvgpu/multimedia.h>
 
 /**
  * Software defined invalid TSG id value.
@@ -52,6 +53,7 @@
 struct gk20a;
 struct nvgpu_channel;
 struct nvgpu_gr_ctx;
+struct nvgpu_multimedia_ctx;
 struct nvgpu_channel_hw_state;
 struct nvgpu_profiler_object;
 struct nvgpu_runlist;
@@ -103,12 +105,26 @@ struct nvgpu_tsg {
 	struct nvgpu_list_node gr_ctx_mappings_list;
 
 	/**
+	 * Pointer to multimedia engine context buffer for this TSG. Allocated during
+	 * TSG open and freed during TSG release.
+	 */
+	struct nvgpu_multimedia_ctx *eng_ctx[NVGPU_MULTIMEDIA_ENGINE_MAX];
+
+	/**
 	 * Mutex to prevent concurrent context initialization for channels
 	 * in same TSG. All channels in one TSG share the context buffer,
 	 * and only one of the channel needs to initialize the context.
 	 * Rest of the channels will re-use it.
 	 */
 	struct nvgpu_mutex ctx_init_lock;
+
+	/**
+	 * Mutex to prevent concurrent engine context initialization for the
+	 * channels in the same TSG. All channels in a TSG share the same engine
+	 * context buffer and only one of the channel needs to initialize the context.
+	 * Rest of the channels will re-use it for a particular engine.
+	 */
+	struct nvgpu_mutex eng_ctx_lock;
 
 	/**
 	 * This ref is initialized during tsg setup s/w.

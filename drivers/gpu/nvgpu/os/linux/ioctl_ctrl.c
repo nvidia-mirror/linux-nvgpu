@@ -1195,6 +1195,8 @@ static void nvgpu_gpu_fetch_engine_info_item(struct gk20a *g,
 		} else {
 			dst_info->engine_id = NVGPU_GPU_ENGINE_ID_ASYNC_COPY;
 		}
+	} else if (nvgpu_device_is_nvenc(g, dev)) {
+		dst_info->engine_id = NVGPU_GPU_ENGINE_ID_NVENC;
 	}
 
 	dst_info->engine_instance = dev_inst_id;
@@ -1221,8 +1223,13 @@ static int nvgpu_gpu_get_engine_info(
 		const struct nvgpu_device *dev = g->fifo.active_engines[i];
 		struct nvgpu_gpu_get_engine_info_item dst_info;
 
-		nvgpu_gpu_fetch_engine_info_item(g, &dst_info, dev,
-			dev->inst_id, gr_dev->runlist_id);
+		if (nvgpu_device_is_nvenc(g, dev)) {
+			nvgpu_gpu_fetch_engine_info_item(g, &dst_info, dev,
+				dev->inst_id, dev->runlist_id);
+		} else {
+			nvgpu_gpu_fetch_engine_info_item(g, &dst_info, dev,
+				dev->inst_id, gr_dev->runlist_id);
+		}
 
 		if (report_index < max_buffer_engines) {
 			err = copy_to_user(&dst_item_list[report_index],

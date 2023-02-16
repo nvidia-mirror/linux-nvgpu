@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -153,6 +153,8 @@ struct nvgpu_device;
 #define NVGPU_UNIT_CE2		BIT32(6)
 /** NVLINK unit */
 #define NVGPU_UNIT_NVLINK	BIT32(7)
+/** NVENC unit */
+#define NVGPU_UNIT_NVENC	BIT32(8)
 
 /** Bit offset of the Architecture field in the HW version register */
 #define NVGPU_GPU_ARCHITECTURE_SHIFT 4U

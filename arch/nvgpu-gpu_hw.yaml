@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2021, NVIDIA CORPORATION.  All Rights Reserved.
+# Copyright (c) 2019-2023, NVIDIA CORPORATION.  All Rights Reserved.
 #
 # Define meta elements and units for describing GPU HW interactions in
 # nvgpu.
@@ -206,6 +206,7 @@ headers:
              include/nvgpu/hw/tu104/hw_perf_tu104.h,
              include/nvgpu/hw/tu104/hw_pgsp_tu104.h,
              include/nvgpu/hw/tu104/hw_pnvdec_tu104.h,
+             include/nvgpu/hw/tu104/hw_pnvenc_tu104.h,
              include/nvgpu/hw/tu104/hw_pram_tu104.h,
              include/nvgpu/hw/tu104/hw_pri_ringmaster_tu104.h,
              include/nvgpu/hw/tu104/hw_pri_ringstation_gpc_tu104.h,

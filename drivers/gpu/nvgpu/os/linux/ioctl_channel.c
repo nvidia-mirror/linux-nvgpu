@@ -500,7 +500,8 @@ static int __gk20a_channel_open(struct gk20a *g, struct nvgpu_cdev *cdev,
 	if (runlist_id == -1) {
 		tmp_runlist_id = nvgpu_grmgr_get_gpu_instance_runlist_id(g, gpu_instance_id);
 	} else {
-		if (nvgpu_grmgr_is_valid_runlist_id(g, gpu_instance_id, runlist_id)) {
+		if (nvgpu_grmgr_is_valid_runlist_id(g, gpu_instance_id, runlist_id) ||
+			nvgpu_engine_is_multimedia_runlist_id(g, runlist_id)) {
 			tmp_runlist_id = runlist_id;
 		} else {
 			return -EINVAL;
@@ -1266,9 +1267,17 @@ long gk20a_channel_ioctl(struct file *filp,
 	}
 #endif
 
-		err = nvgpu_gr_exec_with_err_for_instance(g, gr_instance_id,
-				nvgpu_ioctl_channel_alloc_obj_ctx(ch, args->class_num,
-					args->flags));
+		if (nvgpu_engine_is_multimedia_runlist_id(g, ch->runlist->id)) {
+			if (ch->g->ops.nvenc.multimedia_alloc_ctx != NULL) {
+				err = ch->g->ops.nvenc.multimedia_alloc_ctx(ch, args->class_num, 0);
+			} else {
+				err = -EINVAL;
+			}
+		} else {
+			err = nvgpu_gr_exec_with_err_for_instance(g, gr_instance_id,
+					nvgpu_ioctl_channel_alloc_obj_ctx(ch, args->class_num,
+						args->flags));
+		}
 		gk20a_idle(ch->g);
 		break;
 	}

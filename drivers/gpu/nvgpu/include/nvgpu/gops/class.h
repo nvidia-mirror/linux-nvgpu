@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -51,6 +51,8 @@ struct gops_class {
 	 *	- \ref #VOLTA_CHANNEL_GPFIFO_A    -> 0xC36FU
 	 * 4. Graphics class:
 	 *	- \ref #VOLTA_A                   -> 0xC397U
+	 * 5. NVENC class:
+	 *	- \ref #TURING_NVENC_A            -> 0xC4B7U
 	 *
 	 * @param class_num [in]	Class number to be validated based on
 	 *                              GPU architecture.
@@ -86,6 +88,39 @@ struct gops_class {
 #ifdef CONFIG_NVGPU_GRAPHICS
 	bool (*is_valid_gfx)(u32 class_num);
 #endif
+	/**
+	 * @brief Checks if given class number is valid multimedia class number
+	 *        as per our GPU architecture.
+	 *
+	 * List of valid multimedia class numbers:
+	 *	- \ref #TURING_NVENC_A           -> 0xC4B7U
+	 *
+	 * @param class_num [in]	Class number to be validated based on
+	 *				GPU architecture.
+	 *				- No validation is performed on this
+	 *				  parameter
+	 *
+	 * @return true when \a class_num is one of the numbers in above list or
+	 *	   false otherwise.
+	 */
+	bool (*is_valid_multimedia)(u32 class_num);
+
+	/**
+	 * @brief Checks if given class number is valid nvenc class number
+	 *        as per our GPU architecture.
+	 *
+	 * List of valid nvenc class numbers:
+	 *	- \ref #TURING_NVENC_A           -> 0xC4B7U
+	 *
+	 * @param class_num [in]	Class number to be validated based on
+	 *				GPU architecture.
+	 *				- No validation is performed on this
+	 *				  parameter
+	 *
+	 * @return true when \a class_num is one of the numbers in above list or
+	 *	   false otherwise.
+	 */
+	bool (*is_valid_nvenc)(u32 class_num);
 	/** @endcond DOXYGEN_SHOULD_SKIP_THIS */
 };
 

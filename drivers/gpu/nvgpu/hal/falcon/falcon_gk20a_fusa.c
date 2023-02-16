@@ -29,6 +29,11 @@
 
 #include <nvgpu/hw/gm20b/hw_falcon_gm20b.h>
 
+#define NVGPU_DMA_CHUNK_SIZE		(256U)
+
+/* Timeout duration in number of retries */
+#define NVGPU_DMA_WAIT_TIMEOUT		(2000U)
+
 u32 gk20a_falcon_dmemc_blk_mask(void)
 {
 	return falcon_falcon_dmemc_blk_m();
@@ -627,3 +632,105 @@ void gk20a_falcon_dump_info(struct nvgpu_falcon *flcn)
 			(falcon_falcon_exterraddr_r() & 0x0FFF)));
 }
 #endif
+
+/* Wait for the dma to be idle before initiating next block */
+static s32 gk20a_falcon_dma_wait_idle(struct nvgpu_falcon *flcn)
+{
+	struct nvgpu_timeout timeout;
+	struct gk20a *g;
+
+	if ((flcn == NULL) || (!flcn->is_falcon_supported)) {
+		return -EINVAL;
+	}
+
+	g = flcn->g;
+
+	nvgpu_timeout_init_retry(g, &timeout, NVGPU_DMA_WAIT_TIMEOUT);
+
+	/* Wait for falcon idle */
+	do {
+		u32 val = 0U;
+
+		val = nvgpu_falcon_readl(flcn, falcon_falcon_dmatrfcmd_r());
+		if (falcon_falcon_dmatrfcmd_idle_v(val) == 0x1U) {
+			break;
+		}
+
+		if (nvgpu_timeout_expired_msg(&timeout,
+			"waiting for dma_wait_idle") != 0) {
+			return -ETIMEDOUT;
+		}
+
+		nvgpu_usleep_range(100, 200);
+	} while (true);
+
+	return 0;
+}
+
+/* DMA transfer the ucode (in terms of 256-byte chunk) to IMEM/DMEM */
+static s32 gk20a_falcon_dma_ucode(struct nvgpu_falcon *flcn, u32 *ucode_header,
+					bool imem)
+{
+	u32 i, offset, size;
+	struct gk20a *g = flcn->g;
+	u32 flcn_base = flcn->flcn_base;
+	s32 err = 0;
+
+	offset = imem ? ucode_header[OS_CODE_OFFSET] : ucode_header[OS_DATA_OFFSET];
+	size = imem ? ucode_header[OS_CODE_SIZE] : ucode_header[OS_DATA_SIZE];
+
+	for (i = 0; i < size; i += NVGPU_DMA_CHUNK_SIZE) {
+
+		/* Setup destination IMEM/DMEM offset */
+		nvgpu_writel(g, nvgpu_safe_add_u32(flcn_base, falcon_falcon_dmatrfmoffs_r()), i);
+
+		/* Setup source offset (relative to BASE) */
+		nvgpu_writel(g, nvgpu_safe_add_u32(flcn_base, falcon_falcon_dmatrffboffs_r()),
+						nvgpu_safe_add_u32(offset, i));
+
+		nvgpu_writel(g, nvgpu_safe_add_u32(flcn_base, falcon_falcon_dmatrfcmd_r()),
+				falcon_falcon_dmatrfcmd_imem_f(imem) |
+				falcon_falcon_dmatrfcmd_write_f(0x00) |
+				falcon_falcon_dmatrfcmd_size_f(0x06) |
+				falcon_falcon_dmatrfcmd_ctxdma_f(UCODE_DMA_ID));
+
+		err = gk20a_falcon_dma_wait_idle(flcn);
+		if (err != 0) {
+			nvgpu_err(g, "falcon_dma_wait_idle failed err=%d", err);
+			return err;
+		}
+	}
+
+	return 0;
+}
+
+/* Load the ucode to IMEM and DMEM */
+s32 gk20a_falcon_load_ucode_dma(struct nvgpu_falcon *flcn,
+				struct nvgpu_mem *mem_desc, u32 *ucode_header)
+{
+	s32 err = 0;
+	struct gk20a *g = flcn->g;
+	u64 base_addr;
+
+	/* Using the physical address for fw loading */
+	base_addr = nvgpu_mem_get_phys_addr(g, mem_desc);
+	nvgpu_writel(g, nvgpu_safe_add_u32(flcn->flcn_base, falcon_falcon_dmactl_r()), 0);
+	nvgpu_writel(g, nvgpu_safe_add_u32(flcn->flcn_base, falcon_falcon_dmatrfbase_r()),
+			u64_lo32(base_addr >> 8));
+
+	/* Load the data segment to DMEM */
+	err = gk20a_falcon_dma_ucode(flcn, ucode_header, false);
+	if (err != 0) {
+		nvgpu_err(g, "dmem loading failed err=%d", err);
+		return err;
+	}
+
+	/* Load code segment to IMEM */
+	err = gk20a_falcon_dma_ucode(flcn, ucode_header, true);
+	if (err != 0) {
+		nvgpu_err(g, "imem loading failed err=%d", err);
+		return err;
+	}
+
+	return 0;
+}

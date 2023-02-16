@@ -266,17 +266,25 @@ static int nvgpu_falcons_sw_init(struct gk20a *g)
 		goto done_sec2;
 	}
 
+	err = g->ops.falcon.falcon_sw_init(g, FALCON_ID_NVENC);
+	if (err != 0) {
+		nvgpu_err(g, "failed to sw init FALCON_ID_NVENC");
+		goto done_nvdec;
+	}
+
 #endif
 	err = g->ops.falcon.falcon_sw_init(g, FALCON_ID_GSPLITE);
 	if (err != 0) {
 		nvgpu_err(g, "failed to sw init FALCON_ID_GSPLITE");
-		goto done_nvdec;
+		goto done_nvenc;
 	}
 
 	return 0;
 
-done_nvdec:
+done_nvenc:
 #ifdef CONFIG_NVGPU_DGPU
+	g->ops.falcon.falcon_sw_free(g, FALCON_ID_NVENC);
+done_nvdec:
 	g->ops.falcon.falcon_sw_free(g, FALCON_ID_NVDEC);
 done_sec2:
 	g->ops.falcon.falcon_sw_free(g, FALCON_ID_SEC2);
@@ -302,6 +310,7 @@ static void nvgpu_falcons_sw_free(struct gk20a *g)
 #ifdef CONFIG_NVGPU_DGPU
 	g->ops.falcon.falcon_sw_free(g, FALCON_ID_GSPLITE);
 	g->ops.falcon.falcon_sw_free(g, FALCON_ID_NVDEC);
+	g->ops.falcon.falcon_sw_free(g, FALCON_ID_NVENC);
 	g->ops.falcon.falcon_sw_free(g, FALCON_ID_SEC2);
 #endif
 }
@@ -339,6 +348,13 @@ int nvgpu_prepare_poweroff(struct gk20a *g)
 	if (nvgpu_is_enabled(g, NVGPU_SUPPORT_SEC2_RTOS)) {
 		tmp_ret = g->ops.sec2.sec2_destroy(g);
 		if ((tmp_ret != 0) && (ret == 0)) {
+			ret = tmp_ret;
+		}
+	}
+
+	if (nvgpu_is_enabled(g, NVGPU_SUPPORT_MULTIMEDIA)) {
+		tmp_ret = g->ops.nvenc.deinit(g);
+		if (tmp_ret != 0) {
 			ret = tmp_ret;
 		}
 	}
@@ -969,6 +985,8 @@ int nvgpu_finalize_poweron(struct gk20a *g)
 		NVGPU_INIT_TABLE_ENTRY(&nvgpu_init_cg_ctrl_load_gating_prod,
 								NO_FLAG),
 #ifdef CONFIG_NVGPU_DGPU
+		NVGPU_INIT_TABLE_ENTRY(g->ops.nvenc.init, NVGPU_SUPPORT_MULTIMEDIA),
+		NVGPU_INIT_TABLE_ENTRY(g->ops.nvenc.bootstrap, NVGPU_SUPPORT_MULTIMEDIA),
 		NVGPU_INIT_TABLE_ENTRY(g->ops.sec2.init_sec2_support,
 				       NVGPU_SUPPORT_SEC2_RTOS),
 #endif

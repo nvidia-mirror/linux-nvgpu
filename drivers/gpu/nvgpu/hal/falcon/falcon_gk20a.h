@@ -83,6 +83,8 @@ void gk20a_falcon_mailbox_write(struct nvgpu_falcon *flcn,
 		u32 mailbox_index, u32 data);
 void gk20a_falcon_set_irq(struct nvgpu_falcon *flcn, bool enable,
 				 u32 intr_mask, u32 intr_dest);
+s32 gk20a_falcon_load_ucode_dma(struct nvgpu_falcon *flcn,
+			struct nvgpu_mem *mem_desc, u32 *ucode_header);
 
 #ifdef CONFIG_NVGPU_FALCON_DEBUG
 void gk20a_falcon_dump_stats(struct nvgpu_falcon *flcn);

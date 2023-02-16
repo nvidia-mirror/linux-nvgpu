@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2023 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,18 +20,31 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef NVGPU_CLASS_TU104
-#define NVGPU_CLASS_TU104
+#ifndef MULTIMEDIA_PRIV_H
+#define MULTIMEDIA_PRIV_H
 
-#include <nvgpu/types.h>
+#define TU104_NVENC_UCODE_FW "nvhost_nvenc072.fw"
 
-bool tu104_class_is_valid(u32 class_num);
-bool tu104_class_is_valid_compute(u32 class_num);
-bool tu104_class_is_valid_multimedia(u32 class_num);
-bool tu104_class_is_valid_nvenc(u32 class_num);
+#define MULTIMEDIA_UCODE_HEADER_SIZE		(APP_0_CODE_SIZE + 1)
+#define MULTIMEDIA_UCODE_HEADER_SIZE_BYTES	(MULTIMEDIA_UCODE_HEADER_SIZE * 4)
 
-#ifdef CONFIG_NVGPU_GRAPHICS
-bool tu104_class_is_valid_gfx(u32 class_num);
-#endif
+struct multimedia_fw_hdr {
+	/* 0x10de */
+	u32 fw_magic;
+	/* Versioning of firmware format */
+	u32 fw_ver;
+	/* Entire image size including this header */
+	u32 fw_size;
+	/* Header offset of executable firmware metadata */
+	u32 header_offset;
+	/* Start of executable firmware data */
+	u32 data_offset;
+	/* Size of executable firmware */
+	u32 data_size;
+	/* Reserved */
+	u32 reserved[4];
+};
 
-#endif /* NVGPU_CLASS_TU104 */
+int nvgpu_multimedia_copy_fw(struct gk20a *g, const char *fw_name, u32 *ucode_header,
+				struct nvgpu_mem *ucode_mem_desc);
+#endif /* MULTIMEDIA_PRIV_H */

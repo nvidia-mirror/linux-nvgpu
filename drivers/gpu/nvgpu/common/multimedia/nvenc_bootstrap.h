@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,18 +20,24 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef NVGPU_CLASS_TU104
-#define NVGPU_CLASS_TU104
+#ifndef NVENC_BOOTSTRAP_H
+#define NVENC_BOOTSTRAP_H
 
-#include <nvgpu/types.h>
+/* NVENC core descriptor */
+struct nvgpu_nvenc {
 
-bool tu104_class_is_valid(u32 class_num);
-bool tu104_class_is_valid_compute(u32 class_num);
-bool tu104_class_is_valid_multimedia(u32 class_num);
-bool tu104_class_is_valid_nvenc(u32 class_num);
+	/* NVENC ucode */
+	const char *fw_name;
 
-#ifdef CONFIG_NVGPU_GRAPHICS
-bool tu104_class_is_valid_gfx(u32 class_num);
-#endif
+	/* NVENC ucode header info */
+	u32 ucode_header[MULTIMEDIA_UCODE_HEADER_SIZE];
 
-#endif /* NVGPU_CLASS_TU104 */
+	/* Falcon used to execute NVENC ucode */
+	struct nvgpu_falcon *nvenc_flcn;
+
+	/** Memory to store ucode contents locally. */
+	struct nvgpu_mem nvenc_mem_desc;
+
+};
+
+#endif /* NVENC_BOOTSTRAP_H */

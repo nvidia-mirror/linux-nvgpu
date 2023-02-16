@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2022, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2020-2023, NVIDIA CORPORATION.  All rights reserved.
 
 bitmap_find_next_zero_area
 fb_gv11b_write_mmu_fault_buffer_get
@@ -808,3 +808,7 @@ nvgpu_cic_rm_setup
 nvgpu_cic_rm_init_vars
 nvgpu_cic_rm_deinit_vars
 nvgpu_cic_rm_remove
+nvgpu_nvenc_sw_init
+nvgpu_nvenc_sw_deinit
+nvgpu_nvenc_falcon_boot
+nvgpu_nvenc_reset

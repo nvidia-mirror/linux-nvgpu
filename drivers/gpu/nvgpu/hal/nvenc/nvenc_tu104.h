@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,18 +20,17 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef NVGPU_CLASS_TU104
-#define NVGPU_CLASS_TU104
+#ifndef NVGPU_NVENC_TU104_H
+#define NVGPU_NVENC_TU104_H
 
 #include <nvgpu/types.h>
 
-bool tu104_class_is_valid(u32 class_num);
-bool tu104_class_is_valid_compute(u32 class_num);
-bool tu104_class_is_valid_multimedia(u32 class_num);
-bool tu104_class_is_valid_nvenc(u32 class_num);
+struct gk20a;
 
-#ifdef CONFIG_NVGPU_GRAPHICS
-bool tu104_class_is_valid_gfx(u32 class_num);
-#endif
+u32 tu104_nvenc_base_addr(void);
+void tu104_nvenc_setup_boot_config(struct gk20a *g);
+void tu104_nvenc_halt_engine(struct gk20a *g);
+void tu104_nvenc_set_irq_regs(struct gk20a *g, struct nvgpu_falcon *flcn);
+void tu104_nvenc_interface_enable(struct gk20a *g);
 
-#endif /* NVGPU_CLASS_TU104 */
+#endif /* NVGPU_NVENC_TU104_H */

@@ -34,6 +34,7 @@
 #include <nvgpu/gops/sbr.h>
 #include <nvgpu/gops/func.h>
 #include <nvgpu/gops/nvdec.h>
+#include <nvgpu/gops/nvenc.h>
 #include <nvgpu/gops/pramin.h>
 #include <nvgpu/gops/clk.h>
 #include <nvgpu/gops/xve.h>
@@ -238,6 +239,7 @@ struct gpu_ops {
 	struct gops_sbr sbr;
 	struct gops_func func;
 	struct gops_nvdec nvdec;
+	struct gops_nvenc nvenc;
 	struct gops_ramfc ramfc;
 	struct gops_ramin ramin;
 	struct gops_userd userd;
