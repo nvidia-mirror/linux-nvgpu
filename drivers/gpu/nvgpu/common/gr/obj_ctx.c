@@ -1151,10 +1151,6 @@ int nvgpu_gr_obj_ctx_init_golden_context_image(struct gk20a *g)
 	struct nvgpu_gr_ctx gr_ctx = {};
 	int err = 0;
 
-	if (g->is_virtual) {
-		return 0;
-	}
-
 	err = gk20a_busy(g);
 	if (err != 0) {
 		nvgpu_err(g, "failed to power on, %d", err);

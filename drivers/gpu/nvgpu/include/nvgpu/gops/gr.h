@@ -163,6 +163,7 @@ struct gops_gr_ecc {
  * @see gops_gr
  */
 struct gops_gr_setup {
+	int (*init_golden_image)(struct gk20a *g);
 	/**
 	 * @brief Allocate and setup object context s/w image
 	 *        for GPU channel.

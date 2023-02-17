@@ -243,6 +243,7 @@
 #include <nvgpu/gr/gr_falcon.h>
 #include <nvgpu/gr/gr.h>
 #include <nvgpu/gr/gr_intr.h>
+#include <nvgpu/gr/obj_ctx.h>
 #include <nvgpu/pmu/pmu_perfmon.h>
 #include <nvgpu/nvgpu_init.h>
 #include <nvgpu/sbr.h>
@@ -491,6 +492,7 @@ static const struct gops_gr_fecs_trace tu104_ops_gr_fecs_trace = {
 #endif
 
 static const struct gops_gr_setup tu104_ops_gr_setup = {
+	.init_golden_image = nvgpu_gr_obj_ctx_init_golden_context_image,
 	.alloc_obj_ctx = nvgpu_gr_setup_alloc_obj_ctx,
 	.free_gr_ctx = nvgpu_gr_setup_free_gr_ctx,
 	.free_subctx = nvgpu_gr_setup_free_subctx,
