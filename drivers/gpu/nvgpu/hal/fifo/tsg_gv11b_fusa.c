@@ -323,7 +323,7 @@ int gv11b_tsg_add_subctx_channel_hw(struct nvgpu_channel *ch, bool replayable)
 	nvgpu_mutex_acquire(&tsg->ctx_init_lock);
 
 	g->ops.tsg.disable(tsg);
-	err = g->ops.fifo.preempt_tsg(g, tsg);
+	err = nvgpu_tsg_preempt(g, tsg);
 	if (err != 0) {
 		g->ops.tsg.enable(tsg);
 		nvgpu_mutex_release(&tsg->ctx_init_lock);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -1203,7 +1203,7 @@ long nvgpu_ioctl_tsg_dev_ioctl(struct file *filp, unsigned int cmd,
 			return err;
 		}
 		/* preempt TSG */
-		err = g->ops.fifo.preempt_tsg(g, tsg);
+		err = nvgpu_tsg_preempt(g, tsg);
 		gk20a_idle(g);
 		break;
 		}

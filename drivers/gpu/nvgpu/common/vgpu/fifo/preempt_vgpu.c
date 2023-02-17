@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -60,7 +60,7 @@ int vgpu_fifo_preempt_channel(struct gk20a *g, struct nvgpu_channel *ch)
 	return err;
 }
 
-int vgpu_fifo_preempt_tsg(struct gk20a *g, struct nvgpu_tsg *tsg)
+int vgpu_fifo_preempt_tsg(struct gk20a *g, u32 runlist_id, u32 tsgid)
 {
 	struct tegra_vgpu_cmd_msg msg;
 	struct tegra_vgpu_tsg_preempt_params *p =
@@ -71,13 +71,14 @@ int vgpu_fifo_preempt_tsg(struct gk20a *g, struct nvgpu_tsg *tsg)
 
 	msg.cmd = TEGRA_VGPU_CMD_TSG_PREEMPT;
 	msg.handle = vgpu_get_handle(g);
-	p->tsg_id = tsg->tsgid;
+	p->runlist_id = runlist_id;
+	p->tsg_id = tsgid;
 	err = vgpu_comm_sendrecv(&msg, sizeof(msg), sizeof(msg));
 	err = err ? err : msg.ret;
 
 	if (err) {
 		nvgpu_err(g,
-			"preempt tsg %u failed", tsg->tsgid);
+			"preempt tsg %u failed", tsgid);
 	}
 
 	return err;

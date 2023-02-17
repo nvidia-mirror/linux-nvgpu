@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -144,14 +144,17 @@ int gk20a_fifo_preempt_channel(struct gk20a *g, struct nvgpu_channel *ch)
 	return ret;
 }
 
-int gk20a_fifo_preempt_tsg(struct gk20a *g, struct nvgpu_tsg *tsg)
+int gk20a_fifo_preempt_tsg(struct gk20a *g, u32 runlist_id, u32 tsgid)
 {
 	int ret = 0;
 #ifdef CONFIG_NVGPU_LS_PMU
 	u32 token = PMU_INVALID_MUTEX_OWNER_ID;
 	int mutex_ret = 0;
 #endif
-	nvgpu_log_fn(g, "tsgid: %d", tsg->tsgid);
+
+	(void)runlist_id;
+
+	nvgpu_log_fn(g, "tsgid: %d", tsgid);
 
 	/* we have no idea which runlist we are using. lock all */
 	nvgpu_runlist_lock_active_runlists(g);
@@ -159,7 +162,7 @@ int gk20a_fifo_preempt_tsg(struct gk20a *g, struct nvgpu_tsg *tsg)
 	mutex_ret = nvgpu_pmu_lock_acquire(g, g->pmu,
 			PMU_MUTEX_ID_FIFO, &token);
 #endif
-	ret = gk20a_fifo_preempt_locked(g, tsg->tsgid, ID_TYPE_TSG);
+	ret = gk20a_fifo_preempt_locked(g, tsgid, ID_TYPE_TSG);
 #ifdef CONFIG_NVGPU_LS_PMU
 	if (mutex_ret == 0) {
 		if (nvgpu_pmu_lock_release(g, g->pmu,
@@ -174,10 +177,10 @@ int gk20a_fifo_preempt_tsg(struct gk20a *g, struct nvgpu_tsg *tsg)
 		if (nvgpu_platform_is_silicon(g)) {
 			nvgpu_err(g, "preempt timed out for tsgid: %u, "
 			"ctxsw timeout will trigger recovery if needed",
-			tsg->tsgid);
+			tsgid);
 		} else {
-			nvgpu_err(g, "preempt TSG %d timeout", tsg->tsgid);
-			nvgpu_rc_preempt_timeout(g, tsg);
+			nvgpu_err(g, "preempt TSG %d timeout", tsgid);
+			nvgpu_rc_preempt_timeout(g, &g->fifo.tsg[tsgid]);
 		}
 	}
 

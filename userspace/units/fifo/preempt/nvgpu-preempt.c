@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -106,9 +106,9 @@ static int stub_fifo_preempt_channel(struct gk20a *g, struct nvgpu_channel *ch)
 	return 0;
 }
 
-static int stub_fifo_preempt_tsg(struct gk20a *g, struct nvgpu_tsg *tsg)
+static int stub_fifo_preempt_tsg(struct gk20a *g, u32 runlist_id, u32 tsgid)
 {
-	stub[0].tsgid = tsg->tsgid;
+	stub[0].tsgid = tsgid;
 	return 0;
 }
 

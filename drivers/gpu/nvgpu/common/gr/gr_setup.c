@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -195,7 +195,7 @@ int nvgpu_gr_setup_alloc_obj_ctx(struct nvgpu_channel *c, u32 class_num,
 
 	g->ops.tsg.disable(tsg);
 
-	err = g->ops.fifo.preempt_tsg(g, tsg);
+	err = nvgpu_tsg_preempt(g, tsg);
 	if (err != 0) {
 		nvgpu_err(g, "preempt failed %d", err);
 		goto enable_tsg;

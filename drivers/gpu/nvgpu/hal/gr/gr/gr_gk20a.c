@@ -1,7 +1,7 @@
 /*
  * GK20A Graphics
  *
- * Copyright (c) 2011-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -67,7 +67,7 @@ int gr_gk20a_update_smpc_ctxsw_mode(struct gk20a *g,
 
 	g->ops.tsg.disable(tsg);
 
-	ret = g->ops.fifo.preempt_tsg(g, tsg);
+	ret = nvgpu_tsg_preempt(g, tsg);
 	if (ret != 0) {
 		nvgpu_err(g, "failed to preempt TSG");
 		goto out;
@@ -130,7 +130,7 @@ int gr_gk20a_update_hwpm_ctxsw_mode(struct gk20a *g,
 
 	g->ops.tsg.disable(tsg);
 
-	ret = g->ops.fifo.preempt_tsg(g, tsg);
+	ret = nvgpu_tsg_preempt(g, tsg);
 	if (ret != 0) {
 		nvgpu_err(g, "failed to preempt TSG");
 		goto out;

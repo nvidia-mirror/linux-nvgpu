@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -75,8 +75,7 @@ struct gr_gops_org {
 	int (*wait_idle)(struct gk20a *g);
 	int (*ctrl_ctxsw)(struct gk20a *g, u32 fecs_method,
 			u32 data, u32 *ret_val);
-	int (*fifo_preempt_tsg)(struct gk20a *g,
-				struct nvgpu_tsg *tsg);
+	int (*fifo_preempt_tsg)(struct gk20a *g, u32 runlist_id, u32 tsgid);
 	bool (*is_valid)(u32 class_num);
 	bool (*is_valid_compute)(u32 class_num);
 };
@@ -129,7 +128,7 @@ static int stub_gr_falcon_ctrl_ctxsw(struct gk20a *g, u32 fecs_method,
 	return 0;
 }
 
-static int stub_gr_fifo_preempt_tsg(struct gk20a *g, struct nvgpu_tsg *tsg)
+static int stub_gr_fifo_preempt_tsg(struct gk20a *g, u32 runlist_id, u32 tsgid)
 {
 	return -1;
 }

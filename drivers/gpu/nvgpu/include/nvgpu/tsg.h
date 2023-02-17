@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -941,4 +941,15 @@ void nvgpu_tsg_reset_faulted_eng_pbdma(struct gk20a *g, struct nvgpu_tsg *tsg,
 int nvgpu_tsg_set_mmu_debug_mode(struct nvgpu_channel *ch, bool enable);
 int nvgpu_tsg_set_sched_exit_wait_for_errbar(struct nvgpu_channel *ch, bool enable);
 #endif
+
+/**
+ * @brief Preempt a tsg
+ *
+ * @param g [in]		The GPU driver struct.
+ * @param tsg [in]		Pointer to TSG struct.
+ *
+ * Preempt the tsg.
+ */
+int nvgpu_tsg_preempt(struct gk20a *g, struct nvgpu_tsg *tsg);
+
 #endif /* NVGPU_TSG_H */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -94,7 +94,8 @@ void nvgpu_fifo_preempt_runlists_for_rc(struct gk20a *g, u32 runlists_bitmask);
  * @brief Preempt TSG.
  *
  * @param g [in]	Pointer to GPU driver struct.
- * @param tsg [in]	Pointer to TSG struct.
+ * @param runlist_id [in] Runlist ID.
+ * @param tsgid [in]	TSG ID.
  *
  * Preempt TSG:
  * - Acquire lock for active runlist.
@@ -115,5 +116,5 @@ void nvgpu_fifo_preempt_runlists_for_rc(struct gk20a *g, u32 runlists_bitmask);
  * @retval -ETIMEDOUT when preemption was triggered, but did not
  *         complete within preemption poll timeout.
  */
-int nvgpu_fifo_preempt_tsg(struct gk20a *g, struct nvgpu_tsg *tsg);
+int nvgpu_fifo_preempt_tsg(struct gk20a *g, u32 runlist_id, u32 tsgid);
 #endif /* NVGPU_PREEMPT_H */

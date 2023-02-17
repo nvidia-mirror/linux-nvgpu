@@ -418,7 +418,7 @@ done:
 #define F_TSG_UNBIND_CHANNEL_LAST			BIT(9)
 
 static int stub_fifo_preempt_tsg_EINVAL(
-		struct gk20a *g, struct nvgpu_tsg *tsg)
+		struct gk20a *g, u32 runlist_id, u32 tsgid)
 {
 	return -EINVAL;
 }
@@ -1305,9 +1305,9 @@ static const char *f_tsg_abort[] = {
 	"non_referenceable"
 };
 
-static int stub_fifo_preempt_tsg(struct gk20a *g, struct nvgpu_tsg *tsg)
+static int stub_fifo_preempt_tsg(struct gk20a *g, u32 runlist_id, u32 tsgid)
 {
-	stub[0].tsgid = tsg->tsgid;
+	stub[0].tsgid = tsgid;
 	return 0;
 }
 

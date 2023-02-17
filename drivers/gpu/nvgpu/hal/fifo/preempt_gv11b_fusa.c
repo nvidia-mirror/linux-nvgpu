@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2015-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -376,5 +376,5 @@ int gv11b_fifo_preempt_channel(struct gk20a *g, struct nvgpu_channel *ch)
 	nvgpu_log_info(g, "chid:%d tsgid:%d", ch->chid, tsg->tsgid);
 
 	/* Preempt tsg. Channel preempt is NOOP */
-	return g->ops.fifo.preempt_tsg(g, tsg);
+	return nvgpu_tsg_preempt(g, tsg);
 }

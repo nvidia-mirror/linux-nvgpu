@@ -385,6 +385,7 @@ struct tegra_vgpu_tsg_bind_unbind_channel_params {
 };
 
 struct tegra_vgpu_tsg_preempt_params {
+	u32 runlist_id;
 	u32 tsg_id;
 };
 

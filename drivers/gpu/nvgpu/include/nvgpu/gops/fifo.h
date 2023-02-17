@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -70,7 +70,8 @@ struct gops_fifo {
  	 * @brief Preempt TSG.
  	 *
  	 * @param g [in]	Pointer to GPU driver struct.
-	 * @param tsg [in]	Pointer to TSG struct.
+	 * @param runlist_id [in] Runlist ID.
+	 * @param tsgid [in]	TSG ID.
  	 *
 	 * - Acquire lock for active runlist.
 	 * - Write h/w register to trigger TSG preempt for \a tsg.
@@ -90,7 +91,7 @@ struct gops_fifo {
 	 * @retval -ETIMEDOUT when preemption was triggered, but did not
 	 *         complete within preemption poll timeout.
  	 */
-	int (*preempt_tsg)(struct gk20a *g, struct nvgpu_tsg *tsg);
+	int (*preempt_tsg)(struct gk20a *g, u32 runlist_id, u32 tsgid);
 
 	/**
 	 * @brief Enable and configure FIFO.

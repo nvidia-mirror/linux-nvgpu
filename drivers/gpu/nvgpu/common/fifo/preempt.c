@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -40,8 +40,9 @@ u32 nvgpu_preempt_get_timeout(struct gk20a *g)
 	return g->ctxsw_timeout_period_ms;
 }
 
-int nvgpu_fifo_preempt_tsg(struct gk20a *g, struct nvgpu_tsg *tsg)
+int nvgpu_fifo_preempt_tsg(struct gk20a *g, u32 runlist_id, u32 tsgid)
 {
+	struct nvgpu_runlist *runlist;
 	int ret = 0;
 	u32 preempt_retry_count = 10U;
 	u32 preempt_retry_timeout =
@@ -51,17 +52,19 @@ int nvgpu_fifo_preempt_tsg(struct gk20a *g, struct nvgpu_tsg *tsg)
 	int mutex_ret = 0;
 #endif
 
-	nvgpu_log_fn(g, "tsgid: %d", tsg->tsgid);
+	nvgpu_log_fn(g, "tsgid: %d", tsgid);
 
-	if (tsg->runlist == NULL) {
+	if (runlist_id == INVAL_ID) {
 		return 0;
 	}
 
+	runlist = g->fifo.runlists[runlist_id];
+
 	do {
-		nvgpu_mutex_acquire(&tsg->runlist->runlist_lock);
+		nvgpu_mutex_acquire(&runlist->runlist_lock);
 
 		if (nvgpu_is_errata_present(g, NVGPU_ERRATA_2016608)) {
-			nvgpu_runlist_set_state(g, BIT32(tsg->runlist->id),
+			nvgpu_runlist_set_state(g, BIT32(runlist_id),
 						RUNLIST_DISABLED);
 		}
 
@@ -69,7 +72,7 @@ int nvgpu_fifo_preempt_tsg(struct gk20a *g, struct nvgpu_tsg *tsg)
 		mutex_ret = nvgpu_pmu_lock_acquire(g, g->pmu,
 						   PMU_MUTEX_ID_FIFO, &token);
 #endif
-		g->ops.fifo.preempt_trigger(g, tsg->tsgid, ID_TYPE_TSG);
+		g->ops.fifo.preempt_trigger(g, tsgid, ID_TYPE_TSG);
 
 		/*
 		 * Poll for preempt done. if stalling interrupts are pending
@@ -80,7 +83,7 @@ int nvgpu_fifo_preempt_tsg(struct gk20a *g, struct nvgpu_tsg *tsg)
 		 * the engines hung and set the runlist reset_eng_bitmask
 		 * and mark preemption completion.
 		 */
-		ret = g->ops.fifo.is_preempt_pending(g, tsg->tsgid,
+		ret = g->ops.fifo.is_preempt_pending(g, tsgid,
 					ID_TYPE_TSG, preempt_retry_count > 1U);
 
 #ifdef CONFIG_NVGPU_LS_PMU
@@ -93,11 +96,11 @@ int nvgpu_fifo_preempt_tsg(struct gk20a *g, struct nvgpu_tsg *tsg)
 		}
 #endif
 		if (nvgpu_is_errata_present(g, NVGPU_ERRATA_2016608)) {
-			nvgpu_runlist_set_state(g, BIT32(tsg->runlist->id),
+			nvgpu_runlist_set_state(g, BIT32(runlist_id),
 						RUNLIST_ENABLED);
 		}
 
-		nvgpu_mutex_release(&tsg->runlist->runlist_lock);
+		nvgpu_mutex_release(&runlist->runlist_lock);
 
 		if (ret != -EAGAIN) {
 			break;
@@ -113,9 +116,9 @@ int nvgpu_fifo_preempt_tsg(struct gk20a *g, struct nvgpu_tsg *tsg)
 		if (nvgpu_platform_is_silicon(g)) {
 			nvgpu_err(g, "preempt timed out for tsgid: %u, "
 			"ctxsw timeout will trigger recovery if needed",
-			tsg->tsgid);
+			tsgid);
 		} else {
-			nvgpu_rc_preempt_timeout(g, tsg);
+			nvgpu_rc_preempt_timeout(g, &g->fifo.tsg[tsgid]);
 		}
 	}
 	return ret;
@@ -127,7 +130,7 @@ int nvgpu_preempt_channel(struct gk20a *g, struct nvgpu_channel *ch)
 	struct nvgpu_tsg *tsg = nvgpu_tsg_from_ch(ch);
 
 	if (tsg != NULL) {
-		err = g->ops.fifo.preempt_tsg(ch->g, tsg);
+		err = nvgpu_tsg_preempt(ch->g, tsg);
 	} else {
 		err = g->ops.fifo.preempt_channel(ch->g, ch);
 	}

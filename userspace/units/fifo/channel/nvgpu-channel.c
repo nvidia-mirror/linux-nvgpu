@@ -1536,9 +1536,9 @@ static const char *f_channel_suspend_resume[] = {
 	"work_completion_cancel_sync",
 };
 
-static int stub_fifo_preempt_tsg(struct gk20a *g, struct nvgpu_tsg *tsg)
+static int stub_fifo_preempt_tsg(struct gk20a *g, u32 runlist_id, u32 tsgid)
 {
-	stub[0].tsgid = tsg->tsgid;
+	stub[0].tsgid = tsgid;
 	return 0;
 }
 

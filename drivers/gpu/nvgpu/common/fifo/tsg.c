@@ -574,7 +574,7 @@ static int nvgpu_tsg_unbind_channel_common(struct nvgpu_tsg *tsg,
 	/* Disable TSG and examine status before unbinding channel */
 	g->ops.tsg.disable(tsg);
 
-	err = g->ops.fifo.preempt_tsg(g, tsg);
+	err = nvgpu_tsg_preempt(g, tsg);
 	if (err != 0) {
 		goto fail_enable_tsg;
 	}
@@ -1604,7 +1604,7 @@ void nvgpu_tsg_abort(struct gk20a *g, struct nvgpu_tsg *tsg, bool preempt)
 		 * operation will print the error and ctxsw timeout may trigger
 		 * a recovery if needed.
 		 */
-		(void)g->ops.fifo.preempt_tsg(g, tsg);
+		(void)nvgpu_tsg_preempt(g, tsg);
 	}
 
 	nvgpu_rwsem_down_read(&tsg->ch_list_lock);
@@ -1741,3 +1741,10 @@ int nvgpu_tsg_set_sched_exit_wait_for_errbar(struct nvgpu_channel *ch, bool enab
 	return err;
 }
 #endif
+
+int nvgpu_tsg_preempt(struct gk20a *g, struct nvgpu_tsg *tsg)
+{
+	u32 runlist_id = tsg->runlist == NULL ? INVAL_ID : tsg->runlist->id;
+
+	return g->ops.fifo.preempt_tsg(g, runlist_id, tsg->tsgid);
+}

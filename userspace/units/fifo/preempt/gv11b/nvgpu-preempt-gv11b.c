@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -149,7 +149,7 @@ static int stub_pbdma_handle_intr(struct gk20a *g, u32 pbdma_id, bool recover)
 	return 0;
 }
 
-static int stub_fifo_preempt_tsg(struct gk20a *g, struct nvgpu_tsg *tsg)
+static int stub_fifo_preempt_tsg(struct gk20a *g, u32 runlist_id, u32 tsgid)
 {
 	return 1;
 }
@@ -276,7 +276,8 @@ int test_gv11b_fifo_preempt_tsg(struct unit_module *m, struct gk20a *g,
 			branches & F_PREEMPT_TSG_PLATFORM_SILICON ?
 			true : false;
 
-		err = EXPECT_BUG(nvgpu_fifo_preempt_tsg(g, tsg));
+		err = EXPECT_BUG(nvgpu_fifo_preempt_tsg(g,
+				tsg->runlist->id, tsg->tsgid));
 
 		if (branches & F_PREEMPT_TSG_PREEMPT_LOCKED_FAIL) {
 			if (branches & F_PREEMPT_TSG_PLATFORM_SILICON) {
