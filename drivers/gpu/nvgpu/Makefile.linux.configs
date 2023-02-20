@@ -71,10 +71,8 @@ endif
 # Support for remap
 CONFIG_NVGPU_REMAP := y
 
-ifeq ($(NV_BUILD_SYSTEM_TYPE),embedded-linux)
 # Enable gsp scheduler support
 CONFIG_NVGPU_GSP_SCHEDULER := y
-endif
 
 #Enable stress test for GSP
 ifeq ($(CONFIG_NVGPU_GSP_SCHEDULER),y)
@@ -209,16 +207,8 @@ else
 CONFIG_NVGPU_SYNCFD_NONE := y
 endif
 
-# Below check indicates the build is invoked from Nvidia's
-# internal build system.
-ifneq ($(NV_BUILD_KERNEL_OPTIONS),)
-
-ifeq ($(NV_BUILD_SYSTEM_TYPE),embedded-linux)
 CONFIG_NVS_ROUND_ROBIN_SCHEDULER_DISABLE := y
 ccflags-y += -DCONFIG_NVS_ROUND_ROBIN_SCHEDULER_DISABLE
-endif
-
-endif
 
 # Set config for OOT module build
 ifeq ($(CONFIG_TEGRA_OOT_MODULE),m)
