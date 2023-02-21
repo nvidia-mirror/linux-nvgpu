@@ -72,7 +72,7 @@ int nvgpu_fifo_preempt_tsg(struct gk20a *g, u32 runlist_id, u32 tsgid)
 		mutex_ret = nvgpu_pmu_lock_acquire(g, g->pmu,
 						   PMU_MUTEX_ID_FIFO, &token);
 #endif
-		g->ops.fifo.preempt_trigger(g, tsgid, ID_TYPE_TSG);
+		g->ops.fifo.preempt_trigger(g, runlist_id, tsgid, ID_TYPE_TSG);
 
 		/*
 		 * Poll for preempt done. if stalling interrupts are pending
@@ -83,7 +83,7 @@ int nvgpu_fifo_preempt_tsg(struct gk20a *g, u32 runlist_id, u32 tsgid)
 		 * the engines hung and set the runlist reset_eng_bitmask
 		 * and mark preemption completion.
 		 */
-		ret = g->ops.fifo.is_preempt_pending(g, tsgid,
+		ret = g->ops.fifo.is_preempt_pending(g, runlist_id, tsgid,
 					ID_TYPE_TSG, preempt_retry_count > 1U);
 
 #ifdef CONFIG_NVGPU_LS_PMU
@@ -198,7 +198,7 @@ void nvgpu_fifo_preempt_runlists_for_rc(struct gk20a *g, u32 runlists_bitmask)
 			continue;
 		}
 		/* issue runlist preempt */
-		g->ops.fifo.preempt_trigger(g, runlist->id,
+		g->ops.fifo.preempt_trigger(g, runlist->id, INVAL_ID,
 					ID_TYPE_RUNLIST);
 #ifdef CONFIG_NVGPU_RECOVERY
 		/*

@@ -40,15 +40,16 @@
 
 #include <nvgpu/hw/gk20a/hw_fifo_gk20a.h>
 
-void gk20a_fifo_preempt_trigger(struct gk20a *g, u32 id, unsigned int id_type)
+void gk20a_fifo_preempt_trigger(struct gk20a *g,
+		u32 runlist_id, u32 tsgid, unsigned int id_type)
 {
 	if (id_type == ID_TYPE_TSG) {
 		nvgpu_writel(g, fifo_preempt_r(),
-			fifo_preempt_id_f(id) |
+			fifo_preempt_id_f(tsgid) |
 			fifo_preempt_type_tsg_f());
 	} else {
 		nvgpu_writel(g, fifo_preempt_r(),
-			fifo_preempt_chid_f(id) |
+			fifo_preempt_chid_f(runlist_id) |
 			fifo_preempt_type_channel_f());
 	}
 }
@@ -58,14 +59,14 @@ static int gk20a_fifo_preempt_locked(struct gk20a *g, u32 id,
 {
 	nvgpu_log_fn(g, "id: %d id_type: %d", id, id_type);
 
-	/* issue preempt */
-	g->ops.fifo.preempt_trigger(g, id, id_type);
+	/* issue preempt, runlist_id not used for gm20b and prior */
+	g->ops.fifo.preempt_trigger(g, INVAL_ID, id, id_type);
 
-	/* wait for preempt */
-	return g->ops.fifo.is_preempt_pending(g, id, id_type, false);
+	/* wait for preempt, runlist_id not used for gm20b and prior */
+	return g->ops.fifo.is_preempt_pending(g, INVAL_ID, id, id_type, false);
 }
 
-int gk20a_fifo_is_preempt_pending(struct gk20a *g, u32 id,
+int gk20a_fifo_is_preempt_pending(struct gk20a *g, u32 runlist_id, u32 id,
 		unsigned int id_type, bool preempt_retries_left)
 {
 	struct nvgpu_timeout timeout;
@@ -73,6 +74,7 @@ int gk20a_fifo_is_preempt_pending(struct gk20a *g, u32 id,
 	int ret;
 
 	(void)preempt_retries_left;
+	(void)runlist_id;
 
 	nvgpu_timeout_init_cpu_timer(g, &timeout, nvgpu_preempt_get_timeout(g));
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,22 +31,24 @@
 
 #include <nvgpu/hw/ga10b/hw_runlist_ga10b.h>
 
-void ga10b_fifo_preempt_trigger(struct gk20a *g, u32 id, unsigned int id_type)
+void ga10b_fifo_preempt_trigger(struct gk20a *g,
+		u32 runlist_id, u32 tsgid, unsigned int id_type)
 {
-	struct nvgpu_runlist *runlist = NULL;
+	struct nvgpu_runlist *runlist;
 
-	if (id == INVAL_ID) {
+	if (runlist_id == INVAL_ID ||
+			(tsgid == INVAL_ID && id_type == ID_TYPE_TSG)) {
 		nvgpu_log(g, gpu_dbg_info, "Invalid id, cannot preempt");
 		return;
 	}
 
+	runlist = g->fifo.runlists[runlist_id];
+
 	if (id_type == ID_TYPE_TSG) {
-		struct nvgpu_tsg *tsg = &g->fifo.tsg[id];
-		nvgpu_runlist_writel(g, tsg->runlist, runlist_preempt_r(),
-					runlist_preempt_id_f(id) |
+		nvgpu_runlist_writel(g, runlist, runlist_preempt_r(),
+					runlist_preempt_id_f(tsgid) |
 					runlist_preempt_type_tsg_f());
 	} else if (id_type == ID_TYPE_RUNLIST) {
-		runlist = g->fifo.runlists[id];
 		nvgpu_runlist_writel(g, runlist, runlist_preempt_r(),
 				runlist_preempt_type_runlist_f());
 	} else {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,9 +30,10 @@ struct gk20a;
 struct nvgpu_channel;
 struct nvgpu_tsg;
 
-void gv11b_fifo_preempt_trigger(struct gk20a *g, u32 id, unsigned int id_type);
+void gv11b_fifo_preempt_trigger(struct gk20a *g,
+		u32 runlist_id, u32 id, unsigned int id_type);
 int  gv11b_fifo_preempt_channel(struct gk20a *g, struct nvgpu_channel *ch);
-int  gv11b_fifo_is_preempt_pending(struct gk20a *g, u32 id,
+int  gv11b_fifo_is_preempt_pending(struct gk20a *g, u32 runlist_id, u32 id,
 			unsigned int id_type, bool preempt_retries_left);
 int gv11b_fifo_preempt_poll_pbdma(struct gk20a *g, u32 tsgid, u32 pbdma_id);
 

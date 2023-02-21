@@ -1,7 +1,7 @@
 /*
  * GP10B GPU GR
  *
- * Copyright (c) 2015-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2015-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -417,7 +417,8 @@ static int gr_gp10b_disable_channel_or_tsg(struct gk20a *g, struct nvgpu_channel
 	nvgpu_log(g, gpu_dbg_fn | gpu_dbg_gpu_dbg | gpu_dbg_intr,
 			"CILP: tsgid: 0x%x", tsg->tsgid);
 
-	g->ops.fifo.preempt_trigger(g, tsg->tsgid, ID_TYPE_TSG);
+	g->ops.fifo.preempt_trigger(g,
+		tsg->runlist->id, tsg->tsgid, ID_TYPE_TSG);
 	nvgpu_log(g, gpu_dbg_fn | gpu_dbg_gpu_dbg | gpu_dbg_intr,
 			"CILP: preempted tsg");
 	return ret;

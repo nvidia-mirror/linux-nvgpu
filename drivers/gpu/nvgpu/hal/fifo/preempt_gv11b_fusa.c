@@ -44,7 +44,7 @@
 #include <nvgpu/hw/gv11b/hw_fifo_gv11b.h>
 
 
-void gv11b_fifo_preempt_trigger(struct gk20a *g, u32 id, unsigned int id_type)
+void gv11b_fifo_preempt_trigger(struct gk20a *g, u32 runlist_id, u32 id, unsigned int id_type)
 {
 	if (id_type == ID_TYPE_TSG) {
 		nvgpu_writel(g, fifo_preempt_r(),
@@ -54,7 +54,7 @@ void gv11b_fifo_preempt_trigger(struct gk20a *g, u32 id, unsigned int id_type)
 		u32 reg_val;
 
 		reg_val = nvgpu_readl(g, fifo_runlist_preempt_r());
-		reg_val |= BIT32(id);
+		reg_val |= BIT32(runlist_id);
 		nvgpu_writel(g, fifo_runlist_preempt_r(), reg_val);
 	} else {
 		nvgpu_log_info(g, "channel preempt is noop");
@@ -312,7 +312,7 @@ static int gv11b_fifo_preempt_poll_eng(struct gk20a *g, u32 id,
 	return ret;
 }
 
-int gv11b_fifo_is_preempt_pending(struct gk20a *g, u32 id,
+int gv11b_fifo_is_preempt_pending(struct gk20a *g, u32 runlist_id, u32 id,
 		 unsigned int id_type, bool preempt_retries_left)
 {
 	struct nvgpu_fifo *f = &g->fifo;
@@ -325,13 +325,11 @@ int gv11b_fifo_is_preempt_pending(struct gk20a *g, u32 id,
 	int err, ret = 0;
 	u32 tsgid;
 
-	if (id_type == ID_TYPE_TSG) {
-		rl = f->tsg[id].runlist;
-		tsgid = id;
-	} else {
-		rl = f->channel[id].runlist;
-		tsgid = f->channel[id].tsgid;
-	}
+	/* GV11B onward, the function only supports tsg preemption */
+	nvgpu_assert(id_type == ID_TYPE_TSG);
+
+	rl = f->runlists[runlist_id];
+	tsgid = id;
 
 	nvgpu_log_info(g, "Check preempt pending for tsgid = %u", tsgid);
 

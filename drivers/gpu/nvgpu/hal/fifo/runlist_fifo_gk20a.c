@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -100,7 +100,7 @@ int gk20a_fifo_reschedule_preempt_next(struct nvgpu_channel *ch,
 		return ret;
 	}
 
-	g->ops.fifo.preempt_trigger(g, preempt_id, preempt_type != 0U);
+	g->ops.fifo.preempt_trigger(g, runlist->id, preempt_id, preempt_type != 0U);
 #ifdef TRACEPOINTS_ENABLED
 	trace_gk20a_reschedule_preempt_next(ch->chid, fecsstat0,
 		engine_status.reg_data, fecsstat1,
@@ -109,7 +109,7 @@ int gk20a_fifo_reschedule_preempt_next(struct nvgpu_channel *ch,
 		nvgpu_readl(g, fifo_preempt_r()));
 #endif
 	if (wait_preempt) {
-		if (g->ops.fifo.is_preempt_pending(g, preempt_id,
+		if (g->ops.fifo.is_preempt_pending(g, runlist->id, preempt_id,
 			preempt_type, false) != 0) {
 			nvgpu_err(g, "fifo preempt timed out");
 			/*

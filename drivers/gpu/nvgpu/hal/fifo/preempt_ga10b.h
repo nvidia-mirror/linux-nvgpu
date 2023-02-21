@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,6 +26,7 @@
 
 struct gk20a;
 
-void ga10b_fifo_preempt_trigger(struct gk20a *g, u32 id, unsigned int id_type);
+void ga10b_fifo_preempt_trigger(struct gk20a *g,
+	u32 runlist_id, u32 id, unsigned int id_type);
 
 #endif /* FIFO_PREEMPT_GA10B_H */

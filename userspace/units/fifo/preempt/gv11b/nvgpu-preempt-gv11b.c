@@ -95,14 +95,14 @@ int test_gv11b_fifo_preempt_trigger(struct unit_module *m, struct gk20a *g,
 			__func__, branches_str(branches, f_preempt_trigger));
 
 		if (branches & F_PREEMPT_TRIGGER_TSG) {
-			gv11b_fifo_preempt_trigger(g, 5U, ID_TYPE_TSG);
+			gv11b_fifo_preempt_trigger(g, 0U, 5U, ID_TYPE_TSG);
 			expected_reg_val = fifo_preempt_id_f(5U) |
 					fifo_preempt_type_tsg_f();
 			unit_assert(expected_reg_val ==
 				nvgpu_readl(g, fifo_preempt_r()), goto done);
 			nvgpu_writel(g, fifo_preempt_r(), orig_reg_val);
 		} else {
-			gv11b_fifo_preempt_trigger(g, 5U, ID_TYPE_CHANNEL);
+			gv11b_fifo_preempt_trigger(g, 0U, 5U, ID_TYPE_CHANNEL);
 			unit_assert(orig_reg_val ==
 				nvgpu_readl(g, fifo_preempt_r()), goto done);
 		}
@@ -199,20 +199,22 @@ done:
 	return ret;
 }
 
-static void stub_fifo_preempt_trigger(struct gk20a *g, u32 id,
+static void stub_fifo_preempt_trigger(struct gk20a *g, u32 runlist_id, u32 id,
 			unsigned int id_type)
 {
 
 }
 
-static int stub_fifo_is_preempt_pending_ebusy(struct gk20a *g, u32 id,
+static int stub_fifo_is_preempt_pending_ebusy(struct gk20a *g,
+						u32 runlist_id, u32 id,
 						unsigned int id_type,
 						bool preempt_retries_left)
 {
 	return -EBUSY;
 }
 
-static int stub_fifo_is_preempt_pending_pass(struct gk20a *g, u32 id,
+static int stub_fifo_is_preempt_pending_pass(struct gk20a *g,
+						u32 runlist_id, u32 id,
 						unsigned int id_type,
 						bool preempt_retries_left)
 {
@@ -457,7 +459,7 @@ int test_gv11b_fifo_is_preempt_pending(struct unit_module *m, struct gk20a *g,
 		/* Modify eng_stat for engine 0 */
 		nvgpu_writel(g, fifo_engine_status_r(0U), stub.eng_stat);
 
-		err = gv11b_fifo_is_preempt_pending(g, 0U, id_type, false);
+		err = gv11b_fifo_is_preempt_pending(g, 0U, 0U, id_type, false);
 
 		if (branches & F_PREEMPT_PENDING_POLL_PBDMA_FAIL) {
 			unit_assert(err == -ETIMEDOUT, goto done);

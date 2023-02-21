@@ -209,10 +209,11 @@ struct gops_fifo {
 	 *
 	 * @return: None
 	 */
-	void (*preempt_trigger)(struct gk20a *g, u32 id, unsigned int id_type);
+	void (*preempt_trigger)(struct gk20a *g,
+			u32 runlist_id, u32 tsgid, unsigned int id_type);
 	int (*preempt_poll_pbdma)(struct gk20a *g, u32 tsgid,
 			 u32 pbdma_id);
-	int (*is_preempt_pending)(struct gk20a *g, u32 id,
+	int (*is_preempt_pending)(struct gk20a *g, u32 runlist_id, u32 id,
 		unsigned int id_type, bool preempt_retries_left);
 	void (*intr_set_recover_mask)(struct gk20a *g);
 	void (*intr_unset_recover_mask)(struct gk20a *g);
