@@ -478,7 +478,7 @@ static int nvgpu_nvs_worker_init(struct gk20a *g)
 	struct nvgpu_worker *worker = &g->scheduler->worker.worker;
 	struct nvgpu_nvs_worker *nvs_worker = &g->scheduler->worker;
 
-	if (g->is_virtual) {
+	if (nvgpu_is_legacy_vgpu(g)) {
 		return 0;
 	}
 
