@@ -1,7 +1,7 @@
 /*
  * GA100 Runlist
  *
- * Copyright (c) 2020-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -38,20 +38,21 @@ u32 ga100_runlist_count_max(struct gk20a *g)
 	return nvgpu_get_litter_value(g, GPU_LIT_MAX_RUNLISTS_SUPPORTED);
 }
 
-void ga100_runlist_hw_submit(struct gk20a *g, struct nvgpu_runlist *runlist)
+void ga100_runlist_hw_submit(struct gk20a *g, u32 runlist_id,
+		u64 runlist_iova, enum nvgpu_aperture aperture, u32 count)
+
 {
-	u64 runlist_iova;
+	struct nvgpu_runlist *runlist = g->fifo.runlists[runlist_id];
 	u32 runlist_iova_lo, runlist_iova_hi;
 
-	runlist_iova = nvgpu_mem_get_addr(g, &runlist->domain->mem_hw->mem);
 	runlist_iova_lo = u64_lo32(runlist_iova) >>
 			runlist_submit_base_lo_ptr_align_shift_v();
 	runlist_iova_hi = u64_hi32(runlist_iova);
 
-	if (runlist->domain->mem_hw->count != 0U) {
+	if (count != 0U) {
 		nvgpu_runlist_writel(g, runlist, runlist_submit_base_lo_r(),
 			runlist_submit_base_lo_ptr_lo_f(runlist_iova_lo) |
-			nvgpu_aperture_mask(g, &runlist->domain->mem_hw->mem,
+			nvgpu_aperture_mask_raw(g, aperture,
 			runlist_submit_base_lo_target_sys_mem_noncoherent_f(),
 			runlist_submit_base_lo_target_sys_mem_coherent_f(),
 			runlist_submit_base_lo_target_vid_mem_f()));
@@ -63,5 +64,5 @@ void ga100_runlist_hw_submit(struct gk20a *g, struct nvgpu_runlist *runlist)
 	/* TODO offset in runlist support */
 	nvgpu_runlist_writel(g, runlist, runlist_submit_r(),
 			runlist_submit_offset_f(0U) |
-			runlist_submit_length_f(runlist->domain->mem_hw->count));
+			runlist_submit_length_f(count));
 }

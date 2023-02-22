@@ -756,7 +756,7 @@ static void nvgpu_runlist_domain_actual_submit(struct gk20a *g, struct nvgpu_run
 	 * and domain mem swaps.
 	 */
 	nvgpu_spinlock_acquire(&rl->domain->lock);
-	g->ops.runlist.hw_submit(g, rl);
+	nvgpu_runlist_hw_submit(g, rl);
 	nvgpu_spinlock_release(&rl->domain->lock);
 }
 
@@ -1479,4 +1479,13 @@ u32 nvgpu_runlist_get_num_runlists(struct gk20a *g)
 struct nvgpu_runlist_domain *nvgpu_runlist_get_shadow_domain(struct gk20a *g)
 {
 	return g->fifo.active_runlists[0].shadow_rl_domain;
+}
+
+void nvgpu_runlist_hw_submit(struct gk20a *g, struct nvgpu_runlist *runlist)
+{
+	u64 runlist_iova = nvgpu_mem_get_addr(g, &runlist->domain->mem_hw->mem);
+	enum nvgpu_aperture aperture = runlist->domain->mem_hw->mem.aperture;
+	u32 count = runlist->domain->mem_hw->count;
+
+	g->ops.runlist.hw_submit(g, runlist->id, runlist_iova, aperture, count);
 }

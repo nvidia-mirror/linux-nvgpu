@@ -1,7 +1,7 @@
 /*
  * GA10B Runlist
  *
- * Copyright (c) 2020-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -50,20 +50,20 @@ u32 ga10b_runlist_length_max(struct gk20a *g)
 	return runlist_submit_length_max_v();
 }
 
-void ga10b_runlist_hw_submit(struct gk20a *g, struct nvgpu_runlist *runlist)
+void ga10b_runlist_hw_submit(struct gk20a *g, u32 runlist_id,
+		u64 runlist_iova, enum nvgpu_aperture aperture, u32 count)
 {
-	u64 runlist_iova;
+	struct nvgpu_runlist *runlist = g->fifo.runlists[runlist_id];
 	u32 runlist_iova_lo, runlist_iova_hi;
 
-	runlist_iova = nvgpu_mem_get_addr(g, &runlist->domain->mem_hw->mem);
 	runlist_iova_lo = u64_lo32(runlist_iova) >>
 			runlist_submit_base_lo_ptr_align_shift_v();
 	runlist_iova_hi = u64_hi32(runlist_iova);
 
-	if (runlist->domain->mem_hw->count != 0U) {
+	if (count != 0U) {
 		nvgpu_runlist_writel(g, runlist, runlist_submit_base_lo_r(),
 			runlist_submit_base_lo_ptr_lo_f(runlist_iova_lo) |
-			nvgpu_aperture_mask(g, &runlist->domain->mem_hw->mem,
+			nvgpu_aperture_mask_raw(g, aperture,
 			runlist_submit_base_lo_target_sys_mem_noncoherent_f(),
 			runlist_submit_base_lo_target_sys_mem_coherent_f(),
 			runlist_submit_base_lo_target_vid_mem_f()));
@@ -72,13 +72,13 @@ void ga10b_runlist_hw_submit(struct gk20a *g, struct nvgpu_runlist *runlist)
 			runlist_submit_base_hi_ptr_hi_f(runlist_iova_hi));
 	}
 
-	rl_dbg(g, "Submitting domain[%llu], mem=0x%16llx", runlist->domain->domain_id,
-		(u64)nvgpu_mem_get_addr(g, &runlist->domain->mem_hw->mem));
+	rl_dbg(g, "Submitting runlist[%d], mem=0x%16llx", runlist_id,
+		(u64)runlist_iova);
 
 	/* TODO offset in runlist support */
 	nvgpu_runlist_writel(g, runlist, runlist_submit_r(),
 			runlist_submit_offset_f(0U) |
-			runlist_submit_length_f(runlist->domain->mem_hw->count));
+			runlist_submit_length_f(count));
 }
 
 int ga10b_runlist_check_pending(struct gk20a *g, struct nvgpu_runlist *runlist)

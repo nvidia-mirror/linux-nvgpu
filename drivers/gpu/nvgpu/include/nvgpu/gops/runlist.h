@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -92,7 +92,8 @@ struct gops_runlist {
 	void (*get_tsg_entry)(struct nvgpu_tsg *tsg,
 			u32 *runlist, u32 timeslice);
 	void (*get_ch_entry)(struct nvgpu_channel *ch, u32 *runlist);
-	void (*hw_submit)(struct gk20a *g, struct nvgpu_runlist *runlist);
+	void (*hw_submit)(struct gk20a *g, u32 runlist_id,
+		u64 runlist_iova, enum nvgpu_aperture aperture, u32 count);
 	int (*check_pending)(struct gk20a *g, struct nvgpu_runlist *runlist);
 	void (*write_state)(struct gk20a *g, u32 runlists_mask,
 			u32 runlist_state);

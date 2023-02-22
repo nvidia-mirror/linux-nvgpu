@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2022-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -119,9 +119,11 @@ static int stub_runlist_update(struct gk20a *g, struct nvgpu_runlist *rl,
 	return 0;
 }
 
-static void stub_runlist_hw_submit(struct gk20a *g, struct nvgpu_runlist *runlist)
+static void stub_runlist_hw_submit(struct gk20a *g, u32 runlist_id,
+		u64 runlist_iova, enum nvgpu_aperture aperture, u32 count)
 {
-	struct nvgpu_runlist_domain *domain = runlist->domain;
+	struct nvgpu_runlist_domain *domain =
+		g->fifo.runlists[runlist_id]->domain;
 	nvs_context.updated_domain = domain;
 }
 

@@ -339,6 +339,14 @@ int nvgpu_runlist_update(struct gk20a *g, struct nvgpu_runlist *rl,
 		struct nvgpu_channel *ch, bool add, bool wait_for_finish);
 
 /**
+ * @brief Submit runlist to hardware.
+ *
+ * @param g  [in]		The GPU driver struct owning this runlist.
+ * @param runlist [in]		Runlist object to be submited.
+ */
+void nvgpu_runlist_hw_submit(struct gk20a *g, struct nvgpu_runlist *runlist);
+
+/**
  * @brief Reload runlist
  *
  * @param g [in]		The GPU driver struct owning this runlist.

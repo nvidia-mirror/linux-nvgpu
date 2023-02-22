@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -78,7 +78,7 @@ int test_gk20a_runlist_hw_submit(struct unit_module *m,
 	struct nvgpu_fifo *f = &g->fifo;
 	int ret = UNIT_FAIL;
 	u32 runlist_id = nvgpu_engine_get_gr_runlist_id(g);
-	struct nvgpu_runlist *runlist = g->fifo.runlists[runlist_id];
+	struct nvgpu_runlist *runlist = f->runlists[runlist_id];
 	u32 count;
 
 	for (count = 0; count < 2; count++) {
@@ -88,7 +88,11 @@ int test_gk20a_runlist_hw_submit(struct unit_module *m,
 
 		runlist->domain->mem_hw->count = count;
 
-		gk20a_runlist_hw_submit(g, f->runlists[runlist_id]);
+		gk20a_runlist_hw_submit(g,
+			runlist_id,
+			nvgpu_mem_get_addr(g, &runlist->domain->mem_hw->mem),
+			runlist->domain->mem_hw->mem.aperture,
+			runlist->domain->mem_hw->count);
 		if (count == 0) {
 			unit_assert(nvgpu_readl(g, fifo_runlist_base_r()) == 0,
 					goto done);

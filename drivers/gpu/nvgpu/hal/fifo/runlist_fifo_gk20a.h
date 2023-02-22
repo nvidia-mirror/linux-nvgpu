@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,6 +29,7 @@ struct nvgpu_channel;
 struct nvgpu_tsg;
 struct gk20a;
 struct nvgpu_runlist;
+enum nvgpu_aperture;
 
 #ifdef CONFIG_NVGPU_CHANNEL_TSG_SCHEDULING
 int gk20a_runlist_reschedule(struct nvgpu_channel *ch, bool preempt_next);
@@ -40,7 +41,8 @@ u32 gk20a_runlist_count_max(struct gk20a *g);
 #endif
 
 u32 gk20a_runlist_length_max(struct gk20a *g);
-void gk20a_runlist_hw_submit(struct gk20a *g, struct nvgpu_runlist *runlist);
+void gk20a_runlist_hw_submit(struct gk20a *g, u32 runlist_id,
+		u64 runlist_iova, enum nvgpu_aperture aperture, u32 count);
 int gk20a_runlist_check_pending(struct gk20a *g, struct nvgpu_runlist *runlist);
 void gk20a_runlist_write_state(struct gk20a *g, u32 runlists_mask,
 		u32 runlist_state);

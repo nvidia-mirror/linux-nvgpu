@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -39,24 +39,23 @@ u32 gk20a_runlist_length_max(struct gk20a *g)
 	return fifo_eng_runlist_length_max_v();
 }
 
-void gk20a_runlist_hw_submit(struct gk20a *g, struct nvgpu_runlist *runlist)
+void gk20a_runlist_hw_submit(struct gk20a *g, u32 runlist_id,
+		u64 runlist_iova, enum nvgpu_aperture aperture, u32 count)
 {
-	u64 runlist_iova = nvgpu_mem_get_addr(g, &runlist->domain->mem_hw->mem);
-
 	nvgpu_spinlock_acquire(&g->fifo.runlist_submit_lock);
 
-	if (runlist->domain->mem_hw->count != 0U) {
+	if (count != 0U) {
 		nvgpu_writel(g, fifo_runlist_base_r(),
 			     fifo_runlist_base_ptr_f(u64_lo32(runlist_iova >> 12U)) |
-			     nvgpu_aperture_mask(g, &runlist->domain->mem_hw->mem,
+			     nvgpu_aperture_mask_raw(g, aperture,
 				fifo_runlist_base_target_sys_mem_ncoh_f(),
 				fifo_runlist_base_target_sys_mem_coh_f(),
 				fifo_runlist_base_target_vid_mem_f()));
 	}
 
 	nvgpu_writel(g, fifo_runlist_r(),
-		     fifo_runlist_engine_f(runlist->id) |
-		     fifo_eng_runlist_length_f(runlist->domain->mem_hw->count));
+		     fifo_runlist_engine_f(runlist_id) |
+		     fifo_eng_runlist_length_f(count));
 
 	nvgpu_spinlock_release(&g->fifo.runlist_submit_lock);
 }
