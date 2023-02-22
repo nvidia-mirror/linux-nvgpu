@@ -138,6 +138,7 @@ struct gops_ce {
 	/** @cond DOXYGEN_SHOULD_SKIP_THIS */
 
 	int (*ce_init_support)(struct gk20a *g);
+	u32 (*pce_map_value)(struct gk20a *g);
 	void (*set_pce2lce_mapping)(struct gk20a *g);
 	void (*init_prod_values)(struct gk20a *g);
 	void (*halt_engine)(struct gk20a *g, const struct nvgpu_device *dev);
