@@ -214,6 +214,8 @@ struct nvgpu_clk_pmupstate;
 #define	PMU_BAR0_READ_FECSERR		9U
 #define	PMU_BAR0_WRITE_FECSERR		10U
 
+#define NVGPU_PWRCLK_RATE 204000000UL
+
 #ifdef CONFIG_NVGPU_LS_PMU
 struct rpc_handler_payload {
 	void *rpc_buff;

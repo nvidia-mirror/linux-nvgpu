@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -250,8 +250,7 @@ void nvgpu_pmu_rtos_cmdline_args_init(struct gk20a *g, struct nvgpu_pmu *pmu)
 	pmu->fw->ops.set_cmd_line_args_trace_dma_idx(
 		pmu, GK20A_PMU_DMAIDX_VIRT);
 
-	pmu->fw->ops.set_cmd_line_args_cpu_freq(pmu,
-		(u32)g->ops.clk.get_rate(g, CTRL_CLK_DOMAIN_PWRCLK));
+	pmu->fw->ops.set_cmd_line_args_cpu_freq(pmu, NVGPU_PWRCLK_RATE);
 
 	if (pmu->fw->ops.config_cmd_line_args_super_surface != NULL) {
 		pmu->fw->ops.config_cmd_line_args_super_surface(pmu);
