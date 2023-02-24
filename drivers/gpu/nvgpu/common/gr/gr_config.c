@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -549,7 +549,7 @@ struct nvgpu_gr_config *nvgpu_gr_config_init(struct gk20a *g)
 {
 	struct nvgpu_gr_config *config;
 	u32 cur_gr_instance = nvgpu_gr_get_cur_instance_id(g);
-	u32 gpc_index, tpc_index, tpc_phys_pos, local_gpc_tpc_mask_phys, i;
+	u32 gpc_index;
 	u32 gpc_phys_id;
 	int err;
 
@@ -660,52 +660,9 @@ struct nvgpu_gr_config *nvgpu_gr_config_init(struct gk20a *g)
 		gr_config_init_gpc_skip_mask(config, gpc_index);
 	}
 
-	/*
-	 * This structure holds the physical id for a TPC within a
-	 * GPC. The GPC is indexed using physical id and the TPC is indexed using
-	 * logical id.
-	 */
-	config->gpc_tpc_physical_id_map = nvgpu_kzalloc(g,
-			nvgpu_safe_mult_u64((size_t)config->gpc_count,
-				sizeof(u32 *)));
-	if (config->gpc_tpc_physical_id_map == NULL) {
-		nvgpu_err(g, "alloc gpc_tpc_physical_id_map failed");
-		goto clean_up_gpc_rop_config;
-	}
-	//Get Physical layout of tpc per physical gpc
-	for (gpc_index = 0; gpc_index < config->gpc_count; gpc_index++) {
-		gpc_phys_id = nvgpu_grmgr_get_gr_gpc_phys_id(g,
-				cur_gr_instance, (u32)gpc_index);
-		config->gpc_tpc_physical_id_map[gpc_phys_id] =
-			nvgpu_kzalloc(g, config->max_tpc_per_gpc_count);
-		if (config->gpc_tpc_physical_id_map[gpc_phys_id] == NULL) {
-			nvgpu_err(g, "alloc tpc_physical_id_map(%u) failed",
-					gpc_phys_id);
-			goto clean_up_gpc_tpc_physical_id_map_alloc_fail;
-		}
-		tpc_phys_pos = 0U;
-		local_gpc_tpc_mask_phys = config->gpc_tpc_mask_physical[gpc_phys_id];
-		tpc_index = 0U;
-		while (tpc_index < config->gpc_tpc_count[gpc_index]) {
-			while (local_gpc_tpc_mask_phys != 0x0U) {
-				if ((local_gpc_tpc_mask_phys & 0x1U) != 0x0U) {
-					config->gpc_tpc_physical_id_map[gpc_phys_id][tpc_index++] =
-						tpc_phys_pos;
-				}
-				local_gpc_tpc_mask_phys >>= 1;
-				tpc_phys_pos++;
-			}
-		}
-	}
-
 	gr_config_log_info(g, config);
 	return config;
 
-clean_up_gpc_tpc_physical_id_map_alloc_fail:
-	for (i = 0; i < gpc_index; i++) {
-		nvgpu_kfree(g, config->gpc_tpc_physical_id_map[i]);
-	}
-	nvgpu_kfree(g, config->gpc_tpc_physical_id_map);
 clean_up_gpc_rop_config:
 	if (nvgpu_is_enabled(g, NVGPU_SUPPORT_ROP_IN_GPC)) {
 		gr_config_free_gpc_rop_config(g, config);
@@ -960,7 +917,6 @@ u32 nvgpu_gr_config_get_gpc_zcb_count(struct nvgpu_gr_config *config,
 
 void nvgpu_gr_config_deinit(struct gk20a *g, struct nvgpu_gr_config *config)
 {
-	u32 i;
 	if (config == NULL) {
 		return;
 	}
@@ -983,10 +939,6 @@ void nvgpu_gr_config_deinit(struct gk20a *g, struct nvgpu_gr_config *config)
 		config->sm_to_cluster_redex_config = NULL;
 	}
 #endif
-	for (i = 0; i < config->gpc_count; i++) {
-		nvgpu_kfree(g, config->gpc_tpc_physical_id_map[i]);
-	}
-	nvgpu_kfree(g, config->gpc_tpc_physical_id_map);
 
 	nvgpu_kfree(g, config);
 }
