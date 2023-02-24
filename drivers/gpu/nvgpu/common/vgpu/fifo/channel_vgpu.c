@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -110,35 +110,35 @@ void vgpu_channel_free_inst(struct gk20a *g, struct nvgpu_channel *ch)
 	WARN_ON(err || msg.ret);
 }
 
-void vgpu_channel_enable(struct nvgpu_channel *ch)
+void vgpu_channel_enable(struct gk20a *g, u32 runlist_id, u32 chid)
 {
 	struct tegra_vgpu_cmd_msg msg;
 	struct tegra_vgpu_channel_config_params *p =
 			&msg.params.channel_config;
+	struct nvgpu_channel *ch = &g->fifo.channel[chid];
 	int err;
-	struct gk20a *g = ch->g;
 
 	nvgpu_log_fn(g, " ");
 
 	msg.cmd = TEGRA_VGPU_CMD_CHANNEL_ENABLE;
-	msg.handle = vgpu_get_handle(ch->g);
+	msg.handle = vgpu_get_handle(g);
 	p->handle = ch->virt_ctx;
 	err = vgpu_comm_sendrecv(&msg, sizeof(msg), sizeof(msg));
 	WARN_ON(err || msg.ret);
 }
 
-void vgpu_channel_disable(struct nvgpu_channel *ch)
+void vgpu_channel_disable(struct gk20a *g, u32 runlist_id, u32 chid)
 {
 	struct tegra_vgpu_cmd_msg msg;
 	struct tegra_vgpu_channel_config_params *p =
 			&msg.params.channel_config;
+	struct nvgpu_channel *ch = &g->fifo.channel[chid];
 	int err;
-	struct gk20a *g = ch->g;
 
 	nvgpu_log_fn(g, " ");
 
 	msg.cmd = TEGRA_VGPU_CMD_CHANNEL_DISABLE;
-	msg.handle = vgpu_get_handle(ch->g);
+	msg.handle = vgpu_get_handle(g);
 	p->handle = ch->virt_ctx;
 	err = vgpu_comm_sendrecv(&msg, sizeof(msg), sizeof(msg));
 	WARN_ON(err || msg.ret);

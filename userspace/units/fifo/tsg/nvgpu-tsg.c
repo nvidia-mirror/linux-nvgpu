@@ -1090,10 +1090,10 @@ static const char *f_tsg_enable[] = {
 	"stub"
 };
 
-static void stub_channel_enable(struct nvgpu_channel *ch)
+static void stub_channel_enable(struct gk20a *g, u32 runlist_id, u32 chid)
 {
 	stub[0].name = __func__;
-	stub[0].chid = ch->chid;
+	stub[0].chid = chid;
 	stub[0].count++;
 }
 
@@ -1104,10 +1104,10 @@ static void stub_usermode_ring_doorbell(struct nvgpu_channel *ch)
 	stub[1].count++;
 }
 
-static void stub_channel_disable(struct nvgpu_channel *ch)
+static void stub_channel_disable(struct gk20a *g, u32 runlist_id, u32 chid)
 {
 	stub[2].name = __func__;
-	stub[2].chid = ch->chid;
+	stub[2].chid = chid;
 	stub[2].count++;
 }
 

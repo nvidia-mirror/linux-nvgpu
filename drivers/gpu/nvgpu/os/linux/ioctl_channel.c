@@ -1,7 +1,7 @@
 /*
  * GK20A Graphics channel
  *
- * Copyright (c) 2011-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -1484,7 +1484,7 @@ long gk20a_channel_ioctl(struct file *filp,
 			break;
 		}
 		if (ch->g->ops.channel.enable)
-			ch->g->ops.channel.enable(ch);
+			nvgpu_channel_enable(ch);
 		else
 			err = -ENOSYS;
 		gk20a_idle(ch->g);
@@ -1498,7 +1498,7 @@ long gk20a_channel_ioctl(struct file *filp,
 			break;
 		}
 		if (ch->g->ops.channel.disable)
-			ch->g->ops.channel.disable(ch);
+			nvgpu_channel_disable(ch);
 		else
 			err = -ENOSYS;
 		gk20a_idle(ch->g);

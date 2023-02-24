@@ -43,24 +43,28 @@ struct gops_channel {
 	/**
 	 * @brief Enable channel for h/w scheduling.
 	 *
-	 * @param ch [in]	Channel pointer.
+	 * @param g [in]	The GPU driver struct.
+	 * @param runlist_id [in] ID of the runlist the channel belongs to.
+	 * @param chid [in]	The channel to enable.
 	 *
 	 * The HAL writes CCSR register to enable channel for h/w scheduling.
 	 * Once enabled, the channel can be scheduled to run when this
 	 * channel is next on the runlist.
 	 */
-	void (*enable)(struct nvgpu_channel *ch);
+	void (*enable)(struct gk20a *g, u32 runlist_id, u32 chid);
 
 	/**
 	 * @brief Disable channel from h/w scheduling.
 	 *
-	 * @param ch [in]	Channel pointer.
+	 * @param g [in]	The GPU driver struct.
+	 * @param runlist_id [in] ID of the runlist the channel belongs to.
+	 * @param chid [in]	The channel to disable.
 	 *
 	 * The HAL writes CCSR register to disable channel from h/w scheduling.
 	 * Once disabled, the channel is not scheduled to run even if it
 	 * is next on the runlist.
 	 */
-	void (*disable)(struct nvgpu_channel *ch);
+	void (*disable)(struct gk20a *g, u32 runlist_id, u32 chid);
 
 	/**
 	 * @brief Get number of channels.

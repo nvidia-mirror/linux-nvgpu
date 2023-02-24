@@ -29,8 +29,8 @@ struct nvgpu_channel_hw_state;
 struct nvgpu_debug_context;
 struct nvgpu_channel_dump_info;
 
-void gk20a_channel_enable(struct nvgpu_channel *ch);
-void gk20a_channel_disable(struct nvgpu_channel *ch);
+void gk20a_channel_enable(struct gk20a *g, u32 runlist_id, u32 chid);
+void gk20a_channel_disable(struct gk20a *g, u32 runlist_id, u32 chid);
 void gk20a_channel_read_state(struct gk20a *g, u32 runlist_id, u32 chid,
 		struct nvgpu_channel_hw_state *state);
 

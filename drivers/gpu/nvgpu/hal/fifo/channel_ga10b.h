@@ -30,8 +30,8 @@ struct nvgpu_channel;
 struct nvgpu_channel_hw_state;
 
 u32 ga10b_channel_count(struct gk20a *g);
-void ga10b_channel_enable(struct nvgpu_channel *ch);
-void ga10b_channel_disable(struct nvgpu_channel *ch);
+void ga10b_channel_enable(struct gk20a *g, u32 runlist_id, u32 chid);
+void ga10b_channel_disable(struct gk20a *g, u32 runlist_id, u32 chid);
 void ga10b_channel_bind(struct nvgpu_channel *ch);
 void ga10b_channel_unbind(struct nvgpu_channel *ch);
 void ga10b_channel_clear(struct gk20a *g, u32 runlist_id, u32 chid);

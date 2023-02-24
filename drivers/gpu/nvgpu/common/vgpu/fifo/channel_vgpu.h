@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,8 +30,8 @@ void vgpu_channel_bind(struct nvgpu_channel *ch);
 void vgpu_channel_unbind(struct nvgpu_channel *ch);
 int vgpu_channel_alloc_inst(struct gk20a *g, struct nvgpu_channel *ch);
 void vgpu_channel_free_inst(struct gk20a *g, struct nvgpu_channel *ch);
-void vgpu_channel_enable(struct nvgpu_channel *ch);
-void vgpu_channel_disable(struct nvgpu_channel *ch);
+void vgpu_channel_enable(struct gk20a *g, u32 runlist_id, u32 chid);
+void vgpu_channel_disable(struct gk20a *g, u32 runlist_id, u32 chid);
 u32 vgpu_channel_count(struct gk20a *g);
 void vgpu_channel_set_ctx_mmu_error(struct gk20a *g, struct nvgpu_channel *ch);
 void vgpu_channel_set_error_notifier(struct gk20a *g,

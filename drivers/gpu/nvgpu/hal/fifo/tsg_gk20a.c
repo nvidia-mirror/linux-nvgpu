@@ -57,7 +57,7 @@ void gk20a_tsg_enable(struct nvgpu_tsg *tsg)
 					&hw_state);
 
 		if (hw_state.next || hw_state.ctx_reload) {
-			g->ops.channel.enable(ch);
+			nvgpu_channel_enable(ch);
 		}
 	}
 
@@ -71,7 +71,7 @@ void gk20a_tsg_enable(struct nvgpu_tsg *tsg)
 			continue;
 		}
 
-		g->ops.channel.enable(ch);
+		nvgpu_channel_enable(ch);
 	}
 	nvgpu_rwsem_up_read(&tsg->ch_list_lock);
 

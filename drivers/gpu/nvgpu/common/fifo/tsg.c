@@ -193,12 +193,11 @@ int nvgpu_tsg_validate_cilp_config(struct nvgpu_channel *ch)
 
 void nvgpu_tsg_disable(struct nvgpu_tsg *tsg)
 {
-	struct gk20a *g = tsg->g;
 	struct nvgpu_channel *ch;
 
 	nvgpu_rwsem_down_read(&tsg->ch_list_lock);
 	nvgpu_list_for_each_entry(ch, &tsg->ch_list, nvgpu_channel, ch_entry) {
-		g->ops.channel.disable(ch);
+		nvgpu_channel_disable(ch);
 	}
 	nvgpu_rwsem_up_read(&tsg->ch_list_lock);
 }
@@ -639,7 +638,7 @@ static int nvgpu_tsg_unbind_channel_common(struct nvgpu_tsg *tsg,
 	/* another thread could have re-enabled the channel because it was
 	 * still on the list at that time, so make sure it's truly disabled
 	 */
-	g->ops.channel.disable(ch);
+	nvgpu_channel_disable(ch);
 	nvgpu_rwsem_up_write(&tsg->ch_list_lock);
 
 	/*

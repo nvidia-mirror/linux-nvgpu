@@ -56,26 +56,20 @@ u32 ga10b_channel_count(struct gk20a *g)
 	return	num_channels;
 }
 
-void ga10b_channel_enable(struct nvgpu_channel *ch)
+void ga10b_channel_enable(struct gk20a *g, u32 runlist_id, u32 chid)
 {
-	struct gk20a *g = ch->g;
-	struct nvgpu_runlist *runlist = NULL;
-
-	runlist = ch->runlist;
-
-	nvgpu_chram_bar0_writel(g, runlist, runlist_chram_channel_r(ch->chid),
+	nvgpu_chram_bar0_writel(g,
+		g->fifo.runlists[runlist_id],
+		runlist_chram_channel_r(chid),
 		runlist_chram_channel_update_f(
 			runlist_chram_channel_update_enable_channel_v()));
 }
 
-void ga10b_channel_disable(struct nvgpu_channel *ch)
+void ga10b_channel_disable(struct gk20a *g, u32 runlist_id, u32 chid)
 {
-	struct gk20a *g = ch->g;
-	struct nvgpu_runlist *runlist = NULL;
-
-	runlist = ch->runlist;
-
-	nvgpu_chram_bar0_writel(g, runlist, runlist_chram_channel_r(ch->chid),
+	nvgpu_chram_bar0_writel(g,
+		g->fifo.runlists[runlist_id],
+		runlist_chram_channel_r(chid),
 		runlist_chram_channel_update_f(
 			runlist_chram_channel_update_disable_channel_v()));
 }
@@ -95,7 +89,7 @@ void ga10b_channel_bind(struct nvgpu_channel *ch)
 	}
 
 	/* Enable channel */
-	g->ops.channel.enable(ch);
+	nvgpu_channel_enable(ch);
 
 	nvgpu_atomic_set(&ch->bound, CHANNEL_BOUND);
 }

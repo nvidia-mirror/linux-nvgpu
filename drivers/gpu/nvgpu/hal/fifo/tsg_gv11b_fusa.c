@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -46,7 +46,7 @@ void gv11b_tsg_enable(struct nvgpu_tsg *tsg)
 
 	nvgpu_rwsem_down_read(&tsg->ch_list_lock);
 	nvgpu_list_for_each_entry(ch, &tsg->ch_list, nvgpu_channel, ch_entry) {
-		g->ops.channel.enable(ch);
+		nvgpu_channel_enable(ch);
 		last_ch = ch;
 	}
 	nvgpu_rwsem_up_read(&tsg->ch_list_lock);

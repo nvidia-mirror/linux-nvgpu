@@ -1230,4 +1230,17 @@ static inline void nvgpu_channel_set_wdt_debug_dump(struct nvgpu_channel *ch,
  */
 u32 nvgpu_channel_get_max_subctx_count(struct nvgpu_channel *ch);
 
+/**
+ * @brief Enable the channel.
+ *
+ * @param ch [in]	The channel to enable.
+ */
+void nvgpu_channel_enable(struct nvgpu_channel *ch);
+
+/**
+ * @brief Disable the channel.
+ *
+ * @param ch [in]	The channel to disable.
+ */
+void nvgpu_channel_disable(struct nvgpu_channel *ch);
 #endif

@@ -157,6 +157,16 @@ int nvgpu_channel_update_runlist(struct nvgpu_channel *c, bool add)
 	return c->g->ops.runlist.update(c->g, c->runlist, c, add, true);
 }
 
+void nvgpu_channel_enable(struct nvgpu_channel *ch)
+{
+	ch->g->ops.channel.enable(ch->g, ch->runlist->id, ch->chid);
+}
+
+void nvgpu_channel_disable(struct nvgpu_channel *ch)
+{
+	ch->g->ops.channel.disable(ch->g, ch->runlist->id, ch->chid);
+}
+
 int nvgpu_channel_enable_tsg(struct gk20a *g, struct nvgpu_channel *ch)
 {
 	struct nvgpu_tsg *tsg;

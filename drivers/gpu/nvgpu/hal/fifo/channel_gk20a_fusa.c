@@ -35,18 +35,20 @@
 
 #include <nvgpu/hw/gk20a/hw_ccsr_gk20a.h>
 
-void gk20a_channel_enable(struct nvgpu_channel *ch)
+void gk20a_channel_enable(struct gk20a *g, u32 runlist_id, u32 chid)
 {
-	nvgpu_writel(ch->g, ccsr_channel_r(ch->chid),
-		gk20a_readl(ch->g, ccsr_channel_r(ch->chid)) |
+	(void)runlist_id;
+	nvgpu_writel(g, ccsr_channel_r(chid),
+		gk20a_readl(g, ccsr_channel_r(chid)) |
 		ccsr_channel_enable_set_true_f());
 }
 
-void gk20a_channel_disable(struct nvgpu_channel *ch)
+void gk20a_channel_disable(struct gk20a *g, u32 runlist_id, u32 chid)
 {
-	nvgpu_writel(ch->g, ccsr_channel_r(ch->chid),
-		gk20a_readl(ch->g,
-			ccsr_channel_r(ch->chid)) |
+	(void)runlist_id;
+	nvgpu_writel(g, ccsr_channel_r(chid),
+		gk20a_readl(g,
+			ccsr_channel_r(chid)) |
 			ccsr_channel_enable_clr_true_f());
 }
 

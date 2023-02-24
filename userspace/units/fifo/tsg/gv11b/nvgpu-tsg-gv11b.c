@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -96,9 +96,9 @@ static void subtest_setup(u32 branches)
 #define branches_str test_fifo_flags_str
 #define pruned test_fifo_subtest_pruned
 
-static void stub_channel_enable(struct nvgpu_channel *ch)
+static void stub_channel_enable(struct gk20a *g, u32 runlist_id, u32 chid)
 {
-	stub[0].chid = ch->chid;
+	stub[0].chid = chid;
 	stub[0].count++;
 }
 

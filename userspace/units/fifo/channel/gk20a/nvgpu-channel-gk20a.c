@@ -68,7 +68,7 @@ int test_gk20a_channel_enable(struct unit_module *m,
 		privileged, getpid(), getpid());
 	unit_assert(ch, goto done);
 
-	gk20a_channel_enable(ch);
+	gk20a_channel_enable(g, ch->runlist->id, ch->chid);
 	unit_assert((nvgpu_readl(ch->g, ccsr_channel_r(ch->chid))
 		& ccsr_channel_enable_set_true_f()) != 0, goto done);
 
@@ -93,7 +93,7 @@ int test_gk20a_channel_disable(struct unit_module *m,
 		privileged, getpid(), getpid());
 	unit_assert(ch, goto done);
 
-	gk20a_channel_disable(ch);
+	gk20a_channel_disable(g, ch->runlist->id, ch->chid);
 	unit_assert((nvgpu_readl(ch->g, ccsr_channel_r(ch->chid))
 		& ccsr_channel_enable_clr_true_f()) != 0, goto done);
 
