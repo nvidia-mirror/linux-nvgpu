@@ -350,7 +350,7 @@ struct vm_gk20a {
 #define NVGPU_VM_MAP_IO_COHERENT			BIT32(2)
 #define NVGPU_VM_MAP_UNMAPPED_PTE			BIT32(3)
 #define NVGPU_VM_MAP_L3_ALLOC				BIT32(5)
-#define NVGPU_VM_MAP_PLATFORM_ATOMIC			BIT32(6)
+#define NVGPU_VM_MAP_SYSTEM_COHERENT			BIT32(6)
 #define NVGPU_VM_MAP_TEGRA_RAW				BIT32(7)
 
 #define NVGPU_VM_MAP_ACCESS_DEFAULT			0U
@@ -536,7 +536,7 @@ void nvgpu_vm_put_buffers(struct vm_gk20a *vm,
  *				fixed mappings.
  * @param flags [in]		Flags describes the properties of the mapping.
  *                              - Min: NVGPU_VM_MAP_FIXED_OFFSET
- *                              - Max: NVGPU_VM_MAP_PLATFORM_ATOMIC
+ *                              - Max: NVGPU_VM_MAP_SYSTEM_COHERENT
  * @param kind [in]		Kind parameter.
  *
  * - Acquire the vm.update_gmmu_lock.
@@ -571,7 +571,7 @@ struct nvgpu_mapped_buf *nvgpu_vm_find_mapping(struct vm_gk20a *vm,
  *                                     - Max: gk20a_mem_flag_write_only
  * @param flags [in]			Mapping is fixed or not.
  *                                     - Min: NVGPU_VM_MAP_FIXED_OFFSET
- *                                     - Max: NVGPU_VM_MAP_PLATFORM_ATOMIC
+ *                                     - Max: NVGPU_VM_MAP_SYSTEM_COHERENT
  * @param compr_kind [in]		Default map caching key.
  * @param incompr_kind [in]		Map caching key.
  * @param batch [in]			Describes TLB invalidation and cache

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -364,7 +364,7 @@ int nvgpu_dma_mmap_sys(struct gk20a *g, struct vm_area_struct *vma, struct nvgpu
 		return -EINVAL;
 	}
 
-	if (mem->aperture != APERTURE_SYSMEM) {
+	if (!(nvgpu_aperture_is_sysmem(mem->aperture))) {
 		return -EINVAL;
 	}
 

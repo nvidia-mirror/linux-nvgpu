@@ -1,7 +1,7 @@
 /*
  * Virtualized GPU Memory Management
  *
- * Copyright (c) 2014-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -358,8 +358,8 @@ u64 vgpu_locked_gmmu_map(struct vm_gk20a *vm,
 	if (flags & NVGPU_VM_MAP_L3_ALLOC) {
 		p->flags |= TEGRA_VGPU_MAP_L3_ALLOC;
 	}
-	if (flags & NVGPU_VM_MAP_PLATFORM_ATOMIC) {
-		p->flags |= TEGRA_VGPU_MAP_PLATFORM_ATOMIC;
+	if (flags & NVGPU_VM_MAP_SYSTEM_COHERENT) {
+		p->flags |= TEGRA_VGPU_MAP_SYSTEM_COHERENT;
 	}
 
 	p->prot = prot;

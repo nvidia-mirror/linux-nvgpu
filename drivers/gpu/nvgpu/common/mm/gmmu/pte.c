@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -41,16 +41,10 @@ u32 nvgpu_gmmu_default_big_page_size(void)
  */
 u32 nvgpu_gmmu_aperture_mask(struct gk20a *g,
 				  enum nvgpu_aperture mem_ap,
-				  bool platform_atomic_attr,
 				  u32 sysmem_mask,
 				  u32 sysmem_coh_mask,
 				  u32 vidmem_mask)
 {
-	if (nvgpu_is_enabled(g, NVGPU_SUPPORT_PLATFORM_ATOMIC) &&
-			     platform_atomic_attr) {
-		mem_ap = APERTURE_SYSMEM_COH;
-	}
-
 	return nvgpu_aperture_mask_raw(g, mem_ap,
 				sysmem_mask,
 				sysmem_coh_mask,
@@ -63,8 +57,7 @@ static char *map_attrs_to_str(char *dest, struct nvgpu_gmmu_attrs *attrs)
 	dest[1] = attrs->sparse    ? 'S' : '-';
 	dest[2] = attrs->priv      ? 'P' : '-';
 	dest[3] = attrs->valid     ? 'V' : '-';
-	dest[4] = attrs->platform_atomic ? 'A' : '-';
-	dest[5] = '\0';
+	dest[4] = '\0';
 
 	return dest;
 }
@@ -74,7 +67,7 @@ void nvgpu_pte_dbg_print(struct gk20a *g,
 		const char *vm_name, u32 pd_idx, u32 mmu_level_entry_size,
 		u64 virt_addr, u64 phys_addr, u32 page_size, u32 *pte_w)
 {
-	char attrs_str[6];
+	char attrs_str[5];
 	char ctag_str[32] = "\0";
 	const char *aperture_str = nvgpu_aperture_str(attrs->aperture);
 	const char *perm_str = nvgpu_gmmu_perm_str(attrs->rw_flag);

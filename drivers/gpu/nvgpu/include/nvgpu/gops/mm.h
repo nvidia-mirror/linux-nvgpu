@@ -215,7 +215,7 @@ struct gops_mm_gmmu {
 	 * @param ctag_offset   [in]	Size of the buffer in bytes.
 	 * @param flags         [in]	Mapping flags.
 	 *                              Min:NVGPU_VM_MAP_FIXED_OFFSET
-	 *                              Max:NVGPU_VM_MAP_PLATFORM_ATOMIC
+	 *                              Max:NVGPU_VM_MAP_SYSTEM_COHERENT
 	 * @param rw_flag       [in]	Flag designates the requested
 	 *                              GMMU mapping.
 	 * @param clear_ctags   [in]	True if ctags clear is required.

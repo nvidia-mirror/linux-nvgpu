@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -110,7 +110,7 @@ u64 nvgpu_mem_get_addr(struct gk20a *g, struct nvgpu_mem *mem)
 #ifdef CONFIG_NVGPU_DGPU
 	struct nvgpu_page_alloc *alloc;
 
-	if (mem->aperture == APERTURE_SYSMEM)
+	if (nvgpu_aperture_is_sysmem(mem->aperture))
 		return nvgpu_mem_get_addr_sysmem(g, mem);
 
 	/*
@@ -123,7 +123,7 @@ u64 nvgpu_mem_get_addr(struct gk20a *g, struct nvgpu_mem *mem)
 
 	return alloc->base;
 #else
-	if (mem->aperture == APERTURE_SYSMEM)
+	if (nvgpu_aperture_is_sysmem(mem->aperture))
 		return nvgpu_mem_get_addr_sysmem(g, mem);
 
 	return 0;
@@ -162,7 +162,7 @@ int nvgpu_mem_create_from_mem(struct gk20a *g,
 	u64 size = nr_pages * NVGPU_CPU_PAGE_SIZE;
 	dma_addr_t new_iova;
 
-	if (src->aperture != APERTURE_SYSMEM)
+	if (!nvgpu_aperture_is_sysmem(src->aperture))
 		return -EINVAL;
 
 	/* Some silly things a caller might do... */

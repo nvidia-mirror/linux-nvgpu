@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -291,7 +291,7 @@ done:
 #define F_ATTRS_VALID			0x4ULL
 #define F_ATTRS_CACHEABLE		0x8ULL
 #define F_ATTRS_APERTURE_VIDMEM		0x10ULL
-#define F_PLATFORM_ATOMIC		0x20ULL
+#define F_SYSTEM_COHERENT		0x20ULL
 #define F_UPDATE_PTE			0x40ULL
 #define F_UPDATE_PTE_SPARSE		0x80ULL
 
@@ -306,8 +306,8 @@ done:
 #define F_UPDATE_PTE_ATTRS_CACHEABLE		0x48ULL
 /* F_UPDATE_PTE | F_ATTRS_APERTURE_VIDMEM */
 #define F_UPDATE_PTE_ATTRS_VIDMEM		0x50ULL
-/* F_UPDATE_PTE | F_PLATFORM_ATOMIC */
-#define F_UPDATE_PTE_PLATFORM_ATOMIC		0x60ULL
+/* F_UPDATE_PTE | F_SYSTEM_COHERENT */
+#define F_UPDATE_PTE_SYSTEM_COHERENT	0x60ULL
 
 static const char *f_gmmu_pte_locked[] = {
 	[F_UPDATE_PTE_DEFAULT] = "update_pte_default",
@@ -315,7 +315,7 @@ static const char *f_gmmu_pte_locked[] = {
 	[F_UPDATE_PTE_ATTRS_VALID] = "update_pte_attrs_valid",
 	[F_UPDATE_PTE_ATTRS_CACHEABLE] = "update_pte_attrs_cacheable",
 	[F_UPDATE_PTE_ATTRS_VIDMEM] = "update_pte_attrs_vidmem",
-	[F_UPDATE_PTE_PLATFORM_ATOMIC] = "update_pte_platform_atomic",
+	[F_UPDATE_PTE_SYSTEM_COHERENT] = "update_pte_system_coherent",
 	[F_UPDATE_PTE_SPARSE] = "update_pte_sparse",
 };
 
@@ -361,12 +361,15 @@ int test_update_gmmu_pte_locked(struct unit_module *m,
 	vm.gmmu_page_sizes[GMMU_PAGE_SIZE_SMALL] = SZ_4K;
 
 	paddr = branch & F_UPDATE_PTE ? size : 0ULL;
-	nvgpu_set_enabled(g, NVGPU_SUPPORT_PLATFORM_ATOMIC,
-				(branch & F_PLATFORM_ATOMIC ? true : false));
 
-	attrs.platform_atomic = branch & F_PLATFORM_ATOMIC ? true : false;
-	attrs.aperture = branch & F_ATTRS_APERTURE_VIDMEM ?
-				APERTURE_VIDMEM : APERTURE_SYSMEM;
+	if (branch & F_ATTRS_APERTURE_VIDMEM) {
+		attrs.aperture = APERTURE_VIDMEM;
+	} else if (branch & F_SYSTEM_COHERENT) {
+		attrs.aperture = APERTURE_SYSMEM_COH;
+	} else {
+		attrs.aperture = APERTURE_SYSMEM;
+	}
+
 	attrs.priv = branch & F_ATTRS_PRIV ? true : false;
 	attrs.rw_flag = branch & F_ATTRS_READ_ONLY ?
 			gk20a_mem_flag_read_only : gk20a_mem_flag_none;
@@ -386,9 +389,9 @@ int test_update_gmmu_pte_locked(struct unit_module *m,
 					gmmu_new_pte_address_shift_v()) :
 			gmmu_new_pte_address_sys_f(paddr >>
 					gmmu_new_pte_address_shift_v());
-		data |= branch & F_PLATFORM_ATOMIC ?
-			gmmu_new_pte_aperture_sys_mem_coh_f() :
-			branch & F_ATTRS_APERTURE_VIDMEM ?
+		data |= branch & F_SYSTEM_COHERENT ?
+				gmmu_new_pte_aperture_sys_mem_coh_f() :
+				branch & F_ATTRS_APERTURE_VIDMEM ?
 				gmmu_new_pte_aperture_video_memory_f() :
 				gmmu_new_pte_aperture_sys_mem_ncoh_f();
 		data |= branch & F_ATTRS_VALID ? gmmu_new_pte_valid_true_f() :
@@ -539,7 +542,7 @@ struct unit_module_test mm_gmmu_gp10b_fusa_tests[] = {
 	UNIT_TEST(update_gmmu_pte_locked_s3, test_update_gmmu_pte_locked, (void *)F_UPDATE_PTE_ATTRS_VALID, 0),
 	UNIT_TEST(update_gmmu_pte_locked_s4, test_update_gmmu_pte_locked, (void *)F_UPDATE_PTE_ATTRS_CACHEABLE, 0),
 	UNIT_TEST(update_gmmu_pte_locked_s5, test_update_gmmu_pte_locked, (void *)F_UPDATE_PTE_ATTRS_VIDMEM, 0),
-	UNIT_TEST(update_gmmu_pte_locked_s6, test_update_gmmu_pte_locked, (void *)F_UPDATE_PTE_PLATFORM_ATOMIC, 0),
+	UNIT_TEST(update_gmmu_pte_locked_s6, test_update_gmmu_pte_locked, (void *)F_UPDATE_PTE_SYSTEM_COHERENT, 0),
 	UNIT_TEST(update_gmmu_pte_locked_s7, test_update_gmmu_pte_locked, (void *)F_UPDATE_PTE_SPARSE, 0),
 	UNIT_TEST(gp10b_get_pde0_pgsz_s0, test_gp10b_get_pde0_pgsz, (void *)F_PDE_BIG_PAGE_APERTURE_SET_ONLY, 0),
 	UNIT_TEST(gp10b_get_pde0_pgsz_s1, test_gp10b_get_pde0_pgsz, (void *)F_PDE_BIG_PAGE_APERTURE_ADDR_SET, 0),

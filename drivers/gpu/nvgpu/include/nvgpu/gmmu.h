@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -80,8 +80,9 @@ enum nvgpu_aperture {
 	 */
 	APERTURE_SYSMEM,
 	/**
-	 * This coherent memory is located in SYSMEM. Note: This type is used
-	 * internally. Use APERTURE_SYSMEM.
+	 * This coherent memory is located in SYSMEM. Note: This aperture is
+	 * is used only for few special cases. Clients should normally use
+	 * APERTURE_SYSMEM.
 	 */
 	APERTURE_SYSMEM_COH,
 	/**
@@ -179,10 +180,6 @@ struct nvgpu_gmmu_attrs {
 	 * True if tegra_raw flag is valid.
 	 */
 	bool			tegra_raw;
-	/**
-	 * True if platform_atomic flag is valid.
-	 */
-	bool			platform_atomic;
 };
 
 /**
@@ -289,7 +286,7 @@ int nvgpu_gmmu_init_page_table(struct vm_gk20a *vm);
  * @param size		[in]	Size of the mapping in bytes.
  * @param flags		[in]	Mapping flags.
  *                              - Min: NVGPU_VM_MAP_FIXED_OFFSET
- *                              - Max: NVGPU_VM_MAP_PLATFORM_ATOMIC
+ *                              - Max: NVGPU_VM_MAP_SYSTEM_COHERENT
  * @param rw_flag	[in]	Flag designates the requested GMMU mapping.
  * 				- Min: gk20a_mem_flag_none
  * 				- Max: gk20a_mem_flag_write_only
@@ -358,7 +355,7 @@ u64 nvgpu_gmmu_map(struct vm_gk20a *vm,
  * @param size		[in]	Size of the buffer in bytes.
  * @param flags		[in]	Mapping flags.
  *                              - Min: NVGPU_VM_MAP_FIXED_OFFSET
- *                              - Max: NVGPU_VM_MAP_PLATFORM_ATOMIC
+ *                              - Max: NVGPU_VM_MAP_SYSTEM_COHERENT
  * @param rw_flag	[in]	Flag designates the requested GMMU mapping.
  * 				- Min: gk20a_mem_flag_none
  * 				- Max: gk20a_mem_flag_write_only
@@ -515,7 +512,7 @@ int nvgpu_set_pte(struct gk20a *g, struct vm_gk20a *vm, u64 vaddr, u32 *pte);
  * @param ctag_offset	[in]	Size of the buffer in bytes.
  * @param flags         [in]	Mapping flags.
  *                              - Min: NVGPU_VM_MAP_FIXED_OFFSET
- *                              - Max: NVGPU_VM_MAP_PLATFORM_ATOMIC
+ *                              - Max: NVGPU_VM_MAP_SYSTEM_COHERENT
  * @param rw_flag	[in]	Flag designates the requested GMMU mapping.
  * 				- Min: gk20a_mem_flag_none
  * 				- Max: gk20a_mem_flag_write_only
@@ -633,7 +630,6 @@ u32 nvgpu_gmmu_default_big_page_size(void);
 
 u32 nvgpu_gmmu_aperture_mask(struct gk20a *g,
 				enum nvgpu_aperture mem_ap,
-				bool platform_atomic_attr,
 				u32 sysmem_mask,
 				u32 sysmem_coh_mask,
 				u32 vidmem_mask);

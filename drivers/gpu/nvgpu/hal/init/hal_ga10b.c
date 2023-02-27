@@ -1984,7 +1984,6 @@ int ga10b_init_hal(struct gk20a *g)
 #ifdef CONFIG_NVGPU_GFXP
 	nvgpu_set_enabled(g, NVGPU_SUPPORT_PREEMPTION_GFXP, true);
 #endif
-	nvgpu_set_enabled(g, NVGPU_SUPPORT_PLATFORM_ATOMIC, true);
 	nvgpu_set_enabled(g, NVGPU_SUPPORT_SET_CTX_MMU_DEBUG_MODE, true);
 #ifdef CONFIG_NVGPU_PROFILER
 	nvgpu_set_enabled(g, NVGPU_SUPPORT_VAB_ENABLED, true);

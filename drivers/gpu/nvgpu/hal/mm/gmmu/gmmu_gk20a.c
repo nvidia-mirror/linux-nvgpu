@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,6 +23,7 @@
 #include <nvgpu/gk20a.h>
 #include <nvgpu/gmmu.h>
 #include <nvgpu/log2.h>
+#include <nvgpu/nvgpu_mem.h>
 
 #include <nvgpu/hw/gk20a/hw_gmmu_gk20a.h>
 
@@ -116,7 +117,7 @@ static void update_pte(struct vm_gk20a *vm,
 		gmmu_pte_valid_true_f() :
 		gmmu_pte_valid_false_f();
 	u32 phys_shifted = U32(phys_addr >> gmmu_pte_address_shift_v());
-	u32 addr = attrs->aperture == APERTURE_SYSMEM ?
+	u32 addr = nvgpu_aperture_is_sysmem(attrs->aperture) ?
 		gmmu_pte_address_sys_f(phys_shifted) :
 		gmmu_pte_address_vid_f(phys_shifted);
 #ifdef CONFIG_NVGPU_COMPRESSION

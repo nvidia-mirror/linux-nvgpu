@@ -1853,7 +1853,6 @@ int tu104_init_hal(struct gk20a *g)
 #ifdef CONFIG_NVGPU_GFXP
 	nvgpu_set_enabled(g, NVGPU_SUPPORT_PREEMPTION_GFXP, true);
 #endif
-	nvgpu_set_enabled(g, NVGPU_SUPPORT_PLATFORM_ATOMIC, true);
 	nvgpu_set_enabled(g, NVGPU_SUPPORT_SEC2_VM, true);
 	nvgpu_set_enabled(g, NVGPU_SUPPORT_GSP_VM, true);
 	nvgpu_set_enabled(g, NVGPU_SUPPORT_PMU_SUPER_SURFACE, true);

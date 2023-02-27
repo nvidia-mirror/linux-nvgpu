@@ -108,7 +108,7 @@ struct nvgpu_as_bind_channel_args {
 #define NVGPU_AS_MAP_BUFFER_FLAGS_UNMAPPED_PTE		(1 << 5)
 #define NVGPU_AS_MAP_BUFFER_FLAGS_MAPPABLE_COMPBITS	(1 << 6)
 #define NVGPU_AS_MAP_BUFFER_FLAGS_L3_ALLOC		(1 << 7)
-#define NVGPU_AS_MAP_BUFFER_FLAGS_PLATFORM_ATOMIC	(1 << 9)
+#define NVGPU_AS_MAP_BUFFER_FLAGS_SYSTEM_COHERENT	(1 << 9)
 #define NVGPU_AS_MAP_BUFFER_FLAGS_TEGRA_RAW		(1 << 12)
 
 #define NVGPU_AS_MAP_BUFFER_FLAGS_ACCESS_BITMASK_OFFSET    10U
@@ -160,9 +160,10 @@ struct nvgpu_as_bind_channel_args {
  *
  *     Deprecated.
  *
- *   %NVGPU_AS_MAP_BUFFER_FLAGS_PLATFORM_ATOMIC
+ *   %NVGPU_AS_MAP_BUFFER_FLAGS_SYSTEM_COHERENT
  *
- *     Specify that a mapping should use platform atomics.
+ *     Specify that a mapping should use the system coherent aperture.
+ *     The mapping shall fail if the buffer is allocated from vidmem.
  *
  * @kind  [IN]
  *

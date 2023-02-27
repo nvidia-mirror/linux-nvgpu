@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -162,12 +162,11 @@ static void update_pte(struct vm_gk20a *vm,
 		gmmu_new_pte_valid_true_f() :
 		gmmu_new_pte_valid_false_f();
 	u64 phys_shifted = phys_addr >> gmmu_new_pte_address_shift_v();
-	u32 pte_addr = (attrs->aperture == APERTURE_SYSMEM) ?
+	u32 pte_addr = nvgpu_aperture_is_sysmem(attrs->aperture) ?
 		gmmu_new_pte_address_sys_f(u64_lo32(phys_shifted)) :
 		gmmu_new_pte_address_vid_f(u64_lo32(phys_shifted));
 	u32 pte_tgt = nvgpu_gmmu_aperture_mask(g,
 					attrs->aperture,
-					attrs->platform_atomic,
 					gmmu_new_pte_aperture_sys_mem_ncoh_f(),
 					gmmu_new_pte_aperture_sys_mem_coh_f(),
 					gmmu_new_pte_aperture_video_memory_f());

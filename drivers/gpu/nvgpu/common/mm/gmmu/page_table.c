@@ -924,7 +924,7 @@ static void nvgpu_gmmu_update_page_table_dbg_print(struct gk20a *g,
 		"vm=%s "
 		"%-5s GPU virt %#-12llx +%#-9llx    phys %#-12llx "
 		"phys offset: %#-4llx;  pgsz: %3dkb perm=%-2s | "
-		"kind=%#02x APT=%-6s %c%c%c%c%c",
+		"kind=%#02x APT=%-6s %c%c%c%c",
 		vm->name,
 		(sgt != NULL) ? "MAP" : "UNMAP",
 		virt_addr,
@@ -939,8 +939,7 @@ static void nvgpu_gmmu_update_page_table_dbg_print(struct gk20a *g,
 		attrs->cacheable ? 'C' : '-',
 		attrs->sparse    ? 'S' : '-',
 		attrs->priv      ? 'P' : '-',
-		attrs->valid     ? 'V' : '-',
-		attrs->platform_atomic ? 'A' : '-');
+		attrs->valid     ? 'V' : '-');
 #else
 	(void)g;
 	(void)attrs;
@@ -1046,7 +1045,6 @@ u64 nvgpu_gmmu_map_locked(struct vm_gk20a *vm,
 		.priv      = priv,
 		.valid     = (flags & NVGPU_VM_MAP_UNMAPPED_PTE) == 0U,
 		.aperture  = aperture,
-		.platform_atomic = (flags & NVGPU_VM_MAP_PLATFORM_ATOMIC) != 0U
 	};
 #ifdef CONFIG_NVGPU_COMPRESSION
 	u64 ctag_granularity = g->ops.fb.compression_page_size(g);

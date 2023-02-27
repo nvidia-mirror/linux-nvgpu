@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -170,7 +170,7 @@ int test_update_gmmu_pde0_locked(struct unit_module *m,
  * Input: args (value can be F_UPDATE_PTE_PHYS_ADDR_ZERO, F_UPDATE_PTE_DEFAULT,
  *        F_UPDATE_PTE_ATTRS_PRIV_READ_ONLY, F_UPDATE_PTE_ATTRS_VALID,
  *        F_UPDATE_PTE_ATTRS_CACHEABLE, F_UPDATE_PTE_ATTRS_VIDMEM,
- *        F_UPDATE_PTE_PLATFORM_ATOMIC or F_UPDATE_PTE_SPARSE)
+ *        F_UPDATE_PTE_SYSTEM_COHERENT or F_UPDATE_PTE_SPARSE)
  *
  * Steps:
  * - Update gmmu pte for given physical address.

@@ -2025,7 +2025,7 @@ static int nvgpu_dbg_get_context_buffer(struct gk20a *g, struct nvgpu_mem *ctx_m
 	u32 offset = 0;
 #endif
 
-	if (ctx_mem->aperture == APERTURE_SYSMEM) {
+	if (nvgpu_aperture_is_sysmem(ctx_mem->aperture)) {
 		if (ctx_mem->cpu_va == NULL) {
 			nvgpu_err(g, "CPU pointer is NULL. Note that this feature is currently \
 				not supported on virtual GPU.");

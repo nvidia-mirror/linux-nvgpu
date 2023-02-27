@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -325,7 +325,7 @@ void nvgpu_priv_cmdbuf_finish(struct gk20a *g, struct priv_cmd_entry *e,
 	nvgpu_assert(e->fill_off == e->size);
 
 #ifdef CONFIG_NVGPU_TRACE
-	if (e->mem->aperture == APERTURE_SYSMEM) {
+	if (nvgpu_aperture_is_sysmem(e->mem->aperture)) {
 		trace_gk20a_push_cmdbuf(g->name, 0, e->size, 0,
 				(u32 *)e->mem->cpu_va + e->off);
 	}

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -107,7 +107,7 @@ u32 nvgpu_mem_rd32(struct gk20a *g, struct nvgpu_mem *mem, u64 w)
 {
 	u32 data = 0;
 
-	if (mem->aperture == APERTURE_SYSMEM) {
+	if (nvgpu_aperture_is_sysmem(mem->aperture)) {
 		u32 *ptr = mem->cpu_va;
 
 		WARN_ON(ptr == NULL);
@@ -146,7 +146,7 @@ void nvgpu_mem_rd_n(struct gk20a *g, struct nvgpu_mem *mem,
 	WARN_ON((offset & 3ULL) != 0ULL);
 	WARN_ON((size & 3ULL) != 0ULL);
 
-	if (mem->aperture == APERTURE_SYSMEM) {
+	if (nvgpu_aperture_is_sysmem(mem->aperture)) {
 		u8 *src = (u8 *)mem->cpu_va + offset;
 
 		WARN_ON(mem->cpu_va == NULL);
@@ -164,7 +164,7 @@ void nvgpu_mem_rd_n(struct gk20a *g, struct nvgpu_mem *mem,
 
 void nvgpu_mem_wr32(struct gk20a *g, struct nvgpu_mem *mem, u64 w, u32 data)
 {
-	if (mem->aperture == APERTURE_SYSMEM) {
+	if (nvgpu_aperture_is_sysmem(mem->aperture)) {
 		u32 *ptr = mem->cpu_va;
 
 		WARN_ON(ptr == NULL);
@@ -197,7 +197,7 @@ void nvgpu_mem_wr_n(struct gk20a *g, struct nvgpu_mem *mem, u64 offset,
 	WARN_ON((offset & 3ULL) != 0ULL);
 	WARN_ON((size & 3ULL) != 0ULL);
 
-	if (mem->aperture == APERTURE_SYSMEM) {
+	if (nvgpu_aperture_is_sysmem(mem->aperture)) {
 		u8 *dest = (u8 *)mem->cpu_va + offset;
 
 		WARN_ON(mem->cpu_va == NULL);
@@ -225,7 +225,7 @@ void nvgpu_memset(struct gk20a *g, struct nvgpu_mem *mem, u64 offset,
 
 	c &= 0xffU;
 
-	if (mem->aperture == APERTURE_SYSMEM) {
+	if (nvgpu_aperture_is_sysmem(mem->aperture)) {
 		u8 *dest = (u8 *)mem->cpu_va + offset;
 
 		WARN_ON(mem->cpu_va == NULL);

@@ -72,13 +72,13 @@ static int nvgpu_vm_translate_linux_flags(struct gk20a *g, u32 flags, u32 *out_c
 		if (!nvgpu_is_enabled(g, NVGPU_DISABLE_L3_SUPPORT))
 			core_flags |= NVGPU_VM_MAP_L3_ALLOC;
 	}
-	if ((flags & NVGPU_AS_MAP_BUFFER_FLAGS_PLATFORM_ATOMIC) != 0U) {
-		core_flags |= NVGPU_VM_MAP_PLATFORM_ATOMIC;
-		consumed_flags |= NVGPU_AS_MAP_BUFFER_FLAGS_PLATFORM_ATOMIC;
-	}
 	if ((flags & NVGPU_AS_MAP_BUFFER_FLAGS_TEGRA_RAW) != 0U) {
 		core_flags |= NVGPU_VM_MAP_TEGRA_RAW;
 		consumed_flags |= NVGPU_AS_MAP_BUFFER_FLAGS_TEGRA_RAW;
+	}
+	if ((flags & NVGPU_AS_MAP_BUFFER_FLAGS_SYSTEM_COHERENT) != 0U) {
+		core_flags |= NVGPU_VM_MAP_SYSTEM_COHERENT;
+		consumed_flags |= NVGPU_AS_MAP_BUFFER_FLAGS_SYSTEM_COHERENT;
 	}
 	if ((flags & NVGPU_AS_MAP_BUFFER_FLAGS_MAPPABLE_COMPBITS) != 0U) {
 		nvgpu_warn(g, "Ignoring deprecated flag: "
@@ -280,6 +280,7 @@ int nvgpu_vm_map_linux(struct vm_gk20a *vm,
 	struct nvgpu_sgt *nvgpu_sgt = NULL;
 	struct nvgpu_mapped_buf *mapped_buffer = NULL;
 	struct dma_buf_attachment *attachment;
+	enum nvgpu_aperture buffer_aperture;
 	int err = 0;
 
 	nvgpu_log(g, gpu_dbg_map, "dmabuf file mode: 0x%x mapping flags: 0x%x",
@@ -305,9 +306,19 @@ int nvgpu_vm_map_linux(struct vm_gk20a *vm,
 	os_buf.attachment = attachment;
 	os_buf.dev = dev;
 
-	if (gk20a_dmabuf_aperture(g, dmabuf) == APERTURE_INVALID) {
+	buffer_aperture = gk20a_dmabuf_aperture(g, dmabuf);
+	if (buffer_aperture == APERTURE_INVALID) {
 		err = -EINVAL;
 		goto clean_up;
+	}
+
+	if ((flags & NVGPU_VM_MAP_SYSTEM_COHERENT) != 0U) {
+		if (buffer_aperture == APERTURE_VIDMEM) {
+			nvgpu_err(g, "Vidmem buffers cannot be mapped into the SYSTEM_COHERENT aperture");
+			err = -EINVAL;
+			goto clean_up;
+		}
+		buffer_aperture = APERTURE_SYSMEM_COH;
 	}
 
 	nvgpu_sgt = nvgpu_linux_sgt_create(g, sgt);
@@ -328,7 +339,7 @@ int nvgpu_vm_map_linux(struct vm_gk20a *vm,
 			   compr_kind,
 			   incompr_kind,
 			   batch,
-			   gk20a_dmabuf_aperture(g, dmabuf),
+			   buffer_aperture,
 			   &mapped_buffer);
 
 	nvgpu_sgt_free(g, nvgpu_sgt);
