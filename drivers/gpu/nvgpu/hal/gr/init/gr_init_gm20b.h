@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -41,6 +41,7 @@ struct nvgpu_gr_config;
 
 void gm20b_gr_init_lg_coalesce(struct gk20a *g, u32 data);
 void gm20b_gr_init_su_coalesce(struct gk20a *g, u32 data);
+void gm20a_gr_disable_rd_coalesce(struct gk20a *g);
 void gm20b_gr_init_pes_vsc_stream(struct gk20a *g);
 
 void gm20b_gr_init_fifo_access(struct gk20a *g, bool enable);

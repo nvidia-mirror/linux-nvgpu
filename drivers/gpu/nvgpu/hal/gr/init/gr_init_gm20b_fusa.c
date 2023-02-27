@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -47,27 +47,36 @@
 
 void gm20b_gr_init_lg_coalesce(struct gk20a *g, u32 data)
 {
-	u32 val;
+	(void) data;
 
-	nvgpu_log_fn(g, " ");
-
-	val = nvgpu_readl(g, gr_gpcs_tpcs_tex_m_dbg2_r());
-	val = set_field(val,
-			gr_gpcs_tpcs_tex_m_dbg2_lg_rd_coalesce_en_m(),
-			gr_gpcs_tpcs_tex_m_dbg2_lg_rd_coalesce_en_f(data));
-	nvgpu_writel(g, gr_gpcs_tpcs_tex_m_dbg2_r(), val);
+	nvgpu_log_info(g, "Not updating rd coalesce");
 }
 
 void gm20b_gr_init_su_coalesce(struct gk20a *g, u32 data)
 {
-	u32 reg;
+	(void) data;
 
-	reg = nvgpu_readl(g, gr_gpcs_tpcs_tex_m_dbg2_r());
-	reg = set_field(reg,
-			gr_gpcs_tpcs_tex_m_dbg2_su_rd_coalesce_en_m(),
-			gr_gpcs_tpcs_tex_m_dbg2_su_rd_coalesce_en_f(data));
+	nvgpu_log_info(g, "Not updating rd coalesce");
+}
 
-	nvgpu_writel(g, gr_gpcs_tpcs_tex_m_dbg2_r(), reg);
+/*
+ * Disable surface, LG and tex rd coalesce.
+ */
+void gm20a_gr_disable_rd_coalesce(struct gk20a *g)
+{
+	u32 dbg2_reg;
+
+	dbg2_reg = gk20a_readl(g, gr_gpcs_tpcs_tex_m_dbg2_r());
+	dbg2_reg = set_field(dbg2_reg,
+			     gr_gpcs_tpcs_tex_m_dbg2_lg_rd_coalesce_en_m(),
+			     gr_gpcs_tpcs_tex_m_dbg2_lg_rd_coalesce_en_f(0));
+	dbg2_reg = set_field(dbg2_reg,
+			     gr_gpcs_tpcs_tex_m_dbg2_su_rd_coalesce_en_m(),
+			     gr_gpcs_tpcs_tex_m_dbg2_su_rd_coalesce_en_f(0));
+	dbg2_reg = set_field(dbg2_reg,
+			     gr_gpcs_tpcs_tex_m_dbg2_tex_rd_coalesce_en_m(),
+			     gr_gpcs_tpcs_tex_m_dbg2_tex_rd_coalesce_en_f(0));
+	gk20a_writel(g, gr_gpcs_tpcs_tex_m_dbg2_r(), dbg2_reg);
 }
 
 void gm20b_gr_init_pes_vsc_stream(struct gk20a *g)

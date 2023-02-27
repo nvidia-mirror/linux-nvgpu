@@ -328,6 +328,7 @@ static const struct gops_gr_init gm20b_ops_gr_init = {
 	.ecc_scrub_reg = NULL,
 	.lg_coalesce = gm20b_gr_init_lg_coalesce,
 	.su_coalesce = gm20b_gr_init_su_coalesce,
+	.disable_rd_coalesce = gm20a_gr_disable_rd_coalesce,
 	.pes_vsc_stream = gm20b_gr_init_pes_vsc_stream,
 	.gpc_mmu = gm20b_gr_init_gpc_mmu,
 	.fifo_access = gm20b_gr_init_fifo_access,
@@ -1213,6 +1214,7 @@ int gm20b_init_hal(struct gk20a *g)
 	nvgpu_set_errata(g, NVGPU_ERRATA_1547668, true);
 	nvgpu_set_errata(g, NVGPU_ERRATA_MM_FORCE_128K_PMU_VM, true);
 	nvgpu_set_errata(g, NVGPU_ERRATA_SYNCPT_INVALID_ID_0, true);
+	nvgpu_set_errata(g, NVGPU_ERRATA_200314091, true);
 
 	nvgpu_set_enabled(g, NVGPU_GR_USE_DMA_FOR_FW_BOOTSTRAP, true);
 #ifdef CONFIG_NVGPU_FECS_TRACE

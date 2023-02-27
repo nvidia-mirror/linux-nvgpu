@@ -22,6 +22,7 @@
 
 #include <nvgpu/class.h>
 #include <nvgpu/gk20a.h>
+#include <nvgpu/errata.h>
 #include <nvgpu/log.h>
 #include <nvgpu/io.h>
 #include <nvgpu/mm.h>
@@ -656,6 +657,11 @@ static int nvgpu_gr_obj_ctx_init_hw_state(struct gk20a *g,
 			     sw_ctx_load->l[i].value);
 	}
 	nvgpu_log_info(g, "end: netlist: sw_ctx_load: register writes");
+
+	if (nvgpu_is_errata_present(g, NVGPU_ERRATA_200314091) &&
+	    (g->ops.gr.init.disable_rd_coalesce != NULL)) {
+		g->ops.gr.init.disable_rd_coalesce(g);
+	}
 
 	nvgpu_log_info(g, "configure sm_hww_esr_report mask after sw_ctx_load");
 	g->ops.gr.intr.set_hww_esr_report_mask(g);

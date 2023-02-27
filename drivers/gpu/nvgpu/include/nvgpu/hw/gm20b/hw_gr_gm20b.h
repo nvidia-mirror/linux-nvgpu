@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -669,6 +669,8 @@
 #define gr_gpcs_tpcs_tex_m_dbg2_lg_rd_coalesce_en_m()          (U32(0x1U) << 2U)
 #define gr_gpcs_tpcs_tex_m_dbg2_su_rd_coalesce_en_f(v)   ((U32(v) & 0x1U) << 4U)
 #define gr_gpcs_tpcs_tex_m_dbg2_su_rd_coalesce_en_m()          (U32(0x1U) << 4U)
+#define gr_gpcs_tpcs_tex_m_dbg2_tex_rd_coalesce_en_f(v)  ((U32(v) & 0x1U) << 5U)
+#define gr_gpcs_tpcs_tex_m_dbg2_tex_rd_coalesce_en_m()         (U32(0x1U) << 5U)
 #define gr_gpccs_falcon_addr_r()                                   (0x0041a0acU)
 #define gr_gpccs_falcon_addr_lsb_s()                                        (6U)
 #define gr_gpccs_falcon_addr_lsb_f(v)                   ((U32(v) & 0x3fU) << 0U)
