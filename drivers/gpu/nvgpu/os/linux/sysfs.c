@@ -907,6 +907,24 @@ static ssize_t force_idle_read(struct device *dev,
 static DEVICE_ATTR(force_idle, ROOTRW, force_idle_read, force_idle_store);
 #endif
 
+static ssize_t golden_img_status_show(struct device *dev,
+	struct device_attribute *attr, char *buf)
+{
+	struct gk20a *g = get_gk20a(dev);
+	u32 status = 0;
+
+	if (nvgpu_gr_obj_ctx_golden_img_status(g)) {
+		/* golden ctx is initialized*/
+		status = 1;
+	} else {
+		status = 0;
+	}
+
+	return snprintf(buf, NVGPU_CPU_PAGE_SIZE, "%u\n", status);
+}
+
+static DEVICE_ATTR_RO(golden_img_status);
+
 #ifdef CONFIG_NVGPU_STATIC_POWERGATE
 static ssize_t gpc_pg_mask_read(struct device *dev,
 	struct device_attribute *attr, char *buf)
@@ -921,7 +939,6 @@ static ssize_t gpc_pg_mask_store(struct device *dev,
 {
 	struct gk20a *g = get_gk20a(dev);
 	struct gk20a_platform *platform = dev_get_drvdata(dev);
-	struct nvgpu_gr_obj_ctx_golden_image *gr_golden_image = NULL;
 	unsigned long val = 0;
 	int err = 0;
 
@@ -938,14 +955,8 @@ static ssize_t gpc_pg_mask_store(struct device *dev,
 		goto exit;
 	}
 
-	if (g->gr != NULL) {
-		gr_golden_image = nvgpu_gr_get_golden_image_ptr(g);
-	}
-
-	if (gr_golden_image &&
-			nvgpu_gr_obj_ctx_get_golden_image_size(gr_golden_image)
-			!= 0) {
-		nvgpu_err(g, "golden image size already initialized");
+	if (nvgpu_gr_obj_ctx_golden_img_status(g)) {
+		nvgpu_info(g, "golden image size already initialized");
 		nvgpu_mutex_release(&g->static_pg_lock);
 		return -ENODEV;
 	}
@@ -1001,7 +1012,6 @@ static ssize_t fbp_pg_mask_store(struct device *dev,
 {
 	struct gk20a *g = get_gk20a(dev);
 	struct gk20a_platform *platform = dev_get_drvdata(dev);
-	struct nvgpu_gr_obj_ctx_golden_image *gr_golden_image = NULL;
 	unsigned long val = 0;
 	int err = 0;
 
@@ -1018,14 +1028,8 @@ static ssize_t fbp_pg_mask_store(struct device *dev,
 		goto exit;
 	}
 
-	if (g->gr != NULL) {
-		gr_golden_image = nvgpu_gr_get_golden_image_ptr(g);
-	}
-
-	if (gr_golden_image &&
-			nvgpu_gr_obj_ctx_get_golden_image_size(gr_golden_image)
-			!= 0) {
-		nvgpu_err(g, "golden image size already initialized");
+	if (nvgpu_gr_obj_ctx_golden_img_status(g)) {
+		nvgpu_info(g, "golden image size already initialized");
 		nvgpu_mutex_release(&g->static_pg_lock);
 		return -ENODEV;
 	}
@@ -1089,7 +1093,6 @@ static ssize_t tpc_pg_mask_store(struct device *dev,
 {
 	struct gk20a *g = get_gk20a(dev);
 	struct gk20a_platform *platform = dev_get_drvdata(dev);
-	struct nvgpu_gr_obj_ctx_golden_image *gr_golden_image = NULL;
 	unsigned long val = 0;
 	int err = 0;
 	u32 i;
@@ -1114,14 +1117,8 @@ static ssize_t tpc_pg_mask_store(struct device *dev,
 		goto exit;
 	}
 
-	if (g->gr != NULL) {
-		gr_golden_image = nvgpu_gr_get_golden_image_ptr(g);
-	}
-
-	if (gr_golden_image &&
-			nvgpu_gr_obj_ctx_get_golden_image_size(gr_golden_image)
-			!= 0) {
-		nvgpu_err(g, "golden image size already initialized");
+	if (nvgpu_gr_obj_ctx_golden_img_status(g)) {
+		nvgpu_info(g, "golden image size already initialized");
 		nvgpu_mutex_release(&g->static_pg_lock);
 		/*
 		 * as golden context is already created,
@@ -1520,6 +1517,7 @@ void nvgpu_remove_sysfs(struct device *dev)
 	device_remove_file(dev, &dev_attr_railgate_enable);
 #endif
 	device_remove_file(dev, &dev_attr_allow_all);
+	device_remove_file(dev, &dev_attr_golden_img_status);
 	device_remove_file(dev, &dev_attr_tpc_fs_mask);
 	device_remove_file(dev, &dev_attr_tpc_pg_mask);
 	device_remove_file(dev, &dev_attr_gpc_fs_mask);
@@ -1596,6 +1594,7 @@ int nvgpu_create_sysfs(struct device *dev)
 	error |= device_create_file(dev, &dev_attr_railgate_enable);
 #endif
 	error |= device_create_file(dev, &dev_attr_allow_all);
+	error |= device_create_file(dev, &dev_attr_golden_img_status);
 	error |= device_create_file(dev, &dev_attr_tpc_fs_mask);
 	error |= device_create_file(dev, &dev_attr_tpc_pg_mask);
 	error |= device_create_file(dev, &dev_attr_gpc_fs_mask);

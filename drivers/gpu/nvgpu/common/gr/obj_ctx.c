@@ -1440,6 +1440,26 @@ int nvgpu_gr_obj_ctx_init(struct gk20a *g,
 	return 0;
 }
 
+bool nvgpu_gr_obj_ctx_golden_img_status(struct gk20a *g)
+{
+	struct nvgpu_gr_obj_ctx_golden_image *gr_golden_image = NULL;
+	bool status;
+
+	if (g->gr != NULL) {
+		gr_golden_image = nvgpu_gr_get_golden_image_ptr(g);
+	}
+
+	if ((gr_golden_image != NULL) &&
+		(nvgpu_gr_obj_ctx_get_golden_image_size(gr_golden_image)) != 0U) {
+		/* golden ctx img is initialized */
+		status = true;
+	} else {
+		status = false;
+	}
+
+	return status;
+}
+
 void nvgpu_gr_obj_ctx_deinit(struct gk20a *g,
 	struct nvgpu_gr_obj_ctx_golden_image *golden_image)
 {
