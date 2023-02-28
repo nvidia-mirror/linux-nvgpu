@@ -14,6 +14,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <linux/version.h>
 #include <linux/uaccess.h>
 #include <linux/cdev.h>
 #include <linux/file.h>
@@ -2723,8 +2724,13 @@ int gk20a_ctrl_dev_mmap(struct file *filp, struct vm_area_struct *vma)
 
 	nvgpu_mutex_acquire(&l->ctrl_privs_lock);
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 3, 0)
+	vm_flags_set(vma, VM_IO | VM_DONTCOPY | VM_DONTEXPAND | VM_NORESERVE |
+		VM_DONTDUMP | VM_PFNMAP);
+#else
 	vma->vm_flags |= VM_IO | VM_DONTCOPY | VM_DONTEXPAND | VM_NORESERVE |
 		VM_DONTDUMP | VM_PFNMAP;
+#endif
 	vma->vm_ops = &usermode_vma_ops;
 	vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
 

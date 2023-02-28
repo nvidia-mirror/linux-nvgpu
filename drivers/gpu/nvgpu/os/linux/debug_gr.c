@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -27,6 +27,7 @@
 #include <linux/uaccess.h>
 #include <linux/capability.h>
 #include <linux/debugfs.h>
+#include <linux/version.h>
 
 #ifdef CONFIG_NVGPU_COMPRESSION
 static int cbc_status_debug_show(struct seq_file *s, void *unused)
@@ -245,9 +246,15 @@ static int cbc_ctrl_debug_mmap_cbc_store(struct file *f, struct vm_area_struct *
 		err = -EINVAL;
 		goto done;
 	}
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 3, 0)
+	vm_flags_set(vma, VM_DONTCOPY | VM_DONTEXPAND | VM_NORESERVE |
+			 VM_DONTDUMP | VM_PFNMAP);
+	vm_flags_clear(vma, VM_MAYWRITE);
+#else
 	vma->vm_flags |= VM_DONTCOPY | VM_DONTEXPAND | VM_NORESERVE |
 			 VM_DONTDUMP | VM_PFNMAP;
 	vma->vm_flags &= ~VM_MAYWRITE;
+#endif
 	cbc_store_pa = nvgpu_mem_get_addr(g, &cbc->compbit_store.mem);
 	err = remap_pfn_range(vma, vma->vm_start, cbc_store_pa >> PAGE_SHIFT,
 			      mapping_size, prot);

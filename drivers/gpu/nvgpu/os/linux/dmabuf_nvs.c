@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2022-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -144,11 +144,20 @@ static int nvgpu_nvs_buf_mmap(struct dma_buf *dmabuf, struct vm_area_struct *vma
 
 	nvgpu_nvs_ctrl_fifo_lock_queues(g);
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 3, 0)
+	vm_flags_set(vma, VM_DONTCOPY | VM_DONTEXPAND | VM_NORESERVE |
+		VM_DONTDUMP);
+#else
 	vma->vm_flags |= VM_DONTCOPY | VM_DONTEXPAND | VM_NORESERVE |
 		VM_DONTDUMP;
+#endif
 
 	if (buf->mask == NVGPU_NVS_CTRL_FIFO_QUEUE_CLIENT_EVENTS_READ) {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 3, 0)
+		vm_flags_set(vma, VM_SHARED);
+#else
 		vma->vm_flags |= VM_SHARED;
+#endif
 	}
 
 	vm_ops_old = vma->vm_ops;
