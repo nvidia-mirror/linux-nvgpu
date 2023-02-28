@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -53,6 +53,7 @@ struct nvgpu_gr_config;
 int nvgpu_gr_fs_state_init(struct gk20a *g, struct nvgpu_gr_config *config);
 /** @cond DOXYGEN_SHOULD_SKIP_THIS */
 int nvgpu_gr_init_sm_id_early_config(struct gk20a *g, struct nvgpu_gr_config *config);
+int nvgpu_gr_load_sm_id_config(struct gk20a *g, struct nvgpu_gr_config *config);
 /** @endcond DOXYGEN_SHOULD_SKIP_THIS */
 
 #endif /* NVGPU_GR_FS_STATE_H */

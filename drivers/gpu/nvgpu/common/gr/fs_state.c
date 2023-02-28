@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,7 +28,7 @@
 #include <nvgpu/gr/gr_instances.h>
 #include <nvgpu/grmgr.h>
 
-static int gr_load_sm_id_config(struct gk20a *g, struct nvgpu_gr_config *config)
+int nvgpu_gr_load_sm_id_config(struct gk20a *g, struct nvgpu_gr_config *config)
 {
 	int err;
 	u32 *tpc_sm_id;
@@ -130,7 +130,7 @@ int nvgpu_gr_fs_state_init(struct gk20a *g, struct nvgpu_gr_config *config)
 		g->ops.gr.init.gr_load_tpc_mask(g, config);
 	}
 
-	err = gr_load_sm_id_config(g, config);
+	err = nvgpu_gr_load_sm_id_config(g, config);
 	if (err != 0) {
 		nvgpu_err(g, "load_smid_config failed err=%d", err);
 	}

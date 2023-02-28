@@ -818,6 +818,14 @@ static int gr_init_sm_id_config_early(struct gk20a *g, struct nvgpu_gr *gr)
 		}
 	}
 
+	if (g->ops.gr.init.load_sm_id_config != NULL) {
+		err = g->ops.gr.init.load_sm_id_config(g, gr->config);
+		if (err != 0) {
+			nvgpu_err(g, "load_sm_id_config failed err=%d", err);
+			return err;
+		}
+	}
+
 	return 0;
 }
 
