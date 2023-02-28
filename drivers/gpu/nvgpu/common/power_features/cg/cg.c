@@ -33,8 +33,13 @@ static void nvgpu_cg_set_mode(struct gk20a *g, u32 cgmode, u32 mode_config)
 	const struct nvgpu_device *dev = NULL;
 	struct nvgpu_fifo *f = &g->fifo;
 
-	if ((g->ops.therm.init_blcg_mode == NULL) &&
-			(g->ops.therm.init_elcg_mode == NULL)) {
+	/*
+	 * Add NULL check for ELCG and BLCG HALs based on cgmode
+	 * to avoid coverity issue: CWE-476: NULL Pointer Dereference
+	 */
+	if ((cgmode == BLCG_MODE && g->ops.therm.init_blcg_mode == NULL) ||
+			(cgmode == ELCG_MODE &&
+			 g->ops.therm.init_elcg_mode == NULL)) {
 		return;
 	}
 
