@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -92,6 +92,14 @@
 #define gr_intr_retrigger_r()                                      (0x00400158U)
 #define gr_intr_retrigger_trigger_true_f()                                (0x1U)
 #define gr_exception_r()                                           (0x00400108U)
+#define gr_exception_fe_m()                                    (U32(0x1U) << 0U)
+#define gr_exception_memfmt_m()                                (U32(0x1U) << 1U)
+#define gr_exception_pd_m()                                    (U32(0x1U) << 2U)
+#define gr_exception_scc_m()                                   (U32(0x1U) << 3U)
+#define gr_exception_ds_m()                                    (U32(0x1U) << 4U)
+#define gr_exception_ssync_m()                                 (U32(0x1U) << 5U)
+#define gr_exception_mme_m()                                   (U32(0x1U) << 7U)
+#define gr_exception_sked_m()                                  (U32(0x1U) << 8U)
 #define gr_exception_gpc_m()                                  (U32(0x1U) << 24U)
 #define gr_exception_mme_fe1_m()                               (U32(0x1U) << 9U)
 #define gr_exception1_r()                                          (0x00400118U)
@@ -406,6 +414,7 @@
 #define gr_fe_hww_esr_r()                                          (0x00404000U)
 #define gr_fe_hww_esr_reset_active_f()                             (0x40000000U)
 #define gr_fe_hww_esr_en_enable_f()                                (0x80000000U)
+#define gr_fe_hww_esr_info_r()                                     (0x004041b0U)
 #define gr_mme_fe1_hww_esr_r()                                     (0x0040a790U)
 #define gr_mme_fe1_hww_esr_reset_active_f()                        (0x40000000U)
 #define gr_mme_fe1_hww_esr_en_enable_f()                           (0x80000000U)
@@ -454,6 +463,7 @@
 #define gr_mme_hww_esr_r()                                         (0x00404490U)
 #define gr_mme_hww_esr_reset_active_f()                            (0x40000000U)
 #define gr_mme_hww_esr_en_enable_f()                               (0x80000000U)
+#define gr_mme_hww_esr_info_r()                                    (0x00404494U)
 #define gr_memfmt_hww_esr_r()                                      (0x00404600U)
 #define gr_memfmt_hww_esr_reset_active_f()                         (0x40000000U)
 #define gr_memfmt_hww_esr_en_enable_f()                            (0x80000000U)
@@ -658,6 +668,8 @@
 #define gr_scc_hww_esr_r()                                         (0x00408030U)
 #define gr_scc_hww_esr_reset_active_f()                            (0x40000000U)
 #define gr_scc_hww_esr_en_enable_f()                               (0x80000000U)
+#define gr_sked_hww_esr_r()                                        (0x00407020U)
+#define gr_sked_hww_esr_reset_active_f()                           (0x40000000U)
 #define gr_ssync_hww_esr_r()                                       (0x00405a14U)
 #define gr_ssync_hww_esr_reset_active_f()                          (0x40000000U)
 #define gr_ssync_hww_esr_en_enable_f()                             (0x80000000U)
