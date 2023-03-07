@@ -602,11 +602,15 @@ int nvgpu_runlist_reschedule(struct nvgpu_channel *ch, bool preempt_next,
 	 * and can be disabled.
 	 */
 #if defined(CONFIG_KMD_SCHEDULING_WORKER_THREAD)
-	ret = g->nvs_worker_submit(g, runlist, runlist->domain, wait_preempt);
-	if (ret == 1) {
-		ret = 0;
-	} else if (ret != 0) {
-		goto done;
+	if (nvgpu_is_enabled(g, NVGPU_SUPPORT_KMD_SCHEDULING_WORKER_THREAD)) {
+		ret = g->nvs_worker_submit(g, runlist, runlist->domain, wait_preempt);
+		if (ret == 1) {
+			ret = 0;
+		} else if (ret != 0) {
+			goto done;
+		}
+	} else {
+		ret = nvgpu_rl_domain_sync_submit(g, runlist, runlist->domain, wait_preempt);
 	}
 #endif /* CONFIG_KMD_SCHEDULING_WORKER_THREAD */
 	/*
@@ -683,16 +687,20 @@ static int nvgpu_runlist_do_update(struct gk20a *g, struct nvgpu_runlist *rl,
 		* and can be disabled.
 		*/
 #if defined(CONFIG_KMD_SCHEDULING_WORKER_THREAD)
-		if ((domain != NULL) && (domain->domain_id != SHADOW_DOMAIN_ID)) {
-			domain->remove = !add;
-			rl_dbg(g, "domain-id %llu is_remove %d",
-					domain->domain_id, domain->remove);
-		}
+		if (nvgpu_is_enabled(g, NVGPU_SUPPORT_KMD_SCHEDULING_WORKER_THREAD)) {
+			if ((domain != NULL) && (domain->domain_id != SHADOW_DOMAIN_ID)) {
+				domain->remove = !add;
+				rl_dbg(g, "domain-id %llu is_remove %d",
+						domain->domain_id, domain->remove);
+			}
 
-		ret = g->nvs_worker_submit(g, rl, domain, wait_for_finish);
-		/* Deferred Update */
-		if (ret == 1) {
-			ret = 0;
+			ret = g->nvs_worker_submit(g, rl, domain, wait_for_finish);
+			/* Deferred Update */
+			if (ret == 1) {
+				ret = 0;
+			}
+		} else {
+			ret = nvgpu_rl_domain_sync_submit(g, rl, domain, wait_for_finish);
 		}
 #endif /* CONFIG_KMD_SCHEDULING_WORKER_THREAD */
 		/*

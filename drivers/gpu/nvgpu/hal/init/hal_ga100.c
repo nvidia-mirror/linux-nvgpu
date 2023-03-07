@@ -2021,6 +2021,12 @@ int ga100_init_hal(struct gk20a *g)
 	{
 		nvgpu_set_enabled(g, NVGPU_GR_USE_DMA_FOR_FW_BOOTSTRAP, true);
 	}
+#ifdef CONFIG_KMD_SCHEDULING_WORKER_THREAD
+	/*
+	 * enabled kmd sheduling worker thread
+	 */
+	nvgpu_set_enabled(g, NVGPU_SUPPORT_KMD_SCHEDULING_WORKER_THREAD, true);
+#endif
 	nvgpu_set_enabled(g, NVGPU_SUPPORT_PES_FS, true);
 	g->name = "ga100";
 

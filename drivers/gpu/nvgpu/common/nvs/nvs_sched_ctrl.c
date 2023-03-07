@@ -540,20 +540,22 @@ int nvgpu_nvs_buffer_alloc(struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl,
 	}
 
 #ifdef CONFIG_KMD_SCHEDULING_WORKER_THREAD
-	if (mask == NVGPU_NVS_CTRL_FIFO_QUEUE_EXCLUSIVE_CLIENT_WRITE) {
-		send_queue_receiver = nvs_control_fifo_receiver_initialize(g,
-			(struct nvs_domain_msg_fifo * const)buf->mem.cpu_va, bytes);
-		if (send_queue_receiver == NULL) {
-			goto fail;
+	if (nvgpu_is_enabled(g, NVGPU_SUPPORT_KMD_SCHEDULING_WORKER_THREAD)) {
+		if (mask == NVGPU_NVS_CTRL_FIFO_QUEUE_EXCLUSIVE_CLIENT_WRITE) {
+			send_queue_receiver = nvs_control_fifo_receiver_initialize(g,
+				(struct nvs_domain_msg_fifo * const)buf->mem.cpu_va, bytes);
+			if (send_queue_receiver == NULL) {
+				goto fail;
+			}
+			nvgpu_nvs_domain_ctrl_fifo_set_receiver(g, send_queue_receiver);
+		} else if (mask == NVGPU_NVS_CTRL_FIFO_QUEUE_EXCLUSIVE_CLIENT_READ) {
+			receiver_queue_sender = nvs_control_fifo_sender_initialize(g,
+				(struct nvs_domain_msg_fifo *)buf->mem.cpu_va, bytes);
+			if (receiver_queue_sender == NULL) {
+				goto fail;
+			}
+			nvgpu_nvs_domain_ctrl_fifo_set_sender(g, receiver_queue_sender);
 		}
-		nvgpu_nvs_domain_ctrl_fifo_set_receiver(g, send_queue_receiver);
-	} else if (mask == NVGPU_NVS_CTRL_FIFO_QUEUE_EXCLUSIVE_CLIENT_READ) {
-		receiver_queue_sender = nvs_control_fifo_sender_initialize(g,
-			(struct nvs_domain_msg_fifo *)buf->mem.cpu_va, bytes);
-		if (receiver_queue_sender == NULL) {
-			goto fail;
-		}
-		nvgpu_nvs_domain_ctrl_fifo_set_sender(g, receiver_queue_sender);
 	}
 #endif
 
@@ -592,18 +594,20 @@ void nvgpu_nvs_buffer_free(struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl,
 	mask = buf->mask;
 
 #ifdef CONFIG_KMD_SCHEDULING_WORKER_THREAD
-	send_queue_receiver = nvgpu_nvs_domain_ctrl_fifo_get_receiver(g);
-	receiver_queue_sender = nvgpu_nvs_domain_ctrl_fifo_get_sender(g);
+	if (nvgpu_is_enabled(g, NVGPU_SUPPORT_KMD_SCHEDULING_WORKER_THREAD)) {
+		send_queue_receiver = nvgpu_nvs_domain_ctrl_fifo_get_receiver(g);
+		receiver_queue_sender = nvgpu_nvs_domain_ctrl_fifo_get_sender(g);
 
-	if (mask == NVGPU_NVS_CTRL_FIFO_QUEUE_EXCLUSIVE_CLIENT_WRITE) {
-		nvgpu_nvs_domain_ctrl_fifo_set_receiver(g, NULL);
-		if (send_queue_receiver != NULL) {
-			nvs_control_fifo_receiver_exit(g, send_queue_receiver);
-		}
-	} else if (mask == NVGPU_NVS_CTRL_FIFO_QUEUE_EXCLUSIVE_CLIENT_READ) {
-		nvgpu_nvs_domain_ctrl_fifo_set_sender(g, NULL);
-		if (receiver_queue_sender != NULL) {
-			nvs_control_fifo_sender_exit(g, receiver_queue_sender);
+		if (mask == NVGPU_NVS_CTRL_FIFO_QUEUE_EXCLUSIVE_CLIENT_WRITE) {
+			nvgpu_nvs_domain_ctrl_fifo_set_receiver(g, NULL);
+			if (send_queue_receiver != NULL) {
+				nvs_control_fifo_receiver_exit(g, send_queue_receiver);
+			}
+		} else if (mask == NVGPU_NVS_CTRL_FIFO_QUEUE_EXCLUSIVE_CLIENT_READ) {
+			nvgpu_nvs_domain_ctrl_fifo_set_sender(g, NULL);
+			if (receiver_queue_sender != NULL) {
+				nvs_control_fifo_sender_exit(g, receiver_queue_sender);
+			}
 		}
 	}
 #endif

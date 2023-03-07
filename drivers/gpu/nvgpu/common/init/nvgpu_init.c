@@ -321,7 +321,9 @@ int nvgpu_prepare_poweroff(struct gk20a *g)
 
 #ifdef CONFIG_KMD_SCHEDULING_WORKER_THREAD
 	/* Ensure that thread is paused before Engines suspend below */
-	nvgpu_nvs_worker_pause(g);
+	if (nvgpu_is_enabled(g, NVGPU_SUPPORT_KMD_SCHEDULING_WORKER_THREAD)) {
+		nvgpu_nvs_worker_pause(g);
+	}
 #endif
 
 #ifdef CONFIG_NVGPU_LS_PMU

@@ -1927,6 +1927,12 @@ int tu104_init_hal(struct gk20a *g)
 #ifdef CONFIG_NVGPU_CLK_ARB
 	nvgpu_set_enabled(g, NVGPU_CLK_ARB_ENABLED, false);
 #endif
+#ifdef CONFIG_KMD_SCHEDULING_WORKER_THREAD
+	/*
+	 * enabled kmd sheduling worker thread
+	 */
+	nvgpu_set_enabled(g, NVGPU_SUPPORT_KMD_SCHEDULING_WORKER_THREAD, true);
+#endif
 	nvgpu_set_enabled(g, NVGPU_SUPPORT_PES_FS, true);
 	g->name = "tu10x";
 

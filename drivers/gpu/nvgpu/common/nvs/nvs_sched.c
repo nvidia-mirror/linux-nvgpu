@@ -710,7 +710,9 @@ int nvgpu_nvs_open(struct gk20a *g)
 		/* resuming from railgate */
 		nvgpu_mutex_release(&g->sched_mutex);
 #ifdef CONFIG_KMD_SCHEDULING_WORKER_THREAD
-		nvgpu_nvs_worker_resume(g);
+		if (nvgpu_is_enabled(g, NVGPU_SUPPORT_KMD_SCHEDULING_WORKER_THREAD)) {
+			nvgpu_nvs_worker_resume(g);
+		}
 #endif
 		return err;
 	}
@@ -757,23 +759,25 @@ int nvgpu_nvs_open(struct gk20a *g)
 	nvgpu_wmb();
 
 #ifdef CONFIG_KMD_SCHEDULING_WORKER_THREAD
-	err = nvgpu_nvs_worker_init(g);
-	if (err != 0) {
-		nvgpu_nvs_remove_shadow_domain(g);
-		goto unlock;
-	}
-
-	g->nvs_worker_submit = nvgpu_nvs_worker_submit;
-unlock:
-	if (err) {
-		nvs_dbg(g, "  Failed! Error code: %d", err);
-		if (g->scheduler) {
-			nvgpu_kfree(g, g->scheduler->sched);
-			nvgpu_kfree(g, g->scheduler);
-			g->scheduler = NULL;
+	if (nvgpu_is_enabled(g, NVGPU_SUPPORT_KMD_SCHEDULING_WORKER_THREAD)) {
+		err = nvgpu_nvs_worker_init(g);
+		if (err != 0) {
+			nvgpu_nvs_remove_shadow_domain(g);
+			goto unlock;
 		}
-		if (g->sched_ctrl_fifo)
-			nvgpu_nvs_ctrl_fifo_destroy(g);
+
+		g->nvs_worker_submit = nvgpu_nvs_worker_submit;
+unlock:
+		if (err) {
+			nvs_dbg(g, "  Failed! Error code: %d", err);
+			if (g->scheduler) {
+				nvgpu_kfree(g, g->scheduler->sched);
+				nvgpu_kfree(g, g->scheduler);
+				g->scheduler = NULL;
+			}
+			if (g->sched_ctrl_fifo)
+				nvgpu_nvs_ctrl_fifo_destroy(g);
+		}
 	}
 #endif
 

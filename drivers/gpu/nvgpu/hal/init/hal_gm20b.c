@@ -1258,6 +1258,12 @@ int gm20b_init_hal(struct gk20a *g)
 	nvgpu_set_enabled(g, NVGPU_SUPPORT_PREEMPTION_GFXP, false);
 #endif
 	nvgpu_set_enabled(g, NVGPU_SUPPORT_SET_CTX_MMU_DEBUG_MODE, true);
+#ifdef CONFIG_KMD_SCHEDULING_WORKER_THREAD
+	/*
+	 * enabled kmd sheduling worker thread
+	 */
+	nvgpu_set_enabled(g, NVGPU_SUPPORT_KMD_SCHEDULING_WORKER_THREAD, true);
+#endif
 
 	g->max_sm_diversity_config_count =
 		NVGPU_DEFAULT_SM_DIVERSITY_CONFIG_COUNT;

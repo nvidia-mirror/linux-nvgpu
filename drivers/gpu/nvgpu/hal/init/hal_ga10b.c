@@ -1976,6 +1976,12 @@ int ga10b_init_hal(struct gk20a *g)
 	nvgpu_set_enabled(g, NVGPU_SUPPORT_GSP_SCHED, true);
 	nvgpu_set_enabled(g, NVGPU_SUPPORT_GSP_STEST, true);
 #endif
+#ifdef CONFIG_KMD_SCHEDULING_WORKER_THREAD
+	/*
+	 * enabled kmd sheduling worker thread
+	 */
+	nvgpu_set_enabled(g, NVGPU_SUPPORT_KMD_SCHEDULING_WORKER_THREAD, true);
+#endif
 
 	/*
 	 * enable GSP VM for gsp scheduler firmware

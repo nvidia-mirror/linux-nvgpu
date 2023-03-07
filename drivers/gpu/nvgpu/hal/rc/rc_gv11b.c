@@ -129,12 +129,14 @@ static void gv11b_fifo_locked_abort_runlist_active_tsgs(struct gk20a *g,
 			 * and can be disabled.
 			 */
 #if defined(CONFIG_KMD_SCHEDULING_WORKER_THREAD)
-			/* Special case. Submit the recovery runlist now */
-			err = g->nvs_worker_submit(g, runlist, runlist->domain, false);
-			if (err == 1) {
-				err = 0;
-			} else if (err != 0) {
-				nvgpu_err(g, "runlist id %d is not cleaned up", runlist->id);
+			if (nvgpu_is_enabled(g, NVGPU_SUPPORT_KMD_SCHEDULING_WORKER_THREAD)) {
+				/* Special case. Submit the recovery runlist now */
+				err = g->nvs_worker_submit(g, runlist, runlist->domain, false);
+				if (err == 1) {
+					err = 0;
+				} else if (err != 0) {
+					nvgpu_err(g, "runlist id %d is not cleaned up", runlist->id);
+				}
 			}
 #endif /*CONFIG_KMD_SCHEDULING_WORKER_THREAD*/
 			/*
