@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -137,14 +137,16 @@ int nvgpu_acr_wait_for_completion(struct gk20a *g, struct hs_acr *acr_desc,
 	data = nvgpu_falcon_mailbox_read(acr_desc->acr_flcn, FALCON_MAILBOX_0);
 	if (data != 0U) {
 		error_type = nvgpu_falcon_mailbox_read(acr_desc->acr_flcn, FALCON_MAILBOX_1);
-		if (nvgpu_is_enabled(g, NVGPU_ACR_NEXT_CORE_ENABLED)) {
-			acr_report_error_to_sdl(g, data, error_type);
-		}
 		nvgpu_err(g, "flcn-%d: HS ucode boot failed, err %x", flcn_id,
 				data);
 		nvgpu_err(g, "flcn-%d: Mailbox-1 : 0x%x", flcn_id,
 				nvgpu_falcon_mailbox_read(acr_desc->acr_flcn,
 				FALCON_MAILBOX_1));
+
+		if (nvgpu_is_enabled(g, NVGPU_ACR_NEXT_CORE_ENABLED)) {
+			acr_report_error_to_sdl(g, data, error_type);
+		}
+
 		completion = -EAGAIN;
 		error_type = ACR_BOOT_FAILED;
 		goto exit;
