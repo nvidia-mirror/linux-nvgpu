@@ -1023,9 +1023,8 @@ static int nvgpu_gr_golden_ctx_prepare_inst_block(
 
 		if (subctx_pdb_map == NULL || subctx_mask == NULL) {
 			err = -ENOMEM;
-			if (subctx_pdb_map != NULL) {
-				nvgpu_kfree(g, subctx_pdb_map);
-			}
+			nvgpu_kfree(g, subctx_mask);
+			nvgpu_kfree(g, subctx_pdb_map);
 			nvgpu_free_inst_block(g, inst_block);
 			return err;
 		}
