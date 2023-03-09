@@ -1,7 +1,7 @@
 /*
  * GA10B LTC INTR
  *
- * Copyright (c) 2020-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -989,6 +989,22 @@ void ga10b_ltc_intr_handle_lts_intr2(struct gk20a *g, u32 ltc, u32 slice)
 			reg_value);
 }
 
+#ifdef CONFIG_NVGPU_NON_FUSA
+void ga10b_ltc_intr_handle_illegal_compstat(struct gk20a *g, u32 ltc, u32 slice,
+		u32 ltc_intr, u32 *reg_value)
+{
+	if ((ltc_intr & ltc_ltcs_ltss_intr_en_illegal_compstat_enabled_f()) &&
+		(ltc_intr & ltc_ltcs_ltss_intr_illegal_compstat_m())) {
+		nvgpu_log(g, gpu_dbg_intr,
+			"ltc:%d lts: %d illegal_compstat interrupt",
+			ltc, slice);
+		*reg_value = set_field(*reg_value,
+			ltc_ltcs_ltss_intr_illegal_compstat_m(),
+			ltc_ltcs_ltss_intr_illegal_compstat_reset_f());
+	}
+}
+#endif
+
 void ga10b_ltc_intr_handle_lts_intr(struct gk20a *g, u32 ltc, u32 slice)
 {
 	u32 ltc_stride = nvgpu_get_litter_value(g, GPU_LIT_LTC_STRIDE);
@@ -1036,15 +1052,11 @@ void ga10b_ltc_intr_handle_lts_intr(struct gk20a *g, u32 ltc, u32 slice)
 			ltc_ltcs_ltss_intr_evicted_cb_reset_f());
 	}
 
-	if ((ltc_intr & ltc_ltcs_ltss_intr_en_illegal_compstat_enabled_f()) &&
-		(ltc_intr & ltc_ltcs_ltss_intr_illegal_compstat_m())) {
-		nvgpu_log(g, gpu_dbg_intr,
-			"ltc:%d lts: %d illegal_compstat interrupt",
-			ltc, slice);
-		reg_value = set_field(reg_value,
-			ltc_ltcs_ltss_intr_illegal_compstat_m(),
-			ltc_ltcs_ltss_intr_illegal_compstat_reset_f());
+#ifdef CONFIG_NVGPU_NON_FUSA
+	if (g->ops.ltc.intr.handle_illegal_compstat != NULL) {
+		g->ops.ltc.intr.handle_illegal_compstat(g, ltc, slice, ltc_intr, &reg_value);
 	}
+#endif
 
 	if (ltc_intr & ltc_ltcs_ltss_intr_illegal_atomic_m()) {
 		nvgpu_log(g, gpu_dbg_intr,

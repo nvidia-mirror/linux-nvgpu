@@ -374,6 +374,7 @@ static const struct gops_ltc_intr ga100_ops_ltc_intr = {
 	.isr = ga10b_ltc_intr_isr,
 #ifdef CONFIG_NVGPU_NON_FUSA
 	.en_illegal_compstat = gv11b_ltc_intr_en_illegal_compstat,
+	.handle_illegal_compstat = ga10b_ltc_intr_handle_illegal_compstat,
 #endif
 };
 

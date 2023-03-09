@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -202,6 +202,8 @@ struct gops_ltc_intr {
 	void (*configure)(struct gk20a *g);
 #ifdef CONFIG_NVGPU_NON_FUSA
 	void (*en_illegal_compstat)(struct gk20a *g, bool enable);
+	void (*handle_illegal_compstat)(struct gk20a *g, u32 ltc, u32 slice,
+			u32 ltc_intr, u32 *reg_value);
 #endif
 	void (*isr_extra)(struct gk20a *g, u32 ltc, u32 slice, u32 *reg_value);
 	void (*ltc_intr3_configure_extra)(struct gk20a *g, u32 *reg);
