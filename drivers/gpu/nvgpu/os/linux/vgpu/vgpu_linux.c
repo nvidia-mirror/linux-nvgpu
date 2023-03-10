@@ -508,7 +508,9 @@ int vgpu_probe(struct platform_device *pdev)
 #else
 	nvgpu_log_info(gk20a, "total ram pages : %lu", totalram_pages);
 #endif
+#ifdef CONFIG_NVGPU_COMPRESSION
 	gk20a->max_comptag_mem = totalram_size_in_mb;
+#endif
 
 	nvgpu_mutex_init(&l->dmabuf_priv_list_lock);
 	nvgpu_init_list_node(&l->dmabuf_priv_list);
@@ -522,12 +524,16 @@ int vgpu_remove(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
 	struct gk20a *g = get_gk20a(dev);
+#ifdef CONFIG_NVGPU_COMPRESSION
 	struct nvgpu_os_linux *l = nvgpu_os_linux_from_gk20a(g);
+#endif
 
 	nvgpu_log_fn(g, " ");
 
+#ifdef CONFIG_NVGPU_COMPRESSION
 	gk20a_dma_buf_priv_list_clear(l);
 	nvgpu_mutex_destroy(&l->dmabuf_priv_list_lock);
+#endif
 
 #ifdef CONFIG_GK20A_PM_QOS
 #if LINUX_VERSION_CODE < KERNEL_VERSION(5, 10, 0)
