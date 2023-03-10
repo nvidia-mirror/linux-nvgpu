@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -393,7 +393,7 @@ void nvgpu_delay_usecs(unsigned int usecs);
  * @return Shall return 0 if the timeout has not expired; otherwise, an error
  * number indicating a timeout is returned.
  */
-int nvgpu_timeout_expired_msg_impl(struct nvgpu_timeout *timeout,
+s32 nvgpu_timeout_expired_msg_impl(struct nvgpu_timeout *timeout,
 			      void *caller, const char *fmt, ...);
 #endif
 

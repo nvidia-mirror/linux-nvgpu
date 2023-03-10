@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -144,10 +144,10 @@
 	({ \
 		if (nvgpu_grmgr_is_multi_gr_enabled(g)) { \
 			u32 gr_syspipe_id = nvgpu_gr_get_syspipe_id(g, \
-				gr_instance_id); \
+				(gr_instance_id)); \
 			nvgpu_grmgr_config_gr_remap_window(g, gr_syspipe_id, \
 				true); \
-			g->mig.cur_gr_instance = gr_instance_id; \
+			(g)->mig.cur_gr_instance = (gr_instance_id); \
 			(func); \
 			nvgpu_grmgr_config_gr_remap_window(g, gr_syspipe_id, \
 				false); \
@@ -158,7 +158,7 @@
 #else
 #define nvgpu_gr_exec_for_instance(g, gr_instance_id, func) \
 	({ \
-		nvgpu_assert(gr_instance_id == 0U); \
+		nvgpu_assert((gr_instance_id) == 0U); \
 		(func); \
 	})
 #endif

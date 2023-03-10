@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -75,7 +75,7 @@ int nvgpu_timeout_init_flags(struct gk20a *g, struct nvgpu_timeout *timeout,
 	return 0;
 }
 
-static int nvgpu_timeout_expired_msg_cpu(struct nvgpu_timeout *timeout,
+static s32 nvgpu_timeout_expired_msg_cpu(struct nvgpu_timeout *timeout,
 					 void *caller,
 					 const char *fmt, va_list args)
 {
@@ -100,7 +100,7 @@ static int nvgpu_timeout_expired_msg_cpu(struct nvgpu_timeout *timeout,
 	return 0;
 }
 
-static int nvgpu_timeout_expired_msg_retry(struct nvgpu_timeout *timeout,
+static s32 nvgpu_timeout_expired_msg_retry(struct nvgpu_timeout *timeout,
 					   void *caller,
 					   const char *fmt, va_list args)
 {
@@ -138,10 +138,10 @@ static int nvgpu_timeout_expired_msg_retry(struct nvgpu_timeout *timeout,
  * If a timeout occurs and %NVGPU_TIMER_SILENT_TIMEOUT is not set in the timeout
  * then a message is printed based on %fmt.
  */
-int nvgpu_timeout_expired_msg_impl(struct nvgpu_timeout *timeout,
+s32 nvgpu_timeout_expired_msg_impl(struct nvgpu_timeout *timeout,
 			      void *caller, const char *fmt, ...)
 {
-	int ret;
+	s32 ret;
 	va_list args;
 
 	va_start(args, fmt);

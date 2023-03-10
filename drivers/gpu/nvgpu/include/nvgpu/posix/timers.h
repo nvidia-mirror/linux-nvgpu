@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -47,7 +47,7 @@
 #define nvgpu_timeout_expired_msg_cpu(timeout, caller, fmt, arg...)	\
 ({									\
 	const struct nvgpu_timeout *t_ptr = (timeout);			\
-	int ret_cpu = 0;						\
+	s32 ret_cpu = 0;						\
 	if (nvgpu_current_time_ns() > t_ptr->time_duration) {			\
 		if ((t_ptr->flags & NVGPU_TIMER_SILENT_TIMEOUT) == 0U) { \
 			nvgpu_err(t_ptr->g, "Timeout detected @ %p" fmt, \
@@ -55,7 +55,7 @@
 		}							\
 		ret_cpu = -ETIMEDOUT;					\
 	}								\
-	(int)ret_cpu;							\
+	(s32)ret_cpu;							\
 })
 
 /**
@@ -79,7 +79,7 @@
 #define nvgpu_timeout_expired_msg_retry(timeout, caller, fmt, arg...)	\
 ({									\
 	struct nvgpu_timeout *t_ptr = (timeout);			\
-	int ret_retry = 0;						\
+	s32 ret_retry = 0;						\
 	if (t_ptr->retries.attempted >= t_ptr->retries.max_attempts) {	\
 		if ((t_ptr->flags & NVGPU_TIMER_SILENT_TIMEOUT) == 0U) { \
 			nvgpu_err(t_ptr->g, "No more retries @ %p" fmt,	\
@@ -89,7 +89,7 @@
 	} else {							\
 		t_ptr->retries.attempted++;				\
 	}								\
-	(int)ret_retry;							\
+	(s32)ret_retry;							\
 })
 
 /**
@@ -112,7 +112,7 @@
  */
 #define nvgpu_timeout_expired_msg_impl(timeout, caller, fmt, arg...)	\
 ({									\
-	int ret_timeout = is_fault_injection_set;			\
+	s32 ret_timeout = is_fault_injection_set;			\
 	if (ret_timeout == -1) {					\
 	if (((timeout)->flags & NVGPU_TIMER_RETRY_TIMER) != 0U) {	\
 		ret_timeout = nvgpu_timeout_expired_msg_retry((timeout),\
@@ -122,7 +122,7 @@
 						caller,	fmt, ##arg);	\
 	}								\
 	}								\
-	(int)ret_timeout;						\
+	(s32)ret_timeout;						\
 })
 
 #ifdef NVGPU_UNITTEST_FAULT_INJECTION_ENABLEMENT
