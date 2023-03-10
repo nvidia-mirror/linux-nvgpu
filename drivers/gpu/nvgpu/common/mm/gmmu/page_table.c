@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -482,6 +482,7 @@ static int nvgpu_set_pd_level(struct vm_gk20a *vm,
 		"    ",      /* L=2 */
 		"      ",    /* L=3 */
 		"        ",  /* L=4 */
+		"          ",/* L=5 */
 	};
 
 	nvgpu_gmmu_dbg_v(g, attrs,
