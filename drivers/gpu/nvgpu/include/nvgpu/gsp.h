@@ -57,6 +57,7 @@ struct nvgpu_gsp {
 
 int nvgpu_gsp_debug_buf_init(struct gk20a *g, u32 queue_no, u32 buffer_size);
 void nvgpu_gsp_suspend(struct gk20a *g, struct nvgpu_gsp *gsp);
+void gsp_release_firmware(struct gk20a *g, struct nvgpu_gsp *gsp);
 void nvgpu_gsp_sw_deinit(struct gk20a *g, struct nvgpu_gsp *gsp);
 void nvgpu_gsp_isr_mutex_acquire(struct gk20a *g, struct nvgpu_gsp *gsp);
 void nvgpu_gsp_isr_mutex_release(struct gk20a *g, struct nvgpu_gsp *gsp);

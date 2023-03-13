@@ -59,6 +59,7 @@ void nvgpu_gsp_sched_suspend(struct gk20a *g, struct nvgpu_gsp_sched *gsp_sched)
 	}
 
 	gsp_sched->gsp_ready = false;
+	nvgpu_gsp_queues_free(g, g->gsp_sched->queues);
 	nvgpu_gsp_suspend(g, gsp);
 }
 

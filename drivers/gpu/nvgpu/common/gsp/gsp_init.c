@@ -62,6 +62,7 @@ void nvgpu_gsp_sw_deinit(struct gk20a *g, struct nvgpu_gsp *gsp)
 		nvgpu_falcon_dbg_buf_destroy(gsp->gsp_flcn);
 #endif
 
+		gsp_release_firmware(g, gsp);
 		nvgpu_kfree(g, gsp);
 		gsp = NULL;
 	}

@@ -32,20 +32,16 @@
 #include <nvgpu/gsp/gsp_test.h>
 #endif
 
-static void gsp_release_firmware(struct gk20a *g, struct nvgpu_gsp *gsp)
+void gsp_release_firmware(struct gk20a *g, struct nvgpu_gsp *gsp)
 {
-	if (gsp->gsp_ucode.manifest != NULL) {
-		nvgpu_release_firmware(g, gsp->gsp_ucode.manifest);
-	}
-
-	if (gsp->gsp_ucode.code != NULL) {
-		nvgpu_release_firmware(g, gsp->gsp_ucode.code);
-	}
-
-	if (gsp->gsp_ucode.data != NULL) {
-		nvgpu_release_firmware(g, gsp->gsp_ucode.data);
-	}
+	nvgpu_release_firmware(g, gsp->gsp_ucode.manifest);
+	gsp->gsp_ucode.manifest = NULL;
+	nvgpu_release_firmware(g, gsp->gsp_ucode.code);
+	gsp->gsp_ucode.code = NULL;
+	nvgpu_release_firmware(g, gsp->gsp_ucode.data);
+	gsp->gsp_ucode.data = NULL;
 }
+
 
 static int gsp_read_firmware(struct gk20a *g, struct nvgpu_gsp *gsp,
 		struct gsp_fw *gsp_ucode)
@@ -56,22 +52,27 @@ static int gsp_read_firmware(struct gk20a *g, struct nvgpu_gsp *gsp,
 
 	nvgpu_log_fn(g, " ");
 
+	if ((gsp_ucode->manifest != NULL) && (gsp_ucode->code != NULL)
+		&& (gsp_ucode->data != NULL)) {
+			return 0;
+	}
+
 	gsp_ucode->manifest = nvgpu_request_firmware(g,
-		manifest_name, NVGPU_REQUEST_FIRMWARE_NO_WARN);
+		manifest_name, 0);
 	if (gsp_ucode->manifest == NULL) {
 		nvgpu_err(g, "%s ucode get failed", manifest_name);
 		goto fw_release;
 	}
 
 	gsp_ucode->code = nvgpu_request_firmware(g,
-		code_name, NVGPU_REQUEST_FIRMWARE_NO_WARN);
+		code_name, 0);
 	if (gsp_ucode->code == NULL) {
 		nvgpu_err(g, "%s ucode get failed", code_name);
 		goto fw_release;
 	}
 
 	gsp_ucode->data = nvgpu_request_firmware(g,
-		data_name, NVGPU_REQUEST_FIRMWARE_NO_WARN);
+		data_name, 0);
 	if (gsp_ucode->data == NULL) {
 		nvgpu_err(g, "%s ucode get failed", data_name);
 		goto fw_release;
@@ -237,7 +238,10 @@ int nvgpu_gsp_bootstrap_ns(struct gk20a *g, struct nvgpu_gsp *gsp)
 	err = nvgpu_falcon_wait_for_nvriscv_brom_completion(flcn);
 	if (err != 0) {
 		nvgpu_err(g, "gsp BROM failed");
+		goto exit;
 	}
+
+	return err;
 
 exit:
 	gsp_release_firmware(g, gsp);
