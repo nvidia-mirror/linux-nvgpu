@@ -213,6 +213,7 @@ struct gops_ltc_intr {
 #endif
 	void (*isr_extra)(struct gk20a *g, u32 ltc, u32 slice, u32 *reg_value);
 	void (*ltc_intr3_configure_extra)(struct gk20a *g, u32 *reg);
+	void (*retrigger)(struct gk20a *g);
 	/** @endcond DOXYGEN_SHOULD_SKIP_THIS */
 };
 

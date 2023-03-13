@@ -1134,5 +1134,9 @@ int ga10b_ltc_intr_isr(struct gk20a *g, u32 ltc)
 		ga10b_ltc_intr_handle_lts_intr3(g, ltc, slice);
 	}
 
+	if (g->ops.ltc.intr.retrigger != NULL) {
+		g->ops.ltc.intr.retrigger(g);
+	}
+
 	return 0;
 }
