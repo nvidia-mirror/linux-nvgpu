@@ -764,6 +764,15 @@ static const struct gops_fb_intr gv11b_ops_fb_intr = {
 	.handle_ecc_l2tlb = gv11b_fb_intr_handle_ecc_l2tlb,
 	.handle_ecc_hubtlb = gv11b_fb_intr_handle_ecc_hubtlb,
 	.handle_ecc_fillunit = gv11b_fb_intr_handle_ecc_fillunit,
+	.read_l2tlb_ecc_status = gv11b_fb_intr_read_l2tlb_ecc_status,
+	.read_hubtlb_ecc_status = gv11b_fb_intr_read_hubtlb_ecc_status,
+	.read_fillunit_ecc_status = gv11b_fb_intr_read_fillunit_ecc_status,
+	.get_l2tlb_ecc_info = gv11b_fb_intr_get_l2tlb_ecc_info,
+	.get_hubtlb_ecc_info = gv11b_fb_intr_get_hubtlb_ecc_info,
+	.get_fillunit_ecc_info = gv11b_fb_intr_get_fillunit_ecc_info,
+	.clear_ecc_l2tlb = gv11b_fb_intr_clear_ecc_l2tlb,
+	.clear_ecc_hubtlb = gv11b_fb_intr_clear_ecc_hubtlb,
+	.clear_ecc_fillunit = gv11b_fb_intr_clear_ecc_fillunit,
 };
 
 static const struct gops_fb gv11b_ops_fb = {

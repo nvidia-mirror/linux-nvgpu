@@ -1,7 +1,7 @@
 /*
  * GV11B ECC INTR
  *
- * Copyright (c) 2016-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,6 +30,90 @@
 #include "fb_intr_ecc_gv11b.h"
 
 #include <nvgpu/hw/gv11b/hw_fb_gv11b.h>
+
+u32 gv11b_fb_intr_read_l2tlb_ecc_status(struct gk20a *g)
+{
+	return nvgpu_readl(g, fb_mmu_l2tlb_ecc_status_r());
+}
+
+u32 gv11b_fb_intr_read_hubtlb_ecc_status(struct gk20a *g)
+{
+	return nvgpu_readl(g, fb_mmu_hubtlb_ecc_status_r());
+}
+
+u32 gv11b_fb_intr_read_fillunit_ecc_status(struct gk20a *g)
+{
+	return nvgpu_readl(g, fb_mmu_fillunit_ecc_status_r());
+}
+
+void gv11b_fb_intr_get_l2tlb_ecc_info(struct gk20a *g, u32 *ecc_addr,
+		u32 *corrected_cnt, u32 *uncorrected_cnt)
+{
+	*ecc_addr = nvgpu_readl(g, fb_mmu_l2tlb_ecc_address_r());
+	*corrected_cnt = nvgpu_readl(g,
+			fb_mmu_l2tlb_ecc_corrected_err_count_r());
+	*uncorrected_cnt = nvgpu_readl(g,
+			fb_mmu_l2tlb_ecc_uncorrected_err_count_r());
+}
+
+void gv11b_fb_intr_get_hubtlb_ecc_info(struct gk20a *g, u32 *ecc_addr,
+		u32 *corrected_cnt, u32 *uncorrected_cnt)
+{
+	*ecc_addr = nvgpu_readl(g, fb_mmu_hubtlb_ecc_address_r());
+	*corrected_cnt = nvgpu_readl(g,
+			fb_mmu_hubtlb_ecc_corrected_err_count_r());
+	*uncorrected_cnt = nvgpu_readl(g,
+			fb_mmu_hubtlb_ecc_uncorrected_err_count_r());
+}
+
+void gv11b_fb_intr_get_fillunit_ecc_info(struct gk20a *g, u32 *ecc_addr,
+		u32 *corrected_cnt, u32 *uncorrected_cnt)
+{
+	*ecc_addr = nvgpu_readl(g, fb_mmu_fillunit_ecc_address_r());
+	*corrected_cnt = nvgpu_readl(g,
+			fb_mmu_fillunit_ecc_corrected_err_count_r());
+	*uncorrected_cnt = nvgpu_readl(g,
+			fb_mmu_fillunit_ecc_uncorrected_err_count_r());
+}
+
+void gv11b_fb_intr_clear_ecc_l2tlb(struct gk20a *g,
+		bool clear_corrected, bool clear_uncorrected)
+{
+	if (clear_corrected) {
+		nvgpu_writel(g, fb_mmu_l2tlb_ecc_corrected_err_count_r(), 0);
+	}
+	if (clear_uncorrected) {
+		nvgpu_writel(g, fb_mmu_l2tlb_ecc_uncorrected_err_count_r(), 0);
+	}
+	nvgpu_writel(g, fb_mmu_l2tlb_ecc_status_r(),
+			fb_mmu_l2tlb_ecc_status_reset_clear_f());
+}
+
+void gv11b_fb_intr_clear_ecc_hubtlb(struct gk20a *g,
+		bool clear_corrected, bool clear_uncorrected)
+{
+	if (clear_corrected) {
+		nvgpu_writel(g, fb_mmu_hubtlb_ecc_corrected_err_count_r(), 0);
+	}
+	if (clear_uncorrected) {
+		nvgpu_writel(g, fb_mmu_hubtlb_ecc_uncorrected_err_count_r(), 0);
+	}
+	nvgpu_writel(g, fb_mmu_hubtlb_ecc_status_r(),
+			fb_mmu_hubtlb_ecc_status_reset_clear_f());
+}
+
+void gv11b_fb_intr_clear_ecc_fillunit(struct gk20a *g,
+		bool clear_corrected, bool clear_uncorrected)
+{
+	if (clear_corrected) {
+		nvgpu_writel(g, fb_mmu_fillunit_ecc_corrected_err_count_r(), 0);
+	}
+	if (clear_uncorrected) {
+		nvgpu_writel(g, fb_mmu_fillunit_ecc_uncorrected_err_count_r(), 0);
+	}
+	nvgpu_writel(g, fb_mmu_fillunit_ecc_status_r(),
+			fb_mmu_fillunit_ecc_status_reset_clear_f());
+}
 
 static void gv11b_fb_intr_handle_ecc_l2tlb_errs(struct gk20a *g,
 		u32 ecc_status, u32 ecc_addr)
@@ -62,11 +146,8 @@ void gv11b_fb_intr_handle_ecc_l2tlb(struct gk20a *g, u32 ecc_status)
 	u32 corrected_delta, uncorrected_delta;
 	u32 corrected_overflow, uncorrected_overflow;
 
-	ecc_addr = nvgpu_readl(g, fb_mmu_l2tlb_ecc_address_r());
-	corrected_cnt = nvgpu_readl(g,
-		fb_mmu_l2tlb_ecc_corrected_err_count_r());
-	uncorrected_cnt = nvgpu_readl(g,
-		fb_mmu_l2tlb_ecc_uncorrected_err_count_r());
+	g->ops.fb.intr.get_l2tlb_ecc_info(g, &ecc_addr, &corrected_cnt,
+			&uncorrected_cnt);
 
 	corrected_delta = fb_mmu_l2tlb_ecc_corrected_err_count_total_v(
 							corrected_cnt);
@@ -79,15 +160,9 @@ void gv11b_fb_intr_handle_ecc_l2tlb(struct gk20a *g, u32 ecc_status)
 		fb_mmu_l2tlb_ecc_status_uncorrected_err_total_counter_overflow_m();
 
 	/* clear the interrupt */
-	if ((corrected_delta > 0U) || (corrected_overflow != 0U)) {
-		nvgpu_writel(g, fb_mmu_l2tlb_ecc_corrected_err_count_r(), 0);
-	}
-	if ((uncorrected_delta > 0U) || (uncorrected_overflow != 0U)) {
-		nvgpu_writel(g, fb_mmu_l2tlb_ecc_uncorrected_err_count_r(), 0);
-	}
-
-	nvgpu_writel(g, fb_mmu_l2tlb_ecc_status_r(),
-				fb_mmu_l2tlb_ecc_status_reset_clear_f());
+	g->ops.fb.intr.clear_ecc_l2tlb(g,
+			((corrected_delta > 0U) || (corrected_overflow != 0U)),
+			((uncorrected_delta > 0U) || (uncorrected_overflow != 0U)));
 
 	/* Handle overflow */
 	if (corrected_overflow != 0U) {
@@ -152,11 +227,8 @@ void gv11b_fb_intr_handle_ecc_hubtlb(struct gk20a *g, u32 ecc_status)
 	u32 corrected_delta, uncorrected_delta;
 	u32 corrected_overflow, uncorrected_overflow;
 
-	ecc_addr = nvgpu_readl(g, fb_mmu_hubtlb_ecc_address_r());
-	corrected_cnt = nvgpu_readl(g,
-		fb_mmu_hubtlb_ecc_corrected_err_count_r());
-	uncorrected_cnt = nvgpu_readl(g,
-		fb_mmu_hubtlb_ecc_uncorrected_err_count_r());
+	g->ops.fb.intr.get_hubtlb_ecc_info(g, &ecc_addr, &corrected_cnt,
+			&uncorrected_cnt);
 
 	corrected_delta = fb_mmu_hubtlb_ecc_corrected_err_count_total_v(
 							corrected_cnt);
@@ -169,15 +241,9 @@ void gv11b_fb_intr_handle_ecc_hubtlb(struct gk20a *g, u32 ecc_status)
 		fb_mmu_hubtlb_ecc_status_uncorrected_err_total_counter_overflow_m();
 
 	/* clear the interrupt */
-	if ((corrected_delta > 0U) || (corrected_overflow != 0U)) {
-		nvgpu_writel(g, fb_mmu_hubtlb_ecc_corrected_err_count_r(), 0);
-	}
-	if ((uncorrected_delta > 0U) || (uncorrected_overflow != 0U)) {
-		nvgpu_writel(g, fb_mmu_hubtlb_ecc_uncorrected_err_count_r(), 0);
-	}
-
-	nvgpu_writel(g, fb_mmu_hubtlb_ecc_status_r(),
-				fb_mmu_hubtlb_ecc_status_reset_clear_f());
+	g->ops.fb.intr.clear_ecc_hubtlb(g,
+			((corrected_delta > 0U) || (corrected_overflow != 0U)),
+			((uncorrected_delta > 0U) || (uncorrected_overflow != 0U)));
 
 	/* Handle overflow */
 	if (corrected_overflow != 0U) {
@@ -261,11 +327,8 @@ void gv11b_fb_intr_handle_ecc_fillunit(struct gk20a *g, u32 ecc_status)
 	u32 corrected_delta, uncorrected_delta;
 	u32 corrected_overflow, uncorrected_overflow;
 
-	ecc_addr = nvgpu_readl(g, fb_mmu_fillunit_ecc_address_r());
-	corrected_cnt = nvgpu_readl(g,
-		fb_mmu_fillunit_ecc_corrected_err_count_r());
-	uncorrected_cnt = nvgpu_readl(g,
-		fb_mmu_fillunit_ecc_uncorrected_err_count_r());
+	g->ops.fb.intr.get_fillunit_ecc_info(g, &ecc_addr, &corrected_cnt,
+			&uncorrected_cnt);
 
 	corrected_delta = fb_mmu_fillunit_ecc_corrected_err_count_total_v(
 							corrected_cnt);
@@ -278,16 +341,9 @@ void gv11b_fb_intr_handle_ecc_fillunit(struct gk20a *g, u32 ecc_status)
 		fb_mmu_fillunit_ecc_status_uncorrected_err_total_counter_overflow_m();
 
 	/* clear the interrupt */
-	if ((corrected_delta > 0U) || (corrected_overflow != 0U)) {
-		nvgpu_writel(g, fb_mmu_fillunit_ecc_corrected_err_count_r(), 0);
-	}
-	if ((uncorrected_delta > 0U) || (uncorrected_overflow != 0U)) {
-		nvgpu_writel(g,
-			fb_mmu_fillunit_ecc_uncorrected_err_count_r(), 0);
-	}
-
-	nvgpu_writel(g, fb_mmu_fillunit_ecc_status_r(),
-				fb_mmu_fillunit_ecc_status_reset_clear_f());
+	g->ops.fb.intr.clear_ecc_fillunit(g,
+			((corrected_delta > 0U) || (corrected_overflow != 0U)),
+			((uncorrected_delta > 0U) || (uncorrected_overflow != 0U)));
 
 	/* Handle overflow */
 	if (corrected_overflow != 0U) {
@@ -330,17 +386,17 @@ void gv11b_fb_intr_handle_ecc(struct gk20a *g)
 
 	nvgpu_info(g, "ecc uncorrected error notify");
 
-	status = nvgpu_readl(g, fb_mmu_l2tlb_ecc_status_r());
+	status = g->ops.fb.intr.read_l2tlb_ecc_status(g);
 	if (status != 0U) {
 		g->ops.fb.intr.handle_ecc_l2tlb(g, status);
 	}
 
-	status = nvgpu_readl(g, fb_mmu_hubtlb_ecc_status_r());
+	status = g->ops.fb.intr.read_hubtlb_ecc_status(g);
 	if (status != 0U) {
 		g->ops.fb.intr.handle_ecc_hubtlb(g, status);
 	}
 
-	status = nvgpu_readl(g, fb_mmu_fillunit_ecc_status_r());
+	status = g->ops.fb.intr.read_fillunit_ecc_status(g);
 	if (status != 0U) {
 		g->ops.fb.intr.handle_ecc_fillunit(g, status);
 	}

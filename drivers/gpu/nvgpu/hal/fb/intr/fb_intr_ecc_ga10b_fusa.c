@@ -1,7 +1,7 @@
 /*
  * GA10B FB INTR ECC
  *
- * Copyright (c) 2020-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -33,7 +33,7 @@
 
 void ga10b_fb_intr_handle_ecc_l2tlb(struct gk20a *g, u32 ecc_status)
 {
-	u32 corrected_cnt, uncorrected_cnt;
+	u32 ecc_addr, corrected_cnt, uncorrected_cnt;
 	u32 unique_corrected_delta, unique_uncorrected_delta;
 	u32 unique_corrected_overflow, unique_uncorrected_overflow;
 
@@ -41,10 +41,8 @@ void ga10b_fb_intr_handle_ecc_l2tlb(struct gk20a *g, u32 ecc_status)
 	 * The unique counters tracks the instances of ecc (un)corrected errors
 	 * where the present, previous error addresses are different.
 	 */
-	corrected_cnt = nvgpu_readl(g,
-		fb_mmu_l2tlb_ecc_corrected_err_count_r());
-	uncorrected_cnt = nvgpu_readl(g,
-		fb_mmu_l2tlb_ecc_uncorrected_err_count_r());
+	g->ops.fb.intr.get_l2tlb_ecc_info(g, &ecc_addr, &corrected_cnt,
+		&uncorrected_cnt);
 
 	unique_corrected_delta =
 		fb_mmu_l2tlb_ecc_corrected_err_count_unique_v(corrected_cnt);
@@ -87,7 +85,7 @@ void ga10b_fb_intr_handle_ecc_l2tlb(struct gk20a *g, u32 ecc_status)
 
 void ga10b_fb_intr_handle_ecc_hubtlb(struct gk20a *g, u32 ecc_status)
 {
-	u32 corrected_cnt, uncorrected_cnt;
+	u32 ecc_addr, corrected_cnt, uncorrected_cnt;
 	u32 unique_corrected_delta, unique_uncorrected_delta;
 	u32 unique_corrected_overflow, unique_uncorrected_overflow;
 
@@ -95,10 +93,8 @@ void ga10b_fb_intr_handle_ecc_hubtlb(struct gk20a *g, u32 ecc_status)
 	 * The unique counters tracks the instances of ecc (un)corrected errors
 	 * where the present, previous error addresses are different.
 	 */
-	corrected_cnt = nvgpu_readl(g,
-		fb_mmu_hubtlb_ecc_corrected_err_count_r());
-	uncorrected_cnt = nvgpu_readl(g,
-		fb_mmu_hubtlb_ecc_uncorrected_err_count_r());
+	g->ops.fb.intr.get_hubtlb_ecc_info(g, &ecc_addr, &corrected_cnt,
+		&uncorrected_cnt);
 
 	unique_corrected_delta =
 		fb_mmu_hubtlb_ecc_corrected_err_count_unique_v(corrected_cnt);
@@ -141,7 +137,7 @@ void ga10b_fb_intr_handle_ecc_hubtlb(struct gk20a *g, u32 ecc_status)
 
 void ga10b_fb_intr_handle_ecc_fillunit(struct gk20a *g, u32 ecc_status)
 {
-	u32 corrected_cnt, uncorrected_cnt;
+	u32 ecc_addr, corrected_cnt, uncorrected_cnt;
 	u32 unique_corrected_delta, unique_uncorrected_delta;
 	u32 unique_corrected_overflow, unique_uncorrected_overflow;
 
@@ -149,10 +145,8 @@ void ga10b_fb_intr_handle_ecc_fillunit(struct gk20a *g, u32 ecc_status)
 	 * The unique counters tracks the instances of ecc (un)corrected errors
 	 * where the present, previous error addresses are different.
 	 */
-	corrected_cnt = nvgpu_readl(g,
-		fb_mmu_fillunit_ecc_corrected_err_count_r());
-	uncorrected_cnt = nvgpu_readl(g,
-		fb_mmu_fillunit_ecc_uncorrected_err_count_r());
+	g->ops.fb.intr.get_fillunit_ecc_info(g, &ecc_addr, &corrected_cnt,
+		&uncorrected_cnt);
 
 	unique_corrected_delta =
 		fb_mmu_fillunit_ecc_corrected_err_count_unique_v(corrected_cnt);

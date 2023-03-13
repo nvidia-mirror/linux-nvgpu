@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -121,6 +121,25 @@ struct gops_fb_intr {
 	 */
 	void (*handle_ecc_fillunit)(struct gk20a *g, u32 status);
 
+	/** @cond DOXYGEN_SHOULD_SKIP_THIS */
+	u32 (*read_l2tlb_ecc_status)(struct gk20a *g);
+	u32 (*read_hubtlb_ecc_status)(struct gk20a *g);
+	u32 (*read_fillunit_ecc_status)(struct gk20a *g);
+
+	void (*get_l2tlb_ecc_info)(struct gk20a *g, u32 *ecc_addr,
+			u32 *corrected_cnt, u32 *uncorrected_cnt);
+	void (*get_hubtlb_ecc_info)(struct gk20a *g, u32 *ecc_addr,
+			u32 *corrected_cnt, u32 *uncorrected_cnt);
+	void (*get_fillunit_ecc_info)(struct gk20a *g, u32 *ecc_addr,
+			u32 *corrected_cnt, u32 *uncorrected_cnt);
+
+	void (*clear_ecc_l2tlb)(struct gk20a *g,
+			bool clear_corrected, bool clear_uncorrected);
+	void (*clear_ecc_hubtlb)(struct gk20a *g,
+			bool clear_corrected, bool clear_uncorrected);
+	void (*clear_ecc_fillunit)(struct gk20a *g,
+			bool clear_corrected, bool clear_uncorrected);
+	/** @endcond DOXYGEN_SHOULD_SKIP_THIS */
 };
 
 struct gops_fb_ecc {
