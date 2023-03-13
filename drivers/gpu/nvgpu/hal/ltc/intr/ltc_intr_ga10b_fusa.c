@@ -32,12 +32,42 @@
 
 #include <nvgpu/hw/ga10b/hw_ltc_ga10b.h>
 
+u32 ga10b_ltc_intr_read_intr1(struct gk20a *g)
+{
+	return nvgpu_readl(g, ltc_ltcs_ltss_intr_r());
+}
+
+u32 ga10b_ltc_intr_read_intr2(struct gk20a *g)
+{
+	return nvgpu_readl(g, ltc_ltcs_ltss_intr2_r());
+}
+
+u32 ga10b_ltc_intr_read_intr3(struct gk20a *g)
+{
+	return nvgpu_readl(g, ltc_ltcs_ltss_intr3_r());
+}
+
+void ga10b_ltc_intr_write_intr1(struct gk20a *g, u32 reg_val)
+{
+	nvgpu_writel(g, ltc_ltcs_ltss_intr_r(), reg_val);
+}
+
+void ga10b_ltc_intr_write_intr2(struct gk20a *g, u32 reg_val)
+{
+	nvgpu_writel(g, ltc_ltcs_ltss_intr2_r(), reg_val);
+}
+
+void ga10b_ltc_intr_write_intr3(struct gk20a *g, u32 reg_val)
+{
+	nvgpu_writel(g, ltc_ltcs_ltss_intr3_r(), reg_val);
+}
+
 static void ga10b_ltc_intr1_configure(struct gk20a *g)
 {
 	u32 reg;
 
 	/* Enable ltc interrupts indicating illegal activity */
-	reg = nvgpu_readl(g, ltc_ltcs_ltss_intr_r());
+	reg = g->ops.ltc.intr.read_intr1(g);
 
 	/*
 	 * IDLE_ERROR_CBC - flag if cbc gets a request while slcg clock is
@@ -92,10 +122,10 @@ static void ga10b_ltc_intr1_configure(struct gk20a *g)
 	reg = set_field(reg, ltc_ltcs_ltss_intr_en_illegal_compstat_access_m(),
 		ltc_ltcs_ltss_intr_en_illegal_compstat_access_enabled_f());
 
-	nvgpu_writel(g, ltc_ltcs_ltss_intr_r(), reg);
+	g->ops.ltc.intr.write_intr1(g, reg);
 
 	/* Read back register for write synchronization */
-	reg = nvgpu_readl(g, ltc_ltcs_ltss_intr_r());
+	reg = g->ops.ltc.intr.read_intr1(g);
 
 #ifdef CONFIG_NVGPU_NON_FUSA
 	/* illegal_compstat interrupts can be also controlled through
@@ -114,7 +144,7 @@ static void ga10b_ltc_intr2_configure(struct gk20a *g)
 {
 	u32 reg;
 
-	reg = nvgpu_readl(g, ltc_ltcs_ltss_intr2_r());
+	reg = g->ops.ltc.intr.read_intr2(g);
 
 	/*
 	 * TRDONE_INVALID_TDTAG - The tdtag for a transdone does not match any
@@ -244,10 +274,10 @@ static void ga10b_ltc_intr2_configure(struct gk20a *g)
 		ltc_ltcs_ltss_intr2_en_checkedin_unexpected_trdone_m(),
 		ltc_ltcs_ltss_intr2_en_checkedin_unexpected_trdone_enabled_f());
 
-	nvgpu_writel(g, ltc_ltcs_ltss_intr2_r(), reg);
+	g->ops.ltc.intr.write_intr2(g, reg);
 
 	/* Read back register for write synchronization */
-	reg = nvgpu_readl(g, ltc_ltcs_ltss_intr2_r());
+	reg = g->ops.ltc.intr.read_intr2(g);
 }
 
 void ga10b_ltc_intr3_configure_extra(struct gk20a *g, u32 *reg)
@@ -294,7 +324,7 @@ static void ga10b_ltc_intr3_configure(struct gk20a *g)
 {
 	u32 reg;
 
-	reg = nvgpu_readl(g, ltc_ltcs_ltss_intr3_r());
+	reg = g->ops.ltc.intr.read_intr3(g);
 
 	/*
 	 * CHECKEDOUT_RWC_UPG_UNEXPECTED_NVPORT - RWC/Upgrade to the same 256B
@@ -379,10 +409,10 @@ static void ga10b_ltc_intr3_configure(struct gk20a *g)
 		g->ops.ltc.intr.ltc_intr3_configure_extra(g, &reg);
 	}
 
-	nvgpu_writel(g, ltc_ltcs_ltss_intr3_r(), reg);
+	g->ops.ltc.intr.write_intr3(g, reg);
 
 	/* Read back register for write synchronization */
-	reg = nvgpu_readl(g, ltc_ltcs_ltss_intr3_r());
+	reg = g->ops.ltc.intr.read_intr3(g);
 }
 
 void ga10b_ltc_intr_configure(struct gk20a *g)

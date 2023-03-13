@@ -200,6 +200,12 @@ struct gops_ltc_intr {
 
 	/** @cond DOXYGEN_SHOULD_SKIP_THIS */
 	void (*configure)(struct gk20a *g);
+	u32 (*read_intr1)(struct gk20a *g);
+	u32 (*read_intr2)(struct gk20a *g);
+	u32 (*read_intr3)(struct gk20a *g);
+	void (*write_intr1)(struct gk20a *g, u32 reg_val);
+	void (*write_intr2)(struct gk20a *g, u32 reg_val);
+	void (*write_intr3)(struct gk20a *g, u32 reg_val);
 #ifdef CONFIG_NVGPU_NON_FUSA
 	void (*en_illegal_compstat)(struct gk20a *g, bool enable);
 	void (*handle_illegal_compstat)(struct gk20a *g, u32 ltc, u32 slice,

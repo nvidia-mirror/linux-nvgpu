@@ -40,5 +40,11 @@ void ga10b_ltc_intr_handle_lts_intr3(struct gk20a *g, u32 ltc, u32 slice);
 void ga10b_ltc_intr_handle_lts_intr3_extra(struct gk20a *g, u32 ltc, u32 slice, u32 *reg_value);
 void ga10b_ltc_intr_handle_illegal_compstat(struct gk20a *g, u32 ltc, u32 slice,
 				u32 ltc_intr, u32 *reg_value);
+u32 ga10b_ltc_intr_read_intr1(struct gk20a *g);
+u32 ga10b_ltc_intr_read_intr2(struct gk20a *g);
+u32 ga10b_ltc_intr_read_intr3(struct gk20a *g);
+void ga10b_ltc_intr_write_intr1(struct gk20a *g, u32 reg_val);
+void ga10b_ltc_intr_write_intr2(struct gk20a *g, u32 reg_val);
+void ga10b_ltc_intr_write_intr3(struct gk20a *g, u32 reg_val);
 
 #endif /* NVGPU_LTC_INTR_GA10B_H */

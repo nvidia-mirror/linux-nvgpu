@@ -350,6 +350,12 @@ static const struct gops_ltc_intr ga10b_ops_ltc_intr = {
 	.en_illegal_compstat = gv11b_ltc_intr_en_illegal_compstat,
 	.handle_illegal_compstat = ga10b_ltc_intr_handle_illegal_compstat,
 #endif
+	.read_intr1 = ga10b_ltc_intr_read_intr1,
+	.read_intr2 = ga10b_ltc_intr_read_intr2,
+	.read_intr3 = ga10b_ltc_intr_read_intr3,
+	.write_intr1 = ga10b_ltc_intr_write_intr1,
+	.write_intr2 = ga10b_ltc_intr_write_intr2,
+	.write_intr3 = ga10b_ltc_intr_write_intr3,
 };
 
 static const struct gops_ltc ga10b_ops_ltc = {
