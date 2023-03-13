@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -587,7 +587,7 @@ void gv11b_fb_handle_mmu_fault(struct gk20a *g, u32 niso_intr)
 #ifdef CONFIG_NVGPU_REPLAYABLE_FAULT
 void gv11b_fb_handle_replayable_mmu_fault(struct gk20a *g)
 {
-	u32 fault_status = nvgpu_readl(g, fb_mmu_fault_status_r());
+	u32 fault_status = g->ops.fb.read_mmu_fault_status(g);
 
 	if ((fault_status & fb_mmu_fault_status_replayable_m()) == 0U) {
 		return;

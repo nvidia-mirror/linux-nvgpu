@@ -1,7 +1,7 @@
 /*
  * GM20B GPC MMU
  *
- * Copyright (c) 2014-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -90,7 +90,7 @@ void gm20b_fb_set_mmu_debug_mode(struct gk20a *g, bool enable)
 
 void gm20b_fb_set_debug_mode(struct gk20a *g, bool enable)
 {
-	gm20b_fb_set_mmu_debug_mode(g, enable);
+	g->ops.fb.set_mmu_debug_mode(g, enable);
 	g->ops.gr.set_debug_mode(g, enable);
 }
 #endif
