@@ -1973,7 +1973,8 @@ int ga10b_init_hal(struct gk20a *g)
 	/*
 	 * enable gsp scheduler
 	 */
-	nvgpu_set_enabled(g, NVGPU_SUPPORT_GSP_SCHED, true);
+	nvgpu_set_enabled(g, NVGPU_SUPPORT_GSP_SCHED, false);
+
 	nvgpu_set_enabled(g, NVGPU_SUPPORT_GSP_STEST, true);
 #endif
 #ifdef CONFIG_KMD_SCHEDULING_WORKER_THREAD
