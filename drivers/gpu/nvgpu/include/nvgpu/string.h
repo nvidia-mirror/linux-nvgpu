@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -134,4 +134,16 @@ bool nvgpu_mem_is_word_aligned(struct gk20a *g, u8 *addr);
 u32 nvgpu_str_join(char *dest, u32 dest_len, const char **src_str_list,
 	u32 str_list_len, const char *joiner);
 
+/**
+ * @brief Validate the string.
+ *
+ * API helps to validate the string for filenames. It checks if string is having
+ * any of ([a-z], [A-Z], [0-9], -, _) characters.
+ *
+ * @param name [in] Pointer to filename string.
+ *
+ * @retval 0 if string is having only expected characters.
+ * @retval -EINVAL in case of failure.
+ */
+s32 nvgpu_string_validate(const char *name);
 #endif /* NVGPU_STRING_H */

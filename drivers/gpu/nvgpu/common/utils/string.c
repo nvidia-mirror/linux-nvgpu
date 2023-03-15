@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -130,4 +130,30 @@ u32 nvgpu_str_join(char *dest, u32 dest_len, const char **src_str_list,
 ret:
 	/* Return number of bytes (or chars) copied */
 	return nvgpu_safe_cast_u64_to_u32(strlen(dest));
+}
+
+s32 nvgpu_string_validate(const char *name)
+{
+	s32 i = 0;
+
+	/* Run the loop until '\0' is not found. */
+	while (name[i] != '\0') {
+		/* Imposed string max limit of 32. */
+		if (i > 31) {
+			return -EPERM;
+		}
+
+		if ((name[i] >= '0' && name[i] <= '9') ||
+			(name[i] >= 'A' && name[i] <= 'Z') ||
+			(name[i] >= 'a' && name[i] <= 'z') ||
+			(name[i] == '-') || (name[i] == '_')) {
+			i++;
+			continue;
+		} else {
+			return -EINVAL;
+		}
+
+	}
+
+	return 0;
 }

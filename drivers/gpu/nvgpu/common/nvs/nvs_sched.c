@@ -25,6 +25,7 @@
 #include <nvgpu/types.h>
 
 #include <nvgpu/nvs.h>
+#include <nvgpu/string.h>
 #include <nvgpu/kmem.h>
 #include <nvgpu/gk20a.h>
 #include <nvgpu/runlist.h>
@@ -33,6 +34,7 @@
 #ifdef CONFIG_NVGPU_GSP_SCHEDULER
 #include <nvgpu/gsp_sched.h>
 #endif
+
 static struct nvs_sched_ops nvgpu_nvs_ops = {
 	.preempt = NULL,
 	.recover = NULL,
@@ -877,6 +879,12 @@ int nvgpu_nvs_add_domain(struct gk20a *g, const char *name, u64 timeslice,
 
 	if (name == NULL || pdomain == NULL) {
 		return -EINVAL;
+	}
+
+	err = nvgpu_string_validate(name);
+	if (err != 0) {
+		nvgpu_err(g, "Domain Name %s is Invalid.\n", name);
+		return err;
 	}
 
 	nvgpu_mutex_acquire(&g->sched_mutex);
