@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -616,6 +616,8 @@ void nvgpu_pmu_rpc_handler(struct gk20a *g, struct pmu_msg *msg,
 	struct nv_pmu_rpc_header rpc;
 	struct rpc_handler_payload *rpc_payload =
 		(struct rpc_handler_payload *)param;
+	struct pmu_sequence *seq = NULL;
+	struct nvgpu_pmu *pmu = g->pmu;
 
 	(void)status;
 
@@ -639,9 +641,11 @@ void nvgpu_pmu_rpc_handler(struct gk20a *g, struct pmu_msg *msg,
 exit:
 	rpc_payload->complete = true;
 
-	/* free allocated memory */
+	/* free allocated memory and release the sequence */
 	if (rpc_payload->is_mem_free_set) {
-		nvgpu_kfree(g, rpc_payload);
+		seq = nvgpu_pmu_sequences_get_seq(pmu->sequences,
+				msg->hdr.seq_id);
+		nvgpu_pmu_seq_free_release(g, pmu->sequences, seq);
 	}
 }
 

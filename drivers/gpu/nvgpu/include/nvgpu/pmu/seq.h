@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -49,6 +49,7 @@ enum pmu_seq_state {
 struct pmu_sequence {
 	u8 id;
 	enum pmu_seq_state state;
+	bool seq_free_status;
 	union {
 		struct pmu_allocation_v1 in_v1;
 		struct pmu_allocation_v2 in_v2;
@@ -96,6 +97,9 @@ void nvgpu_pmu_sequences_sw_setup(struct gk20a *g, struct nvgpu_pmu *pmu,
 	struct pmu_sequences *sequences);
 void nvgpu_pmu_sequences_cleanup(struct gk20a *g, struct nvgpu_pmu *pmu,
 	struct pmu_sequences *sequences);
+void nvgpu_pmu_seq_free_release(struct gk20a *g,
+				struct pmu_sequences *sequences,
+				struct pmu_sequence *seq);
 int nvgpu_pmu_sequences_init(struct gk20a *g, struct nvgpu_pmu *pmu,
 	struct pmu_sequences **sequences_p);
 void nvgpu_pmu_sequences_deinit(struct gk20a *g, struct nvgpu_pmu *pmu,

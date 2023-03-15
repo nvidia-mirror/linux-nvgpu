@@ -104,6 +104,10 @@ static bool pmu_validate_cmd(struct nvgpu_pmu *pmu, struct pmu_cmd *cmd,
 	}
 
 	queue_size = nvgpu_pmu_queue_get_size(&pmu->queues, queue_id);
+	if (queue_size == 0) {
+		nvgpu_err(g, "queue_size invalid");
+		return false;
+	}
 
 	if (cmd->hdr.size > (queue_size >> 1)) {
 		goto invalid_cmd;
@@ -579,6 +583,11 @@ int nvgpu_pmu_cmd_post(struct gk20a *g, struct pmu_cmd *cmd,
 
 	if (nvgpu_pmu_fb_queue_enabled(&pmu->queues)) {
 		fb_queue = nvgpu_pmu_fb_queue(&pmu->queues, queue_id);
+		if (fb_queue == NULL) {
+			nvgpu_pmu_seq_release(g, pmu->sequences, seq);
+			return -EINVAL;
+		}
+
 		/* Save the queue in the seq structure. */
 		nvgpu_pmu_seq_set_cmd_queue(seq, fb_queue);
 
@@ -717,7 +726,13 @@ int nvgpu_pmu_rpc_execute(struct nvgpu_pmu *pmu, u8 *rpc,
 	if (status != 0) {
 		nvgpu_err(g, "Failed to execute RPC status=0x%x, func=0x%x",
 				status, rpc_header->function);
-		goto cleanup;
+		/*
+		 * Since the cmd post has failed
+		 * free the allocated memory and
+		 * return the status
+		 */
+		nvgpu_kfree(g, rpc_payload);
+		return status;
 	}
 
 	/*
@@ -735,24 +750,32 @@ int nvgpu_pmu_rpc_execute(struct nvgpu_pmu *pmu, u8 *rpc,
 			status = -ETIMEDOUT;
 			goto cleanup;
 		} else if (fw_ack_status == PMU_FW_ACK_DRIVER_SHUTDOWN) {
-			/* free allocated memory */
-			nvgpu_kfree(g, rpc_payload);
-			/* release the sequence */
-			seq = nvgpu_pmu_sequences_get_seq(pmu->sequences,
-							cmd.hdr.seq_id);
-			nvgpu_pmu_seq_release(g, pmu->sequences, seq);
+			status = 0;
+			goto cleanup;
 		} else {
 			/* copy back data to caller */
-			nvgpu_memcpy(rpc, (u8 *)rpc_buff, size_rpc);
-			/* free allocated memory */
-			nvgpu_kfree(g, rpc_payload);
+			nvgpu_memcpy((u8 *)rpc, (u8 *)rpc_buff, size_rpc);
+			seq = nvgpu_pmu_sequences_get_seq(pmu->sequences,
+							cmd.hdr.seq_id);
+			if (seq->seq_free_status == false) {
+				/*
+				 * free allocated memory and set the
+				 * seq_free_status  true to synchronise
+				 * the memory free
+				 */
+				nvgpu_kfree(g, rpc_payload);
+				seq->seq_free_status = true;
+			}
 		}
 	}
 
 	return 0;
 
 cleanup:
-	nvgpu_kfree(g, rpc_payload);
+	seq = nvgpu_pmu_sequences_get_seq(pmu->sequences,
+					cmd.hdr.seq_id);
+	/* free allocated memory and release the seq */
+	nvgpu_pmu_seq_free_release(g, pmu->sequences, seq);
 exit:
 	return status;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -49,6 +49,33 @@ void nvgpu_pmu_sequences_sw_setup(struct gk20a *g, struct nvgpu_pmu *pmu,
 	}
 }
 
+void nvgpu_pmu_seq_free_release(struct gk20a *g,
+		struct pmu_sequences *sequences,
+		struct pmu_sequence *seq)
+{
+	seq->state	= PMU_SEQ_STATE_FREE;
+	seq->callback	= NULL;
+	seq->out_payload = NULL;
+
+	nvgpu_mutex_acquire(&sequences->pmu_seq_lock);
+
+	/*
+	 * check if the seq->id bit is set in seq table.
+	 * if set then go ahead and free the cb_params if
+	 * seq_free_status is false. This means that memory
+	 * is still not freed. Then clear the seq->id bit.
+	 */
+	if (nvgpu_test_bit(seq->id, sequences->pmu_seq_tbl)) {
+		if (seq->cb_params != NULL && seq->seq_free_status == false) {
+			nvgpu_kfree(g, seq->cb_params);
+			seq->cb_params	= NULL;
+			seq->seq_free_status = true;
+			nvgpu_clear_bit(seq->id, sequences->pmu_seq_tbl);
+		}
+	}
+	nvgpu_mutex_release(&sequences->pmu_seq_lock);
+}
+
 void nvgpu_pmu_sequences_cleanup(struct gk20a *g, struct nvgpu_pmu *pmu,
 	struct pmu_sequences *sequences)
 {
@@ -64,9 +91,9 @@ void nvgpu_pmu_sequences_cleanup(struct gk20a *g, struct nvgpu_pmu *pmu,
 
 	for (i = 0; i < PMU_MAX_NUM_SEQUENCES; i++) {
 		if (sequences->seq[i].cb_params != NULL) {
-			nvgpu_info(g, "seq id-%d Free CBP ", sequences->seq[i].id);
-			nvgpu_kfree(g, sequences->seq[i].cb_params);
-			sequences->seq[i].cb_params	= NULL;
+			nvgpu_pmu_seq_free_release(g, sequences,
+						&sequences->seq[i]);
+			nvgpu_pmu_dbg(g, "sequences cleanup done");
 		}
 	}
 }
@@ -165,6 +192,7 @@ int nvgpu_pmu_seq_acquire(struct gk20a *g,
 	seq->out_payload = NULL;
 	seq->in_payload_fb_queue = false;
 	seq->out_payload_fb_queue = false;
+	seq->seq_free_status = false;
 
 	*pseq = seq;
 	return 0;

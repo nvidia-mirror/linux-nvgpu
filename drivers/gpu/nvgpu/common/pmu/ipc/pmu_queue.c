@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -238,7 +238,13 @@ u32 nvgpu_pmu_queue_get_size(struct pmu_queues *queues, u32 queue_id)
 
 	if (queues->queue_type == QUEUE_TYPE_FB) {
 		fb_queue = queues->fb_queue[queue_id];
-		queue_size = nvgpu_engine_fb_queue_get_element_size(fb_queue);
+		if (fb_queue != NULL) {
+			queue_size =
+				nvgpu_engine_fb_queue_get_element_size(fb_queue);
+		} else {
+			/* when fb is NULL return size as 0 */
+			return 0;
+		}
 	} else {
 		queue = queues->queue[queue_id];
 		queue_size = nvgpu_engine_mem_queue_get_size(queue);
