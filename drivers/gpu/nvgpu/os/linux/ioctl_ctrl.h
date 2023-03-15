@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -16,8 +16,35 @@
 #ifndef __NVGPU_IOCTL_CTRL_H__
 #define __NVGPU_IOCTL_CTRL_H__
 
-struct gk20a_ctrl_priv;
 struct nvgpu_tsg;
+
+struct gk20a_ctrl_priv {
+	struct device *dev;
+	struct gk20a *g;
+	struct nvgpu_clk_session *clk_session;
+	struct nvgpu_cdev *cdev;
+#ifdef CONFIG_NVGPU_TSG_SHARING
+	u64 device_instance_id;
+	u64 tsg_share_token;
+	struct nvgpu_list_node tsg_share_tokens_list;
+	struct nvgpu_mutex tokens_lock;
+#endif
+
+	/**
+	 * This ref is initialized during gk20a_ctrl_dev_open.
+	 * This is ref_get whenever a TSG is opened for a device.
+	 * This is ref_put whenever a TSG is released from a device.
+	 */
+	struct nvgpu_ref refcount;
+
+	struct nvgpu_list_node list;
+	struct {
+		struct vm_area_struct *vma;
+		bool vma_mapped;
+	} usermode_vma;
+};
+
+void nvgpu_ioctl_ctrl_release(struct nvgpu_ref *ref);
 
 int gk20a_ctrl_dev_open(struct inode *inode, struct file *filp);
 int gk20a_ctrl_dev_release(struct inode *inode, struct file *filp);

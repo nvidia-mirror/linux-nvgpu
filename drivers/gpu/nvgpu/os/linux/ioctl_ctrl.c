@@ -91,25 +91,6 @@ struct nvgpu_tsg_share_token_node {
 };
 #endif
 
-struct gk20a_ctrl_priv {
-	struct device *dev;
-	struct gk20a *g;
-	struct nvgpu_clk_session *clk_session;
-	struct nvgpu_cdev *cdev;
-#ifdef CONFIG_NVGPU_TSG_SHARING
-	u64 device_instance_id;
-	u64 tsg_share_token;
-	struct nvgpu_list_node tsg_share_tokens_list;
-	struct nvgpu_mutex tokens_lock;
-#endif
-
-	struct nvgpu_list_node list;
-	struct {
-		struct vm_area_struct *vma;
-		bool vma_mapped;
-	} usermode_vma;
-};
-
 static inline struct gk20a_ctrl_priv *
 gk20a_ctrl_priv_from_list(struct nvgpu_list_node *node)
 {
@@ -178,6 +159,8 @@ int gk20a_ctrl_dev_open(struct inode *inode, struct file *filp)
 	nvgpu_mutex_init(&priv->tokens_lock);
 #endif
 
+	nvgpu_ref_init(&priv->refcount);
+
 	if (!g->sw_ready) {
 		err = gk20a_busy(g);
 		if (err)
@@ -202,9 +185,9 @@ free_ref:
 	return err;
 }
 
-int gk20a_ctrl_dev_release(struct inode *inode, struct file *filp)
+void nvgpu_ioctl_ctrl_release(struct nvgpu_ref *ref)
 {
-	struct gk20a_ctrl_priv *priv = filp->private_data;
+	struct gk20a_ctrl_priv *priv = container_of(ref, struct gk20a_ctrl_priv, refcount);
 	struct gk20a *g = priv->g;
 	struct nvgpu_os_linux *l = nvgpu_os_linux_from_gk20a(g);
 
@@ -219,6 +202,16 @@ int gk20a_ctrl_dev_release(struct inode *inode, struct file *filp)
 
 	nvgpu_put(g);
 	nvgpu_kfree(g, priv);
+}
+
+int gk20a_ctrl_dev_release(struct inode *inode, struct file *filp)
+{
+	struct gk20a_ctrl_priv *priv = filp->private_data;
+	struct gk20a *g = priv->g;
+
+	nvgpu_log_fn(g, " ");
+
+	nvgpu_ref_put(&priv->refcount, nvgpu_ioctl_ctrl_release);
 
 	return 0;
 }
