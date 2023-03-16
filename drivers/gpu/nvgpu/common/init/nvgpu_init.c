@@ -1055,7 +1055,6 @@ int nvgpu_finalize_poweron(struct gk20a *g)
 		}
 	}
 
-	nvgpu_print_enabled_flags(g);
 	return err;
 
 done:

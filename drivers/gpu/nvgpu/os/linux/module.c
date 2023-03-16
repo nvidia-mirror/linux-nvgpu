@@ -537,6 +537,9 @@ int gk20a_pm_finalize_poweron(struct device *dev)
 	/* Initialize linux specific flags */
 	gk20a_init_linux_characteristics(g);
 
+	/* Print out the NvGPU flags for debug purposes after all flags are set. */
+	nvgpu_print_enabled_flags(g);
+
 	err = nvgpu_init_os_linux_ops(l);
 	if (err)
 		goto done;
