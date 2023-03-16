@@ -1,7 +1,7 @@
 /*
  * Tegra GK20A GPU Debugger/Profiler Driver
  *
- * Copyright (c) 2017-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -2721,7 +2721,6 @@ static int nvgpu_dbg_gpu_access_gpu_va(struct dbg_session_gk20a *dbg_s,
 		if (size > allocated_size) {
 			if (buffer) {
 				nvgpu_big_free(g, buffer);
-				buffer = NULL;
 			}
 
 			buffer = nvgpu_big_zalloc(g, size);

@@ -810,6 +810,10 @@ static int nvgpu_nvs_ctrl_fifo_scheduler_process_receiver(struct gk20a *g,
 {
 	int result = 0;
 
+	if ((receiver_queue_sender == NULL) || (send_queue_receiver == NULL)) {
+		return -1;
+	}
+
 	(void)memset(receiver_queue_sender->internal_buffer, 0,
 		NVS_DOMAIN_MESSAGE_MAX_PAYLOAD_SIZE);
 
