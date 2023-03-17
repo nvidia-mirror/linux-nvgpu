@@ -1976,7 +1976,9 @@ int ga10b_init_hal(struct gk20a *g)
 	/*
 	 * enable gsp scheduler
 	 */
-	nvgpu_set_enabled(g, NVGPU_SUPPORT_GSP_SCHED, false);
+	if (!nvgpu_is_enabled(g, NVGPU_IS_FMODEL)) {
+		nvgpu_set_enabled(g, NVGPU_SUPPORT_GSP_SCHED, true);
+	}
 
 	nvgpu_set_enabled(g, NVGPU_SUPPORT_GSP_STEST, true);
 #endif
@@ -1984,7 +1986,9 @@ int ga10b_init_hal(struct gk20a *g)
 	/*
 	 * enabled kmd sheduling worker thread
 	 */
-	nvgpu_set_enabled(g, NVGPU_SUPPORT_KMD_SCHEDULING_WORKER_THREAD, true);
+	if (nvgpu_is_enabled(g, NVGPU_IS_FMODEL)) {
+		nvgpu_set_enabled(g, NVGPU_SUPPORT_KMD_SCHEDULING_WORKER_THREAD, true);
+	}
 #endif
 
 	/*
