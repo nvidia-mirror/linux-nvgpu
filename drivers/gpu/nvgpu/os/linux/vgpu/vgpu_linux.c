@@ -72,18 +72,6 @@ struct vgpu_priv_data *vgpu_get_priv_data(struct gk20a *g)
 	return (struct vgpu_priv_data *)plat->vgpu_priv;
 }
 
-static void vgpu_remove_support(struct gk20a *g)
-{
-	vgpu_remove_support_common(g);
-
-	/* free mappings to registers, etc*/
-
-	if (g->bar1) {
-		iounmap((void __iomem *)g->bar1);
-		g->bar1 = 0U;
-	}
-}
-
 static void vgpu_init_vars(struct gk20a *g, struct gk20a_platform *platform)
 {
 	struct nvgpu_os_linux *l = nvgpu_os_linux_from_gk20a(g);
@@ -103,7 +91,6 @@ static void vgpu_init_vars(struct gk20a *g, struct gk20a_platform *platform)
 	nvgpu_init_list_node(&l->ctrl_privs);
 
 	g->regs_saved = g->regs;
-	g->bar1_saved = g->bar1;
 
 	nvgpu_atomic_set(&g->clk_arb_global_nr, 0);
 
@@ -125,30 +112,10 @@ static void vgpu_init_vars(struct gk20a *g, struct gk20a_platform *platform)
 	}
 }
 
-static int vgpu_init_support(struct platform_device *pdev)
+static int vgpu_init_support(struct gk20a *g)
 {
-	struct resource *r = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	struct gk20a *g = get_gk20a(&pdev->dev);
-	struct nvgpu_os_linux *l = nvgpu_os_linux_from_gk20a(g);
-	void __iomem *regs;
 	int err = 0;
-
-	if (!r) {
-		nvgpu_err(g, "failed to get gk20a bar1");
-		err = -ENXIO;
-		goto fail;
-	}
-
-	if (r->name && !strcmp(r->name, "/vgpu")) {
-		regs = devm_ioremap_resource(&pdev->dev, r);
-		if (IS_ERR(regs)) {
-			nvgpu_err(g, "failed to remap gk20a bar1");
-			err = PTR_ERR(regs);
-			goto fail;
-		}
-		g->bar1 = (uintptr_t)regs;
-		l->bar1_mem = r;
-	}
 
 	nvgpu_mutex_init(&g->dbg_sessions_lock);
 #if defined(CONFIG_NVGPU_CYCLESTATS)
@@ -169,11 +136,11 @@ static int vgpu_init_support(struct platform_device *pdev)
 		SZ_4K / sizeof(g->dbg_regops_tmp_buf[0]);
 #endif
 
-	g->remove_support = vgpu_remove_support;
+	g->remove_support = vgpu_remove_support_common;
 	return 0;
 
  fail:
-	vgpu_remove_support(g);
+	vgpu_remove_support_common(g);
 	return err;
 }
 
@@ -394,7 +361,7 @@ int vgpu_probe(struct platform_device *pdev)
 	platform->g = gk20a;
 	platform->vgpu_priv = priv;
 
-	err = vgpu_init_support(pdev);
+	err = vgpu_init_support(gk20a);
 	if (err != 0) {
 		kfree(l);
 		return -ENOMEM;
