@@ -622,6 +622,7 @@ nvgpu-$(CONFIG_TEGRA_GK20A_NVHOST) += \
 nvgpu-$(CONFIG_NVGPU_GR_VIRTUALIZATION) += \
 	os/linux/vgpu/platform_vgpu_tegra.o \
 	os/linux/vgpu/sysfs_vgpu.o \
+	os/linux/vgpu/vgpu_common.o \
 	os/linux/vgpu/vgpu_ivc.o \
 	os/linux/vgpu/vgpu_linux.o \
 	os/linux/vgpu/gv11b/platform_gv11b_vgpu_tegra.o

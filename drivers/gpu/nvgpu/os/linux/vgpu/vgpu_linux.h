@@ -26,8 +26,6 @@ struct platform_device;
 
 #include <nvgpu/vgpu/vgpu.h>
 
-int vgpu_pm_prepare_poweroff(struct device *dev);
-int vgpu_pm_finalize_poweron(struct device *dev);
 int vgpu_probe(struct platform_device *dev);
 int vgpu_remove(struct platform_device *dev);
 
@@ -39,14 +37,6 @@ int vgpu_tegra_resume(struct device *dev);
 #else
 /* define placeholders for functions used outside of vgpu */
 
-static inline int vgpu_pm_prepare_poweroff(struct device *dev)
-{
-	return -ENOSYS;
-}
-static inline int vgpu_pm_finalize_poweron(struct device *dev)
-{
-	return -ENOSYS;
-}
 static inline int vgpu_probe(struct platform_device *dev)
 {
 	return -ENOSYS;

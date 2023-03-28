@@ -75,6 +75,7 @@
 #include "common/gr/gr_priv.h"
 #include "platform_gk20a.h"
 #include "sysfs.h"
+#include "vgpu/vgpu_common.h"
 #include "vgpu/vgpu_linux.h"
 #include "scale.h"
 #include "pci.h"
