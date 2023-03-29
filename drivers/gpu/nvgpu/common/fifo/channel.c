@@ -1260,6 +1260,7 @@ struct nvgpu_channel *nvgpu_channel_open_new(struct gk20a *g,
 
 	ch->pid = tid;
 	ch->tgid = pid;  /* process granularity for FECS traces */
+	nvgpu_get_thread_name(ch->thread_name);
 
 #ifdef CONFIG_NVGPU_USERD
 	if (nvgpu_userd_init_channel(g, ch) != 0) {
@@ -2125,11 +2126,12 @@ static void nvgpu_channel_info_debug_dump(struct gk20a *g,
 	 */
 	u32 ver = nvgpu_safe_add_u32(g->params.gpu_arch, g->params.gpu_impl);
 
-	gk20a_debug_output(o, "%d-%s, TSG: %u, pid %d, refs: %d, deterministic: %s, domain name: %s",
+	gk20a_debug_output(o, "%d-%s, TSG: %u, pid %d, thread name %s, refs: %d, deterministic: %s, domain name: %s",
 			info->chid,
 			g->name,
 			info->tsgid,
 			info->pid,
+			info->thread_name,
 			info->refs,
 			info->deterministic ? "yes" : "no",
 			info->nvs_domain_name);
@@ -2229,6 +2231,7 @@ void nvgpu_channel_debug_dump_all(struct gk20a *g,
 		info->chid = ch->chid;
 		info->tsgid = ch->tsgid;
 		info->pid = ch->pid;
+		(void)memcpy(info->thread_name, ch->thread_name, sizeof(info->thread_name));
 		info->refs = nvgpu_atomic_read(&ch->ref_count);
 #ifdef CONFIG_NVGPU_KERNEL_MODE_SUBMIT
 		info->deterministic = nvgpu_channel_is_deterministic(ch);

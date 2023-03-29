@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
 
 bitmap_find_next_zero_area
 fb_gv11b_write_mmu_fault_buffer_get
@@ -342,6 +342,7 @@ nvgpu_cond_timedwait
 nvgpu_cond_unlock
 nvgpu_current_pid
 nvgpu_current_tid
+nvgpu_get_thread_name
 nvgpu_current_time_ms
 nvgpu_current_time_ns
 nvgpu_current_time_us

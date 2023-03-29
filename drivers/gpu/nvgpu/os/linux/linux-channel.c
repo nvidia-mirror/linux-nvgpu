@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2022, NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2017-2023, NVIDIA Corporation.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -150,12 +150,12 @@ void nvgpu_set_err_notifier_locked(struct nvgpu_channel *ch, u32 error)
 
 		if (error == NVGPU_CHANNEL_RESETCHANNEL_VERIF_ERROR) {
 			nvgpu_log_info(ch->g,
-			    "error notifier set to %d for ch %d",
-			    error, ch->chid);
+			    "error notifier set to %d for ch %d owned by %s",
+			    error, ch->chid, ch->thread_name);
 		} else {
 			nvgpu_err(ch->g,
-			    "error notifier set to %d for ch %d",
-			    error, ch->chid);
+			    "error notifier set to %d for ch %d owned by %s",
+			    error, ch->chid, ch->thread_name);
 		}
 	}
 }

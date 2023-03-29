@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -52,6 +52,13 @@ int nvgpu_current_tid(struct gk20a *g);
  * @return Process ID of the calling process.
  */
 int nvgpu_current_pid(struct gk20a *g);
+
+/**
+ * @brief  API to get the name of current thread.
+ *
+ * @param dest [in/out]		Pointer to the string buffer.
+ */
+void nvgpu_get_thread_name(char *dest);
 
 /**
  * @brief Print the name of current thread.

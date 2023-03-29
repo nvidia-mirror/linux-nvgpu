@@ -52,6 +52,10 @@ struct nvgpu_user_fence;
 struct nvgpu_runlist;
 
 /**
+ * Size of task name. Should strictly be equal to TASK_COMM_LEN
+ */
+#define TASK_NAME_LEN		(16U)
+/**
  * S/W defined invalid channel identifier.
  */
 #define NVGPU_INVALID_CHANNEL_ID	(~U32(0U))
@@ -187,6 +191,11 @@ struct nvgpu_channel_dump_info {
 	u32 tsgid;
 	/** Pid of the process that created this channel. */
 	int pid;
+	/**
+	 * Name of the thread that created the channel.
+	 * Same size as task_struct.comm[] on linux.
+	 */
+	char thread_name[TASK_NAME_LEN];
 	/** Number of references to this channel. */
 	int refs;
 	/** Channel uses deterministic submit (kernel submit only). */
@@ -356,6 +365,11 @@ struct nvgpu_channel {
 	 * Confusingly, at userspace level, this is what is seen as the "pid".
 	 */
 	pid_t tgid;
+	/**
+	 * Name of the thread that created the channel.
+	 * Same size as task_struct.comm[] on linux.
+	 */
+	char thread_name[TASK_NAME_LEN];
 	/** Lock to serialize ioctls for this channel. */
 	struct nvgpu_mutex ioctl_lock;
 

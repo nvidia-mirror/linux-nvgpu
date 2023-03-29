@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -29,4 +29,14 @@ void nvgpu_print_current_impl(struct gk20a *g, const char *func_name, int line,
 		void *ctx, enum nvgpu_log_type type)
 {
 	nvgpu_log_msg_impl(g, func_name, line, type, current->comm);
+}
+
+void nvgpu_get_thread_name(char *dest)
+{
+	char buf[TASK_COMM_LEN];
+
+	get_task_comm(buf, current);
+	strncpy(dest, buf, TASK_COMM_LEN);
+	/* Ensure buffer is null terminated */
+	dest[TASK_COMM_LEN-1] = '\0';
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -51,6 +51,11 @@ int nvgpu_current_tid(struct gk20a *g)
 	 * representation of "threads".
 	 */
 	return (int)pthread_self();
+}
+
+void nvgpu_get_thread_name(char *dest)
+{
+	(void)dest;
 }
 
 void nvgpu_print_current_impl(struct gk20a *g, const char *func_name, int line,
