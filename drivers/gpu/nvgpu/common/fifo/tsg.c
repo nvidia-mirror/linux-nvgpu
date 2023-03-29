@@ -338,7 +338,7 @@ void nvgpu_tsg_delete_subcontext(struct gk20a *g, struct nvgpu_tsg *tsg,
 			return;
 		}
 		nvgpu_clear_bit(veid - MAX_SYNC_SUBCONTEXTS, tsg->async_veids);
-		tsg->subctx_vms[veid - MAX_SYNC_SUBCONTEXTS] = NULL;
+		tsg->subctx_vms[veid] = NULL;
 	}
 
 	nvgpu_mutex_release(&tsg->veid_alloc_lock);

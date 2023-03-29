@@ -403,9 +403,6 @@ int nvgpu_tsg_create_sync_subcontext_internal(struct gk20a *g,
  * @param tsg [in]		Pointer to TSG struct.
  * @param ch [in]		Pointer to Channel struct.
  *
- * - If this is first channel created without creating subcontext,
- *   then this channel is using subcontext with VEID 0 by default.
- *   Set subctx_vms and reserve the VEID0.
  * - If channel VM does not match subcontext VM return -EINVAL.
  *
  * @return 0 in case of success, < 0 in case of failure.
