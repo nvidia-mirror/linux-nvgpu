@@ -95,8 +95,6 @@ struct nvgpu_gpu_zbc_query_table_args {
 #define NVGPU_GPU_BUS_TYPE_AXI         32
 
 #define NVGPU_GPU_FLAGS_HAS_SYNCPOINTS			(1ULL << 0)
-/* MAP_BUFFER_EX with partial mappings */
-#define NVGPU_GPU_FLAGS_SUPPORT_PARTIAL_MAPPINGS	(1ULL << 1)
 /* MAP_BUFFER_EX with sparse allocations */
 #define NVGPU_GPU_FLAGS_SUPPORT_SPARSE_ALLOCS		(1ULL << 2)
 /* sync fence FDs are available in, e.g., submit_gpfifo */

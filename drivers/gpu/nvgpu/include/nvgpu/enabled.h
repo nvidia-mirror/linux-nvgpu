@@ -72,8 +72,6 @@ struct gk20a;
 		"User-space managed address spaces support"),		\
 	DEFINE_FLAG(NVGPU_SUPPORT_IO_COHERENCE,				\
 		"IO coherence support is available"),			\
-	DEFINE_FLAG(NVGPU_SUPPORT_PARTIAL_MAPPINGS,			\
-		"MAP_BUFFER_EX with partial mappings"),			\
 	DEFINE_FLAG(NVGPU_SUPPORT_SPARSE_ALLOCS,			\
 		"MAP_BUFFER_EX with sparse allocations"),		\
 	DEFINE_FLAG(NVGPU_SUPPORT_MAP_DIRECT_KIND_CTRL,			\
