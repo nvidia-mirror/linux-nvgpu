@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -52,7 +52,6 @@ struct nvgpu_mapped_buf_priv {
 	struct sg_table *sgt;
 };
 
-/* NVGPU_AS_MAP_BUFFER_FLAGS_DIRECT_KIND_CTRL must be set */
 int nvgpu_vm_map_linux(struct vm_gk20a *vm,
 		       struct dma_buf *dmabuf,
 		       u64 map_addr,
@@ -69,7 +68,6 @@ int nvgpu_vm_map_linux(struct vm_gk20a *vm,
 /*
  * Notes:
  * - Batch may be NULL if map op is not part of a batch.
- * - NVGPU_AS_MAP_BUFFER_FLAGS_DIRECT_KIND_CTRL must be set
  */
 int nvgpu_vm_map_buffer(struct vm_gk20a *vm,
 			int dmabuf_fd,

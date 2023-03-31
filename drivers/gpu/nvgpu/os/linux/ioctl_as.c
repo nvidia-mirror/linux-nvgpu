@@ -1,7 +1,7 @@
 /*
  * GK20A Address Spaces
  *
- * Copyright (c) 2011-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -109,13 +109,6 @@ static int gk20a_as_ioctl_map_buffer_ex(
 
 	nvgpu_log_fn(g, " ");
 
-	/* unsupported, direct kind control must be used */
-	if (!(args->flags & NVGPU_AS_MAP_BUFFER_FLAGS_DIRECT_KIND_CTRL)) {
-		struct gk20a *g = as_share->vm->mm->g;
-		nvgpu_log_info(g, "Direct kind control must be requested");
-		return -EINVAL;
-	}
-
 	return nvgpu_vm_map_buffer(as_share->vm, args->dmabuf_fd,
 				   &args->offset, args->flags,
 				   args->page_size,
@@ -198,15 +191,8 @@ static int gk20a_as_ioctl_map_buffer_batch(
 			break;
 		}
 
-		if (map_args.flags &
-		    NVGPU_AS_MAP_BUFFER_FLAGS_DIRECT_KIND_CTRL) {
-			compressible_kind = map_args.compr_kind;
-			incompressible_kind = map_args.incompr_kind;
-		} else {
-			/* direct kind control must be used */
-			err = -EINVAL;
-			break;
-		}
+		compressible_kind = map_args.compr_kind;
+		incompressible_kind = map_args.incompr_kind;
 
 		err = nvgpu_vm_map_buffer(
 			as_share->vm, map_args.dmabuf_fd,

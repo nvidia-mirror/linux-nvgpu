@@ -74,8 +74,6 @@ struct gk20a;
 		"IO coherence support is available"),			\
 	DEFINE_FLAG(NVGPU_SUPPORT_SPARSE_ALLOCS,			\
 		"MAP_BUFFER_EX with sparse allocations"),		\
-	DEFINE_FLAG(NVGPU_SUPPORT_MAP_DIRECT_KIND_CTRL,			\
-		"Direct PTE kind control is supported (map_buffer_ex)"),\
 	DEFINE_FLAG(NVGPU_SUPPORT_MAP_BUFFER_BATCH,			\
 		"Support batch mapping"),				\
 	DEFINE_FLAG(NVGPU_SUPPORT_MAPPING_MODIFY,			\

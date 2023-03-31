@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -349,7 +349,6 @@ struct vm_gk20a {
 #define NVGPU_VM_MAP_CACHEABLE				BIT32(1)
 #define NVGPU_VM_MAP_IO_COHERENT			BIT32(2)
 #define NVGPU_VM_MAP_UNMAPPED_PTE			BIT32(3)
-#define NVGPU_VM_MAP_DIRECT_KIND_CTRL			BIT32(4)
 #define NVGPU_VM_MAP_L3_ALLOC				BIT32(5)
 #define NVGPU_VM_MAP_PLATFORM_ATOMIC			BIT32(6)
 #define NVGPU_VM_MAP_TEGRA_RAW				BIT32(7)

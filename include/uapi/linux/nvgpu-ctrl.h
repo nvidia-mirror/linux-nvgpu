@@ -135,8 +135,6 @@ struct nvgpu_gpu_zbc_query_table_args {
 #define NVGPU_GPU_FLAGS_SUPPORT_RESCHEDULE_RUNLIST	(1ULL << 21)
 /*  subcontexts are available */
 #define NVGPU_GPU_FLAGS_SUPPORT_TSG_SUBCONTEXTS         (1ULL << 22)
-/* Direct PTE kind control is supported (map_buffer_ex) */
-#define NVGPU_GPU_FLAGS_SUPPORT_MAP_DIRECT_KIND_CTRL	(1ULL << 23)
 /* NVGPU_GPU_IOCTL_SET_DETERMINISTIC_OPTS is available */
 #define NVGPU_GPU_FLAGS_SUPPORT_DETERMINISTIC_OPTS	(1ULL << 24)
 /* SCG support is available */

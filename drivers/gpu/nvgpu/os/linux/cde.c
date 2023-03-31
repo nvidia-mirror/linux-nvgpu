@@ -1,7 +1,7 @@
 /*
  * Color decompression engine support
  *
- * Copyright (c) 2014-2022, NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2014-2023, NVIDIA Corporation.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -1108,8 +1108,7 @@ __releases(&l->cde_app->mutex)
 	get_dma_buf(compbits_scatter_buf); /* a ref for nvgpu_vm_map_linux */
 	err = nvgpu_vm_map_linux(cde_ctx->vm, compbits_scatter_buf, 0,
 				 NVGPU_VM_MAP_ACCESS_DEFAULT,
-				 NVGPU_VM_MAP_CACHEABLE |
-				 NVGPU_VM_MAP_DIRECT_KIND_CTRL,
+				 NVGPU_VM_MAP_CACHEABLE,
 				 gk20a_cde_mapping_page_size(cde_ctx->vm,
 							     map_offset,
 							     map_size),
