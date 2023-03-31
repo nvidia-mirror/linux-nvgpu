@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -43,6 +43,8 @@ void ga10b_intr_stall_pause(struct gk20a *g);
 void ga10b_intr_stall_resume(struct gk20a *g);
 void ga10b_intr_isr_stall(struct gk20a *g);
 
+u32 ga10b_intr_get_eng_nonstall_base_vector(struct gk20a *g);
+u32 ga10b_intr_get_eng_stall_base_vector(struct gk20a *g);
 bool ga10b_intr_is_stall_and_eng_intr_pending(struct gk20a *g, u32 engine_id,
 			u32 *eng_intr_pending);
 bool ga10b_mc_intr_get_unit_info(struct gk20a *g, u32 unit);

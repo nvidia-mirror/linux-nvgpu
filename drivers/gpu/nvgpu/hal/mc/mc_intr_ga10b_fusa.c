@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2021-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -322,9 +322,23 @@ void ga10b_intr_mask_top(struct gk20a *g)
 	}
 }
 
+u32 ga10b_intr_get_eng_nonstall_base_vector(struct gk20a *g)
+{
+	u32 reg_val =
+		nvgpu_readl(g, ctrl_legacy_engine_nonstall_intr_base_vectorid_r());
+	return ctrl_legacy_engine_nonstall_intr_base_vectorid_vector_v(reg_val);
+}
+
+u32 ga10b_intr_get_eng_stall_base_vector(struct gk20a *g)
+{
+	u32 reg_val =
+		nvgpu_readl(g, ctrl_legacy_engine_stall_intr_base_vectorid_r());
+	return ctrl_legacy_engine_stall_intr_base_vectorid_vector_v(reg_val);
+}
+
 bool ga10b_mc_intr_get_unit_info(struct gk20a *g, u32 unit)
 {
-	u32 vectorid, reg_val, i;
+	u32 vectorid, i;
 	struct nvgpu_intr_unit_info *intr_unit_info;
 	u64 tmp_subtree_mask = 0ULL;
 
@@ -373,10 +387,7 @@ bool ga10b_mc_intr_get_unit_info(struct gk20a *g, u32 unit)
 		 * is because engine interrupt mask is being used to configure
 		 * interrupts. Base vector is read from ctrl reg.
 		 */
-		reg_val = nvgpu_readl(g,
-			    ctrl_legacy_engine_nonstall_intr_base_vectorid_r());
-		vectorid =
-		  ctrl_legacy_engine_nonstall_intr_base_vectorid_vector_v(reg_val);
+		vectorid = g->ops.mc.get_eng_nonstall_base_vector(g);
 		intr_unit_info->vectorid[0] = vectorid;
 		intr_unit_info->vectorid_size = NVGPU_CIC_INTR_VECTORID_SIZE_ONE;
 
@@ -398,10 +409,7 @@ bool ga10b_mc_intr_get_unit_info(struct gk20a *g, u32 unit)
 		break;
 #endif
 	case NVGPU_CIC_INTR_UNIT_GR_STALL:
-		reg_val = nvgpu_readl(g,
-			    ctrl_legacy_engine_stall_intr_base_vectorid_r());
-		vectorid =
-		  ctrl_legacy_engine_stall_intr_base_vectorid_vector_v(reg_val);
+		vectorid = g->ops.mc.get_eng_stall_base_vector(g);
 		intr_unit_info->vectorid[0] = vectorid;
 		intr_unit_info->vectorid_size = NVGPU_CIC_INTR_VECTORID_SIZE_ONE;
 
@@ -417,10 +425,7 @@ bool ga10b_mc_intr_get_unit_info(struct gk20a *g, u32 unit)
 		return true;
 
 	case NVGPU_CIC_INTR_UNIT_CE_STALL:
-		reg_val = nvgpu_readl(g,
-			    ctrl_legacy_engine_stall_intr_base_vectorid_r());
-		vectorid =
-		  ctrl_legacy_engine_stall_intr_base_vectorid_vector_v(reg_val);
+		vectorid = g->ops.mc.get_eng_stall_base_vector(g);
 		intr_unit_info->vectorid[0] = vectorid;
 		intr_unit_info->vectorid_size = NVGPU_CIC_INTR_VECTORID_SIZE_ONE;
 
@@ -1047,13 +1052,10 @@ static bool ga10b_intr_is_eng_stall_pending(struct gk20a *g, u32 engine_id)
 	u64 eng_subtree_mask = 0ULL;
 	u64 subtree_mask = 0ULL;
 	u32 intr_leaf0, intr_leaf1;
-	u32 reg_val, vectorid;
+	u32 vectorid;
 	bool eng_stall_pending = false;
 
-	reg_val = nvgpu_readl(g,
-		    ctrl_legacy_engine_stall_intr_base_vectorid_r());
-	vectorid =
-		  ctrl_legacy_engine_stall_intr_base_vectorid_vector_v(reg_val);
+	vectorid = g->ops.mc.get_eng_stall_base_vector(g);
 
 	eng_subtree_mask = ((u64)nvgpu_engine_act_interrupt_mask(g, engine_id));
 	eng_subtree_mask <<= GPU_VECTOR_TO_LEAF_SHIFT(vectorid);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -300,6 +300,32 @@ struct gops_mc {
 	 *
 	 */
 	void (*gr1_out_of_reset)(struct gk20a *g, u32 devtype, bool enable);
+
+	/**
+	 * @brief Retrieve the base vector for engine non-stall interrupts.
+	 *
+	 * @param g [in]	The GPU driver struct.
+	 *
+	 * This function is invoked to get the base vector for engine non-stall
+	 * interrupts. An engine's non-stall interrupt vector is the sum of this
+	 * base vector and the engine's interrupt ID.
+	 *
+	 * @return the base vector for engine non-stall interrupts.
+	 */
+	u32 (*get_eng_nonstall_base_vector)(struct gk20a *g);
+
+	/**
+	 * @brief Retrieve the base vector for engine stall interrupts.
+	 *
+	 * @param g [in]	The GPU driver struct.
+	 *
+	 * This function is invoked to get the base vector for engine stall
+	 * interrupts. An engine's stall interrupt vector is the sum of this
+	 * base vector and the engine's interrupt ID.
+	 *
+	 * @return the base vector for engine stall interrupts.
+	 */
+	u32 (*get_eng_stall_base_vector)(struct gk20a *g);
 
 	/** @endcond DOXYGEN_SHOULD_SKIP_THIS */
 };

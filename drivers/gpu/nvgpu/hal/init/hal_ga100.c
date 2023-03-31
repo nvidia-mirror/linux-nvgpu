@@ -1508,6 +1508,8 @@ static const struct gops_mc ga100_ops_mc = {
 #ifdef CONFIG_NVGPU_HAL_NON_FUSA
 	.intr_get_unit_info = ga10b_mc_intr_get_unit_info,
 #endif
+	.get_eng_stall_base_vector = ga10b_intr_get_eng_stall_base_vector,
+	.get_eng_nonstall_base_vector = ga10b_intr_get_eng_nonstall_base_vector,
 };
 #endif
 

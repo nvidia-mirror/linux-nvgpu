@@ -1540,6 +1540,8 @@ static const struct gops_mc ga10b_ops_mc = {
 	.ltc_isr = mc_tu104_ltc_isr,
 	.is_mmu_fault_pending = ga10b_intr_is_mmu_fault_pending,
 	.intr_get_unit_info = ga10b_mc_intr_get_unit_info,
+	.get_eng_nonstall_base_vector = ga10b_intr_get_eng_nonstall_base_vector,
+	.get_eng_stall_base_vector = ga10b_intr_get_eng_stall_base_vector,
 };
 
 static const struct gops_debug ga10b_ops_debug = {
