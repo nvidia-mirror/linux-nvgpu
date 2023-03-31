@@ -52,6 +52,11 @@ endif
 ccflags-y += -I$(srctree.nvmap)/include
 endif
 
+# When compiling as OOT module, include the headers from nvidia-oot tree.
+ifeq ($(CONFIG_TEGRA_OOT_MODULE),m)
+ccflags-y += -I$(srctree.nvidia)/include
+endif
+
 ifeq ($(CONFIG_NVGPU_DEBUGGER),y)
 ccflags-y += -DCONFIG_NVGPU_DEBUGGER
 ccflags-y += -DCONFIG_NVGPU_ENGINE_RESET
