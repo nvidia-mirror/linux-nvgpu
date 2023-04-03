@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2018-2023, NVIDIA Corporation.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -18,13 +18,15 @@
 #include <linux/tegra_gr_comm.h>
 
 #include "os/linux/os_linux.h"
+#include "os/linux/module.h"
 
 int vgpu_ivc_init(struct gk20a *g, u32 elems,
 		const size_t *queue_sizes, u32 queue_start, u32 num_queues)
 {
-	struct platform_device *pdev = to_platform_device(dev_from_gk20a(g));
+	struct device *dev = dev_from_gk20a(g);
 
-	return tegra_gr_comm_init(pdev, elems, queue_sizes, queue_start,
+	return tegra_gr_comm_init(dev, nvgpu_get_node(g), elems,
+				queue_sizes, queue_start,
 				num_queues);
 }
 
