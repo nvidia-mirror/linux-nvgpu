@@ -627,6 +627,9 @@ nvgpu-$(CONFIG_NVGPU_GR_VIRTUALIZATION) += \
 	os/linux/vgpu/vgpu_linux.o \
 	os/linux/vgpu/gv11b/platform_gv11b_vgpu_tegra.o
 
+nvgpu-$(CONFIG_NVGPU_GR_VIRTUALIZATION) += \
+	os/linux/vgpu/vf_linux.o
+
 ifeq ($(CONFIG_NVGPU_FECS_TRACE),y)
 nvgpu-$(CONFIG_NVGPU_GR_VIRTUALIZATION) += \
 	os/linux/vgpu/fecs_trace_vgpu_linux.o

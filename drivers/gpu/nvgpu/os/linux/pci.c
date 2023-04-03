@@ -52,6 +52,8 @@
 #include "driver_common.h"
 #include "dmabuf_priv.h"
 
+#include "vgpu/vf_linux.h"
+
 #if defined(CONFIG_NVGPU_HAL_NON_FUSA) && defined(CONFIG_NVGPU_NEXT)
 #include <nvgpu_next_chips.h>
 #endif
@@ -564,10 +566,30 @@ static int nvgpu_pci_probe(struct pci_dev *pdev,
 	u32 device_index = PCI_DEVICE_INDEX(pent->driver_data);
 	u32 device_flags = PCI_DEVICE_FLAGS(pent->driver_data);
 
+	/* Allocate memory to hold platform data*/
+	platform = (struct gk20a_platform *)kzalloc(
+			sizeof(struct gk20a_platform), GFP_KERNEL);
+	if (!platform) {
+		dev_err(&pdev->dev, "couldn't allocate platform data");
+		return -ENOMEM;
+	}
+
+	/* copy detected device data to allocated platform space*/
+	err = nvgpu_pci_get_platform_data(platform, device_index);
+	if (err)
+		goto err_free_platform;
+
+	if (platform->virtual_dev) {
+		err = vf_probe(pdev, platform);
+		if (err)
+			goto err_free_platform;
+	}
+
 	l = kzalloc(sizeof(*l), GFP_KERNEL);
 	if (!l) {
 		dev_err(&pdev->dev, "couldn't allocate gk20a support");
-		return -ENOMEM;
+		err = -ENOMEM;
+		goto err_free_platform;
 	}
 
 	g = &l->g;
@@ -578,27 +600,13 @@ static int nvgpu_pci_probe(struct pci_dev *pdev,
 
 	nvgpu_kmem_init(g);
 
-	/* Allocate memory to hold platform data*/
-	platform = (struct gk20a_platform *)nvgpu_kzalloc( g,
-			sizeof(struct gk20a_platform));
-	if (!platform) {
-		dev_err(&pdev->dev, "couldn't allocate platform data");
-		err = -ENOMEM;
-		goto err_free_l;
-	}
-
-	/* copy detected device data to allocated platform space*/
-	err = nvgpu_pci_get_platform_data(platform, device_index);
-	if (err)
-		goto err_free_platform;
-
 	g->is_pci_igpu = platform->is_pci_igpu;
 	nvgpu_info(g, "is_pci_igpu: %s", g->is_pci_igpu ? "true" : "false");
 	pci_set_drvdata(pdev, platform);
 
 	err = nvgpu_init_errata_flags(g);
 	if (err)
-		goto err_free_platform;
+		goto err_free_l;
 
 	err = nvgpu_init_enabled_flags(g);
 	if (err) {
@@ -783,13 +791,13 @@ err_disable_msi:
 	nvgpu_free_enabled_flags(g);
 err_free_errata:
 	nvgpu_free_errata_flags(g);
-err_free_platform:
-	nvgpu_kfree(g, platform);
 err_free_l:
 
 	if (g->is_pci_igpu)
 		nvgpu_kmem_fini(g, NVGPU_KMEM_FINI_FORCE_CLEANUP);
 	kfree(l);
+err_free_platform:
+	kfree(platform);
 	return err;
 }
 

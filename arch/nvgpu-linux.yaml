@@ -232,6 +232,8 @@ vgpu:
              os/linux/vgpu/platform_vgpu_tegra.c,
              os/linux/vgpu/platform_vgpu_tegra.h,
              os/linux/vgpu/sysfs_vgpu.c,
+             os/linux/vgpu/vf_linux.c,
+             os/linux/vgpu/vf_linux.h,
              os/linux/vgpu/vgpu_common.c,
              os/linux/vgpu/vgpu_common.h,
              os/linux/vgpu/vgpu_ivc.c,
