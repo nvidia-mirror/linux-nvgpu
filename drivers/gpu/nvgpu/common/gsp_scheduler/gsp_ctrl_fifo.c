@@ -97,16 +97,38 @@ exit:
 	return err;
 }
 
-int nvgpu_gsp_sched_erase_ctrl_fifo(struct gk20a *g)
+int nvgpu_gsp_sched_erase_ctrl_fifo(struct gk20a *g,
+	enum nvgpu_nvs_ctrl_queue_direction queue_direction)
 {
 	int err = 0;
 	struct nv_flcn_cmd_gsp cmd = { };
+	enum queue_type qtype;
 
-	err = gsp_send_cmd_and_wait_for_ack(g, &cmd, NV_GSP_UNIT_CONTROL_FIFO_ERASE, 0);
+	/* populating command with only queue direction */
+	cmd.cmd.ctrl_fifo.fifo_addr_lo = 0U;
+	cmd.cmd.ctrl_fifo.fifo_addr_hi = 0U;
+	cmd.cmd.ctrl_fifo.queue_entries = 0U;
+	cmd.cmd.ctrl_fifo.queue_size = 0U;
+
+	if (queue_direction == NVGPU_NVS_DIR_CLIENT_TO_SCHEDULER) {
+		qtype = CONTROL_QUEUE;
+	} else if (queue_direction == NVGPU_NVS_DIR_SCHEDULER_TO_CLIENT) {
+		qtype = RESPONSE_QUEUE;
+	} else {
+		nvgpu_err(g, "Erase queue failed queue type not supported");
+		err = -EINVAL;
+		goto exit;
+	}
+
+	cmd.cmd.ctrl_fifo.qtype = (u32)qtype;
+
+	err = gsp_send_cmd_and_wait_for_ack(g, &cmd, NV_GSP_UNIT_CONTROL_FIFO_ERASE,
+			sizeof(struct nvgpu_gsp_ctrl_fifo_info));
 	if (err != 0) {
 		nvgpu_err(g, "GSP ctrl fifo erase cmd failed");
 	}
 
+exit:
 	return err;
 };
 #endif /* CONFIG_NVS_PRESENT*/

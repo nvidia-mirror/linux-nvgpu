@@ -876,6 +876,9 @@ static int nvgpu_nvs_ctrl_fifo_create_queue(struct gk20a *g,
 		goto fail;
 	}
 
+	/* queue direction is needed by gsp scheduler */
+	queue->queue_direction = queue_direction;
+
 	read_only = (args->access_type == NVGPU_NVS_CTRL_FIFO_QUEUE_ACCESS_TYPE_EXCLUSIVE) ? false : true;
 	if (read_only) {
 		flag |= O_RDONLY;

@@ -297,6 +297,7 @@ struct nvgpu_nvs_ctrl_queue {
 	bool			valid;
 	u8				mask;
 	u8				ref;
+	enum nvgpu_nvs_ctrl_queue_direction		queue_direction;
 	void (*free)(struct gk20a *g, struct nvgpu_nvs_ctrl_queue *queue);
 };
 

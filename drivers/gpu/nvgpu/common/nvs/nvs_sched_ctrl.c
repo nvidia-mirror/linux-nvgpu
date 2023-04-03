@@ -620,7 +620,7 @@ void nvgpu_nvs_buffer_free(struct nvgpu_nvs_domain_ctrl_fifo *sched_ctrl,
 	if (nvgpu_mem_is_valid(&buf->mem)) {
 #if defined (CONFIG_NVS_PRESENT) && defined (CONFIG_NVGPU_GSP_SCHEDULER)
 	if (nvgpu_is_enabled(g, (u32)(NVGPU_SUPPORT_GSP_SCHED))) {
-		nvgpu_gsp_sched_erase_ctrl_fifo(g);
+		nvgpu_gsp_sched_erase_ctrl_fifo(g, buf->queue_direction);
 	}
 #endif
 		nvgpu_dma_unmap_free(system_vm, &buf->mem);

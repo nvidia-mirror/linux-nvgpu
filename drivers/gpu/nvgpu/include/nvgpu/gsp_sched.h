@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2022-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -132,6 +132,7 @@ bool nvgpu_gsp_is_ready(struct gk20a *g);
 int nvgpu_gsp_sched_send_queue_info(struct gk20a *g, struct nvgpu_nvs_ctrl_queue *queue,
 	enum nvgpu_nvs_ctrl_queue_direction queue_direction);
 
-int nvgpu_gsp_sched_erase_ctrl_fifo(struct gk20a *g);
+int nvgpu_gsp_sched_erase_ctrl_fifo(struct gk20a *g,
+	enum nvgpu_nvs_ctrl_queue_direction queue_direction);
 #endif
 #endif /* GSP_SCHED_H */
