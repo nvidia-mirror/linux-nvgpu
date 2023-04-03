@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -48,6 +48,9 @@
 
 #include "hal/fb/fb_mmu_fault_gv11b.h"
 #include "hal/mm/mmu_fault/mmu_fault_gv11b.h"
+
+#define NVGPU_MMU_FAULT_BUFFER_READ_DELAY		10U
+#define NVGPU_MMU_FAULT_BUFFER_READ_ITERS		20U
 
 #ifdef CONFIG_NVGPU_REPLAYABLE_FAULT
 static int gv11b_fb_fix_page_fault(struct gk20a *g,
@@ -608,6 +611,34 @@ void gv11b_mm_mmu_fault_handle_nonreplay_replay_fault(struct gk20a *g,
 
 	rd32_val = nvgpu_mem_rd32(g, mem,
 		 nvgpu_safe_add_u32(offset, gmmu_fault_buf_entry_valid_w()));
+	if (!nvgpu_platform_is_silicon(g)) {
+		/*
+		 * In sim environments, there may be a delay between the MMU
+		 * fault interrupt triggering and the MMU fault buffer containing
+		 * valid data, try reading the fault buffer entry's valid bit
+		 * multiple times until it is set.
+		 */
+		u32 iters = NVGPU_MMU_FAULT_BUFFER_READ_ITERS;
+
+		do {
+			if (((rd32_val & gmmu_fault_buf_entry_valid_m()) != 0U)) {
+				break;
+			}
+
+			if (--iters == 0U) {
+				break;
+			}
+
+			nvgpu_udelay(NVGPU_MMU_FAULT_BUFFER_READ_DELAY);
+			rd32_val = nvgpu_mem_rd32(g, mem,
+				nvgpu_safe_add_u32(offset, gmmu_fault_buf_entry_valid_w()));
+		} while (true);
+
+		if (iters == 0U) {
+			nvgpu_err(g, "timeout waiting for valid fault buffer entry");
+			return;
+		}
+	}
 	nvgpu_log(g, gpu_dbg_intr, "entry valid offset val = 0x%x", rd32_val);
 
 	gv11b_mm_mmu_fault_handle_buf_valid_entry(g, mem, mmufault,
