@@ -262,8 +262,6 @@ struct vm_gk20a {
 	/** Page size used for mappings with this address space. */
 	u32 big_page_size;
 
-	/** Whether this address space is managed by user space or not. */
-	bool userspace_managed;
 	/** GPU and CPU using same address space or not. */
 	bool unified_va;
 
@@ -797,7 +795,6 @@ int nvgpu_vm_do_init(struct mm_gk20a *mm,
 		     u64 kernel_reserved,
 		     u64 small_big_split,
 		     bool big_pages,
-		     bool userspace_managed,
 		     bool unified_va,
 		     const char *name);
 
@@ -856,7 +853,6 @@ struct vm_gk20a *nvgpu_vm_init(struct gk20a *g,
 			       u64 kernel_reserved,
 			       u64 small_big_split,
 			       bool big_pages,
-			       bool userspace_managed,
 			       bool unified_va,
 			       const char *name);
 

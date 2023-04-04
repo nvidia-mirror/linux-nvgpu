@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -740,7 +740,7 @@ int test_gr_init_hal_error_injection(struct unit_module *m,
 	vm = nvgpu_vm_init(g, SZ_4K, SZ_4K << 10,
 		nvgpu_safe_sub_u64(1ULL << 37, SZ_4K << 10),
 		(1ULL << 32), 0ULL,
-		false, false, false, "dummy");
+		false, false, "dummy");
 	if (!vm) {
 		unit_return_fail(m, "failed to allocate VM");
 	}

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -222,7 +222,6 @@ static int nvgpu_init_system_vm(struct mm_gk20a *mm)
 				   0ULL,
 				   true,
 				   false,
-				   false,
 				   "system");
 	if (mm->pmu.vm == NULL) {
 		return -ENOMEM;
@@ -281,7 +280,7 @@ static int nvgpu_init_cde_vm(struct mm_gk20a *mm)
 					U64(big_page_size) << U64(10)),
 				kernel_size,
 				0ULL,
-				false, false, false, "cde");
+				false, false, "cde");
 	if (mm->cde.vm == NULL) {
 		return -ENOMEM;
 	}
@@ -303,7 +302,7 @@ static int nvgpu_init_ce_vm(struct mm_gk20a *mm)
 					U64(big_page_size) << U64(10)),
 				kernel_size,
 				0ULL,
-				false, false, false, "ce");
+				false, false, "ce");
 	if (mm->ce.vm == NULL) {
 		return -ENOMEM;
 	}
@@ -370,7 +369,7 @@ static int nvgpu_init_bar1_vm(struct mm_gk20a *mm)
 			0ULL,
 			nvgpu_safe_sub_u64(mm->bar1.aperture_size, SZ_64K),
 			0ULL,
-			true, false, false,
+			true, false,
 			"bar1");
 	if (mm->bar1.vm == NULL) {
 		return -ENOMEM;
@@ -408,7 +407,7 @@ static int nvgpu_init_engine_ucode_vm(struct gk20a *g,
 
 	ucode->vm = nvgpu_vm_init(g, big_page_size, SZ_4K,
 		0ULL, nvgpu_safe_sub_u64(ucode->aperture_size, SZ_4K), 0ULL,
-		false, false, false,
+		false, false,
 		address_space_name);
 	if (ucode->vm == NULL) {
 		return -ENOMEM;

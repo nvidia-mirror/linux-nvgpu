@@ -1165,7 +1165,7 @@ int nvgpu_gr_obj_ctx_init_golden_context_image(struct gk20a *g)
 					U64(big_page_size) << U64(10)),
 				kernel_size,
 				0ULL,
-				false, false, false, "golden_context");
+				false, false, "golden_context");
 	if (vm == NULL) {
 		nvgpu_err(g, "vm init failed");
 		err = -ENOMEM;

@@ -271,7 +271,7 @@ int test_ltc_init_support(struct unit_module *m,
 			0ULL,
 			nvgpu_safe_sub_u64(mm->bar1.aperture_size, low_hole),
 			0ULL,
-			true, false, false,
+			true, false,
 			"bar1");
 	if (mm->bar1.vm == NULL) {
 		unit_return_fail(m, "nvgpu_vm_init failed\n");

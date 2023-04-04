@@ -103,8 +103,6 @@ struct nvgpu_gpu_zbc_query_table_args {
 #define NVGPU_GPU_FLAGS_SUPPORT_CYCLE_STATS		(1ULL << 4)
 /* NVGPU_DBG_GPU_IOCTL_CYCLE_STATS_SNAPSHOT is available */
 #define NVGPU_GPU_FLAGS_SUPPORT_CYCLE_STATS_SNAPSHOT	(1ULL << 6)
-/* User-space managed address spaces support */
-#define NVGPU_GPU_FLAGS_SUPPORT_USERSPACE_MANAGED_AS	(1ULL << 7)
 /* Both gpu driver and device support TSG */
 #define NVGPU_GPU_FLAGS_SUPPORT_TSG			(1ULL << 8)
 /* Clock control support */
@@ -420,7 +418,6 @@ struct nvgpu_alloc_as_args {
  *      increments at kickoffs and decrements at job completion are
  *      bypassed.
  */
-#define NVGPU_GPU_IOCTL_ALLOC_AS_FLAGS_USERSPACE_MANAGED	(1 << 0)
 #define NVGPU_GPU_IOCTL_ALLOC_AS_FLAGS_UNIFIED_VA	 	(1 << 1)
 	__u32 flags;
 	__u32 reserved;		/* must be zero */

@@ -68,8 +68,6 @@ struct gk20a;
 		"false if vidmem aperture actually points to sysmem"),	\
 	DEFINE_FLAG(NVGPU_MM_UNIFIED_MEMORY,				\
 		"unified or split memory with separate vidmem?"),	\
-	DEFINE_FLAG(NVGPU_SUPPORT_USERSPACE_MANAGED_AS,			\
-		"User-space managed address spaces support"),		\
 	DEFINE_FLAG(NVGPU_SUPPORT_IO_COHERENCE,				\
 		"IO coherence support is available"),			\
 	DEFINE_FLAG(NVGPU_SUPPORT_SPARSE_ALLOCS,			\

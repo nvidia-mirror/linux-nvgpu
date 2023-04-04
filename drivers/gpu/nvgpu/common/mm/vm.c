@@ -711,7 +711,6 @@ static int nvgpu_vm_init_attributes(struct mm_gk20a *mm,
 		     u64 user_reserved,
 		     u64 kernel_reserved,
 		     bool big_pages,
-		     bool userspace_managed,
 		     bool unified_va,
 		     const char *name)
 {
@@ -757,17 +756,10 @@ static int nvgpu_vm_init_attributes(struct mm_gk20a *mm,
 	vm->va_limit = aperture_size;
 
 	vm->big_page_size     = vm->gmmu_page_sizes[GMMU_PAGE_SIZE_BIG];
-	vm->userspace_managed = userspace_managed;
 	vm->unified_va        = unified_va;
 	vm->mmu_levels        =
 		g->ops.mm.gmmu.get_mmu_levels(g, vm->big_page_size);
 
-#ifdef CONFIG_NVGPU_GR_VIRTUALIZATION
-	if (nvgpu_is_legacy_vgpu(g) && userspace_managed) {
-		nvgpu_err(g, "vGPU: no userspace managed addr space support");
-		return -ENOSYS;
-	}
-#endif
 	return 0;
 }
 
@@ -782,7 +774,6 @@ int nvgpu_vm_do_init(struct mm_gk20a *mm,
 		     u64 kernel_reserved,
 		     u64 small_big_split,
 		     bool big_pages,
-		     bool userspace_managed,
 		     bool unified_va,
 		     const char *name)
 {
@@ -790,8 +781,7 @@ int nvgpu_vm_do_init(struct mm_gk20a *mm,
 	int err = 0;
 
 	err = nvgpu_vm_init_attributes(mm, vm, big_page_size, low_hole,
-		user_reserved, kernel_reserved, big_pages, userspace_managed,
-		unified_va, name);
+		user_reserved, kernel_reserved, big_pages, unified_va, name);
 	if (err != 0) {
 		return err;
 	}
@@ -899,7 +889,6 @@ struct vm_gk20a *nvgpu_vm_init(struct gk20a *g,
 			       u64 kernel_reserved,
 			       u64 small_big_split,
 			       bool big_pages,
-			       bool userspace_managed,
 			       bool unified_va,
 			       const char *name)
 {
@@ -912,7 +901,7 @@ struct vm_gk20a *nvgpu_vm_init(struct gk20a *g,
 
 	err = nvgpu_vm_do_init(&g->mm, vm, big_page_size, low_hole,
 			     user_reserved, kernel_reserved, small_big_split,
-			     big_pages, userspace_managed, unified_va, name);
+			     big_pages, unified_va, name);
 	if (err != 0) {
 		nvgpu_kfree(g, vm);
 		return NULL;
@@ -1093,12 +1082,6 @@ int nvgpu_vm_get_buffers(struct vm_gk20a *vm,
 	struct nvgpu_mapped_buf **buffer_list;
 	struct nvgpu_rbtree_node *node = NULL;
 	u32 i = 0;
-
-	if (vm->userspace_managed) {
-		*mapped_buffers = NULL;
-		*num_buffers = 0;
-		return 0;
-	}
 
 	nvgpu_mutex_acquire(&vm->update_gmmu_lock);
 
@@ -1362,22 +1345,20 @@ static int nvgpu_vm_new_mapping(struct vm_gk20a *vm,
 	/*
 	 * Check if this buffer is already mapped.
 	 */
-	if (!vm->userspace_managed) {
-		nvgpu_mutex_acquire(&vm->update_gmmu_lock);
-		mapped_buffer = nvgpu_vm_find_mapping(vm,
-						      os_buf,
-						      map_addr,
-						      binfo_ptr->flags,
-						      map_key_kind);
+	nvgpu_mutex_acquire(&vm->update_gmmu_lock);
+	mapped_buffer = nvgpu_vm_find_mapping(vm,
+					      os_buf,
+					      map_addr,
+					      binfo_ptr->flags,
+					      map_key_kind);
 
-		if (mapped_buffer != NULL) {
-			nvgpu_ref_get(&mapped_buffer->ref);
-			nvgpu_mutex_release(&vm->update_gmmu_lock);
-			*mapped_buffer_arg = mapped_buffer;
-			return 1;
-		}
+	if (mapped_buffer != NULL) {
+		nvgpu_ref_get(&mapped_buffer->ref);
 		nvgpu_mutex_release(&vm->update_gmmu_lock);
+		*mapped_buffer_arg = mapped_buffer;
+		return 1;
 	}
+	nvgpu_mutex_release(&vm->update_gmmu_lock);
 
 	/*
 	 * Generate a new mapping!
@@ -1419,14 +1400,6 @@ static int nvgpu_vm_map_check_attributes(struct vm_gk20a *vm,
 	struct gk20a *g = gk20a_from_vm(vm);
 
 	(void)compr_kind;
-
-	if (vm->userspace_managed &&
-		((flags & NVGPU_VM_MAP_FIXED_OFFSET) == 0U)) {
-		nvgpu_err(g,
-			  "non-fixed-offset mapping not available on "
-			  "userspace managed address spaces");
-		return -EINVAL;
-	}
 
 	binfo_ptr->flags = flags;
 	binfo_ptr->size = nvgpu_os_buf_get_size(os_buf);

@@ -1,7 +1,7 @@
 /*
  * GK20A Address Spaces
  *
- * Copyright (c) 2011-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -62,8 +62,6 @@ static int gk20a_vm_alloc_share(struct gk20a_as_share *as_share,
 	u64 kernel_size = mm->channel.kernel_size;
 	u64 pde_size, pde_size_mask;
 	bool big_pages;
-	const bool userspace_managed =
-		(flags & NVGPU_AS_ALLOC_USERSPACE_MANAGED) != 0U;
 	const bool unified_va =
 		nvgpu_is_enabled(g, NVGPU_MM_UNIFY_ADDRESS_SPACES) ||
 		((flags & NVGPU_AS_ALLOC_UNIFIED_VA) != 0U);
@@ -135,7 +133,7 @@ static int gk20a_vm_alloc_share(struct gk20a_as_share *as_share,
 			   user_size,
 			   kernel_size,
 			   va_range_split,
-			   big_pages, userspace_managed, unified_va, name);
+			   big_pages, unified_va, name);
 	if (vm == NULL) {
 		return -ENOMEM;
 	}

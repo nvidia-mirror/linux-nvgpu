@@ -93,7 +93,6 @@ static int init_channel_vm(struct unit_module *m, struct nvgpu_channel *ch)
 				   0ULL,
 				   true,
 				   false,
-				   false,
 				   "system");
 	if (mm->pmu.vm == NULL) {
 		unit_return_fail(m, "nvgpu_vm_init failed\n");
@@ -108,7 +107,7 @@ static int init_channel_vm(struct unit_module *m, struct nvgpu_channel *ch)
 			0ULL,
 			nvgpu_safe_sub_u64(mm->bar1.aperture_size, low_hole),
 			0ULL,
-			true, false, false,
+			true, false,
 			"bar1");
 	if (mm->bar1.vm == NULL) {
 		unit_return_fail(m, "nvgpu_vm_init failed\n");

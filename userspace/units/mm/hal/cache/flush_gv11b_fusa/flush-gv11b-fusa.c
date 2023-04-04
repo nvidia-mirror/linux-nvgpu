@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -153,7 +153,6 @@ static int init_mm(struct unit_module *m, struct gk20a *g)
 				   0ULL,
 				   true,
 				   false,
-				   false,
 				   "system");
 	if (mm->pmu.vm == NULL) {
 		unit_return_fail(m, "'system' nvgpu_vm_init failed\n");
@@ -164,7 +163,7 @@ static int init_mm(struct unit_module *m, struct gk20a *g)
 	mm->bar1.vm = nvgpu_vm_init(g,
 		g->ops.mm.gmmu.get_default_big_page_size(),
 		SZ_4K, 0ULL, nvgpu_safe_sub_u64(mm->bar1.aperture_size, SZ_4K),
-		0ULL, false, false, false, "bar1");
+		0ULL, false, false, "bar1");
 	if (mm->bar1.vm == NULL) {
 		unit_return_fail(m, "'bar1' nvgpu_vm_init failed\n");
 	}

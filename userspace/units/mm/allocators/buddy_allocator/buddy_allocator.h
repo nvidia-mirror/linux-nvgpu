@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -219,7 +219,6 @@ int test_nvgpu_buddy_allocator_alloc(struct unit_module *m,
  *   - aperture_size = GK20A_PMU_VA_SIZE.
  *   - kernel_reserved = aperture_size - low_hole.
  *   - flags = GPU_ALLOC_GVA_SPACE, GVA space enabled.
- *   - userspace_managed = false, unified_va = false.
  *   - big_pages = false.
  * - Initialize buddy allocator for this test.
  *   - Base address = 1K.
@@ -265,7 +264,6 @@ int test_buddy_allocator_with_small_pages(struct unit_module *m,
  *   - aperture_size = GK20A_PMU_VA_SIZE.
  *   - kernel_reserved = aperture_size - low_hole.
  *   - flags = GPU_ALLOC_GVA_SPACE, GVA space enabled.
- *   - userspace_managed = false, unified_va = false.
  *   - big_pages = true.
  * - Initialize buddy allocator for this test.
  *   - Base address = 64M, PDE aligned.

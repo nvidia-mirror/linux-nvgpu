@@ -356,7 +356,7 @@ static int init_mm(struct unit_module *m, struct gk20a *g)
 			0ULL,
 			nvgpu_safe_sub_u64(mm->bar1.aperture_size, low_hole),
 			0ULL,
-			true, false, false,
+			true, false,
 			"bar1");
 	if (mm->bar1.vm == NULL) {
 		unit_return_fail(m, "nvgpu_vm_init failed\n");
@@ -369,7 +369,6 @@ static int init_mm(struct unit_module *m, struct gk20a *g)
 				   nvgpu_safe_sub_u64(aperture_size, low_hole),
 				   0ULL,
 				   true,
-				   false,
 				   false,
 				   "system");
 	if (mm->pmu.vm == NULL) {
@@ -983,7 +982,7 @@ static struct vm_gk20a *init_test_req_vm(struct gk20a *g)
 	return nvgpu_vm_init(g, g->ops.mm.gmmu.get_default_big_page_size(),
 			     low_hole, user_reserved, kernel_reserved,
 			     nvgpu_gmmu_va_small_page_limit(),
-			     big_pages, true, true, "testmem");
+			     big_pages, true, "testmem");
 }
 
 int test_nvgpu_page_table_c1_full(struct unit_module *m, struct gk20a *g,

@@ -1,7 +1,7 @@
 /*
  * GK20A Address Spaces
  *
- * Copyright (c) 2011-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -50,11 +50,6 @@ struct gk20a_as_share {
 };
 
 /**
- * AS allocation flag for userspace managed
- */
-#define NVGPU_AS_ALLOC_USERSPACE_MANAGED	BIT32(0)
-
-/**
  * AS allocation flag for unified VA
  */
 #define NVGPU_AS_ALLOC_UNIFIED_VA		BIT32(1)
@@ -97,8 +92,7 @@ int gk20a_vm_release_share(struct gk20a_as_share *as_share);
  * @param g [in]			The GPU
  * @param big_page_size [in]		Big page size to use for the VM,
  *					set 0 for 64K big page size.
- * @param flags [in]			NVGPU_AS_ALLOC_* flags. The flags are
- * 					NVGPU_AS_ALLOC_USERSPACE_MANAGED and
+ * @param flags [in]			NVGPU_AS_ALLOC_* flags. The flag is
  * 					NVGPU_AS_ALLOC_UNIFIED_VA.
  * @param va_range_start [in]		Requested user managed memory start
  *					address, used to map buffers, save data
@@ -117,8 +111,6 @@ int gk20a_vm_release_share(struct gk20a_as_share *as_share);
  *  of two and it should be in the range supported big page sizes supported by the GPU.
  *
  * @note	if \a big_page_size == 0, the default big page size(64K) is used.
- * @note	The \a flags is always set as NVGPU_AS_ALLOC_USERSPACE_MANAGED(AS
- * 		allocation flag for userspace managed)
  *
  * @return	0 in case of success, < 0 in case of failure.
  *

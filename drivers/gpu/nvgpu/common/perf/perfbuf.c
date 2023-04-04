@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -96,7 +96,7 @@ int nvgpu_perfbuf_init_vm(struct gk20a *g)
 			nvgpu_safe_sub_u64(user_size, SZ_4K),
 			kernel_size,
 			0ULL,
-			false, false, false, "perfbuf");
+			false, false, "perfbuf");
 	if (mm->perfbuf.vm == NULL) {
 		return -ENOMEM;
 	}

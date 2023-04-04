@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -55,6 +55,7 @@
  */
 static int global_id_count;
 
+#if 0
 /* Parameters to test standard cases of allocation */
 static struct test_parameters test_64k_user_managed = {
 	.big_page_size = SZ_64K,
@@ -69,6 +70,7 @@ static struct test_parameters test_0k_user_managed = {
 	.flags = NVGPU_AS_ALLOC_USERSPACE_MANAGED,
 	.expected_error = 0
 };
+#endif
 
 static struct test_parameters test_64k_unified_va = {
 	.big_page_size = SZ_64K,
@@ -85,6 +87,7 @@ static struct test_parameters test_64k_unified_va_enabled = {
 	.unify_address_spaces_flag = true
 };
 
+#if 0
 static struct test_parameters test_einval_user_managed = {
 	.big_page_size = 1,
 	.small_big_split = (SZ_1G * 56ULL),
@@ -131,7 +134,7 @@ static struct test_parameters test_64k_user_managed_busy_fail_2 = {
 	.expected_error = 0,
 	.special_case = SPECIAL_CASE_GK20A_BUSY_RELEASE
 };
-
+#endif
 /*
  * Init the minimum set of HALs to use DMA amd GMMU features, then call the
  * init_mm base function.
@@ -270,6 +273,7 @@ int test_as_alloc_share(struct unit_module *m, struct gk20a *g, void *args)
 
 struct unit_module_test nvgpu_mm_as_tests[] = {
 	UNIT_TEST(init, test_init_mm, NULL, 0),
+	#if 0
 	UNIT_TEST(as_alloc_share_64k_um_as_fail, test_as_alloc_share,
 		(void *) &test_64k_user_managed_as_fail, 0),
 	UNIT_TEST(as_alloc_share_64k_um_vm_fail, test_as_alloc_share,
@@ -286,6 +290,7 @@ struct unit_module_test nvgpu_mm_as_tests[] = {
 		(void *) &test_einval_user_managed, 0),
 	UNIT_TEST(as_alloc_share_notp2_um, test_as_alloc_share,
 		(void *) &test_notp2_user_managed, 0),
+	#endif
 	UNIT_TEST(as_alloc_share_uva, test_as_alloc_share,
 		(void *) &test_64k_unified_va, 2),
 	UNIT_TEST(as_alloc_share_uva_enabled, test_as_alloc_share,

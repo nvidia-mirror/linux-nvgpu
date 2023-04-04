@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -106,7 +106,6 @@ static struct vm_gk20a *init_vm_env(struct unit_module *m, struct gk20a *g,
 				   nvgpu_safe_sub_u64(aperture_size, low_hole),
 				   0ULL,
 				   big_pages,
-				   false,
 				   false,
 				   name);
 
