@@ -20,6 +20,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#include <nvgpu/gk20a.h>
 #include <nvgpu/pmu/seq.h>
 #include <nvgpu/bitops.h>
 #include <nvgpu/errno.h>
@@ -91,7 +92,7 @@ void nvgpu_pmu_sequences_cleanup(struct gk20a *g, struct nvgpu_pmu *pmu,
 
 	for (i = 0; i < PMU_MAX_NUM_SEQUENCES; i++) {
 		if (sequences->seq[i].cb_params != NULL) {
-			nvgpu_pmu_seq_free_release(g, sequences,
+			 g->ops.pmu.pmu_seq_cleanup(g, sequences,
 						&sequences->seq[i]);
 			nvgpu_pmu_dbg(g, "sequences cleanup done");
 		}

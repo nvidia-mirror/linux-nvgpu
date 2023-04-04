@@ -31,6 +31,7 @@
 #include <nvgpu/pmu.h>
 #ifdef CONFIG_NVGPU_LS_PMU
 #include <nvgpu/pmu/pmu_pstate.h>
+#include <nvgpu/pmu/seq.h>
 #endif
 #include <nvgpu/therm.h>
 #include <nvgpu/clk_arb.h>
@@ -1407,6 +1408,7 @@ static const struct gops_pmu ga10b_ops_pmu = {
 	.pmu_isr = gk20a_pmu_isr,
 	.handle_ext_irq = ga10b_pmu_handle_ext_irq,
 #ifdef CONFIG_NVGPU_LS_PMU
+	.pmu_seq_cleanup = nvgpu_pmu_seq_free_release,
 	.get_inst_block_config = ga10b_pmu_get_inst_block_config,
 	/* Init */
 	.pmu_rtos_init = nvgpu_pmu_rtos_init,

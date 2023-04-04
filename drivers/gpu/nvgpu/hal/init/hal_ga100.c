@@ -30,6 +30,7 @@
 #include <nvgpu/pmu.h>
 #ifdef CONFIG_NVGPU_LS_PMU
 #include <nvgpu/pmu/pmu_pstate.h>
+#include <nvgpu/pmu/seq.h>
 #endif
 #include <nvgpu/therm.h>
 #include <nvgpu/clk_arb.h>
@@ -1382,6 +1383,7 @@ static const struct gops_pmu ga100_ops_pmu = {
 	.setup_apertures = tu104_pmu_setup_apertures,
 	.secured_pmu_start = gm20b_secured_pmu_start,
 	.pmu_clear_bar0_host_err_status = gm20b_clear_pmu_bar0_host_err_status,
+	.pmu_seq_cleanup = nvgpu_pmu_seq_free_release,
 };
 #endif
 

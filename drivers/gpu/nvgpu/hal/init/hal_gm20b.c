@@ -53,6 +53,7 @@
 #include <nvgpu/pmu.h>
 #ifdef CONFIG_NVGPU_LS_PMU
 #include <nvgpu/pmu/pmu_pstate.h>
+#include <nvgpu/pmu/seq.h>
 #endif
 #include <nvgpu/therm.h>
 #ifdef CONFIG_NVGPU_CLK_ARB
@@ -876,6 +877,7 @@ static const struct gops_pmu gm20b_ops_pmu = {
 	.setup_apertures = gm20b_pmu_setup_apertures,
 	.secured_pmu_start = gm20b_secured_pmu_start,
 	.handle_swgen1_irq = NULL,
+	.pmu_seq_cleanup = nvgpu_pmu_seq_release,
 };
 #endif
 

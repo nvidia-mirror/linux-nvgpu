@@ -304,6 +304,9 @@ struct gops_pmu {
 	int (*pmu_destroy)(struct gk20a *g, struct nvgpu_pmu *pmu);
 	int (*pmu_pstate_sw_setup)(struct gk20a *g);
 	int (*pmu_pstate_pmu_setup)(struct gk20a *g);
+	void (*pmu_seq_cleanup)(struct gk20a *g,
+			struct pmu_sequences *sequences,
+			struct pmu_sequence *seq);
 #endif
 
 	struct nvgpu_hw_err_inject_info_desc * (*get_pmu_err_desc)

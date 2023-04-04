@@ -29,6 +29,7 @@
 #include <nvgpu/pmu.h>
 #ifdef CONFIG_NVGPU_LS_PMU
 #include <nvgpu/pmu/pmu_pstate.h>
+#include <nvgpu/pmu/seq.h>
 #endif
 #include <nvgpu/therm.h>
 #ifdef CONFIG_NVGPU_CLK_ARB
@@ -1191,6 +1192,8 @@ static const struct gops_pmu gv11b_ops_pmu = {
 	.pmu_queue_head = gk20a_pmu_queue_head,
 	.pmu_queue_tail = gk20a_pmu_queue_tail,
 	.pmu_msgq_tail = gk20a_pmu_msgq_tail,
+	/* pmu sequence */
+	.pmu_seq_cleanup = nvgpu_pmu_seq_release,
 	/* mutex */
 	.pmu_mutex_size = gv11b_pmu_mutex__size_1_v,
 	.pmu_mutex_owner = gk20a_pmu_mutex_owner,
