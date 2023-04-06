@@ -53,6 +53,7 @@
 #include "dmabuf_priv.h"
 
 #include "vgpu/vf_linux.h"
+#include "vgpu/vgpu_common.h"
 
 #if defined(CONFIG_NVGPU_HAL_NON_FUSA) && defined(CONFIG_NVGPU_NEXT)
 #include <nvgpu_next_chips.h>
@@ -467,7 +468,10 @@ static int nvgpu_pci_init_support(struct pci_dev *pdev, bool is_pci_igpu)
 #ifdef CONFIG_PM
 static int nvgpu_pci_pm_runtime_resume(struct device *dev)
 {
-	return gk20a_pm_finalize_poweron(dev);
+	if (gk20a_gpu_is_virtual(dev))
+		return vgpu_pm_finalize_poweron(dev);
+	else
+		return gk20a_pm_finalize_poweron(dev);
 }
 
 static int nvgpu_pci_pm_runtime_suspend(struct device *dev)
