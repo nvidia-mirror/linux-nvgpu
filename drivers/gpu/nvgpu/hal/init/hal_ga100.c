@@ -710,6 +710,12 @@ static const struct gops_gr_init ga100_ops_gr_init = {
 static const struct gops_gr_intr ga100_ops_gr_intr = {
 	.handle_fecs_error = gv11b_gr_intr_handle_fecs_error,
 	.handle_sw_method = ga100_gr_intr_handle_sw_method,
+#if defined(CONFIG_NVGPU_HAL_NON_FUSA)
+	.handle_compute_sw_method = ga10b_gr_intr_handle_compute_sw_method,
+#endif
+#if defined(CONFIG_NVGPU_DEBUGGER) && defined(CONFIG_NVGPU_GRAPHICS)
+	.handle_gfx_sw_method = ga10b_gr_intr_handle_gfx_sw_method,
+#endif
 	.handle_class_error = gp10b_gr_intr_handle_class_error,
 	.clear_pending_interrupts = gm20b_gr_intr_clear_pending_interrupts,
 	.read_pending_interrupts = ga100_gr_intr_read_pending_interrupts,

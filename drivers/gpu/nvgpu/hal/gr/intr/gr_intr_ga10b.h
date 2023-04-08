@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,24 +30,16 @@ struct nvgpu_gr_sm_ecc_status;
 enum nvgpu_gr_sm_ecc_error_types;
 struct nvgpu_gr_intr_info;
 
-/* Copy required definitions from clc797.h and clc7c0.h class files */
-#define NVC797_SET_SHADER_EXCEPTIONS		0x1528U
-#define NVC797_SET_GO_IDLE_TIMEOUT 		0x022cU
-#define NVC797_SET_CIRCULAR_BUFFER_SIZE 	0x1280U
-#define NVC797_SET_ALPHA_CIRCULAR_BUFFER_SIZE 	0x02dcU
-#define NVC797_SET_CB_BASE			0x1014U
-#define NVC797_SET_BES_CROP_DEBUG4		0x10b0U
-#define NVC797_SET_TEX_IN_DBG			0x10bcU
-#define NVC797_SET_SKEDCHECK			0x10c0U
-
-#define NVC7C0_SET_SHADER_EXCEPTIONS		0x1528U
-#define NVC7C0_SET_CB_BASE			0x0220U
-#define NVC7C0_SET_BES_CROP_DEBUG4		0x022cU
-#define NVC7C0_SET_TEX_IN_DBG			0x0238U
-#define NVC7C0_SET_SKEDCHECK			0x023cU
-
 int ga10b_gr_intr_handle_sw_method(struct gk20a *g, u32 addr,
 			u32 class_num, u32 offset, u32 data);
+#if defined(CONFIG_NVGPU_DEBUGGER) && defined(CONFIG_NVGPU_GRAPHICS)
+int ga10b_gr_intr_handle_gfx_sw_method(struct gk20a *g, u32 addr,
+			u32 class_num, u32 offset, u32 data);
+#endif
+#if defined(CONFIG_NVGPU_HAL_NON_FUSA)
+int ga10b_gr_intr_handle_compute_sw_method(struct gk20a *g, u32 addr,
+			u32 class_num, u32 offset, u32 data);
+#endif
 void ga10b_gr_intr_enable_interrupts(struct gk20a *g, bool enable);
 void ga10b_gr_intr_enable_gpc_exceptions(struct gk20a *g,
 					 struct nvgpu_gr_config *gr_config);

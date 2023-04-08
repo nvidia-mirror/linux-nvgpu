@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -119,43 +119,25 @@ u32 ga100_gr_intr_read_pending_interrupts(struct gk20a *g,
 int ga100_gr_intr_handle_sw_method(struct gk20a *g, u32 addr,
 			u32 class_num, u32 offset, u32 data)
 {
+	int ret = -EINVAL;
+
 	nvgpu_log_fn(g, " ");
 
 #ifdef CONFIG_NVGPU_HAL_NON_FUSA
-	if (class_num == AMPERE_COMPUTE_A) {
-		switch (offset << NVGPU_GA100_SW_METHOD_SHIFT) {
-		case NVC6C0_SET_BES_CROP_DEBUG4:
-			g->ops.gr.set_bes_crop_debug4(g, data);
-			return 0;
-		case NVC6C0_SET_SHADER_EXCEPTIONS:
-			g->ops.gr.intr.set_shader_exceptions(g, data);
-			return 0;
-		case NVC6C0_SET_TEX_IN_DBG:
-			gv11b_gr_intr_set_tex_in_dbg(g, data);
-			return 0;
-		case NVC6C0_SET_SKEDCHECK:
-			gv11b_gr_intr_set_skedcheck(g, data);
-			return 0;
-		}
+	if (class_num == gr_compute_class_v()) {
+		ret = g->ops.gr.intr.handle_compute_sw_method(g, addr, class_num,
+				offset, data);
 	}
 #endif
 
 #if defined(CONFIG_NVGPU_DEBUGGER) && defined(CONFIG_NVGPU_GRAPHICS)
-	if (class_num == AMPERE_A) {
-		switch (offset << NVGPU_GA100_SW_METHOD_SHIFT) {
-		case NVC697_SET_SHADER_EXCEPTIONS:
-			g->ops.gr.intr.set_shader_exceptions(g, data);
-			return 0;
-		case NVC697_SET_CIRCULAR_BUFFER_SIZE:
-			g->ops.gr.set_circular_buffer_size(g, data);
-			return 0;
-		case NVC697_SET_ALPHA_CIRCULAR_BUFFER_SIZE:
-			g->ops.gr.set_alpha_circular_buffer_size(g, data);
-			return 0;
-		}
+	if (class_num == gr_graphics_class_v()) {
+		ret = g->ops.gr.intr.handle_gfx_sw_method(g, addr, class_num,
+				offset, data);
 	}
 #endif
-	return -EINVAL;
+
+	return ret;
 }
 
 bool ga100_gr_intr_handle_exceptions(struct gk20a *g, bool *is_gpc_exception)

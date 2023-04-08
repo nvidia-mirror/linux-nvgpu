@@ -103,16 +103,103 @@ u32 ga10b_gr_intr_enable_mask(struct gk20a *g)
 	return gr_intr_en_mask();
 }
 
-int ga10b_gr_intr_handle_sw_method(struct gk20a *g, u32 addr,
-			u32 class_num, u32 offset, u32 data)
+#if defined(CONFIG_NVGPU_HAL_NON_FUSA)
+int ga10b_gr_intr_handle_compute_sw_method(struct gk20a *g, u32 addr,
+		u32 class_num, u32 offset, u32 data)
 {
-#if defined(CONFIG_NVGPU_HAL_NON_FUSA) || (defined(CONFIG_NVGPU_DEBUGGER) && defined(CONFIG_NVGPU_GRAPHICS))
 	/*
 	 * Hardware divides sw_method enum value by 2 before passing as "offset".
 	 * Left shift given offset by 2 to obtain sw_method enum value.
 	 */
 	u32 left_shift_by_2 = 2U;
+
+	(void)addr;
+	(void)class_num;
+
+	nvgpu_log_fn(g, " ");
+
+	switch (offset << left_shift_by_2) {
+	case gr_compute_method_set_shader_exceptions_v():
+		g->ops.gr.intr.set_shader_exceptions(g, data);
+		return 0;
+	case gr_compute_method_set_cb_base_v():
+		/*
+		 * This method is only implemented for gm107 in resman
+		 * code. However, this method has never been defined in
+		 * nvgpu code. This case is added for debug purposes.
+		 */
+		nvgpu_err(g, "Unhandled set_cb_base method");
+		return 0;
+	case gr_compute_method_set_bes_crop_debug4_v():
+		g->ops.gr.set_bes_crop_debug4(g, data);
+		return 0;
+	case gr_compute_method_set_tex_in_dbg_v():
+		gv11b_gr_intr_set_tex_in_dbg(g, data);
+		return 0;
+	case gr_compute_method_set_skedcheck_v():
+		gv11b_gr_intr_set_skedcheck(g, data);
+		return 0;
+	}
+
+	return -EINVAL;
+}
 #endif
+
+#if defined(CONFIG_NVGPU_DEBUGGER) && defined(CONFIG_NVGPU_GRAPHICS)
+int ga10b_gr_intr_handle_gfx_sw_method(struct gk20a *g, u32 addr,
+			u32 class_num, u32 offset, u32 data)
+{
+	/*
+	 * Hardware divides sw_method enum value by 2 before passing as "offset".
+	 * Left shift given offset by 2 to obtain sw_method enum value.
+	 */
+	u32 left_shift_by_2 = 2U;
+
+	(void)addr;
+	(void)class_num;
+
+	nvgpu_log_fn(g, " ");
+
+	switch (offset << left_shift_by_2) {
+	case gr_graphics_method_set_shader_exceptions_v():
+		g->ops.gr.intr.set_shader_exceptions(g, data);
+		return 0;
+	case gr_graphics_method_set_go_idle_timeout_v():
+		gp10b_gr_intr_set_go_idle_timeout(g, data);
+		return 0;
+	case gr_graphics_method_set_circular_buffer_size_v():
+		g->ops.gr.set_circular_buffer_size(g, data);
+		return 0;
+	case gr_graphics_method_set_alpha_circular_buffer_size_v():
+		g->ops.gr.set_alpha_circular_buffer_size(g, data);
+		return 0;
+	case gr_graphics_method_set_cb_base_v():
+		/*
+		 * This method is only implemented for gm107 in resman
+		 * code. However, this method has never been defined in
+		 * nvgpu code. This case is added for debug purposes.
+		 */
+		nvgpu_err(g, "Unhandled set_cb_base method");
+		return 0;
+	case gr_graphics_method_set_bes_crop_debug4_v():
+		g->ops.gr.set_bes_crop_debug4(g, data);
+		return 0;
+	case gr_graphics_method_set_tex_in_dbg_v():
+		gv11b_gr_intr_set_tex_in_dbg(g, data);
+		return 0;
+	case gr_graphics_method_set_skedcheck_v():
+		gv11b_gr_intr_set_skedcheck(g, data);
+		return 0;
+	}
+
+	return -EINVAL;
+}
+#endif
+
+int ga10b_gr_intr_handle_sw_method(struct gk20a *g, u32 addr,
+			u32 class_num, u32 offset, u32 data)
+{
+	int ret = -EINVAL;
 
 	(void)addr;
 	(void)class_num;
@@ -122,69 +209,20 @@ int ga10b_gr_intr_handle_sw_method(struct gk20a *g, u32 addr,
 	nvgpu_log_fn(g, " ");
 
 #ifdef CONFIG_NVGPU_HAL_NON_FUSA
-	if (class_num == AMPERE_COMPUTE_B) {
-		switch (offset << left_shift_by_2) {
-		case NVC7C0_SET_SHADER_EXCEPTIONS:
-			g->ops.gr.intr.set_shader_exceptions(g, data);
-			return 0;
-		case NVC7C0_SET_CB_BASE:
-			/*
-			 * This method is only implemented for gm107 in resman
-			 * code. However, this method has never been defined in
-			 * nvgpu code. This case is added for debug purposes.
-			 */
-			nvgpu_err(g, "Unhandled set_cb_base method");
-			return 0;
-		case NVC7C0_SET_BES_CROP_DEBUG4:
-			g->ops.gr.set_bes_crop_debug4(g, data);
-			return 0;
-		case NVC7C0_SET_TEX_IN_DBG:
-			gv11b_gr_intr_set_tex_in_dbg(g, data);
-			return 0;
-		case NVC7C0_SET_SKEDCHECK:
-			gv11b_gr_intr_set_skedcheck(g, data);
-			return 0;
-		}
+	if (class_num == gr_compute_class_v()) {
+		ret = g->ops.gr.intr.handle_compute_sw_method(g, addr, class_num,
+				offset, data);
 	}
 #endif
 
 #if defined(CONFIG_NVGPU_DEBUGGER) && defined(CONFIG_NVGPU_GRAPHICS)
-	if (class_num == AMPERE_B) {
-		switch (offset << left_shift_by_2) {
-		case NVC797_SET_SHADER_EXCEPTIONS:
-			g->ops.gr.intr.set_shader_exceptions(g, data);
-			return 0;
-		case NVC797_SET_GO_IDLE_TIMEOUT:
-			gp10b_gr_intr_set_go_idle_timeout(g, data);
-			return 0;
-		case NVC797_SET_CIRCULAR_BUFFER_SIZE:
-			g->ops.gr.set_circular_buffer_size(g, data);
-			return 0;
-		case NVC797_SET_ALPHA_CIRCULAR_BUFFER_SIZE:
-			g->ops.gr.set_alpha_circular_buffer_size(g, data);
-			return 0;
-		case NVC797_SET_CB_BASE:
-			/*
-			 * This method is only implemented for gm107 in resman
-			 * code. However, this method has never been defined in
-			 * nvgpu code. This case is added for debug purposes.
-			 */
-			nvgpu_err(g, "Unhandled set_cb_base method");
-			return 0;
-		case NVC797_SET_BES_CROP_DEBUG4:
-			g->ops.gr.set_bes_crop_debug4(g, data);
-			return 0;
-		case NVC797_SET_TEX_IN_DBG:
-			gv11b_gr_intr_set_tex_in_dbg(g, data);
-			return 0;
-		case NVC797_SET_SKEDCHECK:
-			gv11b_gr_intr_set_skedcheck(g, data);
-			return 0;
-		}
+	if (class_num == gr_graphics_class_v()) {
+		ret = g->ops.gr.intr.handle_gfx_sw_method(g, addr, class_num,
+				offset, data);
 	}
 #endif
 
-	return -EINVAL;
+	return ret;
 }
 
 static u32 ga10b_gr_intr_check_gr_mme_fe1_exception(struct gk20a *g,

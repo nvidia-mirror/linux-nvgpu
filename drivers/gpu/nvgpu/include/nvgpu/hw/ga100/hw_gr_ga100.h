@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1269,4 +1269,20 @@
 				(0x100000U)
 #define gr_gpcs_pri_tpcs_sm_sch_macro_sched_exit_wait_for_errbar_disabled_f()\
 				(0x0U)
+#define gr_graphics_class_v()                                      (0x0000c697U)
+#define gr_graphics_method_set_shader_exceptions_v()               (0x00001528U)
+#define gr_graphics_method_set_shader_exceptions_enable_false_v()  (0x00000000U)
+#define gr_graphics_method_set_go_idle_timeout_v()                 (0x0000022cU)
+#define gr_graphics_method_set_circular_buffer_size_v()            (0x00001280U)
+#define gr_graphics_method_set_alpha_circular_buffer_size_v()      (0x000002dcU)
+#define gr_graphics_method_set_cb_base_v()                         (0x00001014U)
+#define gr_graphics_method_set_bes_crop_debug4_v()                 (0x000010b0U)
+#define gr_graphics_method_set_tex_in_dbg_v()                      (0x000010bcU)
+#define gr_graphics_method_set_skedcheck_v()                       (0x000010c0U)
+#define gr_compute_class_v()                                       (0x0000c6c0U)
+#define gr_compute_method_set_shader_exceptions_v()                (0x00001528U)
+#define gr_compute_method_set_cb_base_v()                          (0x00000220U)
+#define gr_compute_method_set_bes_crop_debug4_v()                  (0x0000022cU)
+#define gr_compute_method_set_tex_in_dbg_v()                       (0x00000238U)
+#define gr_compute_method_set_skedcheck_v()                        (0x0000023cU)
 #endif

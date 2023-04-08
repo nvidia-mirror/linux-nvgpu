@@ -508,6 +508,14 @@ struct gops_gr_intr {
 				 struct nvgpu_gr_isr_data *isr_data);
 	int (*handle_sw_method)(struct gk20a *g, u32 addr,
 				u32 class_num, u32 offset, u32 data);
+#if defined(CONFIG_NVGPU_HAL_NON_FUSA)
+	int (*handle_compute_sw_method)(struct gk20a *g, u32 addr,
+				u32 class_num, u32 offset, u32 data);
+#endif
+#if defined(CONFIG_NVGPU_DEBUGGER) && defined(CONFIG_NVGPU_GRAPHICS)
+	int (*handle_gfx_sw_method)(struct gk20a *g, u32 addr,
+				u32 class_num, u32 offset, u32 data);
+#endif
 	void (*set_shader_exceptions)(struct gk20a *g,
 				      u32 data);
 	void (*handle_class_error)(struct gk20a *g, u32 chid,

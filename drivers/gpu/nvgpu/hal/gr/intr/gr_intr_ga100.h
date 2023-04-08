@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,22 +25,6 @@
 
 struct gk20a;
 struct nvgpu_gr_config;
-
-/* Copy required definitions from clc6c0.h class file */
-#define NVC6C0_SET_CB_BASE			0x0220U
-#define NVC6C0_SET_BES_CROP_DEBUG4		0x022cU
-#define NVC6C0_SET_TEX_IN_DBG			0x0238U
-#define NVC6C0_SET_SKEDCHECK			0x023cU
-#define NVC697_SET_SHADER_EXCEPTIONS		0x1528U
-#define NVC6C0_SET_SHADER_EXCEPTIONS		0x1528U
-#define NVC697_SET_CIRCULAR_BUFFER_SIZE		0x1280U
-#define NVC697_SET_ALPHA_CIRCULAR_BUFFER_SIZE	0x02dcU
-
-/*
- * Hardware divides sw_method enum value by 2 before passing as "offset".
- * Left shift given offset by 2 to obtain sw_method enum value.
- */
-#define NVGPU_GA100_SW_METHOD_SHIFT		2U
 
 int ga100_gr_intr_handle_sw_method(struct gk20a *g, u32 addr,
 			u32 class_num, u32 offset, u32 data);
