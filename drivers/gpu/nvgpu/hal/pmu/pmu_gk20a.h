@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -34,6 +34,12 @@ struct pmu_mutexes;
 
 void gk20a_pmu_isr(struct gk20a *g);
 u32 gk20a_pmu_get_irqmask(struct gk20a *g);
+u32 gk20a_pmu_get_irqstat(struct gk20a *g);
+void gk20a_pmu_set_irqsclr(struct gk20a *g, u32 intr);
+void gk20a_pmu_set_irqsset(struct gk20a *g, u32 intr);
+u32 gk20a_pmu_get_exterrstat(struct gk20a *g);
+void gk20a_pmu_set_exterrstat(struct gk20a *g, u32 intr);
+u32 gk20a_pmu_get_exterraddr(struct gk20a *g);
 
 #ifdef CONFIG_NVGPU_LS_PMU
 void gk20a_pmu_dump_falcon_stats(struct nvgpu_pmu *pmu);

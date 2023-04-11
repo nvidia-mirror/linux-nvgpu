@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -67,12 +67,12 @@ void gk20a_pmu_dump_falcon_stats(struct nvgpu_pmu *pmu)
 	i = gk20a_readl(g, pwr_pmu_bar0_fecs_error_r());
 	nvgpu_err(g, "pwr_pmu_bar0_fecs_error_r : 0x%x", i);
 
-	i = gk20a_readl(g, pwr_falcon_exterrstat_r());
+	i = g->ops.pmu.get_exterrstat(g);
 	nvgpu_err(g, "pwr_falcon_exterrstat_r : 0x%x", i);
 	if (pwr_falcon_exterrstat_valid_v(i) ==
 			pwr_falcon_exterrstat_valid_true_v()) {
 		nvgpu_err(g, "pwr_falcon_exterraddr_r : 0x%x",
-			gk20a_readl(g, pwr_falcon_exterraddr_r()));
+			g->ops.pmu.get_exterraddr(g));
 	}
 }
 
@@ -497,6 +497,7 @@ void gk20a_pmu_handle_interrupts(struct gk20a *g, u32 intr)
 	struct nvgpu_pmu *pmu = g->pmu;
 	bool recheck = false;
 	int err = 0;
+	u32 reg_val = 0U;
 
 	if ((intr & pwr_falcon_irqstat_halt_true_f()) != 0U) {
 		nvgpu_err(g, "pmu halt intr not implemented");
@@ -514,9 +515,10 @@ void gk20a_pmu_handle_interrupts(struct gk20a *g, u32 intr)
 			"pmu exterr intr not implemented. Clearing interrupt.");
 		nvgpu_pmu_dump_falcon_stats(pmu);
 
-		nvgpu_writel(g, pwr_falcon_exterrstat_r(),
-			nvgpu_readl(g, pwr_falcon_exterrstat_r()) &
-				~pwr_falcon_exterrstat_valid_m());
+		reg_val = g->ops.pmu.get_exterrstat(g) &
+				~pwr_falcon_exterrstat_valid_m();
+
+		g->ops.pmu.set_exterrstat(g, reg_val);
 	}
 
 	if (g->ops.pmu.handle_swgen1_irq != NULL) {
@@ -535,8 +537,8 @@ void gk20a_pmu_handle_interrupts(struct gk20a *g, u32 intr)
 	if (recheck) {
 		if (!nvgpu_pmu_queue_is_empty(&pmu->queues,
 					      PMU_MESSAGE_QUEUE)) {
-			nvgpu_writel(g, pwr_falcon_irqsset_r(),
-				pwr_falcon_irqsset_swgen0_set_f());
+			g->ops.pmu.set_irqsset(g,
+					pwr_falcon_irqsset_swgen0_set_f());
 		}
 	}
 }

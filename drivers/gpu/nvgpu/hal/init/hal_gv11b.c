@@ -1173,6 +1173,12 @@ static const struct gops_pmu gv11b_ops_pmu = {
 	.pmu_enable_irq = gv11b_pmu_enable_irq,
 	.get_irqdest = gv11b_pmu_get_irqdest,
 	.get_irqmask = gk20a_pmu_get_irqmask,
+	.get_irqstat = gk20a_pmu_get_irqstat,
+	.set_irqsclr = gk20a_pmu_set_irqsclr,
+	.set_irqsset = gk20a_pmu_set_irqsset,
+	.get_exterrstat = gk20a_pmu_get_exterrstat,
+	.set_exterrstat = gk20a_pmu_set_exterrstat,
+	.get_exterraddr = gk20a_pmu_get_exterraddr,
 	.pmu_isr = gk20a_pmu_isr,
 	.handle_ext_irq = gv11b_pmu_handle_ext_irq,
 #ifdef CONFIG_NVGPU_LS_PMU

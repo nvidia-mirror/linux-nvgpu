@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -38,6 +38,36 @@ u32 gk20a_pmu_get_irqmask(struct gk20a *g)
 	return mask;
 }
 
+u32 gk20a_pmu_get_irqstat(struct gk20a *g)
+{
+	return nvgpu_readl(g, pwr_falcon_irqstat_r());
+}
+
+void gk20a_pmu_set_irqsclr(struct gk20a *g, u32 intr)
+{
+	nvgpu_writel(g, pwr_falcon_irqsclr_r(), intr);
+}
+
+void gk20a_pmu_set_irqsset(struct gk20a *g, u32 intr)
+{
+	nvgpu_writel(g, pwr_falcon_irqsset_r(), intr);
+}
+
+u32 gk20a_pmu_get_exterrstat(struct gk20a *g)
+{
+	return nvgpu_readl(g, pwr_falcon_exterrstat_r());
+}
+
+void gk20a_pmu_set_exterrstat(struct gk20a *g, u32 intr)
+{
+	nvgpu_writel(g, pwr_falcon_exterrstat_r(), intr);
+}
+
+u32 gk20a_pmu_get_exterraddr(struct gk20a *g)
+{
+	return nvgpu_readl(g, pwr_falcon_exterraddr_r());
+}
+
 void gk20a_pmu_isr(struct gk20a *g)
 {
 	struct nvgpu_pmu *pmu = g->pmu;
@@ -48,7 +78,7 @@ void gk20a_pmu_isr(struct gk20a *g)
 
 	nvgpu_mutex_acquire(&pmu->isr_mutex);
 
-	intr = nvgpu_readl(g, pwr_falcon_irqstat_r());
+	intr = g->ops.pmu.get_irqstat(g);
 	mask = g->ops.pmu.get_irqmask(g);
 	nvgpu_pmu_dbg(g, "received PMU interrupt: stat:0x%08x mask:0x%08x",
 			intr, mask);
@@ -57,7 +87,7 @@ void gk20a_pmu_isr(struct gk20a *g)
 		nvgpu_log_info(g,
 			"clearing unhandled interrupt: stat:0x%08x mask:0x%08x",
 			intr, mask);
-		nvgpu_writel(g, pwr_falcon_irqsclr_r(), intr);
+		g->ops.pmu.set_irqsclr(g, intr);
 		nvgpu_mutex_release(&pmu->isr_mutex);
 		return;
 	}
@@ -68,7 +98,7 @@ void gk20a_pmu_isr(struct gk20a *g)
 		g->ops.pmu.handle_ext_irq(g, intr);
 	}
 
-	nvgpu_writel(g, pwr_falcon_irqsclr_r(), intr);
+	g->ops.pmu.set_irqsclr(g, intr);
 
 #ifdef CONFIG_NVGPU_LS_PMU
 	if (nvgpu_pmu_get_fw_state(g, pmu) == PMU_FW_STATE_OFF) {

@@ -1413,6 +1413,12 @@ static const struct gops_pmu ga10b_ops_pmu = {
 	.get_irqmask = ga10b_pmu_get_irqmask,
 	.pmu_isr = gk20a_pmu_isr,
 	.handle_ext_irq = ga10b_pmu_handle_ext_irq,
+	.get_irqstat = gk20a_pmu_get_irqstat,
+	.set_irqsclr = gk20a_pmu_set_irqsclr,
+	.set_irqsset = gk20a_pmu_set_irqsset,
+	.get_exterrstat = gk20a_pmu_get_exterrstat,
+	.set_exterrstat = gk20a_pmu_set_exterrstat,
+	.get_exterraddr = gk20a_pmu_get_exterraddr,
 #ifdef CONFIG_NVGPU_LS_PMU
 	.pmu_seq_cleanup = nvgpu_pmu_seq_free_release,
 	.get_inst_block_config = ga10b_pmu_get_inst_block_config,

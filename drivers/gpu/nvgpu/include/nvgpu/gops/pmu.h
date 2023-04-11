@@ -473,6 +473,12 @@ struct gops_pmu {
 	/** @cond DOXYGEN_SHOULD_SKIP_THIS */
 	void (*handle_swgen1_irq)(struct gk20a *g, u32 intr);
 	u32 (*get_irqmask)(struct gk20a *g);
+	u32 (*get_irqstat)(struct gk20a *g);
+	void (*set_irqsclr)(struct gk20a *g, u32 intr);
+	void (*set_irqsset)(struct gk20a *g, u32 intr);
+	u32 (*get_exterrstat)(struct gk20a *g);
+	void (*set_exterrstat)(struct gk20a *g, u32 intr);
+	u32 (*get_exterraddr)(struct gk20a *g);
 
 #ifdef CONFIG_NVGPU_LS_PMU
 	u32 (*get_inst_block_config)(struct gk20a *g);
