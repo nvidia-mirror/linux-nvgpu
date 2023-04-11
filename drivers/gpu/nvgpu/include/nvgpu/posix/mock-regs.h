@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -46,12 +46,16 @@ struct nvgpu_mock_iospace {
 #define MOCK_REGS_PBUS		10U
 #define MOCK_REGS_HSHUB		11U
 #define MOCK_REGS_FB		12U
-#define MOCK_REGS_LAST		13U
+#define MOCK_REGS_RUNLIST	13U
+#define MOCK_REGS_CHRAM		14U
+#define MOCK_REGS_LAST		15U
 
 /**
  * Load a mocked register list into the passed IO space description.
  */
-int nvgpu_get_mock_reglist(struct gk20a *g, u32 reg_space,
+int nvgpu_get_mock_reglist_gv11b(struct gk20a *g, u32 reg_space,
+			   struct nvgpu_mock_iospace *iospace);
+int nvgpu_get_mock_reglist_ga10b(struct gk20a *g, u32 reg_space,
 			   struct nvgpu_mock_iospace *iospace);
 
 #endif

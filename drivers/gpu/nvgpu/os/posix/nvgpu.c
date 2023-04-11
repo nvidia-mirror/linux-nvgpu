@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -159,8 +159,22 @@ static void nvgpu_posix_load_regs(struct gk20a *g)
 	struct nvgpu_mock_iospace space;
 	struct nvgpu_posix_io_reg_space *regs;
 
+	char chip[24];
+
+	memset(chip, 0, sizeof(chip));
+	FILE *tegra_name = popen("uname -m", "r");
+
+	while (fgets(chip, sizeof(chip), tegra_name) != NULL) {
+		chip[strcspn(chip, "\n")] = '\0';
+	}
+	pclose(tegra_name);
+
 	for (i = 0; i < MOCK_REGS_LAST; i++) {
-		err = nvgpu_get_mock_reglist(g, i, &space);
+		if (strcmp(chip, "ARMv8_nVidia-Orin") == 0) {
+			err = nvgpu_get_mock_reglist_ga10b(g, i, &space);
+		} else {
+			err = nvgpu_get_mock_reglist_gv11b(g, i, &space);
+		}
 		if (err) {
 			nvgpu_err(g, "Unknown IO regspace: %d; ignoring.", i);
 			continue;
