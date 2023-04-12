@@ -700,11 +700,6 @@ static int nvgpu_pci_probe(struct pci_dev *pdev,
 		if (IS_ERR(platform->reset_control))
 			platform->reset_control = NULL;
 #endif
-		err = gk20a_pm_init(&pdev->dev);
-		if (err) {
-			dev_err(&pdev->dev, "pm init failed");
-			goto err_free_irq;
-		}
 	}
 
 	if (strchr(dev_name(&pdev->dev), '%')) {
@@ -717,12 +712,10 @@ static int nvgpu_pci_probe(struct pci_dev *pdev,
 	if (err)
 		goto err_free_irq;
 
-	if (!g->is_pci_igpu) {
-		err = nvgpu_pci_pm_init(&pdev->dev);
-		if (err) {
-			nvgpu_err(g, "pm init failed");
-			goto err_free_irq;
-		}
+	err = nvgpu_pci_pm_init(&pdev->dev);
+	if (err) {
+		nvgpu_err(g, "pm init failed");
+		goto err_free_irq;
 	}
 
 	if (!platform->disable_nvlink) {
@@ -754,12 +747,6 @@ static int nvgpu_pci_probe(struct pci_dev *pdev,
 #endif
 
 	if (g->is_pci_igpu) {
-		err = gk20a_pm_late_init(&pdev->dev);
-		if (err) {
-			dev_err(&pdev->dev, "pm late_init failed");
-			goto err_free_irq;
-		}
-
 		l->nvgpu_reboot_nb.notifier_call =
 			nvgpu_kernel_shutdown_notification;
 		err = register_reboot_notifier(&l->nvgpu_reboot_nb);
@@ -769,13 +756,14 @@ static int nvgpu_pci_probe(struct pci_dev *pdev,
 		err = nvgpu_get_dt_clock_limit(g, &g->dgpu_max_clk);
 		if (err != 0)
 			nvgpu_info(g, "Missing nvgpu node");
-
-		err = nvgpu_pci_add_pci_power(pdev);
-		if (err) {
-			nvgpu_err(g, "add pci power failed (%d).", err);
-			goto err_free_irq;
-		}
 	}
+
+	err = nvgpu_pci_add_pci_power(pdev);
+	if (err) {
+		nvgpu_err(g, "add pci power failed (%d).", err);
+		goto err_free_irq;
+	}
+
 	nvgpu_mutex_init(&l->dmabuf_priv_list_lock);
 	nvgpu_init_list_node(&l->dmabuf_priv_list);
 
