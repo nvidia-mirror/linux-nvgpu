@@ -104,7 +104,6 @@ struct nvgpu_as_bind_channel_args {
  */
 #define NVGPU_AS_MAP_BUFFER_FLAGS_FIXED_OFFSET		(1 << 0)
 #define NVGPU_AS_MAP_BUFFER_FLAGS_CACHEABLE		(1 << 2)
-#define NVGPU_AS_MAP_BUFFER_FLAGS_IO_COHERENT		(1 << 4)
 #define NVGPU_AS_MAP_BUFFER_FLAGS_UNMAPPED_PTE		(1 << 5)
 #define NVGPU_AS_MAP_BUFFER_FLAGS_MAPPABLE_COMPBITS	(1 << 6)
 #define NVGPU_AS_MAP_BUFFER_FLAGS_L3_ALLOC		(1 << 7)
@@ -139,12 +138,6 @@ struct nvgpu_as_bind_channel_args {
  *   %NVGPU_AS_MAP_BUFFER_FLAGS_CACHEABLE
  *
  *     Specify that a mapping shall be GPU cachable.
- *
- *   %NVGPU_AS_MAP_BUFFER_FLAGS_IO_COHERENT
- *
- *     Specify that a mapping shall be IO coherent.
- *
- *     DEPRECATED: do not use! This will be removed in a future update.
  *
  *   %NVGPU_AS_MAP_BUFFER_FLAGS_UNMAPPED_PTE
  *

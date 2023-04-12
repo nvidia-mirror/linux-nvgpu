@@ -58,10 +58,6 @@ static int nvgpu_vm_translate_linux_flags(struct gk20a *g, u32 flags, u32 *out_c
 		core_flags |= NVGPU_VM_MAP_CACHEABLE;
 		consumed_flags |= NVGPU_AS_MAP_BUFFER_FLAGS_CACHEABLE;
 	}
-	if ((flags & NVGPU_AS_MAP_BUFFER_FLAGS_IO_COHERENT) != 0U) {
-		core_flags |= NVGPU_VM_MAP_IO_COHERENT;
-		consumed_flags |= NVGPU_AS_MAP_BUFFER_FLAGS_IO_COHERENT;
-	}
 	if ((flags & NVGPU_AS_MAP_BUFFER_FLAGS_UNMAPPED_PTE) != 0U) {
 		core_flags |= NVGPU_VM_MAP_UNMAPPED_PTE;
 		consumed_flags |= NVGPU_AS_MAP_BUFFER_FLAGS_UNMAPPED_PTE;

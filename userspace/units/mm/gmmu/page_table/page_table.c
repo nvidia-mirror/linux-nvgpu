@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -124,7 +124,7 @@ static struct test_parameters test_iommu_sysmem_coh = {
 	.aperture = APERTURE_SYSMEM,
 	.is_iommuable = true,
 	.rw_flag = gk20a_mem_flag_none,
-	.flags = NVGPU_VM_MAP_CACHEABLE | NVGPU_VM_MAP_IO_COHERENT,
+	.flags = NVGPU_VM_MAP_CACHEABLE,
 	.priv = false,
 };
 
@@ -758,10 +758,6 @@ static u64 gmmu_map_advanced(struct unit_module *m, struct gk20a *g,
 
 	if (params->sparse && params->special_null_phys) {
 		mem->cpu_va = NULL;
-	}
-
-	if (nvgpu_is_enabled(g, NVGPU_USE_COHERENT_SYSMEM)) {
-		params->flags |= NVGPU_VM_MAP_IO_COHERENT;
 	}
 
 	nvgpu_mutex_acquire(&vm->update_gmmu_lock);

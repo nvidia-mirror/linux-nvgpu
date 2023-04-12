@@ -179,7 +179,6 @@ struct tegra_vgpu_as_map_params {
 };
 
 #define TEGRA_VGPU_MAP_CACHEABLE	(1 << 0)
-#define TEGRA_VGPU_MAP_IO_COHERENT	(1 << 1)
 #define TEGRA_VGPU_MAP_L3_ALLOC		(1 << 2)
 #define TEGRA_VGPU_MAP_SYSTEM_COHERENT	(1 << 3)
 

@@ -352,9 +352,6 @@ u64 vgpu_locked_gmmu_map(struct vm_gk20a *vm,
 	if (flags & NVGPU_VM_MAP_CACHEABLE) {
 		p->flags = TEGRA_VGPU_MAP_CACHEABLE;
 	}
-	if (flags & NVGPU_VM_MAP_IO_COHERENT) {
-		p->flags |= TEGRA_VGPU_MAP_IO_COHERENT;
-	}
 	if (flags & NVGPU_VM_MAP_L3_ALLOC) {
 		p->flags |= TEGRA_VGPU_MAP_L3_ALLOC;
 	}
