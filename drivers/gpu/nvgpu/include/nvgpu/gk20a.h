@@ -310,6 +310,8 @@ struct railgate_stats {
 #define GPU_LIT_NVDEC_CLASS			60
 /** NVJPG class. */
 #define GPU_LIT_NVJPG_CLASS			61
+/** Number of singleton gpcs. */
+#define GPU_LIT_NUM_SINGLETON_GPCS		62
 
 /** Macro to get litter values corresponding to the litter defines. */
 #define nvgpu_get_litter_value(g, v) ((g)->ops.get_litter_value((g), v))

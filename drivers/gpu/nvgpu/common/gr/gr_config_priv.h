@@ -30,6 +30,8 @@
  */
 #define GK20A_GR_MAX_PES_PER_GPC 3U
 
+#define ILLEGAL_VGPC 0xFFU
+
 struct gk20a;
 
 /**
@@ -55,6 +57,15 @@ struct nvgpu_sm_info {
 	 * Global TPC index for SM.
 	 */
 	u32 global_tpc_index;
+
+	/**
+	 * Virtual GPC index for SM.
+	 */
+	u32 virtual_gpc_index;
+};
+
+struct nvgpu_gpc_info {
+	u32 *virtual_gpc_info;
 };
 
 /**
@@ -208,6 +219,19 @@ struct nvgpu_gr_config {
 	u32 map_tile_count;
 	u32 map_row_offset;
 #endif
+
+	u32 singleton_mask;
+	u32 num_singletons;
+	u32 num_tpc_in_skyline;
+	u32 *gpc_skyline;
+	struct nvgpu_gpc_info *gpc_info;
+};
+
+struct tpc_vgpc_table {
+	u32 gpc_id;
+	u32 tpc_id;
+	u32 global_tpc_id;
+	u32 virtual_gpc_id;
 };
 
 #endif /* NVGPU_GR_CONFIG_PRIV_H */

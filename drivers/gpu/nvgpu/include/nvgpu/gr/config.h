@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -33,6 +33,7 @@
 struct gk20a;
 struct nvgpu_sm_info;
 struct nvgpu_gr_config;
+struct tpc_vgpc_table;
 
 /*
  * Number of bits represents a PES Mask.
@@ -389,6 +390,154 @@ u32 nvgpu_gr_config_get_pes_tpc_mask(struct nvgpu_gr_config *config,
 u32 nvgpu_gr_config_get_gpc_mask(struct nvgpu_gr_config *config);
 
 /**
+ * @brief Set singleton mask.
+ *
+ * @param config [in]		Pointer to GR configuration struct.
+ * @param val [in]		Mask value to be set.
+ *
+ * This function sets the singleton mask in #nvgpu_gr_config struct.
+ */
+void nvgpu_gr_config_set_singleton_mask(struct nvgpu_gr_config *config,
+		u32 val);
+
+/**
+ * @brief Get singleton mask.
+ *
+ * @param config [in]		Pointer to GR configuration struct.
+ *
+ * This function returns the singleton mask of enabled singleton TPCs.
+ *
+ * @return mask of enabled singleton TPCs.
+ */
+u32 nvgpu_gr_config_get_singleton_mask(struct nvgpu_gr_config *config);
+
+/**
+ * @brief Set number of singletons.
+ *
+ * @param config [in]		Pointer to GR configuration struct.
+ * @param val [in]		Value to be set.
+ *
+ * The TPCs which are not part of virtual GPCs are called singleton TPCs.
+ *
+ * This function sets the number of singletons in #nvgpu_gr_config struct.
+ */
+void nvgpu_gr_config_set_num_singletons(struct nvgpu_gr_config *config,
+		u32 val);
+
+/**
+ * @brief Get number of singletons.
+ *
+ * @param config [in]		Pointer to GR configuration struct.
+ *
+ * This function sets the number of singletons in #nvgpu_gr_config struct.
+ */
+u32 nvgpu_gr_config_get_num_singletons(struct nvgpu_gr_config *config);
+
+/**
+ * @brief Set number of TPCs in skyline.
+ *
+ * @param config [in]		Pointer to GR configuration struct.
+ * @param val [in]		Skyline value to be set.
+ *
+ * The skyline defines how many TPCs are in each virtual GPC.
+ * This function sets the number of TPCs in skyline in #nvgpu_gr_config struct.
+ * GPC index must be less than value returned by
+ * #nvgpu_gr_config_get_gpc_count(), otherwise an assert is raised.
+ */
+void nvgpu_gr_config_set_num_tpc_in_skyline(struct nvgpu_gr_config *config,
+		u32 val);
+
+/**
+ * @brief Get number of TPCs in skyline.
+ *
+ * @param config [in]		Pointer to GR configuration struct.
+ *
+ * The skyline defines how many TPCs are in each virtual GPC.
+ * This function returns the number of TPCs in skyline in #nvgpu_gr_config struct.
+ * GPC index must be less than value returned by
+ * #nvgpu_gr_config_get_gpc_count(), otherwise an assert is raised.
+ *
+ * @return the number of TPCs in skyline.
+ */
+u32 nvgpu_gr_config_get_num_tpc_in_skyline(struct nvgpu_gr_config *config);
+
+/**
+ * @brief Set skyline for a given GPC.
+ *
+ * @param config [in]		Pointer to GR configuration struct.
+ * @param gpc_index [in]	Valid GPC index.
+ * @param val [in]		Skyline value to be set.
+ *
+ * The skyline defines how many TPCs are in each virtual GPC.
+ * This function sets the skyline in #nvgpu_gr_config struct
+ * for given GPC index.
+ * GPC index must be less than value returned by
+ * #nvgpu_gr_config_get_gpc_count(), otherwise an assert is raised.
+ */
+void nvgpu_gr_config_set_gpc_skyline(struct nvgpu_gr_config *config,
+		u32 gpc_index, u32 val);
+
+/**
+ * @brief Get skyline for a given GPC.
+ *
+ * @param config [in]		Pointer to GR configuration struct.
+ * @param gpc_index [in]	Valid GPC index.
+ *
+ * The skyline defines how many TPCs are in each virtual GPC.
+ * This function returns the skyline in #nvgpu_gr_config struct
+ * for given GPC index.
+ * GPC index must be less than value returned by
+ * #nvgpu_gr_config_get_gpc_count(), otherwise an assert is raised.
+ *
+ * @return number of TPCs in skyline GPC.
+ */
+u32 nvgpu_gr_config_get_gpc_skyline(struct nvgpu_gr_config *config,
+		u32 gpc_index);
+
+/**
+ * @brief Set virtual GPC ID for a given GPC.
+ *
+ * @param config [in]		Pointer to GR configuration struct.
+ * @param vgpc_table [in]	Pointer to Virtual GPC table.
+ * @param global_tpc_id [in]	Global TPC index.
+ * @param gpc_index [in]	Valid GPC index.
+ * @param tpc_index [in]	Valid TPC index.
+ * @param val [in]		Mask value to be set.
+ *
+ * The virtual GPCs are numbered based on the number of non-floorswept
+ * TPCs that exist per GPC. They are numbered from largest to smallest
+ * TPC count, independent of which GPCs support graphics.
+ *
+ * This function sets the virtual GPC table in #tpc_vgpc_table struct
+ * for given GPC, TPC indices.
+ * GPC index must be less than value returned by
+ * #nvgpu_gr_config_get_gpc_count(), otherwise an assert is raised.
+ */
+void nvgpu_gr_config_set_virtual_gpc_id(struct nvgpu_gr_config *config,
+		struct tpc_vgpc_table *vgpc_table, u32 global_tpc_id,
+		u32 gpc_index, u32 tpc_index);
+
+/**
+ * @brief Get virtual GPC ID for a given GPC.
+ *
+ * @param config [in]		Pointer to GR configuration struct.
+ * @param gpc_index [in]	Valid GPC index.
+ * @param vtpc_index [in]	Valid TPC index.
+ *
+ * The virtual GPCs are numbered based on the number of non-floorswept
+ * TPCs that exist per GPC. They are numbered from largest to smallest
+ * TPC count, independent of which GPCs support graphics.
+ *
+ * This function returns the virtual GPC index of a given TPC.
+ * GPC index must be less than value returned by
+ * #nvgpu_gr_config_get_gpc_count(), otherwise an assert is raised.
+ *
+ * @return virtual GPC ID for a given GPC.
+ */
+u32 nvgpu_gr_config_get_virtual_gpc_id(struct nvgpu_gr_config *config,
+		u32 gpc_index, u32 vtpc_index);
+
+/**
  * @brief Get number of SMs.
  *
  * @param config [in]		Pointer to GR configuration struct.
@@ -519,6 +668,27 @@ u32 nvgpu_gr_config_get_sm_info_global_tpc_index(struct nvgpu_sm_info *sm_info);
  */
 void nvgpu_gr_config_set_sm_info_global_tpc_index(struct nvgpu_sm_info *sm_info,
 	u32 global_tpc_index);
+
+/**
+ * @brief Set virtual GPC index of SM.
+ *
+ * @param sm_info [in]			Pointer to SM information struct.
+ * @param virtual_gpc_index [in]	Virtual GPC index to be set.
+ *
+ * This function sets virtual GPC index of SM into given #nvgpu_sm_info struct.
+ */
+void nvgpu_gr_config_set_sm_info_virtual_gpc_index(struct nvgpu_sm_info *sm_info,
+	u32 virtual_gpc_index);
+
+/**
+ * @brief Get virtual GPC index of SM.
+ *
+ * @param sm_info [in]			Pointer to SM information struct.
+ * @param virtual_gpc_index [in]	Virtual GPC index to be set.
+ *
+ * This function returns virtual GPC index of SM from given #nvgpu_sm_info struct.
+ */
+u32 nvgpu_gr_config_get_sm_info_virtual_gpc_index(struct nvgpu_sm_info *sm_info);
 
 /**
  * @brief Get index of SM within TPC.

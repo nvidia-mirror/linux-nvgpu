@@ -342,6 +342,10 @@ static void gr_config_log_info(struct gk20a *g,
 		nvgpu_log(g, gpu_dbg_info | gpu_dbg_gr, "gpc_tpc_mask[%d] : 0x%x",
 			   gpc_index, config->gpc_tpc_mask[gpc_index]);
 	}
+	for (gpc_index = 0; gpc_index < config->max_gpc_count; gpc_index++) {
+		nvgpu_log(g, gpu_dbg_info | gpu_dbg_gr, "gpc_skyline[%d] : 0x%x",
+			   gpc_index, config->gpc_skyline[gpc_index]);
+	}
 #ifdef CONFIG_NVGPU_GRAPHICS
 	for (gpc_index = 0; gpc_index < config->gpc_count; gpc_index++) {
 		nvgpu_log(g, gpu_dbg_info | gpu_dbg_gr, "gpc_zcb_count[%d] : %d",
@@ -391,8 +395,8 @@ static void gr_config_set_gpc_mask(struct gk20a *g,
 static bool gr_config_alloc_valid(struct nvgpu_gr_config *config)
 {
 	if ((config->gpc_tpc_count == NULL) || (config->gpc_tpc_mask == NULL) ||
-	    (config->gpc_ppc_count == NULL) ||
-	    (config->gpc_skip_mask == NULL)) {
+	    (config->gpc_ppc_count == NULL) || (config->gpc_skyline == NULL) ||
+	    (config->gpc_skip_mask == NULL) || (config->gpc_info == NULL)) {
 		return false;
 	}
 
@@ -409,7 +413,9 @@ static bool gr_config_alloc_valid(struct nvgpu_gr_config *config)
 static void gr_config_free_mem(struct gk20a *g,
 				struct nvgpu_gr_config *config)
 {
-	u32 pes_index;
+	u32 pes_index, i;
+	size_t max_gpc_cnt = nvgpu_safe_mult_u64((size_t)config->max_gpc_count,
+			sizeof(u32));
 
 	for (pes_index = 0U; pes_index < config->pe_count_per_gpc; pes_index++) {
 		nvgpu_kfree(g, config->pes_tpc_count[pes_index]);
@@ -424,6 +430,11 @@ static void gr_config_free_mem(struct gk20a *g,
 	nvgpu_kfree(g, config->gpc_tpc_mask);
 	nvgpu_kfree(g, config->gpc_tpc_count);
 	nvgpu_kfree(g, config->gpc_tpc_mask_physical);
+	nvgpu_kfree(g, config->gpc_skyline);
+	for (i = 0; i < max_gpc_cnt; i++) {
+		nvgpu_kfree(g, config->gpc_info[i].virtual_gpc_info);
+	}
+	nvgpu_kfree(g, config->gpc_info);
 }
 
 static bool gr_config_alloc_struct_mem(struct gk20a *g,
@@ -434,6 +445,7 @@ static bool gr_config_alloc_struct_mem(struct gk20a *g,
 	size_t sm_info_size;
 	size_t gpc_size, sm_size, max_gpc_cnt;
 	size_t pd_tbl_size;
+	u32 i = 0;
 
 	total_tpc_cnt = nvgpu_safe_mult_u32(config->gpc_count,
 				config->max_tpc_per_gpc_count);
@@ -465,6 +477,14 @@ static bool gr_config_alloc_struct_mem(struct gk20a *g,
 	config->gpc_tpc_count = nvgpu_kzalloc(g, gpc_size);
 	config->gpc_tpc_mask = nvgpu_kzalloc(g, max_gpc_cnt);
 	config->gpc_tpc_mask_physical = nvgpu_kzalloc(g, max_gpc_cnt);
+	config->gpc_skyline = nvgpu_kzalloc(g, max_gpc_cnt);
+	config->gpc_info = nvgpu_kzalloc(g,
+			nvgpu_safe_mult_u64(max_gpc_cnt,
+				sizeof(struct nvgpu_gpc_info)));
+	for (i = 0; i < max_gpc_cnt; i++) {
+		config->gpc_info[i].virtual_gpc_info =
+			nvgpu_kzalloc(g, config->max_gpc_count * sizeof(u32));
+	}
 #ifdef CONFIG_NVGPU_GRAPHICS
 	if (!nvgpu_is_enabled(g, NVGPU_SUPPORT_MIG)) {
 		config->max_zcull_per_gpc_count = nvgpu_get_litter_value(g,
@@ -1124,6 +1144,66 @@ u32 nvgpu_gr_config_get_gpc_mask(struct nvgpu_gr_config *config)
 	return config->gpc_mask;
 }
 
+void nvgpu_gr_config_set_singleton_mask(struct nvgpu_gr_config *config, u32 val)
+{
+	config->singleton_mask = val;
+}
+
+u32 nvgpu_gr_config_get_singleton_mask(struct nvgpu_gr_config *config)
+{
+	return config->singleton_mask;
+}
+
+void nvgpu_gr_config_set_num_singletons(struct nvgpu_gr_config *config, u32 val)
+{
+	config->num_singletons = val;
+}
+
+u32 nvgpu_gr_config_get_num_singletons(struct nvgpu_gr_config *config)
+{
+	return config->num_singletons;
+}
+
+void nvgpu_gr_config_set_num_tpc_in_skyline(struct nvgpu_gr_config *config, u32 val)
+{
+	config->num_tpc_in_skyline = val;
+}
+
+u32 nvgpu_gr_config_get_num_tpc_in_skyline(struct nvgpu_gr_config *config)
+{
+	return config->num_tpc_in_skyline;
+}
+
+void nvgpu_gr_config_set_virtual_gpc_id(struct nvgpu_gr_config *config,
+		struct tpc_vgpc_table *vgpc_table, u32 global_tpc_id,
+		u32 gpc_index, u32 tpc_index)
+{
+	nvgpu_assert(gpc_index < nvgpu_gr_config_get_max_gpc_count(config));
+	config->gpc_info[vgpc_table[global_tpc_id].gpc_id].virtual_gpc_info[tpc_index]
+		= gpc_index;
+}
+
+u32 nvgpu_gr_config_get_virtual_gpc_id(struct nvgpu_gr_config *config,
+		u32 gpc_index, u32 vtpc_index)
+{
+	nvgpu_assert(gpc_index < nvgpu_gr_config_get_max_gpc_count(config));
+	return config->gpc_info[gpc_index].virtual_gpc_info[vtpc_index];
+}
+
+void nvgpu_gr_config_set_gpc_skyline(struct nvgpu_gr_config *config,
+		u32 gpc_index, u32 val)
+{
+	nvgpu_assert(gpc_index < nvgpu_gr_config_get_max_gpc_count(config));
+	config->gpc_skyline[gpc_index] = val;
+}
+
+u32 nvgpu_gr_config_get_gpc_skyline(struct nvgpu_gr_config *config,
+		u32 gpc_index)
+{
+	nvgpu_assert(gpc_index < nvgpu_gr_config_get_max_gpc_count(config));
+	return config->gpc_skyline[gpc_index];
+}
+
 u32 nvgpu_gr_config_get_no_of_sm(struct nvgpu_gr_config *config)
 {
 	return config->no_of_sm;
@@ -1193,4 +1273,15 @@ void nvgpu_gr_config_set_sm_info_sm_index(struct nvgpu_sm_info *sm_info,
 	u32 sm_index)
 {
 	sm_info->sm_index = sm_index;
+}
+
+u32 nvgpu_gr_config_get_sm_info_virtual_gpc_index(struct nvgpu_sm_info *sm_info)
+{
+	return sm_info->virtual_gpc_index;
+}
+
+void nvgpu_gr_config_set_sm_info_virtual_gpc_index(struct nvgpu_sm_info *sm_info,
+	u32 virtual_gpc_index)
+{
+	sm_info->virtual_gpc_index = virtual_gpc_index;
 }
