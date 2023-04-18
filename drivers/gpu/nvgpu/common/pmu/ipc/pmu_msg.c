@@ -641,11 +641,17 @@ void nvgpu_pmu_rpc_handler(struct gk20a *g, struct pmu_msg *msg,
 exit:
 	rpc_payload->complete = true;
 
-	/* free allocated memory and release the sequence */
+	/*
+	 * free allocated memory and set seq_free_status to
+	 * true to sync the memory free
+	 */
 	if (rpc_payload->is_mem_free_set) {
 		seq = nvgpu_pmu_sequences_get_seq(pmu->sequences,
 				msg->hdr.seq_id);
-		nvgpu_pmu_seq_free_release(g, pmu->sequences, seq);
+		if (seq->seq_free_status == false) {
+			nvgpu_kfree(g, rpc_payload);
+			seq->seq_free_status = true;
+		}
 	}
 }
 
