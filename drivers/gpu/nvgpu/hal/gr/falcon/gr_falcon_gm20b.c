@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -198,6 +198,12 @@ void gm20b_gr_falcon_start_ucode(struct gk20a *g)
 	nvgpu_log(g, gpu_dbg_fn | gpu_dbg_gr, " ");
 
 	g->ops.gr.falcon.fecs_ctxsw_clear_mailbox(g, 0U, (~U32(0U)));
+
+	/*
+	 * When GPCCS and FECS are booted in NS mode, clear mailbox 1 to skip
+	 * the security level check in ucode.
+	 */
+	g->ops.gr.falcon.fecs_ctxsw_clear_mailbox(g, 1U, (~U32(0U)));
 
 	nvgpu_writel(g, gr_gpccs_dmactl_r(), gr_gpccs_dmactl_require_ctx_f(0U));
 	nvgpu_writel(g, gr_fecs_dmactl_r(), gr_fecs_dmactl_require_ctx_f(0U));
