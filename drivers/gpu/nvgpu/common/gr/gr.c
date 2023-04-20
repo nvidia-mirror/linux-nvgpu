@@ -680,6 +680,13 @@ static int gr_reset_hw_and_load_prod(struct gk20a *g)
 		return err;
 	}
 
+#ifdef CONFIG_NVGPU_GRAPHICS
+	if (g->ops.gr.init.setup_gfx_tpcs != NULL) {
+		nvgpu_gr_exec_for_all_instances(g,
+			g->ops.gr.init.setup_gfx_tpcs(g));
+	}
+#endif
+
 	nvgpu_gr_exec_for_all_instances(g, nvgpu_cg_init_gr_load_gating_prod(g));
 
 	/* Disable elcg until it gets enabled later in the init*/

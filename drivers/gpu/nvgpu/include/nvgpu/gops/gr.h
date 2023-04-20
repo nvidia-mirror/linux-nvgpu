@@ -941,6 +941,9 @@ struct gops_gr_init {
 	void (*auto_go_idle)(struct gk20a *g, bool enable);
 	void (*eng_config)(struct gk20a *g);
 	int (*reset_gpcs)(struct gk20a *g);
+#ifdef CONFIG_NVGPU_GRAPHICS
+	void (*setup_gfx_tpcs)(struct gk20a *g);
+#endif
 	int (*sm_id_config_early)(struct gk20a *g,
 			struct nvgpu_gr_config *config);
 	int (*load_sm_id_config)(struct gk20a *g,
