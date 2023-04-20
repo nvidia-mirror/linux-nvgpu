@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -151,7 +151,7 @@ void nvgpu_pmu_lsfm_rpc_handler(struct gk20a *g,
 
 	(void) memset(&acr_rpc, 0, sizeof(struct nv_pmu_rpc_header));
 	nvgpu_memcpy((u8 *)&acr_rpc, (u8 *)rpc_payload->rpc_buff,
-		sizeof(struct nv_pmu_rpc_struct_acr_bootstrap_gr_falcons));
+		sizeof(struct nv_pmu_rpc_header));
 
 	switch (acr_rpc.hdr.function) {
 	case NV_PMU_RPC_ID_ACR_INIT_WPR_REGION:
