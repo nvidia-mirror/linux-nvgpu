@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -52,9 +52,10 @@
 
 #ifdef CONFIG_NVGPU_SET_FALCON_ACCESS_MAP
 void gv11b_gr_init_get_access_map(struct gk20a *g,
-				   u32 **whitelist, u32 *num_entries)
+				   u32 **gr_access_map,
+				   u32 *gr_access_map_num_entries)
 {
-	static u32 wl_addr_gv11b[] = {
+	static u32 gr_access_map_gv11b[] = {
 		/* this list must be sorted (low to high) */
 		0x404468, /* gr_pri_mme_max_instructions       */
 		0x418380, /* gr_pri_gpcs_rasterarb_line_class  */
@@ -96,8 +97,8 @@ void gv11b_gr_init_get_access_map(struct gk20a *g,
 	size_t array_size;
 
 	(void)g;
-	*whitelist = wl_addr_gv11b;
-	array_size = ARRAY_SIZE(wl_addr_gv11b);
-	*num_entries = nvgpu_safe_cast_u64_to_u32(array_size);
+	*gr_access_map = gr_access_map_gv11b;
+	array_size = ARRAY_SIZE(gr_access_map_gv11b);
+	*gr_access_map_num_entries = nvgpu_safe_cast_u64_to_u32(array_size);
 }
 #endif

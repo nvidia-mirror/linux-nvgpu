@@ -86,7 +86,8 @@ bool gm20b_gr_init_is_allowed_sw_bundle(struct gk20a *g,
 void gm20b_gr_init_gpc_mmu(struct gk20a *g);
 #ifdef CONFIG_NVGPU_SET_FALCON_ACCESS_MAP
 void gm20b_gr_init_get_access_map(struct gk20a *g,
-				   u32 **whitelist, u32 *num_entries);
+				   u32 **gr_access_map,
+				   u32 *gr_access_map_num_entries);
 #endif
 void gm20b_gr_init_sm_id_numbering(struct gk20a *g, u32 gpc, u32 tpc, u32 smid,
 				struct nvgpu_gr_config *gr_config,

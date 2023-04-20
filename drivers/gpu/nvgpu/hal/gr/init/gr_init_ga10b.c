@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -105,9 +105,10 @@ int ga10b_gr_init_enable_mme_config_ptimer(struct gk20a *g,
 #endif
 #ifdef CONFIG_NVGPU_SET_FALCON_ACCESS_MAP
 void ga10b_gr_init_get_access_map(struct gk20a *g,
-				   u32 **whitelist, u32 *num_entries)
+				   u32 **gr_access_map,
+				   u32 *gr_access_map_num_entries)
 {
-	static u32 wl_addr_ga10b[] = {
+	static u32 gr_access_map_ga10b[] = {
 		/* this list must be sorted (low to high) */
 		0x418380, /* gr_pri_gpcs_rasterarb_line_class  */
 		0x418800, /* gr_pri_gpcs_setup_debug           */
@@ -148,8 +149,8 @@ void ga10b_gr_init_get_access_map(struct gk20a *g,
 	size_t array_size;
 
 	(void)g;
-	*whitelist = wl_addr_ga10b;
-	array_size = ARRAY_SIZE(wl_addr_ga10b);
-	*num_entries = nvgpu_safe_cast_u64_to_u32(array_size);
+	*gr_access_map = gr_access_map_ga10b;
+	array_size = ARRAY_SIZE(gr_access_map_ga10b);
+	*gr_access_map_num_entries = nvgpu_safe_cast_u64_to_u32(array_size);
 }
 #endif

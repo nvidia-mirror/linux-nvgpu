@@ -884,7 +884,8 @@ struct gops_gr_init {
 #endif
 #ifdef CONFIG_NVGPU_SET_FALCON_ACCESS_MAP
 	void (*get_access_map)(struct gk20a *g,
-			       u32 **whitelist, u32 *num_entries);
+			       u32 **gr_access_map,
+			       u32 *gr_access_map_num_entries);
 #endif
 #ifdef CONFIG_NVGPU_SM_DIVERSITY
 	int (*commit_sm_id_programming)(struct gk20a *g,

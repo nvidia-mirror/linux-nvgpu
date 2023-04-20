@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -68,7 +68,8 @@ void ga10b_gr_init_commit_rops_crop_override(struct gk20a *g,
 
 #ifdef CONFIG_NVGPU_SET_FALCON_ACCESS_MAP
 void ga10b_gr_init_get_access_map(struct gk20a *g,
-					u32 **whitelist, u32 *num_entries);
+					u32 **gr_access_map,
+					u32 *gr_access_map_num_entries);
 #endif
 
 void ga10b_gr_init_fs_state(struct gk20a *g);

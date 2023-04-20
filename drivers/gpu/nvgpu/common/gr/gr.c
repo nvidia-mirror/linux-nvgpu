@@ -359,8 +359,8 @@ static int gr_init_access_map(struct gk20a *g, struct nvgpu_gr *gr)
 			     NVGPU_CPU_PAGE_SIZE);
 	u32 nr_pages_size = nvgpu_safe_mult_u32(NVGPU_CPU_PAGE_SIZE, nr_pages);
 #ifdef CONFIG_NVGPU_SET_FALCON_ACCESS_MAP
-	u32 *whitelist = NULL;
-	u32 w, num_entries = 0U;
+	u32 *gr_access_map = NULL;
+	u32 w, gr_access_map_num_entries = 0U;
 #endif
 
 	nvgpu_log(g, gpu_dbg_gr, " ");
@@ -374,15 +374,16 @@ static int gr_init_access_map(struct gk20a *g, struct nvgpu_gr *gr)
 	nvgpu_memset(g, mem, 0, 0, nr_pages_size);
 
 #ifdef CONFIG_NVGPU_SET_FALCON_ACCESS_MAP
-	g->ops.gr.init.get_access_map(g, &whitelist, &num_entries);
+	g->ops.gr.init.get_access_map(g, &gr_access_map,
+			&gr_access_map_num_entries);
 
-	for (w = 0U; w < num_entries; w++) {
+	for (w = 0U; w < gr_access_map_num_entries; w++) {
 		u32 map_bit, map_byte, map_shift, x;
-		map_bit = whitelist[w] >> 2;
+		map_bit = gr_access_map[w] >> 2;
 		map_byte = map_bit >> 3;
 		map_shift = map_bit & 0x7U; /* i.e. 0-7 */
 		nvgpu_log_info(g, "access map addr:0x%x byte:0x%x bit:%d",
-			       whitelist[w], map_byte, map_shift);
+			       gr_access_map[w], map_byte, map_shift);
 		x = nvgpu_mem_rd32(g, mem, (u64)map_byte / (u64)sizeof(u32));
 		x |= BIT32(
 			   (map_byte % (u32)sizeof(u32) * BITS_PER_BYTE_U32)
