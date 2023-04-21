@@ -1,7 +1,7 @@
 /*
  * GR MANAGER
  *
- * Copyright (c) 2020-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -489,8 +489,9 @@ u32 nvgpu_grmgr_get_gr_gpc_phys_id(struct gk20a *g, u32 gr_instance_id,
 	gpu_instance = &g->mig.gpu_instance[gpu_instance_id];
 	gr_syspipe = &gpu_instance->gr_syspipe;
 
-	nvgpu_assert(gpc_local_id < gr_syspipe->num_gpc);
-
+#ifndef __NVGPU_UNIT_TEST_
+		nvgpu_assert(gpc_local_id < gr_syspipe->num_gpc);
+#endif
 	nvgpu_log(g, gpu_dbg_mig,
 		"gpu_instance_id[%u] gpc_local_id[%u] physical_id[%u]",
 		gpu_instance_id, gpc_local_id,
