@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -162,7 +162,9 @@ void nvgpu_ecc_remove_support(struct gk20a *g)
 	}
 
 #ifdef CONFIG_NVGPU_SYSFS
-	nvgpu_ecc_sysfs_remove(g);
+	if (!nvgpu_is_enabled(g, NVGPU_DISABLE_ECC_STATS)) {
+		nvgpu_ecc_sysfs_remove(g);
+	}
 #endif
 	nvgpu_ecc_free(g);
 
