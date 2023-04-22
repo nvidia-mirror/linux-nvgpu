@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -135,7 +135,7 @@ struct unit_module_test therm_tests[] = {
 	UNIT_TEST(therm_setup_env,		therm_test_setup_env,			NULL, 0),
 	UNIT_TEST(therm_init_support,		test_therm_init_support,		NULL, 0),
 	UNIT_TEST(gv11b_therm_init_elcg_mode,	test_therm_init_elcg_mode,		NULL, 0),
-	UNIT_TEST(gv11b_elcg_init_idle_filters,	test_elcg_init_idle_filters,		NULL, 0),
+	UNIT_TEST(gv11b_elcg_init_idle_filters,	test_elcg_init_idle_filters,		NULL, 2),
 	UNIT_TEST(therm_free_env,		therm_test_free_env,			NULL, 0),
 };
 

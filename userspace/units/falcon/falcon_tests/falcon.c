@@ -1357,7 +1357,7 @@ struct unit_module_test falcon_tests[] = {
 	UNIT_TEST(falcon_sw_init_free, test_falcon_sw_init_free, NULL, 0),
 	UNIT_TEST(falcon_get_id, test_falcon_get_id, NULL, 0),
 	UNIT_TEST(falcon_reset, test_falcon_reset, NULL, 0),
-	UNIT_TEST(falcon_mem_scrub, test_falcon_mem_scrub, NULL, 0),
+	UNIT_TEST(falcon_mem_scrub, test_falcon_mem_scrub, NULL, 2),
 	UNIT_TEST(falcon_idle, test_falcon_idle, NULL, 0),
 	UNIT_TEST(falcon_halt, test_falcon_halt, NULL, 0),
 	UNIT_TEST(falcon_mem_rw_init, test_falcon_mem_rw_init, NULL, 0),
@@ -1370,7 +1370,7 @@ struct unit_module_test falcon_tests[] = {
 	UNIT_TEST(falcon_mem_rw_aligned, test_falcon_mem_rw_aligned, NULL, 0),
 	UNIT_TEST(falcon_mem_rw_zero, test_falcon_mem_rw_zero, NULL, 0),
 	UNIT_TEST(falcon_mailbox, test_falcon_mailbox, NULL, 0),
-	UNIT_TEST(falcon_bootstrap, test_falcon_bootstrap, NULL, 0),
+	UNIT_TEST(falcon_bootstrap, test_falcon_bootstrap, NULL, 2),
 	UNIT_TEST(falcon_irq, test_falcon_irq, NULL, 0),
 
 	/* Cleanup */

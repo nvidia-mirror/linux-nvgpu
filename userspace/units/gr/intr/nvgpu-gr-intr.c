@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1266,12 +1266,12 @@ int test_gr_intr_fecs_exceptions(struct unit_module *m,
 }
 
 struct unit_module_test nvgpu_gr_intr_tests[] = {
-	UNIT_TEST(gr_intr_setup, test_gr_init_setup_ready, NULL, 0),
-	UNIT_TEST(gr_intr_channel_free, test_gr_intr_without_channel, NULL, 0),
-	UNIT_TEST(gr_intr_sw_method, test_gr_intr_sw_exceptions, NULL, 0),
-	UNIT_TEST(gr_intr_fecs_exceptions, test_gr_intr_fecs_exceptions, NULL, 0),
-	UNIT_TEST(gr_intr_gpc_exceptions, test_gr_intr_gpc_exceptions, NULL, 0),
-	UNIT_TEST(gr_intr_with_channel, test_gr_intr_setup_channel, NULL, 0),
+	UNIT_TEST(gr_intr_setup, test_gr_init_setup_ready, NULL, 2),
+	UNIT_TEST(gr_intr_channel_free, test_gr_intr_without_channel, NULL, 2),
+	UNIT_TEST(gr_intr_sw_method, test_gr_intr_sw_exceptions, NULL, 2),
+	UNIT_TEST(gr_intr_fecs_exceptions, test_gr_intr_fecs_exceptions, NULL, 2),
+	UNIT_TEST(gr_intr_gpc_exceptions, test_gr_intr_gpc_exceptions, NULL, 2),
+	UNIT_TEST(gr_intr_with_channel, test_gr_intr_setup_channel, NULL, 2),
 	UNIT_TEST(gr_intr_cleanup, test_gr_init_setup_cleanup, NULL, 0),
 };
 

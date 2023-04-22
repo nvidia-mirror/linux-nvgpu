@@ -847,10 +847,10 @@ struct unit_module_test nvgpu_ltc_tests[] = {
 	UNIT_TEST(ltc_init_support, test_ltc_init_support, NULL, 0),
 	UNIT_TEST(ltc_ecc_init_free, test_ltc_ecc_init_free, NULL, 0),
 	UNIT_TEST(ltc_functionality_tests, test_ltc_functionality_tests,
-								NULL, 0),
+								NULL, 2),
 	UNIT_TEST(ltc_intr, test_ltc_intr, NULL, 0),
-	UNIT_TEST(ltc_intr_bvec, test_ltc_intr_bvec, NULL, 0),
-	UNIT_TEST(ltc_intr_configure, test_ltc_intr_configure, NULL, 0),
+	UNIT_TEST(ltc_intr_bvec, test_ltc_intr_bvec, NULL, 2),
+	UNIT_TEST(ltc_intr_configure, test_ltc_intr_configure, NULL, 2),
 	UNIT_TEST(ltc_determine_L2_size, test_determine_L2_size_bytes, NULL, 0),
 #ifdef CONFIG_NVGPU_NON_FUSA
 	UNIT_TEST(ltc_intr_en_illegal_compstat,

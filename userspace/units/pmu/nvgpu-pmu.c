@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -744,8 +744,8 @@ struct unit_module_test nvgpu_pmu_tests[] = {
 	UNIT_TEST(pmu_early_init, test_pmu_early_init, NULL, 0),
 	UNIT_TEST(pmu_supported, test_is_pmu_supported, NULL, 0),
 	UNIT_TEST(pmu_remove_support, test_pmu_remove_support, NULL, 0),
-	UNIT_TEST(pmu_reset, test_pmu_reset, NULL, 0),
-	UNIT_TEST(pmu_isr, test_pmu_isr, NULL, 0),
+	UNIT_TEST(pmu_reset, test_pmu_reset, NULL, 2),
+	UNIT_TEST(pmu_isr, test_pmu_isr, NULL, 2),
 
 	UNIT_TEST(falcon_free_test_env, free_falcon_test_env, NULL, 0),
 };

@@ -426,7 +426,7 @@ int test_gr_obj_ctx_error_injection(struct unit_module *m,
 }
 
 struct unit_module_test nvgpu_gr_obj_ctx_tests[] = {
-	UNIT_TEST(gr_obj_ctx_setup, test_gr_init_setup_ready, NULL, 0),
+	UNIT_TEST(gr_obj_ctx_setup, test_gr_init_setup_ready, NULL, 2),
 	UNIT_TEST(gr_obj_ctx_alloc_errors, test_gr_obj_ctx_error_injection, NULL, 2),
 	UNIT_TEST(gr_obj_ctx_cleanup, test_gr_init_setup_cleanup, NULL, 0),
 };

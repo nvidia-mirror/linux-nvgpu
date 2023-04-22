@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -2407,7 +2407,7 @@ struct unit_module_test vm_tests[] = {
 		      test_map_buf,
 		      NULL,
 		      0),
-	UNIT_TEST(init_error_paths, test_init_error_paths, NULL, 0),
+	UNIT_TEST(init_error_paths, test_init_error_paths, NULL, 2),
 	UNIT_TEST(map_buffer_error_cases, test_map_buffer_error_cases, NULL, 0),
 	UNIT_TEST(map_buffer_security, test_map_buffer_security, NULL, 0),
 	UNIT_TEST(map_buffer_security_error_cases, test_map_buffer_security_error_cases, NULL, 0),

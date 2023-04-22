@@ -1050,14 +1050,14 @@ static int free_falcon_test_env(struct unit_module *m, struct gk20a *g,
 struct unit_module_test nvgpu_acr_tests[] = {
 	UNIT_TEST(acr_init, test_acr_init, NULL, 0),
 #if defined(__QNX__)
-	UNIT_TEST(acr_prepare_ucode_blob, test_acr_prepare_ucode_blob, NULL, 0),
+	UNIT_TEST(acr_prepare_ucode_blob, test_acr_prepare_ucode_blob, NULL, 2),
 	UNIT_TEST(acr_is_lsf_lazy_bootstrap,
 				test_acr_is_lsf_lazy_bootstrap, NULL, 0),
 	UNIT_TEST(acr_construct_execute, test_acr_construct_execute,
-			NULL, 0),
+			NULL, 2),
 
 	UNIT_TEST(acr_bootstrap_hs_acr, test_acr_bootstrap_hs_acr,
-			NULL, 0),
+			NULL, 2),
 #endif
 	UNIT_TEST(acr_free_falcon_test_env, free_falcon_test_env, NULL, 0),
 

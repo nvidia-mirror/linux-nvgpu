@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -89,7 +89,7 @@ int test_gr_fs_state_error_injection(struct unit_module *m,
 }
 
 struct unit_module_test nvgpu_gr_fs_state_tests[] = {
-	UNIT_TEST(gr_fs_state_setup, test_gr_init_setup_ready, NULL, 0),
+	UNIT_TEST(gr_fs_state_setup, test_gr_init_setup_ready, NULL, 2),
 	UNIT_TEST(gr_fs_state_error_injection, test_gr_fs_state_error_injection, NULL, 2),
 	UNIT_TEST(gr_fs_state_cleanup, test_gr_init_setup_cleanup, NULL, 0),
 };
