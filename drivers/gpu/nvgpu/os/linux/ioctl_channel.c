@@ -986,16 +986,6 @@ static int nvgpu_ioctl_channel_alloc_obj_ctx(struct nvgpu_channel *ch,
 {
 	struct gk20a *g = ch->g;
 
-	if (g->ops.gr.setup.init_golden_image != NULL) {
-		int err = g->ops.gr.setup.init_golden_image(g);
-
-		if (err != 0) {
-			nvgpu_err(g, "golden context image init failed (%d).",
-				err);
-			return -ENOSYS;
-		}
-	}
-
 	return g->ops.gr.setup.alloc_obj_ctx(ch, class_num,
 			nvgpu_obj_ctx_user_flags_to_common_flags(user_flags));
 }

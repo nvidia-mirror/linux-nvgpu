@@ -827,11 +827,6 @@ static int nvgpu_gr_obj_ctx_save_golden_ctx(struct gk20a *g,
 		nvgpu_err(g, "golden context mismatch");
 		err = -ENOMEM;
 	}
-
-	/* free temporary copy now */
-	nvgpu_gr_global_ctx_deinit_local_golden_image(g,
-			golden_image->local_golden_image_copy);
-	golden_image->local_golden_image_copy = NULL;
 #endif
 
 clean_up:
@@ -1150,17 +1145,15 @@ int nvgpu_gr_obj_ctx_init_golden_context_image(struct gk20a *g)
 	struct nvgpu_gr_ctx gr_ctx = {};
 	int err = 0;
 
-	err = gk20a_busy(g);
-	if (err != 0) {
-		nvgpu_err(g, "failed to power on, %d", err);
-		return err;
-	}
-
 	nvgpu_mutex_acquire(&golden_image->ctx_mutex);
 
+	/* Reinit golden context image during resume on safety build. This is
+	 * needed to satisfy ctxsw temporal restrictions. */
+#ifdef CONFIG_NVGPU_NON_FUSA
 	if (golden_image->ready) {
 		goto out;
 	}
+#endif
 
 	big_page_size = g->ops.mm.gmmu.get_default_big_page_size();
 
@@ -1218,7 +1211,6 @@ free_vm:
 	nvgpu_vm_put(vm);
 out:
 	nvgpu_mutex_release(&golden_image->ctx_mutex);
-	gk20a_idle(g);
 	return err;
 }
 
@@ -1460,6 +1452,14 @@ void nvgpu_gr_obj_ctx_deinit(struct gk20a *g,
 			golden_image->local_golden_image);
 		golden_image->local_golden_image = NULL;
 	}
+
+#ifdef CONFIG_NVGPU_GR_GOLDEN_CTX_VERIFICATION
+	if (golden_image->local_golden_image_copy != NULL) {
+		nvgpu_gr_global_ctx_deinit_local_golden_image(g,
+			golden_image->local_golden_image_copy);
+		golden_image->local_golden_image_copy = NULL;
+	}
+#endif
 #ifdef CONFIG_NVGPU_POWER_PG
 	nvgpu_pmu_set_golden_image_initialized(g, GOLDEN_IMG_NOT_READY);
 #endif

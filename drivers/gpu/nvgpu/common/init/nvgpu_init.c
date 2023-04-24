@@ -1048,7 +1048,9 @@ int nvgpu_finalize_poweron(struct gk20a *g)
 				NVGPU_SUPPORT_GSP_STEST),
 #endif
 #endif
-	NVGPU_INIT_TABLE_ENTRY(nvgpu_nvs_init, NO_FLAG),
+		NVGPU_INIT_TABLE_ENTRY(nvgpu_nvs_init, NO_FLAG),
+		/* Initialize the golden context image. */
+		NVGPU_INIT_TABLE_ENTRY(g->ops.gr.setup.init_golden_image, NO_FLAG),
 	};
 	size_t i;
 

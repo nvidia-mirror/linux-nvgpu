@@ -52,6 +52,9 @@
 #include <nvgpu/grmgr.h>
 
 #include "gr_priv.h"
+#ifndef CONFIG_NVGPU_NON_FUSA
+#include "gr/obj_ctx_priv.h"
+#endif
 
 static int gr_alloc_global_ctx_buffers(struct gk20a *g, struct nvgpu_gr *gr)
 {
@@ -201,6 +204,10 @@ static void disable_gr_interrupts(struct gk20a *g)
 
 int nvgpu_gr_suspend(struct gk20a *g)
 {
+#ifndef CONFIG_NVGPU_NON_FUSA
+	struct nvgpu_gr_obj_ctx_golden_image *golden_image =
+		nvgpu_gr_get_golden_image_ptr(g);
+#endif
 	int ret = 0;
 
 	nvgpu_log_fn(g, " ");
@@ -221,7 +228,9 @@ int nvgpu_gr_suspend(struct gk20a *g)
 	nvgpu_gr_falcon_suspend(g, nvgpu_gr_get_falcon_ptr(g));
 
 	g->gr->initialized = false;
-
+#ifndef CONFIG_NVGPU_NON_FUSA
+	golden_image->ready = false;
+#endif
 	nvgpu_log_fn(g, "done");
 	return ret;
 }
