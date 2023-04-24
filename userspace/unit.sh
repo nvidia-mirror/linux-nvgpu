@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright (c) 2019, NVIDIA CORPORATION.  All Rights Reserved.
+# Copyright (c) 2019-2023, NVIDIA CORPORATION.  All Rights Reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -31,18 +31,48 @@ options=$(getopt -o t: --long test-level: -- "$@")
 this_script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" > /dev/null && pwd )"
 pushd $this_script_dir
 
-FIRMWARES=("/gpu-firmware-private/t19x/gr/net/safety/NETD_img.bin"
-	"/gpu-firmware-private/t19x/gr/net/safety/fecs_sig.bin"
-	"/gpu-firmware-private/t19x/gr/net/safety/gpccs_sig.bin"
-	"/gpu-firmware-private/t19x/gr/fecs/safety/fecs.bin"
-	"/gpu-firmware-private/t19x/gr/gpccs/safety/gpccs.bin"
-	"/gpu-firmware-private/t19x/gr/pmu/safety/acr_ucode_prod.bin"
-	"/gpu-firmware-private/t19x/gr/pmu/safety/acr_ucode_dbg.bin")
+tegra_platform=`cat /proc/device-tree/model`
 
-FIRMWARE_TARGET_PATH="/lib/firmware/gv11b/"
+if [ -d /sys/devices/platform/17000000.ga10b ] && [ "$tegra_platform" != "t234pre_si" ];
+then
+	FIRMWARES=("/gpu-firmware-private/t23x/gr/net/fecs_pkc_sig_encrypt.bin"
+		"/gpu-firmwa0re-private/t23x/gr/net/gpccs_pkc_sig_encrypt.bin"
+		"/gpu-firmware-private/t23x/gr/fecs/fecs_encrypt_dbg.bin"
+		"/gpu-firmware-private/t23x/gr/fecs/fecs_encrypt_prod.bin"
+		"/gpu-firmware-private/t23x/gr/gpccs/gpccs_encrypt_dbg.bin"
+		"/gpu-firmware-private/t23x/gr/gpccs/gpccs_encrypt_prod.bin"
+		"/gpu-firmware-private/t23x/gr/net/NETC_img_debug_encrypted.bin"
+		"/gpu-firmware-private/t23x/gr/net/NETC_img_prod_encrypted.bin"
+		"/gpu-firmware-private/t23x/gr/gsp/riscv/acr-gsp.data.encrypt.bin"
+		"/gpu-firmware-private/t23x/gr/gsp/riscv/acr-gsp.manifest.encrypt.bin.out.bin"
+		"/gpu-firmware-private/t23x/gr/gsp/riscv/acr-gsp.text.encrypt.bin"
+		"/gpu-firmware-private/t23x/gr/gsp/riscv/acr-gsp.data.encrypt.bin.prod"
+		"/gpu-firmware-private/t23x/gr/gsp/riscv/acr-gsp.manifest.encrypt.bin.out.bin.prod"
+		"/gpu-firmware-private/t23x/gr/gsp/riscv/acr-gsp.text.encrypt.bin.prod"
+		"/gpu-firmware-private/t23x/gr/gsp/riscv/safety-scheduler.data.encrypt.bin"
+		"/gpu-firmware-private/t23x/gr/gsp/riscv/safety-scheduler.manifest.encrypt.bin.out.bin"
+		"/gpu-firmware-private/t23x/gr/gsp/riscv/safety-scheduler.text.encrypt.bin"
+		"/gpu-firmware-private/t23x/gr/gsp/riscv/safety-scheduler.data.encrypt.bin.prod"
+		"/gpu-firmware-private/t23x/gr/gsp/riscv/safety-scheduler.manifest.encrypt.bin.out.bin.prod"
+		"/gpu-firmware-private/t23x/gr/gsp/riscv/safety-scheduler.text.encrypt.bin.prod")
 
-CUR_DIR=`pwd`
-DEST_DIR=${CUR_DIR}/firmware/gv11b/
+	FIRMWARE_TARGET_PATH="/lib/firmware/ga10b/"
+	CUR_DIR=`pwd`
+	DEST_DIR=${CUR_DIR}/firmware/ga10b/
+else
+	FIRMWARES=("/gpu-firmware-private/t23x/gr/net/NETC_img.bin"
+		"/gpu-firmware-private/t23x/gr/net/fecs_sig.bin"
+		"/gpu-firmware-private/t23x/gr/net/gpccs_sig.bin"
+		"/gpu-firmware-private/t23x/gr/fecs/fecs.bin"
+		"/gpu-firmware-private/t23x/gr/gpccs/gpccs.bin"
+		"/gpu-firmware-private/t23x/gr/pmu/acr_ucode_prod.bin"
+		"/gpu-firmware-private/t23x/gr/pmu/acr_ucode_dbg.bin")
+
+	FIRMWARE_TARGET_PATH="/lib/firmware/gv11b/"
+	CUR_DIR=`pwd`
+	DEST_DIR=${CUR_DIR}/firmware/gv11b/
+fi
+
 mkdir -p ${DEST_DIR}
 
 if [ -f nvgpu_unit ]; then
@@ -58,6 +88,17 @@ if [ -f nvgpu_unit ]; then
         # target, so use that dir structure
         LD_LIBRARY_PATH=".:units/igpu"
         cores=$(cat /proc/cpuinfo |grep processor |wc -l)
+
+	if [ -d /sys/devices/platform/17000000.ga10b ] && [ "$tegra_platform" != "t234pre_si" ];
+	then
+		rm -rf units/igpu/libnvgpu-fifo*
+		rm -rf units/igpu/libnvgpu-gr-falcon.so
+		rm -rf units/igpu/libnvgpu-gr-intr.so
+		rm -rf units/igpu/libnvgpu-gr-init.so
+		rm -rf units/igpu/libmc.so
+		rm -rf units/igpu/libnvgpu-gr-config.so
+		rm -rf units/igpu/libnvgpu-gr-setup.so
+	fi
 
 	# Ignore number of cores for now; it seems that the parallel unit
 	# tests are just too buggy and that they really don't save much

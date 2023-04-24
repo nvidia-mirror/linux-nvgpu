@@ -158,11 +158,16 @@ static void nvgpu_posix_load_regs(struct gk20a *g)
 	int err;
 	struct nvgpu_mock_iospace space;
 	struct nvgpu_posix_io_reg_space *regs;
+	FILE *tegra_name;
 
 	char chip[24];
 
 	memset(chip, 0, sizeof(chip));
-	FILE *tegra_name = popen("uname -m", "r");
+#if defined(__QNX__)
+	tegra_name = popen("uname -m", "r");
+#else
+	tegra_name = popen("cat /proc/device-tree/compatible | cut -d',' -f 5", "r");
+#endif
 
 	while (fgets(chip, sizeof(chip), tegra_name) != NULL) {
 		chip[strcspn(chip, "\n")] = '\0';
@@ -170,7 +175,7 @@ static void nvgpu_posix_load_regs(struct gk20a *g)
 	pclose(tegra_name);
 
 	for (i = 0; i < MOCK_REGS_LAST; i++) {
-		if (strcmp(chip, "ARMv8_nVidia-Orin") == 0) {
+		if ((strcmp(chip, "ARMv8_nVidia-Orin") == 0) || (strcmp(chip, "tegra23x") == 0)) {
 			err = nvgpu_get_mock_reglist_ga10b(g, i, &space);
 		} else {
 			err = nvgpu_get_mock_reglist_gv11b(g, i, &space);
