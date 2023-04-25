@@ -1516,8 +1516,12 @@ void nvgpu_remove_sysfs(struct device *dev)
 	device_remove_file(dev, &dev_attr_force_idle);
 	device_remove_file(dev, &dev_attr_railgate_enable);
 #endif
-	device_remove_file(dev, &dev_attr_allow_all);
 	device_remove_file(dev, &dev_attr_golden_img_status);
+#ifdef CONFIG_NVGPU_DEBUGGER
+	if (g->support_gpu_tools) {
+		device_remove_file(dev, &dev_attr_allow_all);
+	}
+#endif
 	device_remove_file(dev, &dev_attr_tpc_fs_mask);
 	device_remove_file(dev, &dev_attr_tpc_pg_mask);
 	device_remove_file(dev, &dev_attr_gpc_fs_mask);
@@ -1593,8 +1597,12 @@ int nvgpu_create_sysfs(struct device *dev)
 	error |= device_create_file(dev, &dev_attr_force_idle);
 	error |= device_create_file(dev, &dev_attr_railgate_enable);
 #endif
-	error |= device_create_file(dev, &dev_attr_allow_all);
 	error |= device_create_file(dev, &dev_attr_golden_img_status);
+#ifdef CONFIG_NVGPU_DEBUGGER
+	if (g->support_gpu_tools) {
+		error |= device_create_file(dev, &dev_attr_allow_all);
+	}
+#endif
 	error |= device_create_file(dev, &dev_attr_tpc_fs_mask);
 	error |= device_create_file(dev, &dev_attr_tpc_pg_mask);
 	error |= device_create_file(dev, &dev_attr_gpc_fs_mask);
