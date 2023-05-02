@@ -399,6 +399,8 @@ static long gk20a_ctrl_ioctl_gpu_characteristics(
 	gpu.device_instance_id = priv->device_instance_id;
 #endif
 
+	gpu.numa_domain_id = dev_to_node(dev_from_gk20a(g));
+
 	gpu.L2_cache_size = g->ops.ltc.determine_L2_size_bytes(g);
 	gpu.on_board_video_memory_size = 0; /* integrated GPU */
 

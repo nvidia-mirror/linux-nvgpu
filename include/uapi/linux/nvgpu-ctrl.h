@@ -220,6 +220,13 @@ struct nvgpu_gpu_characteristics {
 	__u32 rev;
 	__u32 num_gpc;
 
+	/*
+	 * Specifies the NUMA domain for the GPU device
+	 * A value of "-1" specifies no NUMA domain info.
+	 */
+#define NVGPU_GPU_CHARACTERISTICS_NO_NUMA_INFO (-1)
+	__s32 numa_domain_id;
+
 	__u64 L2_cache_size;               /* bytes */
 	__u64 on_board_video_memory_size;  /* bytes */
 
