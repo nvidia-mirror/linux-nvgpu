@@ -479,6 +479,16 @@ struct gops_pmu {
 	u32 (*get_exterrstat)(struct gk20a *g);
 	void (*set_exterrstat)(struct gk20a *g, u32 intr);
 	u32 (*get_exterraddr)(struct gk20a *g);
+	u32 (*get_bar0_addr)(struct gk20a *g);
+	u32 (*get_bar0_data)(struct gk20a *g);
+	u32 (*get_bar0_timeout)(struct gk20a *g);
+	u32 (*get_bar0_ctl)(struct gk20a *g);
+	u32 (*get_bar0_error_status)(struct gk20a *g);
+	void (*set_bar0_error_status)(struct gk20a *g, u32 val);
+	u32 (*get_bar0_fecs_error)(struct gk20a *g);
+	void (*set_bar0_fecs_error)(struct gk20a *g, u32 val);
+	u32 (*get_mailbox)(struct gk20a *g, u32 i);
+	u32 (*get_pmu_debug)(struct gk20a *g, u32 i);
 
 #ifdef CONFIG_NVGPU_LS_PMU
 	u32 (*get_inst_block_config)(struct gk20a *g);

@@ -40,6 +40,16 @@ void gk20a_pmu_set_irqsset(struct gk20a *g, u32 intr);
 u32 gk20a_pmu_get_exterrstat(struct gk20a *g);
 void gk20a_pmu_set_exterrstat(struct gk20a *g, u32 intr);
 u32 gk20a_pmu_get_exterraddr(struct gk20a *g);
+u32 gk20a_pmu_get_bar0_addr(struct gk20a *g);
+u32 gk20a_pmu_get_bar0_data(struct gk20a *g);
+u32 gk20a_pmu_get_bar0_timeout(struct gk20a *g);
+u32 gk20a_pmu_get_bar0_ctl(struct gk20a *g);
+u32 gk20a_pmu_get_bar0_error_status(struct gk20a *g);
+void gk20a_pmu_set_bar0_error_status(struct gk20a *g, u32 val);
+u32 gk20a_pmu_get_bar0_fecs_error(struct gk20a *g);
+void gk20a_pmu_set_bar0_fecs_error(struct gk20a *g, u32 val);
+u32 gk20a_pmu_get_mailbox(struct gk20a *g, u32 i);
+u32 gk20a_pmu_get_pmu_debug(struct gk20a *g, u32 i);
 
 #ifdef CONFIG_NVGPU_LS_PMU
 void gk20a_pmu_dump_falcon_stats(struct nvgpu_pmu *pmu);

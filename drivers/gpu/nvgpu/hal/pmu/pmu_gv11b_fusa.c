@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -88,7 +88,7 @@ int gv11b_pmu_bar0_error_status(struct gk20a *g, u32 *bar0_status,
 	u32 err_status = 0;
 	u32 err_cmd = 0;
 
-	val = nvgpu_readl(g, pwr_pmu_bar0_error_status_r());
+	val = g->ops.pmu.get_bar0_error_status(g);
 	*bar0_status = val;
 	if (val == 0U) {
 		return 0;
@@ -104,14 +104,14 @@ int gv11b_pmu_bar0_error_status(struct gk20a *g, u32 *bar0_status,
 		*etype = pmu_bar0_cmd_hwerr_etype(err_cmd);
 	} else if ((val & pwr_pmu_bar0_error_status_fecserr_m()) != 0U) {
 		*etype = pmu_bar0_fecserr_etype(err_cmd);
-		err_status = nvgpu_readl(g, pwr_pmu_bar0_fecs_error_r());
+		err_status = g->ops.pmu.get_bar0_fecs_error(g);
 		/*
 		 * BAR0_FECS_ERROR would only record the first error code if
 		 * multiple FECS error happen. Once BAR0_FECS_ERROR is cleared,
 		 * BAR0_FECS_ERROR can record the error code from FECS again.
 		 * Writing status regiter to clear the FECS Hardware state.
 		 */
-		nvgpu_writel(g, pwr_pmu_bar0_fecs_error_r(), err_status);
+		g->ops.pmu.set_bar0_fecs_error(g, err_status);
 	} else if ((val & pwr_pmu_bar0_error_status_hosterr_m()) != 0U) {
 		*etype = pmu_bar0_hosterr_etype(err_cmd);
 		/*
@@ -131,7 +131,7 @@ int gv11b_pmu_bar0_error_status(struct gk20a *g, u32 *bar0_status,
 	}
 
 	/* Writing Bar0 status regiter to clear the Hardware state */
-	nvgpu_writel(g, pwr_pmu_bar0_error_status_r(), val);
+	g->ops.pmu.set_bar0_error_status(g, val);
 	return (-EIO);
 }
 

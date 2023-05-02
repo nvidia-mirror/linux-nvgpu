@@ -68,6 +68,56 @@ u32 gk20a_pmu_get_exterraddr(struct gk20a *g)
 	return nvgpu_readl(g, pwr_falcon_exterraddr_r());
 }
 
+u32 gk20a_pmu_get_bar0_addr(struct gk20a *g)
+{
+	return nvgpu_readl(g, pwr_pmu_bar0_addr_r());
+}
+
+u32 gk20a_pmu_get_bar0_data(struct gk20a *g)
+{
+	return nvgpu_readl(g, pwr_pmu_bar0_data_r());
+}
+
+u32 gk20a_pmu_get_bar0_timeout(struct gk20a *g)
+{
+	return nvgpu_readl(g, pwr_pmu_bar0_timeout_r());
+}
+
+u32 gk20a_pmu_get_bar0_ctl(struct gk20a *g)
+{
+	return nvgpu_readl(g, pwr_pmu_bar0_ctl_r());
+}
+
+u32 gk20a_pmu_get_bar0_error_status(struct gk20a *g)
+{
+	return nvgpu_readl(g, pwr_pmu_bar0_error_status_r());
+}
+
+void gk20a_pmu_set_bar0_error_status(struct gk20a *g, u32 val)
+{
+	return nvgpu_writel(g, pwr_pmu_bar0_error_status_r(), val);
+}
+
+u32 gk20a_pmu_get_bar0_fecs_error(struct gk20a *g)
+{
+	return nvgpu_readl(g, pwr_pmu_bar0_fecs_error_r());
+}
+
+void gk20a_pmu_set_bar0_fecs_error(struct gk20a *g, u32 val)
+{
+	return nvgpu_writel(g, pwr_pmu_bar0_fecs_error_r(), val);
+}
+
+u32 gk20a_pmu_get_mailbox(struct gk20a *g, u32 i)
+{
+	return nvgpu_readl(g, pwr_pmu_mailbox_r(i));
+}
+
+u32 gk20a_pmu_get_pmu_debug(struct gk20a *g, u32 i)
+{
+	return nvgpu_readl(g, pwr_pmu_debug_r(i));
+}
+
 void gk20a_pmu_isr(struct gk20a *g)
 {
 	struct nvgpu_pmu *pmu = g->pmu;

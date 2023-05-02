@@ -43,28 +43,28 @@ void gk20a_pmu_dump_falcon_stats(struct nvgpu_pmu *pmu)
 
 	for (i = 0; i < pwr_pmu_mailbox__size_1_v(); i++) {
 		nvgpu_err(g, "pwr_pmu_mailbox_r(%d) : 0x%x",
-			i, gk20a_readl(g, pwr_pmu_mailbox_r(i)));
+			i, g->ops.pmu.get_mailbox(g, i));
 	}
 
 	for (i = 0; i < pwr_pmu_debug__size_1_v(); i++) {
 		nvgpu_err(g, "pwr_pmu_debug_r(%d) : 0x%x",
-			i, gk20a_readl(g, pwr_pmu_debug_r(i)));
+			i, g->ops.pmu.get_pmu_debug(g, i));
 	}
 
-	i = gk20a_readl(g, pwr_pmu_bar0_error_status_r());
+	i = g->ops.pmu.get_bar0_error_status(g);
 	nvgpu_err(g, "pwr_pmu_bar0_error_status_r : 0x%x", i);
 	if (i != 0U) {
 		nvgpu_err(g, "pwr_pmu_bar0_addr_r : 0x%x",
-			gk20a_readl(g, pwr_pmu_bar0_addr_r()));
+			g->ops.pmu.get_bar0_addr(g));
 		nvgpu_err(g, "pwr_pmu_bar0_data_r : 0x%x",
-			gk20a_readl(g, pwr_pmu_bar0_data_r()));
+			g->ops.pmu.get_bar0_data(g));
 		nvgpu_err(g, "pwr_pmu_bar0_timeout_r : 0x%x",
-			gk20a_readl(g, pwr_pmu_bar0_timeout_r()));
+			g->ops.pmu.get_bar0_timeout(g));
 		nvgpu_err(g, "pwr_pmu_bar0_ctl_r : 0x%x",
-			gk20a_readl(g, pwr_pmu_bar0_ctl_r()));
+			g->ops.pmu.get_bar0_ctl(g));
 	}
 
-	i = gk20a_readl(g, pwr_pmu_bar0_fecs_error_r());
+	i = g->ops.pmu.get_bar0_fecs_error(g);
 	nvgpu_err(g, "pwr_pmu_bar0_fecs_error_r : 0x%x", i);
 
 	i = g->ops.pmu.get_exterrstat(g);
@@ -502,7 +502,7 @@ void gk20a_pmu_handle_interrupts(struct gk20a *g, u32 intr)
 	if ((intr & pwr_falcon_irqstat_halt_true_f()) != 0U) {
 		nvgpu_err(g, "pmu halt intr not implemented");
 		nvgpu_pmu_dump_falcon_stats(pmu);
-		if (nvgpu_readl(g, pwr_pmu_mailbox_r
+		if (g->ops.pmu.get_mailbox(g,
 				(PMU_MODE_MISMATCH_STATUS_MAILBOX_R)) ==
 				PMU_MODE_MISMATCH_STATUS_VAL) {
 			if (g->ops.pmu.dump_secure_fuses != NULL) {
@@ -576,7 +576,7 @@ int gk20a_pmu_bar0_error_status(struct gk20a *g, u32 *bar0_status,
 	u32 err_status = 0;
 	u32 err_cmd = 0;
 
-	val = gk20a_readl(g, pwr_pmu_bar0_error_status_r());
+	val = g->ops.pmu.get_bar0_error_status(g);
 	*bar0_status = val;
 	if (val == 0U) {
 		return 0;
@@ -592,14 +592,14 @@ int gk20a_pmu_bar0_error_status(struct gk20a *g, u32 *bar0_status,
 		*etype = pmu_bar0_cmd_hwerr_etype(err_cmd);
 	} else if ((val & pwr_pmu_bar0_error_status_fecserr_m()) != 0U) {
 		*etype = pmu_bar0_fecserr_etype(err_cmd);
-		err_status = gk20a_readl(g, pwr_pmu_bar0_fecs_error_r());
+		err_status = g->ops.pmu.get_bar0_fecs_error(g);
 		/*
 		 * BAR0_FECS_ERROR would only record the first error code if
 		 * multiple FECS error happen. Once BAR0_FECS_ERROR is cleared,
 		 * BAR0_FECS_ERROR can record the error code from FECS again.
 		 * Writing status regiter to clear the FECS Hardware state.
 		 */
-		gk20a_writel(g, pwr_pmu_bar0_fecs_error_r(), err_status);
+		g->ops.pmu.set_bar0_fecs_error(g, err_status);
 	} else if ((val & pwr_pmu_bar0_error_status_hosterr_m()) != 0U) {
 		*etype = pmu_bar0_hosterr_etype(err_cmd);
 		/*
@@ -619,7 +619,7 @@ int gk20a_pmu_bar0_error_status(struct gk20a *g, u32 *bar0_status,
 	}
 
 	/* Writing Bar0 status regiter to clear the Hardware state */
-	gk20a_writel(g, pwr_pmu_bar0_error_status_r(), val);
+	g->ops.pmu.set_bar0_error_status(g, val);
 	return (-EIO);
 }
 
