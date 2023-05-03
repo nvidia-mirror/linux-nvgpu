@@ -233,6 +233,8 @@ struct gk20a;
 			"Multi process TSG sharing support"),		\
 	DEFINE_FLAG(NVGPU_SUPPORT_MULTIMEDIA,				\
 			"Multimedia engine support"),			\
+	DEFINE_FLAG(NVGPU_SUPPORT_SEMA_BASED_GPFIFO_GET,		\
+			"Semaphore based gpfifo get update support"),	\
 	DEFINE_FLAG(NVGPU_MAX_ENABLED_BITS, "Marks max number of flags"),
 
 /**
