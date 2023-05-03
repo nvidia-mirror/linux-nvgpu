@@ -340,7 +340,8 @@ static int nvgpu_init_sema_pool(struct vm_gk20a *vm)
 	/*
 	 * Don't waste the memory on semaphores if we don't need them.
 	 */
-	if (nvgpu_has_syncpoints(g)) {
+	if (nvgpu_has_syncpoints(g) &&
+		!nvgpu_is_enabled(g, NVGPU_SUPPORT_SEMA_BASED_GPFIFO_GET)) {
 		return 0;
 	}
 
@@ -927,7 +928,8 @@ static void nvgpu_vm_remove(struct vm_gk20a *vm)
 	 * pool involves unmapping a GMMU mapping which means aquiring the
 	 * update_gmmu_lock.
 	 */
-	if (!nvgpu_has_syncpoints(g)) {
+	if (!nvgpu_has_syncpoints(g) ||
+		nvgpu_is_enabled(g, NVGPU_SUPPORT_SEMA_BASED_GPFIFO_GET)) {
 		if (vm->sema_pool != NULL) {
 			nvgpu_semaphore_pool_unmap(vm->sema_pool, vm);
 			nvgpu_semaphore_pool_put(vm->sema_pool);
