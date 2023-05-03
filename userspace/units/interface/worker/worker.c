@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -346,8 +346,8 @@ int test_deinit(struct unit_module *m, struct gk20a *g, void *args)
 
 struct unit_module_test worker_tests[] = {
 	UNIT_TEST(init,		test_init,				NULL, 0),
-	UNIT_TEST(enqueue,	test_enqueue,				NULL, 1),
-	UNIT_TEST(branches,	test_branches,				NULL, 0),
+	UNIT_TEST(enqueue,	test_enqueue,				NULL, 2),
+	UNIT_TEST(branches,	test_branches,				NULL, 2),
 	UNIT_TEST(deinit,	test_deinit,				NULL, 0),
 };
 
