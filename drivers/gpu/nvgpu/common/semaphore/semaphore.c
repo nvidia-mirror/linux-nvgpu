@@ -1,7 +1,7 @@
 /*
  * Nvgpu Semaphores
  *
- * Copyright (c) 2014-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -168,8 +168,29 @@ void nvgpu_semaphore_prepare(struct nvgpu_semaphore *s,
 			     hw_sema->chid, next);
 }
 
+void nvgpu_semaphore_prepare_for_gpfifo_get(struct nvgpu_channel *c,
+		struct nvgpu_semaphore *s, struct nvgpu_hw_semaphore *hw_sema,
+		u32 new_entries)
+{
+	u32 next_get;
+
+	nvgpu_mutex_acquire(&c->gpfifo_hw_sema_lock);
+	next_get = nvgpu_safe_add_u32((u32)nvgpu_hw_semaphore_read_next(hw_sema),
+			new_entries) & nvgpu_safe_sub_u32(c->gpfifo.entry_num,
+			1U);
+	nvgpu_atomic_set(&hw_sema->next_value, (s32)next_get);
+	nvgpu_mutex_release(&c->gpfifo_hw_sema_lock);
+
+	WARN_ON(s->ready_to_wait);
+
+	nvgpu_atomic_set(&s->value, (s32)next_get);
+	s->ready_to_wait = true;
+
+	gpu_sema_verbose_dbg(s->g, "PREP sema for c=%d (%u)",
+				hw_sema->chid, next_get);
+}
+
 u64 nvgpu_semaphore_get_hw_pool_page_idx(struct nvgpu_semaphore *s)
 {
 	return nvgpu_semaphore_pool_get_page_idx(s->location.pool);
 }
-

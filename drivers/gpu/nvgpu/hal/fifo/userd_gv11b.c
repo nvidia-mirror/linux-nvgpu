@@ -28,6 +28,7 @@
 #include <nvgpu/channel.h>
 
 #include <nvgpu/hw/gv11b/hw_ram_gv11b.h>
+#include <nvgpu/channel_sync_semaphore.h>
 
 #include "userd_gv11b.h"
 
@@ -35,8 +36,20 @@ u32 gv11b_userd_gp_get(struct gk20a *g, struct nvgpu_channel *ch)
 {
 	struct nvgpu_mem *mem = ch->userd_mem;
 	u32 offset = ch->userd_offset / U32(sizeof(u32));
+	u32 ret;
 
-	return nvgpu_mem_rd32(g, mem, offset + ram_userd_gp_get_w());
+	/*
+	 * NVGPU_SUPPORT_SEMA_BASED_GPFIFO_GET is enabled when userd get
+	 * is not getting updated by gpu anymore.
+	 */
+	if (nvgpu_is_enabled(g, (u32)NVGPU_SUPPORT_SEMA_BASED_GPFIFO_GET)) {
+		nvgpu_channel_update_gpfifo_get(ch);
+		ret = ch->gpfifo.get;
+	} else {
+		ret = nvgpu_mem_rd32(g, mem, offset + ram_userd_gp_get_w());
+	}
+
+	return ret;
 }
 
 u64 gv11b_userd_pb_get(struct gk20a *g, struct nvgpu_channel *ch)

@@ -251,6 +251,10 @@ static void channel_kernelmode_deinit(struct nvgpu_channel *ch)
 		nvgpu_channel_sync_destroy(ch->sync);
 		ch->sync = NULL;
 	}
+	if (ch->gpfifo_sync != NULL) {
+		nvgpu_channel_sync_destroy(ch->gpfifo_sync);
+		ch->gpfifo_sync = NULL;
+	}
 	nvgpu_mutex_release(&ch->sync_lock);
 }
 
@@ -370,6 +374,18 @@ static int channel_setup_kernelmode(struct nvgpu_channel *c,
 			nvgpu_mutex_release(&c->sync_lock);
 			goto clean_up_unmap;
 		}
+
+		if (nvgpu_is_enabled(g, NVGPU_SUPPORT_SEMA_BASED_GPFIFO_GET)) {
+			c->gpfifo_sync = nvgpu_channel_sync_semaphore_create(c);
+			if (c->gpfifo_sync == NULL) {
+				err = -ENOMEM;
+				goto clean_up_sync;
+			}
+			nvgpu_mutex_acquire(&c->gpfifo_hw_sema_lock);
+			nvgpu_channel_sync_hw_semaphore_init(c->gpfifo_sync);
+			nvgpu_mutex_release(&c->gpfifo_hw_sema_lock);
+		}
+
 		nvgpu_mutex_release(&c->sync_lock);
 
 		if (g->ops.channel.set_syncpt != NULL) {
@@ -431,6 +447,10 @@ clean_up_priv_cmd:
 clean_up_prealloc:
 	nvgpu_channel_joblist_deinit(c);
 clean_up_sync:
+	if (c->gpfifo_sync != NULL) {
+		nvgpu_channel_sync_destroy(c->gpfifo_sync);
+		c->gpfifo_sync = NULL;
+	}
 	if (c->sync != NULL) {
 		nvgpu_channel_sync_destroy(c->sync);
 		c->sync = NULL;
@@ -448,9 +468,9 @@ clean_up:
 }
 
 /* Update with this periodically to determine how the gpfifo is draining. */
-static inline u32 channel_update_gpfifo_get(struct gk20a *g,
-				struct nvgpu_channel *c)
+static inline u32 channel_update_gpfifo_get(struct nvgpu_channel *c)
 {
+	struct gk20a *g = c->g;
 	u32 new_get = 0U;
 
 	if (g->ops.userd.gp_get != NULL) {
@@ -469,7 +489,7 @@ u32 nvgpu_channel_get_gpfifo_free_count(struct nvgpu_channel *ch)
 
 u32 nvgpu_channel_update_gpfifo_get_and_get_free_count(struct nvgpu_channel *ch)
 {
-	(void)channel_update_gpfifo_get(ch->g, ch);
+	(void)channel_update_gpfifo_get(ch);
 	return nvgpu_channel_get_gpfifo_free_count(ch);
 }
 
@@ -514,6 +534,9 @@ static void nvgpu_channel_finalize_job(struct nvgpu_channel *c,
 	 * semaphore or even a syncfd.
 	 */
 	nvgpu_fence_put(&job->post_fence);
+	if (job->gpfifo_sema != NULL) {
+		nvgpu_semaphore_put(job->gpfifo_sema);
+	}
 
 	/*
 	 * Free the private command buffers (in order of allocation)
@@ -522,6 +545,9 @@ static void nvgpu_channel_finalize_job(struct nvgpu_channel *c,
 		nvgpu_priv_cmdbuf_free(c->priv_cmd_q, job->wait_cmd);
 	}
 	nvgpu_priv_cmdbuf_free(c->priv_cmd_q, job->incr_cmd);
+	if (job->gpfifo_incr_cmd != NULL) {
+		nvgpu_priv_cmdbuf_free(c->priv_cmd_q, job->gpfifo_incr_cmd);
+	}
 
 	nvgpu_channel_free_job(c, job);
 
@@ -590,9 +616,22 @@ void nvgpu_channel_clean_up_jobs(struct nvgpu_channel *c)
 
 		WARN_ON(c->sync == NULL);
 
+		if (c->gpfifo_sync != NULL) {
+			if (g->aggressive_sync_destroy_thresh != 0U) {
+				nvgpu_mutex_acquire(&c->sync_lock);
+				if (nvgpu_channel_sync_put_ref_and_check(c->gpfifo_sync)
+					&& g->aggressive_sync_destroy) {
+					nvgpu_channel_sync_destroy(c->gpfifo_sync);
+					c->gpfifo_sync = NULL;
+				}
+				nvgpu_mutex_release(&c->sync_lock);
+			}
+		}
+
 		if (c->sync != NULL) {
 			if (c->has_os_fence_framework_support &&
-			    g->os_channel.os_fence_framework_inst_exists(c)) {
+			    g->os_channel.os_fence_framework_inst_exists(c) &&
+			    !nvgpu_has_syncpoints(g)) {
 				g->os_channel.signal_os_fence_framework(c,
 						&job->post_fence);
 			}
@@ -689,7 +728,7 @@ bool nvgpu_channel_update_and_check_ctxsw_timeout(struct nvgpu_channel *ch,
 		goto done;
 	}
 
-	gpfifo_get = channel_update_gpfifo_get(ch->g, ch);
+	gpfifo_get = channel_update_gpfifo_get(ch);
 
 	if (gpfifo_get == ch->ctxsw_timeout_gpfifo_get) {
 		/* didn't advance since previous ctxsw timeout check */
@@ -1042,6 +1081,9 @@ unbind:
 
 #ifdef CONFIG_NVGPU_KERNEL_MODE_SUBMIT
 	WARN_ON(ch->sync != NULL);
+	if (nvgpu_is_enabled(g, NVGPU_SUPPORT_SEMA_BASED_GPFIFO_GET)) {
+		WARN_ON(ch->gpfifo_sync != NULL);
+	}
 #endif
 
 	channel_free_unlink_debug_session(ch);
@@ -1751,6 +1793,7 @@ static void nvgpu_channel_destroy(struct nvgpu_channel *c)
 	nvgpu_mutex_destroy(&c->ioctl_lock);
 #ifdef CONFIG_NVGPU_KERNEL_MODE_SUBMIT
 	nvgpu_mutex_destroy(&c->joblist.pre_alloc.read_lock);
+	nvgpu_mutex_destroy(&c->gpfifo_hw_sema_lock);
 #endif
 	nvgpu_mutex_destroy(&c->sync_lock);
 #if defined(CONFIG_NVGPU_CYCLESTATS)
@@ -1815,6 +1858,7 @@ int nvgpu_channel_init_support(struct gk20a *g, u32 chid)
 	nvgpu_init_list_node(&c->worker_item);
 
 	nvgpu_mutex_init(&c->joblist.pre_alloc.read_lock);
+	nvgpu_mutex_init(&c->gpfifo_hw_sema_lock);
 
 #endif /* CONFIG_NVGPU_KERNEL_MODE_SUBMIT */
 	nvgpu_mutex_init(&c->ioctl_lock);

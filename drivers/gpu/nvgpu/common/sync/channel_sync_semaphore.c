@@ -1,7 +1,7 @@
 /*
  * GK20A Channel Synchronization Abstraction
  *
- * Copyright (c) 2014-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -40,12 +40,6 @@
 #include <nvgpu/fence_sema.h>
 
 #include "channel_sync_priv.h"
-
-struct nvgpu_channel_sync_semaphore {
-	struct nvgpu_channel_sync base;
-	struct nvgpu_channel *c;
-	struct nvgpu_hw_semaphore *hw_sema;
-};
 
 static struct nvgpu_channel_sync_semaphore *
 nvgpu_channel_sync_semaphore_from_base(struct nvgpu_channel_sync *base)
@@ -105,6 +99,34 @@ static void add_sema_incr_cmd(struct gk20a *g, struct nvgpu_channel *c,
 	nvgpu_semaphore_prepare(s, hw_sema);
 
 	g->ops.sync.sema.add_incr_cmd(g, cmd, s, va, wfi);
+	gpu_sema_verbose_dbg(g, "(R) c=%u INCR %u (%u) pool=%-3llu"
+			     "va=0x%llx entry=%p",
+			     ch, nvgpu_semaphore_get_value(s),
+			     nvgpu_semaphore_read(s),
+			     nvgpu_semaphore_get_hw_pool_page_idx(s),
+			     va, cmd);
+}
+
+static void add_sema_incr_cmd_to_write_next_get(struct nvgpu_channel *c,
+			 struct nvgpu_semaphore *s, struct priv_cmd_entry *cmd,
+			 struct nvgpu_hw_semaphore *hw_sema,
+			 u32 entries)
+{
+	struct gk20a *g = c->g;
+	u32 ch = c->chid;
+	u64 va;
+
+	/* release will need to write back to the semaphore memory. */
+	va = nvgpu_semaphore_gpu_rw_va(s);
+
+	/* find the right sema next_value to write (like syncpt's max). */
+	nvgpu_semaphore_prepare_for_gpfifo_get(c, s, hw_sema, entries);
+
+	/*
+	 * gp.get should be updated only when all the cmds are completed.
+	 * Hence forcing the wfi to be true always.
+	 */
+	g->ops.sync.sema.add_incr_cmd(g, cmd, s, va, true);
 	gpu_sema_verbose_dbg(g, "(R) c=%u INCR %u (%u) pool=%-3llu"
 			     "va=0x%llx entry=%p",
 			     ch, nvgpu_semaphore_get_value(s),
@@ -225,6 +247,42 @@ clean_up_cmdbuf:
 	nvgpu_priv_cmdbuf_rollback(c->priv_cmd_q, *incr_cmd);
 clean_up_sema:
 	nvgpu_semaphore_put(semaphore);
+	return err;
+}
+
+s32 nvgpu_submit_create_gpfifo_tracking_semaphore(
+		struct nvgpu_channel_sync *s,
+		struct nvgpu_semaphore **semaphore,
+		struct priv_cmd_entry **incr_cmd,
+		u32 gpfifo_entries)
+{
+	u32 incr_cmd_size;
+	struct nvgpu_channel_sync_semaphore *sp =
+		nvgpu_channel_sync_semaphore_from_base(s);
+	struct nvgpu_channel *c = sp->c;
+	s32 err = 0;
+
+	*semaphore = nvgpu_semaphore_alloc(sp->hw_sema);
+	if (*semaphore == NULL) {
+		nvgpu_err(c->g,
+				"ran out of semaphores");
+		return -ENOMEM;
+	}
+
+	incr_cmd_size = c->g->ops.sync.sema.get_incr_cmd_size();
+	err = nvgpu_priv_cmdbuf_alloc(c->priv_cmd_q, incr_cmd_size, incr_cmd);
+	if (err != 0) {
+		goto clean_up_sema;
+	}
+
+	/* Release the completion semaphore. */
+	add_sema_incr_cmd_to_write_next_get(c, *semaphore, *incr_cmd,
+			sp->hw_sema, gpfifo_entries);
+
+	return 0;
+
+clean_up_sema:
+	nvgpu_semaphore_put(*semaphore);
 	return err;
 }
 
@@ -395,4 +453,23 @@ err_free_hw_sema:
 err_free_sema:
 	nvgpu_kfree(g, sema);
 	return NULL;
+}
+
+void nvgpu_channel_sync_hw_semaphore_init(struct nvgpu_channel_sync *sync)
+{
+	struct nvgpu_channel_sync_semaphore *sp =
+		nvgpu_channel_sync_semaphore_from_base(sync);
+
+	nvgpu_hw_semaphore_set(sp->hw_sema, 0);
+	nvgpu_hw_semaphore_init_next(sp->hw_sema);
+}
+
+void nvgpu_channel_update_gpfifo_get(struct nvgpu_channel *c)
+{
+	struct nvgpu_channel_sync_semaphore *sp;
+
+	if (c->gpfifo_sync != NULL) {
+		sp = nvgpu_channel_sync_semaphore_from_base(c->gpfifo_sync);
+		c->gpfifo.get = nvgpu_hw_semaphore_read(sp->hw_sema);
+	}
 }

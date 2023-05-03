@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -39,6 +39,7 @@
 #include <nvgpu/trace.h>
 #include <nvgpu/nvhost.h>
 #include <nvgpu/user_fence.h>
+#include <nvgpu/channel_sync_semaphore.h>
 
 #include <nvgpu/fifo/swprofile.h>
 
@@ -106,7 +107,7 @@ static int nvgpu_submit_create_incr_cmd(struct nvgpu_channel *c,
 static int nvgpu_submit_prepare_syncs(struct nvgpu_channel *c,
 				      struct nvgpu_channel_fence *fence,
 				      struct nvgpu_channel_job *job,
-				      u32 flags)
+				      u32 flags, u32 gpfifo_entries)
 {
 	struct gk20a *g = c->g;
 	bool need_sync_fence;
@@ -116,6 +117,8 @@ static int nvgpu_submit_prepare_syncs(struct nvgpu_channel *c,
 	bool flag_fence_get = (flags & NVGPU_SUBMIT_FLAGS_FENCE_GET) != 0U;
 	bool flag_sync_fence = (flags & NVGPU_SUBMIT_FLAGS_SYNC_FENCE) != 0U;
 	bool flag_fence_wait = (flags & NVGPU_SUBMIT_FLAGS_FENCE_WAIT) != 0U;
+	bool sema_tracking = nvgpu_is_enabled(g,
+					NVGPU_SUPPORT_SEMA_BASED_GPFIFO_GET);
 
 	if (g->aggressive_sync_destroy_thresh != 0U) {
 		nvgpu_mutex_acquire(&c->sync_lock);
@@ -128,6 +131,20 @@ static int nvgpu_submit_prepare_syncs(struct nvgpu_channel *c,
 			new_sync_created = true;
 		}
 		nvgpu_channel_sync_get_ref(c->sync);
+
+		if (c->gpfifo_sync == NULL && sema_tracking) {
+			c->gpfifo_sync = nvgpu_channel_sync_semaphore_create(c);
+			if (c->gpfifo_sync == NULL) {
+				err = -ENOMEM;
+				goto clean_up_put_sync;
+			}
+			nvgpu_mutex_acquire(&c->gpfifo_hw_sema_lock);
+			nvgpu_channel_sync_hw_semaphore_init(c->gpfifo_sync);
+			nvgpu_mutex_release(&c->gpfifo_hw_sema_lock);
+		}
+		if (c->gpfifo_sync != NULL) {
+			nvgpu_channel_sync_get_ref(c->gpfifo_sync);
+		}
 	}
 
 	if ((g->ops.channel.set_syncpt != NULL) && new_sync_created) {
@@ -151,6 +168,7 @@ static int nvgpu_submit_prepare_syncs(struct nvgpu_channel *c,
 
 	need_sync_fence = flag_fence_get && flag_sync_fence;
 
+
 	/*
 	 * Always generate an increment at the end of a GPFIFO submission. When
 	 * we do job tracking, post fences are needed for various reasons even
@@ -162,19 +180,41 @@ static int nvgpu_submit_prepare_syncs(struct nvgpu_channel *c,
 		goto clean_up_wait_cmd;
 	}
 
+	if (sema_tracking) {
+		err = nvgpu_submit_create_gpfifo_tracking_semaphore(
+				c->gpfifo_sync, &job->gpfifo_sema,
+				&job->gpfifo_incr_cmd,
+				nvgpu_safe_add_u32(gpfifo_entries,
+					(flag_fence_wait ? 3U : 2U)));
+		if (err != 0) {
+			goto clean_up_incr_cmd;
+		}
+	}
+
 	if (g->aggressive_sync_destroy_thresh != 0U) {
 		nvgpu_mutex_release(&c->sync_lock);
 	}
 	return 0;
 
+clean_up_incr_cmd:
+	if (job->incr_cmd != NULL) {
+		nvgpu_priv_cmdbuf_rollback(c->priv_cmd_q, job->incr_cmd);
+		job->incr_cmd = NULL;
+	}
 clean_up_wait_cmd:
 	if (job->wait_cmd != NULL) {
 		nvgpu_priv_cmdbuf_rollback(c->priv_cmd_q, job->wait_cmd);
+		job->wait_cmd = NULL;
 	}
-	job->wait_cmd = NULL;
 clean_up_put_sync:
 	if (g->aggressive_sync_destroy_thresh != 0U) {
-		if (nvgpu_channel_sync_put_ref_and_check(c->sync)
+		if (c->gpfifo_sync != NULL &&
+			nvgpu_channel_sync_put_ref_and_check(c->gpfifo_sync)
+		    && g->aggressive_sync_destroy) {
+			nvgpu_channel_sync_destroy(c->gpfifo_sync);
+		}
+		if (c->sync != NULL &&
+			nvgpu_channel_sync_put_ref_and_check(c->sync)
 		    && g->aggressive_sync_destroy) {
 			nvgpu_channel_sync_destroy(c->sync);
 		}
@@ -349,7 +389,7 @@ static int nvgpu_submit_prepare_gpfifo_track(struct nvgpu_channel *c,
 		return err;
 	}
 
-	err = nvgpu_submit_prepare_syncs(c, fence, job, flags);
+	err = nvgpu_submit_prepare_syncs(c, fence, job, flags, num_entries);
 	if (err != 0) {
 		goto clean_up_job;
 	}
@@ -369,9 +409,10 @@ static int nvgpu_submit_prepare_gpfifo_track(struct nvgpu_channel *c,
 	if (err != 0) {
 		goto clean_up_gpfifo_wait;
 	}
-
 	nvgpu_submit_append_priv_cmdbuf(c, job->incr_cmd);
-
+	if (c->gpfifo_sync != NULL) {
+		nvgpu_submit_append_priv_cmdbuf(c, job->gpfifo_incr_cmd);
+	}
 	err = nvgpu_channel_add_job(c, job, skip_buffer_refcounting);
 	if (err != 0) {
 		goto clean_up_gpfifo_incr;
@@ -403,6 +444,17 @@ clean_up_gpfifo_incr:
 		  nvgpu_safe_sub_u32(c->gpfifo.entry_num,
 		    nvgpu_safe_add_u32(1U, num_entries)))) &
 		nvgpu_safe_sub_u32(c->gpfifo.entry_num, 1U);
+
+	/*
+	 * undo the gpfifo incr priv cmdbuf which is similar to undo of
+	 * wait_cmd priv cmdbuf.
+	 */
+	if (job->gpfifo_incr_cmd != NULL) {
+		c->gpfifo.put =
+			nvgpu_safe_add_u32(c->gpfifo.put,
+			  nvgpu_safe_sub_u32(c->gpfifo.entry_num, 1U)) &
+			nvgpu_safe_sub_u32(c->gpfifo.entry_num, 1U);
+	}
 clean_up_gpfifo_wait:
 	if (job->wait_cmd != NULL) {
 		/*
@@ -419,6 +471,9 @@ clean_up_gpfifo_wait:
 	}
 	nvgpu_fence_put(&job->post_fence);
 	nvgpu_priv_cmdbuf_rollback(c->priv_cmd_q, job->incr_cmd);
+	if (job->gpfifo_incr_cmd != NULL) {
+		nvgpu_priv_cmdbuf_rollback(c->priv_cmd_q, job->gpfifo_incr_cmd);
+	}
 	if (job->wait_cmd != NULL) {
 		nvgpu_priv_cmdbuf_rollback(c->priv_cmd_q, job->wait_cmd);
 	}

@@ -2,7 +2,7 @@
  *
  * Nvgpu Channel Synchronization Abstraction (Semaphore)
  *
- * Copyright (c) 2018-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,11 +28,18 @@
 
 #include <nvgpu/types.h>
 #include <nvgpu/channel_sync.h>
+#include "../../common/sync/channel_sync_priv.h"
 
 #ifdef CONFIG_NVGPU_KERNEL_MODE_SUBMIT
 
 struct nvgpu_channel;
-struct nvgpu_channel_sync_semaphore;
+struct nvgpu_channel_sync;
+
+struct nvgpu_channel_sync_semaphore {
+	struct nvgpu_channel_sync base;
+	struct nvgpu_channel *c;
+	struct nvgpu_hw_semaphore *hw_sema;
+};
 
 /*
  * Converts a valid struct nvgpu_channel_sync ptr to
@@ -54,6 +61,14 @@ nvgpu_channel_sync_semaphore_hw_sema(
  */
 struct nvgpu_channel_sync *
 nvgpu_channel_sync_semaphore_create(struct nvgpu_channel *c);
+void nvgpu_channel_sync_hw_semaphore_init(struct nvgpu_channel_sync *sync);
+void nvgpu_channel_update_gpfifo_get(struct nvgpu_channel *c);
+s32 nvgpu_submit_create_gpfifo_tracking_semaphore(
+		struct nvgpu_channel_sync *s,
+		struct nvgpu_semaphore **semaphore,
+		struct priv_cmd_entry **incr_cmd,
+		u32 gpfifo_entries);
+
 
 #endif
 

@@ -387,6 +387,9 @@ struct nvgpu_channel {
 	struct gpfifo_desc gpfifo;
 	struct priv_cmd_queue *priv_cmd_q;
 	struct nvgpu_channel_sync *sync;
+	struct nvgpu_channel_sync *gpfifo_sync;
+	/* lock for gpfifo hw_sema access */
+	struct nvgpu_mutex gpfifo_hw_sema_lock;
 	/* for job cleanup handling in the background worker */
 	struct nvgpu_list_node worker_item;
 #endif /* CONFIG_NVGPU_KERNEL_MODE_SUBMIT */

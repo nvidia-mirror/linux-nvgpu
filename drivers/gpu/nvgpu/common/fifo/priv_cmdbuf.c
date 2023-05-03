@@ -67,6 +67,7 @@ int nvgpu_priv_cmdbuf_queue_alloc(struct vm_gk20a *vm,
 	int err = 0;
 	u32 wait_size, incr_size;
 	u32 mem_per_job;
+	u32 gpfifo_incr_size = 0;
 
 	/*
 	 * sema size is at least as much as syncpt size, but semas may not be
@@ -77,6 +78,9 @@ int nvgpu_priv_cmdbuf_queue_alloc(struct vm_gk20a *vm,
 #ifdef CONFIG_NVGPU_SW_SEMAPHORE
 	wait_size = g->ops.sync.sema.get_wait_cmd_size();
 	incr_size = g->ops.sync.sema.get_incr_cmd_size();
+	if (nvgpu_is_enabled(g, NVGPU_SUPPORT_SEMA_BASED_GPFIFO_GET)) {
+		gpfifo_incr_size = g->ops.sync.sema.get_incr_cmd_size();
+	}
 #else
 	wait_size = g->ops.sync.syncpt.get_wait_cmd_size();
 	incr_size = g->ops.sync.syncpt.get_incr_cmd_size(true);
@@ -84,22 +88,24 @@ int nvgpu_priv_cmdbuf_queue_alloc(struct vm_gk20a *vm,
 
 	/*
 	 * Compute the amount of priv_cmdbuf space we need. In general the
-	 * worst case is the kernel inserts both a semaphore pre-fence and
-	 * post-fence. Any sync-pt fences will take less memory so we can
-	 * ignore them unless they're the only supported type. Jobs can also
-	 * have more than one pre-fence but that's abnormal and we'll -EAGAIN
-	 * if such jobs would fill the queue.
+	 * worst case is the kernel inserts both a semaphore pre-fence,
+	 * post-fence and semaphore for gp.get tracking. Any sync-pt fences
+	 * will take less memory so we can ignore them unless they're the only
+	 * supported type. Jobs can also have more than one pre-fence but
+	 * that's abnormal and we'll -EAGAIN if such jobs would fill the queue.
 	 *
 	 * A semaphore ACQ (fence-wait) is 8 words: semaphore_a, semaphore_b,
 	 * semaphore_c, and semaphore_d. A semaphore INCR (fence-get) will be
 	 * 10 words: all the same as an ACQ plus a non-stalling intr which is
-	 * another 2 words. In reality these numbers vary by chip but we'll use
-	 * 8 and 10 as examples.
+	 * another 2 words. Semaphore for updating the gp.get also needs same
+	 * as A semaphore INCR (fence-get) i.e 10 words. In reality these
+	 * numbers vary by chip but we'll use 8, 10 and 10 as examples.
 	 *
 	 * Given the job count, cmdbuf space is allocated such that each job
-	 * can get one wait command and one increment command:
+	 * can get one wait command, one increment command and a semaphore for
+	 * gp.get tracking
 	 *
-	 *   job_count * (8 + 10) * 4 bytes
+	 *   job_count * (8 + 10 + 10) * 4 bytes
 	 *
 	 * These cmdbufs are inserted as gpfifo entries right before and after
 	 * the user submitted gpfifo entries per submit.
@@ -109,13 +115,15 @@ int nvgpu_priv_cmdbuf_queue_alloc(struct vm_gk20a *vm,
 	 * is full when the number of consumed entries is one less than the
 	 * allocation size:
 	 *
-	 * alloc bytes = job_count * (wait + incr + 1) * slot in bytes
+	 * alloc bytes = job_count * (wait + incr + gpfifo_incr + 1) * slot
+	 * in bytes
 	 */
-	mem_per_job = nvgpu_safe_mult_u32(
+	mem_per_job = nvgpu_safe_add_u32(
 			nvgpu_safe_add_u32(
 				nvgpu_safe_add_u32(wait_size, incr_size),
-				1U),
-			(u32)sizeof(u32));
+				gpfifo_incr_size), 1U);
+	mem_per_job = nvgpu_safe_mult_u32(mem_per_job, (u32)sizeof(u32));
+
 	/* both 32 bit and mem_per_job is small */
 	size = nvgpu_safe_mult_u64((u64)job_count, (u64)mem_per_job);
 

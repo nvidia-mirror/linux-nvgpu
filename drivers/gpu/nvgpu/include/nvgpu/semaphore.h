@@ -35,6 +35,7 @@ struct nvgpu_hw_semaphore;
 struct nvgpu_semaphore;
 struct vm_gk20a;
 struct nvgpu_allocator;
+struct nvgpu_channel;
 
 #define gpu_sema_dbg(g, fmt, args...)		\
 	nvgpu_log(g, gpu_dbg_sema, fmt, ##args)
@@ -77,6 +78,7 @@ u64 nvgpu_hw_semaphore_addr(struct nvgpu_hw_semaphore *hw_sema);
 u32 nvgpu_hw_semaphore_read(struct nvgpu_hw_semaphore *hw_sema);
 bool nvgpu_hw_semaphore_reset(struct nvgpu_hw_semaphore *hw_sema);
 void nvgpu_hw_semaphore_set(struct nvgpu_hw_semaphore *hw_sema, u32 val);
+void nvgpu_hw_semaphore_init_next(struct nvgpu_hw_semaphore *hw_sema);
 int nvgpu_hw_semaphore_read_next(struct nvgpu_hw_semaphore *hw_sema);
 int nvgpu_hw_semaphore_update_next(struct nvgpu_hw_semaphore *hw_sema);
 
@@ -99,6 +101,9 @@ bool nvgpu_semaphore_can_wait(struct nvgpu_semaphore *s);
 
 void nvgpu_semaphore_prepare(struct nvgpu_semaphore *s,
 		struct nvgpu_hw_semaphore *hw_sema);
+void nvgpu_semaphore_prepare_for_gpfifo_get(struct nvgpu_channel *c,
+		struct nvgpu_semaphore *s,
+		struct nvgpu_hw_semaphore *hw_sema, u32 new_entries);
 u64 nvgpu_semaphore_get_hw_pool_page_idx(struct nvgpu_semaphore *s);
 
 #endif /* NVGPU_SEMAPHORE_H */

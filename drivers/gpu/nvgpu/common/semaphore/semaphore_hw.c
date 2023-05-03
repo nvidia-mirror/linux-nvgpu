@@ -159,6 +159,11 @@ void nvgpu_hw_semaphore_set(struct nvgpu_hw_semaphore *hw_sema, u32 val)
 	nvgpu_mem_wr(g, &pool->rw_mem, hw_sema->location.offset, val);
 }
 
+void nvgpu_hw_semaphore_init_next(struct nvgpu_hw_semaphore *hw_sema)
+{
+	nvgpu_atomic_set(&hw_sema->next_value, 0);
+}
+
 int nvgpu_hw_semaphore_read_next(struct nvgpu_hw_semaphore *hw_sema)
 {
 	return nvgpu_atomic_read(&hw_sema->next_value);

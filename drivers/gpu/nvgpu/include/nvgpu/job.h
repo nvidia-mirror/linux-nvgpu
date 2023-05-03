@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -37,8 +37,10 @@ struct nvgpu_channel_job {
 	struct nvgpu_mapped_buf **mapped_buffers;
 	u32 num_mapped_buffers;
 	struct nvgpu_fence_type post_fence;
+	struct nvgpu_semaphore *gpfifo_sema;
 	struct priv_cmd_entry *wait_cmd;
 	struct priv_cmd_entry *incr_cmd;
+	struct priv_cmd_entry *gpfifo_incr_cmd;
 	struct nvgpu_list_node list;
 };
 
