@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -149,6 +149,14 @@ bool nvgpu_hw_semaphore_reset(struct nvgpu_hw_semaphore *hw_sema)
 			hw_sema->chid, current_val, threshold);
 
 	return true;
+}
+
+void nvgpu_hw_semaphore_set(struct nvgpu_hw_semaphore *hw_sema, u32 val)
+{
+	struct nvgpu_semaphore_pool *pool = hw_sema->location.pool;
+	struct gk20a *g = pool->sema_sea->gk20a;
+
+	nvgpu_mem_wr(g, &pool->rw_mem, hw_sema->location.offset, val);
 }
 
 int nvgpu_hw_semaphore_read_next(struct nvgpu_hw_semaphore *hw_sema)

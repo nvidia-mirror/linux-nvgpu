@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -76,6 +76,7 @@ void nvgpu_hw_semaphore_free(struct nvgpu_hw_semaphore *hw_sema);
 u64 nvgpu_hw_semaphore_addr(struct nvgpu_hw_semaphore *hw_sema);
 u32 nvgpu_hw_semaphore_read(struct nvgpu_hw_semaphore *hw_sema);
 bool nvgpu_hw_semaphore_reset(struct nvgpu_hw_semaphore *hw_sema);
+void nvgpu_hw_semaphore_set(struct nvgpu_hw_semaphore *hw_sema, u32 val);
 int nvgpu_hw_semaphore_read_next(struct nvgpu_hw_semaphore *hw_sema);
 int nvgpu_hw_semaphore_update_next(struct nvgpu_hw_semaphore *hw_sema);
 
