@@ -1359,6 +1359,7 @@ static const struct gops_pmu ga100_ops_pmu = {
 	.pmu_get_queue_head = tu104_pmu_queue_head_r,
 	.pmu_mutex_release = gk20a_pmu_mutex_release,
 	.pmu_is_interrupted = gk20a_pmu_is_interrupted,
+	.set_mailbox1 = gk20a_pmu_set_mailbox1,
 	.get_irqstat = gk20a_pmu_get_irqstat,
 	.set_irqsclr = gk20a_pmu_set_irqsclr,
 	.set_irqsset = gk20a_pmu_set_irqsset,

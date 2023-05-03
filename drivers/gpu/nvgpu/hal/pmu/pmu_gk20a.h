@@ -34,6 +34,7 @@ struct pmu_mutexes;
 
 void gk20a_pmu_isr(struct gk20a *g);
 u32 gk20a_pmu_get_irqmask(struct gk20a *g);
+void gk20a_pmu_set_mailbox1(struct gk20a *g, u32 val);
 u32 gk20a_pmu_get_irqstat(struct gk20a *g);
 void gk20a_pmu_set_irqsclr(struct gk20a *g, u32 intr);
 void gk20a_pmu_set_irqsset(struct gk20a *g, u32 intr);

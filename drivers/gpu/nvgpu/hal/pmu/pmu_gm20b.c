@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2015-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -194,7 +194,7 @@ void gm20b_pmu_flcn_setup_boot_config(struct gk20a *g)
 	}
 
 	/* Clearing mailbox register used to reflect capabilities */
-	gk20a_writel(g, pwr_falcon_mailbox1_r(), 0);
+	g->ops.pmu.set_mailbox1(g, 0);
 
 	/* enable the context interface */
 	gk20a_writel(g, pwr_falcon_itfen_r(),

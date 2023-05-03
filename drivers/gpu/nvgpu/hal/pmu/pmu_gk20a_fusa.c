@@ -38,6 +38,11 @@ u32 gk20a_pmu_get_irqmask(struct gk20a *g)
 	return mask;
 }
 
+void gk20a_pmu_set_mailbox1(struct gk20a *g, u32 val)
+{
+	nvgpu_writel(g, pwr_falcon_mailbox1_r(), val);
+}
+
 u32 gk20a_pmu_get_irqstat(struct gk20a *g)
 {
 	return nvgpu_readl(g, pwr_falcon_irqstat_r());

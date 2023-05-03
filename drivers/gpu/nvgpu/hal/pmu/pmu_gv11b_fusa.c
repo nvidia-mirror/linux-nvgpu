@@ -81,6 +81,21 @@ static u32 pmu_bar0_hosterr_etype(u32 val)
 			PMU_BAR0_WRITE_HOSTERR : PMU_BAR0_READ_HOSTERR;
 }
 
+u32 gv11b_pmu_get_ecc_address(struct gk20a *g)
+{
+	return nvgpu_readl(g, pwr_pmu_falcon_ecc_address_r());
+}
+
+u32 gv11b_pmu_get_ecc_status(struct gk20a *g)
+{
+	return nvgpu_readl(g, pwr_pmu_falcon_ecc_status_r());
+}
+
+void gv11b_pmu_set_ecc_status(struct gk20a *g, u32 val)
+{
+	nvgpu_writel(g, pwr_pmu_falcon_ecc_status_r(), val);
+}
+
 int gv11b_pmu_bar0_error_status(struct gk20a *g, u32 *bar0_status,
 	u32 *etype)
 {
@@ -168,8 +183,8 @@ bool gv11b_pmu_validate_mem_integrity(struct gk20a *g)
 {
 	u32 ecc_status, ecc_addr;
 
-	ecc_status = nvgpu_readl(g, pwr_pmu_falcon_ecc_status_r());
-	ecc_addr = nvgpu_readl(g, pwr_pmu_falcon_ecc_address_r());
+	ecc_status = g->ops.pmu.get_ecc_status(g);
+	ecc_addr = g->ops.pmu.get_ecc_address(g);
 
 	return ((gv11b_pmu_correct_ecc(g, ecc_status, ecc_addr) == 0) ? true :
 			false);
@@ -195,7 +210,7 @@ void gv11b_pmu_flcn_setup_boot_config(struct gk20a *g)
 	}
 
 	/* Clearing mailbox register used to reflect capabilities */
-	nvgpu_writel(g, pwr_falcon_mailbox1_r(), PWR_FALCON_MAILBOX1_DATA_INIT);
+	g->ops.pmu.set_mailbox1(g, PWR_FALCON_MAILBOX1_DATA_INIT);
 
 	/* enable the context interface */
 	nvgpu_writel(g, pwr_falcon_itfen_r(),
@@ -342,10 +357,8 @@ static void gv11b_pmu_handle_ecc_irq(struct gk20a *g)
 		return;
 	}
 
-	ecc_status = nvgpu_readl(g,
-		pwr_pmu_falcon_ecc_status_r());
-	ecc_addr = nvgpu_readl(g,
-		pwr_pmu_falcon_ecc_address_r());
+	ecc_status = g->ops.pmu.get_ecc_status(g);
+	ecc_addr = g->ops.pmu.get_ecc_address(g);
 	corrected_cnt = nvgpu_readl(g,
 		pwr_pmu_falcon_ecc_corrected_err_count_r());
 	uncorrected_cnt = nvgpu_readl(g,
@@ -374,8 +387,7 @@ static void gv11b_pmu_handle_ecc_irq(struct gk20a *g)
 			pwr_pmu_falcon_ecc_uncorrected_err_count_r(), 0);
 	}
 
-	nvgpu_writel(g, pwr_pmu_falcon_ecc_status_r(),
-		pwr_pmu_falcon_ecc_status_reset_task_f());
+	g->ops.pmu.set_ecc_status(g, pwr_pmu_falcon_ecc_status_reset_task_f());
 
 	/* update counters per slice */
 	if (corrected_overflow != 0U) {

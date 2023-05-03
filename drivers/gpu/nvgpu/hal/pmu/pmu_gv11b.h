@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -38,6 +38,9 @@ void gv11b_pmu_engine_reset(struct gk20a *g, bool do_reset);
 u32 gv11b_pmu_falcon_base_addr(void);
 bool gv11b_is_pmu_supported(struct gk20a *g);
 void gv11b_pmu_handle_ext_irq(struct gk20a *g, u32 intr0);
+u32 gv11b_pmu_get_ecc_address(struct gk20a *g);
+u32 gv11b_pmu_get_ecc_status(struct gk20a *g);
+void gv11b_pmu_set_ecc_status(struct gk20a *g, u32 val);
 
 #ifdef CONFIG_NVGPU_LS_PMU
 int gv11b_pmu_bootstrap(struct gk20a *g, struct nvgpu_pmu *pmu,

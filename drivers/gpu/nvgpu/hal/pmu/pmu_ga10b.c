@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -437,7 +437,7 @@ static int ga10b_pmu_handle_ecc(struct gk20a *g)
 	int ret = 0;
 	u32 ecc_status = 0;
 
-	ecc_status = nvgpu_readl(g, pwr_pmu_falcon_ecc_status_r());
+	ecc_status = g->ops.pmu.get_ecc_status(g);
 
 	if ((ecc_status &
 		pwr_pmu_falcon_ecc_status_uncorrected_err_imem_m()) != 0U) {
@@ -481,7 +481,7 @@ static int ga10b_pmu_handle_ecc(struct gk20a *g)
 
 	if (ret != 0) {
 		nvgpu_err(g, "ecc_addr(0x%x)",
-			nvgpu_readl(g, pwr_pmu_falcon_ecc_address_r()));
+			g->ops.pmu.get_ecc_address(g));
 	}
 
 	return ret;

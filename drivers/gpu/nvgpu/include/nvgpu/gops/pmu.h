@@ -473,6 +473,10 @@ struct gops_pmu {
 	/** @cond DOXYGEN_SHOULD_SKIP_THIS */
 	void (*handle_swgen1_irq)(struct gk20a *g, u32 intr);
 	u32 (*get_irqmask)(struct gk20a *g);
+	void (*set_mailbox1)(struct gk20a *g, u32 val);
+	u32 (*get_ecc_address)(struct gk20a *g);
+	u32 (*get_ecc_status)(struct gk20a *g);
+	void (*set_ecc_status)(struct gk20a *g, u32 val);
 	u32 (*get_irqstat)(struct gk20a *g);
 	void (*set_irqsclr)(struct gk20a *g, u32 intr);
 	void (*set_irqsset)(struct gk20a *g, u32 intr);
