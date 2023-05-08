@@ -502,6 +502,32 @@ struct nvgpu_gpu_get_tpc_masks_args {
 	__u64 mask_buf_addr;
 };
 
+struct nvgpu_gpu_get_gpc_physical_map_args {
+	/* [in] GPC logical-map-buffer size. It must be
+	 * sizeof(__u32) * fls(gpc_mask)
+	 */
+	__u32 map_buf_size;
+	__u32 reserved;
+
+	/* [out] pointer to array of u32 entries.
+	 * For each entry, index=local gpc index and value=physical gpc index.
+	 */
+	__u64 physical_gpc_buf_addr;
+};
+
+struct nvgpu_gpu_get_gpc_logical_map_args {
+	/* [in] GPC logical-map-buffer size. It must be
+	 * sizeof(__u32) * fls(gpc_mask)
+	 */
+	__u32 map_buf_size;
+	__u32 reserved;
+
+	/* [out] pointer to array of u32 entries.
+	 * For each entry, index=local gpc index and value=logical gpc index.
+	 */
+	__u64 logical_gpc_buf_addr;
+};
+
 struct nvgpu_gpu_open_channel_args {
 	union {
 		__s32 channel_fd; /* deprecated: use out.channel_fd instead */
@@ -1242,11 +1268,15 @@ struct nvgpu_gpu_register_buffer_args {
 	_IOWR(NVGPU_GPU_IOCTL_MAGIC, 40, \
 			struct nvgpu_gpu_set_deterministic_opts_args)
 #define NVGPU_GPU_IOCTL_REGISTER_BUFFER	\
-	_IOWR(NVGPU_GPU_IOCTL_MAGIC,  41, struct nvgpu_gpu_register_buffer_args)
+	_IOWR(NVGPU_GPU_IOCTL_MAGIC, 41, struct nvgpu_gpu_register_buffer_args)
 #define NVGPU_GPU_IOCTL_GET_BUFFER_INFO	\
-	_IOWR(NVGPU_GPU_IOCTL_MAGIC,  42, struct nvgpu_gpu_get_buffer_info_args)
+	_IOWR(NVGPU_GPU_IOCTL_MAGIC, 42, struct nvgpu_gpu_get_buffer_info_args)
+#define NVGPU_GPU_IOCTL_GET_GPC_LOCAL_TO_PHYSICAL_MAP\
+	_IOWR(NVGPU_GPU_IOCTL_MAGIC, 43, struct nvgpu_gpu_get_gpc_physical_map_args)
+#define NVGPU_GPU_IOCTL_GET_GPC_LOCAL_TO_LOGICAL_MAP\
+	_IOWR(NVGPU_GPU_IOCTL_MAGIC, 44, struct nvgpu_gpu_get_gpc_logical_map_args)
 #define NVGPU_GPU_IOCTL_LAST		\
-	_IOC_NR(NVGPU_GPU_IOCTL_GET_BUFFER_INFO)
+	_IOC_NR(NVGPU_GPU_IOCTL_GET_GPC_LOCAL_TO_LOGICAL_MAP)
 #define NVGPU_GPU_IOCTL_MAX_ARG_SIZE	\
 	sizeof(struct nvgpu_gpu_get_cpu_time_correlation_info_args)
 

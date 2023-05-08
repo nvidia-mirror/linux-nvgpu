@@ -778,6 +778,74 @@ clean_up:
 	return err;
 }
 
+static int gk20a_ctrl_get_gpc_local_to_physical_map(struct gk20a *g, struct nvgpu_gr_config *gr_config,
+	u32 gr_instance_id, struct nvgpu_gpu_get_gpc_physical_map_args *args)
+{
+	u32 gpc_count;
+	u32 map_size;
+	u32 gpc_local_index;
+	u32 *physical_map;
+
+	gpc_count = nvgpu_gr_config_get_gpc_count(gr_config);
+	map_size = sizeof(u32) * gpc_count;
+
+	if (map_size != args->map_buf_size) {
+		return -EINVAL;
+	}
+
+	physical_map = (u32 *)nvgpu_kzalloc(g, map_size);
+	if (physical_map == NULL) {
+		return -ENOMEM;
+	}
+
+	for (gpc_local_index = 0U; gpc_local_index < gpc_count; ++gpc_local_index) {
+		physical_map[gpc_local_index] = nvgpu_grmgr_get_gr_gpc_phys_id(g, gr_instance_id, gpc_local_index);
+	}
+
+	if (copy_to_user((void __user *)(uintptr_t)args->physical_gpc_buf_addr, physical_map, map_size)) {
+		nvgpu_kfree(g, physical_map);
+		return -EFAULT;
+	}
+
+	nvgpu_kfree(g, physical_map);
+
+	return 0;
+}
+
+static int gk20a_ctrl_get_gpc_local_to_logical_map(struct gk20a *g, struct nvgpu_gr_config *gr_config,
+	u32 gr_instance_id, struct nvgpu_gpu_get_gpc_logical_map_args *args)
+{
+	u32 gpc_count;
+	u32 map_size;
+	u32 gpc_local_index;
+	u32 *logical_map;
+
+	gpc_count = nvgpu_gr_config_get_gpc_count(gr_config);
+	map_size = sizeof(u32) * gpc_count;
+
+	if (map_size != args->map_buf_size) {
+		return -EINVAL;
+	}
+
+	logical_map = (u32 *)nvgpu_kzalloc(g, map_size);
+	if (logical_map == NULL) {
+		return -ENOMEM;
+	}
+
+	for (gpc_local_index = 0U; gpc_local_index < gpc_count; ++gpc_local_index) {
+		logical_map[gpc_local_index] = nvgpu_grmgr_get_gr_gpc_logical_id(g, gr_instance_id, gpc_local_index);
+	}
+
+	if (copy_to_user((void __user *)(uintptr_t)args->logical_gpc_buf_addr, logical_map, map_size)) {
+		nvgpu_kfree(g, logical_map);
+		return -EFAULT;
+	}
+
+	nvgpu_kfree(g, logical_map);
+
+	return 0;
+}
+
 static int gk20a_ctrl_get_tpc_masks(struct gk20a *g, struct nvgpu_gr_config *gr_config,
 				    struct nvgpu_gpu_get_tpc_masks_args *args)
 {
@@ -2499,6 +2567,14 @@ long gk20a_ctrl_dev_ioctl(struct file *filp, unsigned int cmd, unsigned long arg
 	case NVGPU_GPU_IOCTL_GET_TPC_MASKS:
 		err = gk20a_ctrl_get_tpc_masks(g, gr_config,
 			(struct nvgpu_gpu_get_tpc_masks_args *)buf);
+		break;
+	case NVGPU_GPU_IOCTL_GET_GPC_LOCAL_TO_PHYSICAL_MAP:
+		err = gk20a_ctrl_get_gpc_local_to_physical_map(g, gr_config,
+			gr_instance_id, (struct nvgpu_gpu_get_gpc_physical_map_args *)buf);
+		break;
+	case NVGPU_GPU_IOCTL_GET_GPC_LOCAL_TO_LOGICAL_MAP:
+		err = gk20a_ctrl_get_gpc_local_to_logical_map(g, gr_config,
+			gr_instance_id, (struct nvgpu_gpu_get_gpc_logical_map_args *)buf);
 		break;
 	case NVGPU_GPU_IOCTL_GET_FBP_L2_MASKS:
 		err = gk20a_ctrl_get_fbp_l2_masks(g, gpu_instance_id,
