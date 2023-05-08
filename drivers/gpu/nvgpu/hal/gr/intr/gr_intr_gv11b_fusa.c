@@ -1944,7 +1944,15 @@ u32 gv11b_gr_intr_record_sm_error_state(struct gk20a *g, u32 gpc, u32 tpc, u32 s
 
 	err = gv11b_gr_intr_read_sm_error_state(g, tsg, offset, sm_id);
 	if (err != 0) {
-		nvgpu_err(g, "error writing sm_error_state");
+		nvgpu_err(g, "error populating tsg sm_error_state");
+	} else {
+		nvgpu_err(g, "sm err state gpc_id(%d), tpc_id(%d), "
+				"offset(%d), sm_id(%d), hww_global_esr %d,"
+				"hww_warp_esr %d, hww_warp_esr_pc 0x%llx",
+				gpc, tpc, offset, sm_id,
+				tsg->sm_error_states[sm_id].hww_global_esr,
+				tsg->sm_error_states[sm_id].hww_warp_esr,
+				tsg->sm_error_states[sm_id].hww_warp_esr_pc);
 	}
 
 record_fail:
