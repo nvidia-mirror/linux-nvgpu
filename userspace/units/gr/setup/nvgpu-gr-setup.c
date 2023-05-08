@@ -1848,7 +1848,7 @@ struct unit_module_test nvgpu_gr_setup_tests[] = {
 	UNIT_TEST(gr_setup_subctx_gr_ctx_buffers,
 			test_gr_validate_subctx_gr_ctx_buffers, NULL, 0),
 	UNIT_TEST(gr_setup_subctx_multi_as_gr_ctx_buffers,
-			test_gr_validate_multi_as_subctx_gr_ctx_buffers, NULL, 0),
+			test_gr_validate_multi_as_subctx_gr_ctx_buffers, NULL, 2),
 	UNIT_TEST(gr_setup_subctx_inst_blocks,
 			test_gr_validate_subctx_inst_blocks, NULL, 0),
 	UNIT_TEST(gr_setup_class_veid_pbdma,

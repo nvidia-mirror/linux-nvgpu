@@ -368,11 +368,13 @@ static void nvgpu_gr_obj_ctx_commit_veid0_preemption_buffers(struct gk20a *g,
 bool nvgpu_gr_obj_ctx_is_gfx_engine(struct gk20a *g, struct nvgpu_tsg_subctx *subctx)
 {
 	if (nvgpu_is_enabled(g, NVGPU_SUPPORT_TSG_SUBCONTEXTS)) {
-		if (!nvgpu_is_enabled(g, NVGPU_SUPPORT_MIG) &&
+		if ((subctx != NULL) && (!nvgpu_is_enabled(g, NVGPU_SUPPORT_MIG)) &&
 		     nvgpu_tsg_subctx_get_id(subctx) == CHANNEL_INFO_VEID0) {
 			return true;
 		}
-	} else if (!nvgpu_is_enabled(g, NVGPU_SUPPORT_MIG)) {
+	}
+
+	if (!nvgpu_is_enabled(g, NVGPU_SUPPORT_MIG)) {
 		return true;
 	}
 
@@ -1085,7 +1087,8 @@ static int nvgpu_gr_golden_ctx_prepare_gr_ctx(
 		}
 	}
 	err = nvgpu_gr_ctx_mappings_map_global_ctx_buffers(g,
-			gr->global_ctx_buffer, true, mappings, false);
+			gr->global_ctx_buffer,
+			nvgpu_gr_obj_ctx_is_gfx_engine(g, NULL), mappings, false);
 	if (err != 0) {
 		nvgpu_err(g, "map global ctx buffers failed err=%d", err);
 		goto unmap_ctx_buffer;
@@ -1184,14 +1187,14 @@ int nvgpu_gr_obj_ctx_init_golden_context_image(struct gk20a *g)
 	}
 
 	nvgpu_gr_obj_ctx_commit_global_ctx_buffers(g, gr->global_ctx_buffer,
-		gr->config, &gr_ctx, true,
+		gr->config, &gr_ctx, nvgpu_gr_obj_ctx_is_gfx_engine(g, NULL),
 		&mappings, true);
 
 	/* commit gr ctx buffer */
 	nvgpu_gr_obj_ctx_commit_inst(g, &inst_block, &gr_ctx, subctx, &mappings);
 	err = nvgpu_gr_obj_ctx_alloc_golden_ctx_image(g, golden_image,
 		gr->global_ctx_buffer, gr->config, &gr_ctx,
-		true,
+		nvgpu_gr_obj_ctx_is_gfx_engine(g, NULL),
 		&mappings, &inst_block);
 	if (err != 0) {
 		nvgpu_err(g, "create golden image failed err=%d", err);
