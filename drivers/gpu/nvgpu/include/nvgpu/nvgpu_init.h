@@ -164,7 +164,9 @@ int nvgpu_prepare_poweroff(struct gk20a *g);
  * still ring doorbell, but this will not trigger any work on
  * engines since fifo scheduling is disabled.
  */
-void nvgpu_sw_quiesce(struct gk20a *g);
+void nvgpu_sw_quiesce_with_trace(struct gk20a *g, const char *fname, int line);
+#define nvgpu_sw_quiesce(g)	\
+	nvgpu_sw_quiesce_with_trace(g, __func__, __LINE__)
 
 /**
  * @brief Cleanup SW Quiesce state

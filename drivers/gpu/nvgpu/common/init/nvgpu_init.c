@@ -195,7 +195,7 @@ static int nvgpu_sw_quiesce_init_support(struct gk20a *g)
 	return 0;
 }
 
-void nvgpu_sw_quiesce(struct gk20a *g)
+void nvgpu_sw_quiesce_with_trace(struct gk20a *g, const char *fname, int line)
 {
 	if (g->is_virtual || (g->enabled_flags == NULL) ||
 		nvgpu_is_enabled(g, NVGPU_DISABLE_SW_QUIESCE)) {
@@ -209,11 +209,11 @@ void nvgpu_sw_quiesce(struct gk20a *g)
 	}
 
 	if (g->sw_quiesce_pending) {
-		nvgpu_err(g, "SW quiesce already pending");
+		nvgpu_err(g, "%s:%d SW quiesce already pending", fname, line);
 		return;
 	}
 
-	nvgpu_err(g, "SW quiesce requested");
+	nvgpu_err(g, "%s:%d SW quiesce requested", fname, line);
 
 	/*
 	 * When this flag is set, interrupt handlers should
