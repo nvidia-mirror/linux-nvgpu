@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -584,7 +584,7 @@ struct unit_module_test nvgpu_gr_config_tests[] = {
 	UNIT_TEST(config_check_init, test_gr_config_count, NULL, 0),
 	UNIT_TEST(config_check_set_get, test_gr_config_set_get, NULL, 0),
 	UNIT_TEST(config_error_injection,
-			test_gr_config_error_injection, NULL, 0),
+			test_gr_config_error_injection, NULL, 2),
 	UNIT_TEST(config_deinit, test_gr_config_deinit, NULL, 0),
 	UNIT_TEST(gr_remove_setup, test_gr_remove_setup, NULL, 0),
 };
