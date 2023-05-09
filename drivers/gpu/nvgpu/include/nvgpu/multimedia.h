@@ -34,11 +34,17 @@ struct nvgpu_channel;
 /**
  * Multimedia engine enum types supported from driver.
  */
-enum nvgpu_multimedia_engine {
+enum {
 	/** NVENC engine enum */
-	NVGPU_MULTIMEDIA_ENGINE_NVENC     = 0U,
+	NVGPU_MULTIMEDIA_ENGINE_NVENC = 0U,
+	/** OFA engine enum */
+	NVGPU_MULTIMEDIA_ENGINE_OFA = 1U,
+	/** NVDEC engine enum */
+	NVGPU_MULTIMEDIA_ENGINE_NVDEC = 2U,
+	/** NVJPG engine enum */
+	NVGPU_MULTIMEDIA_ENGINE_NVJPG = 3U,
 	/** Invalid engine enum */
-	NVGPU_MULTIMEDIA_ENGINE_MAX
+	NVGPU_MULTIMEDIA_ENGINE_MAX = 4U
 };
 
 /**
@@ -63,4 +69,5 @@ struct nvgpu_multimedia_ctx {
 int nvgpu_multimedia_setup_ctx(struct nvgpu_channel *ch, u32 class_num, u32 flags);
 void nvgpu_multimedia_free_ctx(struct gk20a *g, struct nvgpu_multimedia_ctx *eng_ctx);
 void nvgpu_multimedia_free_all_ctx(struct nvgpu_tsg *tsg);
+bool nvgpu_multimedia_get_devtype(s32 multimedia_id, u32 *dev_type, u32 *instance);
 #endif

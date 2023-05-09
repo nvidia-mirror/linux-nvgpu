@@ -44,6 +44,7 @@
 #include <nvgpu/fifo.h>
 #include <nvgpu/static_analysis.h>
 #include <nvgpu/swprofile.h>
+#include <nvgpu/multimedia.h>
 
 #include <nvgpu/fifo/swprofile.h>
 
@@ -637,6 +638,42 @@ u32 nvgpu_engine_get_nvenc_runlist_id(struct gk20a *g)
 	return dev->runlist_id;
 }
 
+u32 nvgpu_engine_get_ofa_runlist_id(struct gk20a *g)
+{
+	const struct nvgpu_device *dev;
+
+	dev = nvgpu_device_get(g, NVGPU_DEVTYPE_OFA, 0);
+	if (dev == NULL) {
+		return NVGPU_INVALID_RUNLIST_ID;
+	}
+
+	return dev->runlist_id;
+}
+
+u32 nvgpu_engine_get_nvdec_runlist_id(struct gk20a *g)
+{
+	const struct nvgpu_device *dev;
+
+	dev = nvgpu_device_get(g, NVGPU_DEVTYPE_NVDEC, 0);
+	if (dev == NULL) {
+		return NVGPU_INVALID_RUNLIST_ID;
+	}
+
+	return dev->runlist_id;
+}
+
+u32 nvgpu_engine_get_nvjpg_runlist_id(struct gk20a *g)
+{
+	const struct nvgpu_device *dev;
+
+	dev = nvgpu_device_get(g, NVGPU_DEVTYPE_NVJPG, 0);
+	if (dev == NULL) {
+		return NVGPU_INVALID_RUNLIST_ID;
+	}
+
+	return dev->runlist_id;
+}
+
 bool nvgpu_engine_is_valid_runlist_id(struct gk20a *g, u32 runlist_id)
 {
 	u32 i;
@@ -655,12 +692,17 @@ bool nvgpu_engine_is_valid_runlist_id(struct gk20a *g, u32 runlist_id)
 
 bool nvgpu_engine_is_multimedia_runlist_id(struct gk20a *g, u32 runlist_id)
 {
+	u32 dev_type, instance;
+	s32 mm_engine;
 	const struct nvgpu_device *dev;
 
-	/* Will be extended for other multimedia engine types */
-	nvgpu_device_for_each(g, dev, NVGPU_DEVTYPE_NVENC) {
-		if (dev->runlist_id == runlist_id) {
-			return true;
+	for (mm_engine = NVGPU_MULTIMEDIA_ENGINE_NVENC; mm_engine < NVGPU_MULTIMEDIA_ENGINE_MAX;
+		mm_engine++) {
+		if (nvgpu_multimedia_get_devtype(mm_engine, &dev_type, &instance)) {
+			dev = nvgpu_device_get(g, dev_type, instance);
+			if ((dev != NULL) && (dev->runlist_id == runlist_id)) {
+				return true;
+			}
 		}
 	}
 
@@ -886,6 +928,8 @@ int nvgpu_engine_init_info(struct nvgpu_fifo *f)
 	int err;
 	struct gk20a *g = f->g;
 	const struct nvgpu_device *dev;
+	u32 dev_type, instance;
+	s32 mm_engine;
 
 	f->num_engines = 0;
 
@@ -900,12 +944,19 @@ int nvgpu_engine_init_info(struct nvgpu_fifo *f)
 		}
 	}
 
-	nvgpu_device_for_each(g, dev, NVGPU_DEVTYPE_NVENC) {
-		err = nvgpu_engine_init_one_dev(f, dev);
-		if (err != 0) {
-			return err;
+	for (mm_engine = NVGPU_MULTIMEDIA_ENGINE_NVENC; mm_engine < NVGPU_MULTIMEDIA_ENGINE_MAX;
+		mm_engine++) {
+		if (nvgpu_multimedia_get_devtype(mm_engine, &dev_type, &instance)) {
+			dev = nvgpu_device_get(g, dev_type, instance);
+			if (dev != NULL) {
+				err = nvgpu_engine_init_one_dev(f, dev);
+				if (err != 0) {
+					return err;
+				}
+			}
 		}
 	}
+
 	err = g->ops.engine.init_ce_info(f);
 	return err;
 }

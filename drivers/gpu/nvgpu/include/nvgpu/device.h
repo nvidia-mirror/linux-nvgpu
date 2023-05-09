@@ -117,9 +117,9 @@ struct gk20a;
 /**
  * @ingroup NVGPU_TOP_DEVICE_INFO_DEFINES
  *
- * Device type for NVOFA engine instances.
+ * Device type for OFA engine instances.
  */
-#define NVGPU_DEVTYPE_NVOFA		22U
+#define NVGPU_DEVTYPE_OFA		22U
 
 #define NVGPU_MAX_DEVTYPE		58U
 
@@ -363,14 +363,24 @@ bool nvgpu_device_is_nvdec(struct gk20a *g, const struct nvgpu_device *dev);
 bool nvgpu_device_is_nvjpg(struct gk20a *g, const struct nvgpu_device *dev);
 
 /**
- * @brief Return true if dev is a NVOFA engine device.
+ * @brief Return true if dev is a OFA engine device.
  *
  * @param g [in]	The GPU.
  * @param dev [in]	A device.
  *
- * @return true if \a dev matches the NVOFA device type.
+ * @return true if \a dev matches the OFA device type.
  */
-bool nvgpu_device_is_nvofa(struct gk20a *g, const struct nvgpu_device *dev);
+bool nvgpu_device_is_ofa(struct gk20a *g, const struct nvgpu_device *dev);
+
+/**
+ * @brief Return true if dev is a multimedia engine device.
+ *
+ * @param g [in]	The GPU.
+ * @param dev [in]	A device.
+ *
+ * @return true if \a dev matches the multimedia device type.
+ */
+bool nvgpu_device_is_multimedia(struct gk20a *g, const struct nvgpu_device *dev);
 
 /**
  * @brief Get all the copy engine pointers for this chip.

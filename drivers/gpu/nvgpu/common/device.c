@@ -61,14 +61,14 @@ static inline const char *nvgpu_device_type_to_str(const struct nvgpu_device *de
 	case NVGPU_DEVTYPE_NVENC:
 		str = "NVENC";
 		break;
+	case NVGPU_DEVTYPE_OFA:
+		str = "OFA";
+		break;
 	case NVGPU_DEVTYPE_NVDEC:
 		str = "NVDEC";
 		break;
 	case NVGPU_DEVTYPE_NVJPG:
 		str = "NVJPG";
-		break;
-	case NVGPU_DEVTYPE_NVOFA:
-		str = "NVOFA";
 		break;
 	default:
 		break;
@@ -367,6 +367,13 @@ bool nvgpu_device_is_nvenc(struct gk20a *g, const struct nvgpu_device *dev)
 	return dev->type == NVGPU_DEVTYPE_NVENC;
 }
 
+bool nvgpu_device_is_ofa(struct gk20a *g, const struct nvgpu_device *dev)
+{
+	(void)g;
+
+	return dev->type == NVGPU_DEVTYPE_OFA;
+}
+
 bool nvgpu_device_is_nvdec(struct gk20a *g, const struct nvgpu_device *dev)
 {
 	(void)g;
@@ -381,9 +388,19 @@ bool nvgpu_device_is_nvjpg(struct gk20a *g, const struct nvgpu_device *dev)
 	return dev->type == NVGPU_DEVTYPE_NVJPG;
 }
 
-bool nvgpu_device_is_nvofa(struct gk20a *g, const struct nvgpu_device *dev)
+bool nvgpu_device_is_multimedia(struct gk20a *g, const struct nvgpu_device *dev)
 {
+	u32 dev_type, instance;
+	s32 mm_engine;
 	(void)g;
 
-	return dev->type == NVGPU_DEVTYPE_NVOFA;
+	for (mm_engine = NVGPU_MULTIMEDIA_ENGINE_NVENC; mm_engine < NVGPU_MULTIMEDIA_ENGINE_MAX;
+		mm_engine++) {
+		if (nvgpu_multimedia_get_devtype(mm_engine, &dev_type, &instance)) {
+			if (dev->type == dev_type) {
+				return true;
+			}
+		}
+	}
+	return false;
 }

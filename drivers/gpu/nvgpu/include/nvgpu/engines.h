@@ -63,8 +63,14 @@ enum nvgpu_fifo_engine {
 	NVGPU_ENGINE_ASYNC_CE  = 2U,
 	/** NVENC engine enum */
 	NVGPU_ENGINE_NVENC     = 3U,
+	/** OFA engine enum */
+	NVGPU_ENGINE_OFA       = 4U,
+	/** NVDEC engine enum */
+	NVGPU_ENGINE_NVDEC     = 5U,
+	/** NVJPG engine enum */
+	NVGPU_ENGINE_NVJPG     = 6U,
 	/** Invalid engine enum */
-	NVGPU_ENGINE_INVAL     = 4U,
+	NVGPU_ENGINE_INVAL     = 7U,
 };
 
 /**
@@ -292,6 +298,57 @@ u32 nvgpu_engine_get_gr_runlist_id(struct gk20a *g);
  *         nvenc h/w engine id is NULL.
  */
 u32 nvgpu_engine_get_nvenc_runlist_id(struct gk20a *g);
+/**
+ * @brief Get runlist id for the first available #NVGPU_ENGINE_OFA engine enum
+ *        type.
+ *
+ * @param g [in]		The GPU driver struct.
+ *
+ * - Get h/w engine id for the first available #NVGPU_ENGINE_OFA engine enum
+ *   type.
+ * -- Get #nvgpu_engine_info for the first available ofa engine id.
+ * -- Get #nvgpu_engine_info.runlist_id for first available ofa engine id.
+ *
+ * @return #nvgpu_engine_info.runlist_id for the first available ofa engine id.
+ * @retval U32_MAX if #NVGPU_ENGINE_OFA engine enum type is not available.
+ * @retval U32_MAX if pointer to #nvgpu_engine_info for the first available
+ *         ofa h/w engine id is NULL.
+ */
+u32 nvgpu_engine_get_ofa_runlist_id(struct gk20a *g);
+/**
+ * @brief Get runlist id for the first available #NVGPU_ENGINE_NVDEC engine enum
+ *        type.
+ *
+ * @param g [in]		The GPU driver struct.
+ *
+ * - Get h/w engine id for the first available #NVGPU_ENGINE_NVDEC engine enum
+ *   type.
+ * -- Get #nvgpu_engine_info for the first available nvdec engine id.
+ * -- Get #nvgpu_engine_info.runlist_id for first available nvdec engine id.
+ *
+ * @return #nvgpu_engine_info.runlist_id for the first available nvdec engine id.
+ * @retval U32_MAX if #NVGPU_ENGINE_NVDEC engine enum type is not available.
+ * @retval U32_MAX if pointer to #nvgpu_engine_info for the first available
+ *         nvdec h/w engine id is NULL.
+ */
+u32 nvgpu_engine_get_nvdec_runlist_id(struct gk20a *g);
+/**
+ * @brief Get runlist id for the first available #NVGPU_ENGINE_NVJPG engine enum
+ *        type.
+ *
+ * @param g [in]		The GPU driver struct.
+ *
+ * - Get h/w engine id for the first available #NVGPU_ENGINE_NVJPG engine enum
+ *   type.
+ * -- Get #nvgpu_engine_info for the first available nvjpg id.
+ * -- Get #nvgpu_engine_info.runlist_id for first available nvjpg engine id.
+ *
+ * @return #nvgpu_engine_info.runlist_id for the first available nvjpg engine id.
+ * @retval U32_MAX if #NVGPU_ENGINE_NVJPG engine enum type is not available.
+ * @retval U32_MAX if pointer to #nvgpu_engine_info for the first available
+ *         nvjpg h/w engine id is NULL.
+ */
+u32 nvgpu_engine_get_nvjpg_runlist_id(struct gk20a *g);
 /**
  * @brief Check if runlist id corresponds to runlist id of one of the
  *        engine ids supported by h/w.

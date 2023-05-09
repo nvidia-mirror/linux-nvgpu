@@ -146,15 +146,18 @@ struct nvgpu_device;
 #ifdef CONFIG_NVGPU_HAL_NON_FUSA
 #define NVGPU_UNIT_PWR		BIT32(4)
 #endif
-#ifdef CONFIG_NVGPU_DGPU
+/** NVDEC unit */
 #define NVGPU_UNIT_NVDEC	BIT32(5)
-#endif
 /** CE2 unit */
 #define NVGPU_UNIT_CE2		BIT32(6)
 /** NVLINK unit */
 #define NVGPU_UNIT_NVLINK	BIT32(7)
 /** NVENC unit */
 #define NVGPU_UNIT_NVENC	BIT32(8)
+/** OFA unit */
+#define NVGPU_UNIT_OFA		BIT32(9)
+/** NVJPG unit */
+#define NVGPU_UNIT_NVJPG	BIT32(10)
 
 /** Bit offset of the Architecture field in the HW version register */
 #define NVGPU_GPU_ARCHITECTURE_SHIFT 4U

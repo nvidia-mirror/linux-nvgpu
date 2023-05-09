@@ -35,6 +35,7 @@
 #include <nvgpu/multimedia.h>
 #include <nvgpu/tsg.h>
 #include <nvgpu/channel.h>
+#include <nvgpu/device.h>
 #include "multimedia_priv.h"
 #include "nvenc_bootstrap.h"
 
@@ -176,7 +177,7 @@ void nvgpu_multimedia_free_ctx(struct gk20a *g, struct nvgpu_multimedia_ctx *eng
 
 void nvgpu_multimedia_free_all_ctx(struct nvgpu_tsg *tsg)
 {
-	enum nvgpu_multimedia_engine eng;
+	s32 eng;
 	struct nvgpu_multimedia_ctx *eng_ctx;
 	struct gk20a *g = tsg->g;
 
@@ -253,4 +254,37 @@ int nvgpu_multimedia_copy_fw(struct gk20a *g, const char *fw_name, u32 *ucode_he
 free_ucode:
 	nvgpu_release_firmware(g, multimedia_fw);
 	return err;
+}
+
+bool nvgpu_multimedia_get_devtype(s32 multimedia_id, u32 *dev_type, u32 *instance)
+{
+	bool isValid = true;
+
+	switch (multimedia_id) {
+
+	case NVGPU_MULTIMEDIA_ENGINE_NVENC:
+		*dev_type = NVGPU_DEVTYPE_NVENC;
+		*instance = 0;
+		break;
+
+	case NVGPU_MULTIMEDIA_ENGINE_OFA:
+		*dev_type = NVGPU_DEVTYPE_OFA;
+		*instance = 0;
+		break;
+
+	case NVGPU_MULTIMEDIA_ENGINE_NVDEC:
+		*dev_type = NVGPU_DEVTYPE_NVDEC;
+		*instance = 0;
+		break;
+
+	case NVGPU_MULTIMEDIA_ENGINE_NVJPG:
+		*dev_type = NVGPU_DEVTYPE_NVJPG;
+		*instance = 0;
+		break;
+
+	default:
+		isValid = false;
+		break;
+	}
+	return isValid;
 }
