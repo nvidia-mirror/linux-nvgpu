@@ -271,6 +271,8 @@ static int nvgpu_prof_ioctl_get_pm_resource_type(u32 resource,
 	case NVGPU_PROFILER_PM_RESOURCE_ARG_PC_SAMPLER:
 		*pm_resource = NVGPU_PROFILER_PM_RESOURCE_TYPE_PC_SAMPLER;
 		return 0;
+	case NVGPU_PROFILER_PM_RESOURCE_ARG_HES_CWD:
+		return -EINVAL;
 	default:
 		break;
 	}
