@@ -1692,6 +1692,7 @@ static const struct gops_sec2 tu104_ops_sec2 = {
 
 #ifdef CONFIG_NVGPU_LS_PMU
 static const struct gops_gsp tu104_ops_gsp = {
+	.is_gsp_supported = true,
 	.falcon_base_addr = tu104_gsp_falcon_base_addr,
 	.falcon_setup_boot_config = tu104_gsp_flcn_setup_boot_config,
 	.gsp_reset = tu104_gsp_reset,

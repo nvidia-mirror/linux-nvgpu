@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -36,6 +36,7 @@ struct gops_gsp {
 	int (*gsp_reset)(struct gk20a *g);
 	bool (*validate_mem_integrity)(struct gk20a *g);
 	bool (*is_debug_mode_enabled)(struct gk20a *g);
+	bool is_gsp_supported;
 #ifdef CONFIG_NVGPU_GSP_SCHEDULER
 	u32 (*gsp_get_queue_head)(u32 i);
 	u32 (*gsp_get_queue_head_size)(void);
