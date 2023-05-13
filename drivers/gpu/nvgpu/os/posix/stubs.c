@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -41,11 +41,13 @@ void nvgpu_dbg_session_post_event(struct dbg_session_gk20a *dbg_s)
 #ifdef CONFIG_NVGPU_SYSFS
 int nvgpu_ecc_sysfs_init(struct gk20a *g)
 {
+	(void)g;
 	return 0;
 }
 
 void nvgpu_ecc_sysfs_remove(struct gk20a *g)
 {
+	(void)g;
 }
 #endif
 

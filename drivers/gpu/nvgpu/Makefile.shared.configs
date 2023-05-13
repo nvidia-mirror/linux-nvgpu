@@ -48,6 +48,11 @@ endif
 
 NVGPU_COMMON_CFLAGS		:=
 
+# Enable debug flag for both safety debug and standard debug builds.
+ifeq ($(NV_BUILD_CONFIGURATION_IS_DEBUG),1)
+NVGPU_COMMON_CFLAGS		+= -DCONFIG_NVGPU_BUILD_CONFIGURATION_IS_DEBUG
+endif
+
 #
 # Flags always enabled regardless of build profile.
 #
@@ -202,6 +207,11 @@ endif
 CONFIG_NVGPU_FALCON_DEBUG       := 1
 NVGPU_COMMON_CFLAGS             += -DCONFIG_NVGPU_FALCON_DEBUG
 
+ifneq ($(NVGPU_HVRTOS),1)
+CONFIG_NVGPU_SYSFS              := 1
+NVGPU_COMMON_CFLAGS             += -DCONFIG_NVGPU_SYSFS
+endif
+
 #
 # Flags enabled only for regular build profile.
 #
@@ -214,11 +224,6 @@ CONFIG_NVGPU_EPL_INIT            := 1
 NVGPU_COMMON_CFLAGS             += -DCONFIG_NVGPU_EPL_INIT
 endif
 endif
-endif
-
-ifneq ($(NVGPU_HVRTOS),1)
-CONFIG_NVGPU_SYSFS              := 1
-NVGPU_COMMON_CFLAGS             += -DCONFIG_NVGPU_SYSFS
 endif
 
 # Enable FSI Error injection support only on regular build when the
