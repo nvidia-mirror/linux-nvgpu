@@ -61,6 +61,11 @@ NVGPU_COV_WHITELIST(false_positive, NVGPU_MISRA(Rule, 14_4), "Bug 2623654") \
 	} while (false)
 #endif
 
+/**
+ * Size required to submit work through MMIO.
+ */
+#define NVGPU_GPU_MMIO_SIZE		SZ_64K
+
 static int pd_allocate(struct vm_gk20a *vm,
 		       struct nvgpu_gmmu_pd *pd,
 		       const struct gk20a_mmu_level *l,
@@ -194,6 +199,140 @@ void nvgpu_gmmu_unmap_addr(struct vm_gk20a *vm, struct nvgpu_mem *mem, u64 gpu_v
 void nvgpu_gmmu_unmap(struct vm_gk20a *vm, struct nvgpu_mem *mem)
 {
 	nvgpu_gmmu_unmap_addr(vm, mem, mem->gpu_va);
+}
+
+int nvgpu_channel_setup_mmio_gpu_vas(struct gk20a *g,
+		struct nvgpu_channel *c,
+		u32 gpfifosize)
+{
+	int err = 0;
+	struct nvgpu_sgt *sgt = NULL;
+	struct vm_gk20a *vm = c->vm;
+	u64 virtual_func_offset = 0U;
+
+	/* Initialize the map sizes for userd, gpummio and gpfio */
+	c->userd_va_mapsize = SZ_4K;
+	c->gpfifo_va_mapsize = gpfifosize;
+
+	sgt = nvgpu_sgt_create_from_mem(g, &c->usermode_userd);
+	if (sgt == NULL) {
+		return -ENOMEM;
+	}
+
+	c->userd_va = nvgpu_gmmu_map_va(vm, sgt, c->userd_va_mapsize,
+				APERTURE_SYSMEM, 0);
+
+	nvgpu_sgt_free(g, sgt);
+	if (c->userd_va == 0U) {
+		return -ENOMEM;
+	}
+
+	sgt = nvgpu_sgt_create_from_mem(g, &c->usermode_gpfifo);
+	if (sgt == NULL) {
+		goto free_userd_va;
+	}
+
+	c->gpfifo_va = nvgpu_gmmu_map_va(vm, sgt, gpfifosize, APERTURE_SYSMEM, 0);
+	nvgpu_sgt_free(g, sgt);
+	if (c->gpfifo_va == 0U) {
+		goto free_userd_va;
+	}
+
+	nvgpu_mutex_acquire(&vm->gpu_mmio_va_map_lock);
+	if (vm->gpummio_va == 0U) {
+		virtual_func_offset = g->ops.usermode.base(g);
+		vm->gpummio_va_mapsize = NVGPU_GPU_MMIO_SIZE;
+		/*
+		 * create a SGT from VF addr with 64KB for the first channel"
+		 */
+		err = nvgpu_mem_create_from_phys(g, &vm->gpummio_mem,
+				virtual_func_offset,
+				vm->gpummio_va_mapsize / NVGPU_CPU_PAGE_SIZE);
+		if (err < 0) {
+			nvgpu_mutex_release(&vm->gpu_mmio_va_map_lock);
+			goto free_gpfifo_va;
+		}
+
+		sgt = nvgpu_sgt_create_from_mem(g, &vm->gpummio_mem);
+		if (sgt == NULL) {
+			goto free_mem_and_release_lock;
+		}
+
+		vm->gpummio_va = nvgpu_gmmu_map_va(vm, sgt, vm->gpummio_va_mapsize,
+				APERTURE_SYSMEM_COH, NVGPU_KIND_SMSKED_MESSAGE);
+		nvgpu_sgt_free(g, sgt);
+		if (vm->gpummio_va == 0U) {
+			goto free_mem_and_release_lock;
+		}
+	}
+	nvgpu_mutex_release(&vm->gpu_mmio_va_map_lock);
+	return 0;
+free_mem_and_release_lock:
+	nvgpu_dma_free(g, &vm->gpummio_mem);
+	nvgpu_mutex_release(&vm->gpu_mmio_va_map_lock);
+
+free_gpfifo_va:
+	nvgpu_gmmu_unmap_va(c->vm, c->gpfifo_va, c->gpfifo_va_mapsize);
+	c->gpfifo_va = 0U;
+free_userd_va:
+	nvgpu_gmmu_unmap_va(c->vm, c->userd_va, c->userd_va_mapsize);
+	c->userd_va = 0U;
+	return -ENOMEM;
+}
+
+void nvgpu_channel_free_mmio_gpu_vas(struct gk20a *g,
+			struct nvgpu_channel *c)
+{
+	(void)g;
+
+	if (c->gpfifo_va != 0U) {
+		nvgpu_gmmu_unmap_va(c->vm, c->gpfifo_va, c->gpfifo_va_mapsize);
+	}
+
+	if (c->userd_va != 0U) {
+		nvgpu_gmmu_unmap_va(c->vm, c->userd_va, c->userd_va_mapsize);
+	}
+
+	c->userd_va = 0U;
+	c->gpfifo_va = 0U;
+}
+
+u64 nvgpu_gmmu_map_va(struct vm_gk20a *vm,
+		struct nvgpu_sgt *sgt,
+		u64 size,
+		enum nvgpu_aperture aperture,
+		u8 kind)
+{
+
+	struct gk20a *g = gk20a_from_vm(vm);
+	u64 gpu_va = 0U;
+	u64 vaddr =  0U;
+	u64 buffer_offset = 0U;
+	u32 ctag_offset = 0U;
+	u32 flags = 0U;
+	enum gk20a_mem_rw_flag rw_flag = 0;
+	bool clear_ctags = false;
+	bool sparse = false;
+	bool priv = false;
+	struct vm_gk20a_mapping_batch *batch = NULL;
+
+	nvgpu_mutex_acquire(&vm->update_gmmu_lock);
+	gpu_va = g->ops.mm.gmmu.map(vm, vaddr, sgt/* sg list */,
+			buffer_offset, size, GMMU_PAGE_SIZE_SMALL, kind,
+			ctag_offset, flags, rw_flag, clear_ctags,
+			sparse, priv, batch, aperture);
+	nvgpu_mutex_release(&vm->update_gmmu_lock);
+	return gpu_va;
+}
+
+void nvgpu_gmmu_unmap_va(struct vm_gk20a *vm, u64 gpu_va, u64 size)
+{
+	struct gk20a *g = gk20a_from_vm(vm);
+
+	nvgpu_mutex_acquire(&vm->update_gmmu_lock);
+	g->ops.mm.gmmu.unmap(vm, gpu_va, size, GMMU_PAGE_SIZE_SMALL, false,
+			gk20a_mem_flag_none, false, NULL);
+	nvgpu_mutex_release(&vm->update_gmmu_lock);
 }
 
 int nvgpu_gmmu_init_page_table(struct vm_gk20a *vm)

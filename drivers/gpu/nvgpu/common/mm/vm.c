@@ -813,6 +813,7 @@ int nvgpu_vm_do_init(struct mm_gk20a *mm,
 	vm->mapped_buffers = NULL;
 
 	nvgpu_mutex_init(&vm->syncpt_ro_map_lock);
+	nvgpu_mutex_init(&vm->gpu_mmio_va_map_lock);
 	nvgpu_mutex_init(&vm->update_gmmu_lock);
 
 	nvgpu_ref_init(&vm->ref);
@@ -838,6 +839,7 @@ int nvgpu_vm_do_init(struct mm_gk20a *mm,
 clean_up_gmmu_lock:
 	nvgpu_mutex_destroy(&vm->update_gmmu_lock);
 	nvgpu_mutex_destroy(&vm->syncpt_ro_map_lock);
+	nvgpu_mutex_destroy(&vm->gpu_mmio_va_map_lock);
 #endif
 clean_up_gpu_vm:
 	if (g->ops.mm.vm_as_free_share != NULL) {
@@ -943,6 +945,16 @@ static void nvgpu_vm_remove(struct vm_gk20a *vm)
 				vm->syncpt_ro_map_gpu_va);
 	}
 
+	nvgpu_mutex_acquire(&vm->gpu_mmio_va_map_lock);
+	if (vm->gpummio_va != 0U) {
+		nvgpu_gmmu_unmap_va(vm, vm->gpummio_va,
+				vm->gpummio_va_mapsize);
+		nvgpu_dma_free(g, &vm->gpummio_mem);
+		vm->gpummio_va = 0U;
+		vm->gpummio_va_mapsize = 0U;
+	}
+	nvgpu_mutex_release(&vm->gpu_mmio_va_map_lock);
+
 	nvgpu_mutex_acquire(&vm->update_gmmu_lock);
 
 	nvgpu_rbtree_enum_start(0, &node, vm->mapped_buffers);
@@ -988,6 +1000,7 @@ static void nvgpu_vm_remove(struct vm_gk20a *vm)
 	nvgpu_mutex_destroy(&vm->update_gmmu_lock);
 
 	nvgpu_mutex_destroy(&vm->syncpt_ro_map_lock);
+	nvgpu_mutex_destroy(&vm->gpu_mmio_va_map_lock);
 	nvgpu_kfree(g, vm);
 }
 

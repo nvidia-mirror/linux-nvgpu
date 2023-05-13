@@ -629,6 +629,9 @@ static u32 nvgpu_setup_bind_user_flags_to_common_flags(u32 user_flags)
 	if (user_flags & NVGPU_CHANNEL_SETUP_BIND_FLAGS_USERMODE_SUPPORT)
 		flags |= NVGPU_SETUP_BIND_FLAGS_USERMODE_SUPPORT;
 
+	if (user_flags & NVGPU_CHANNEL_SETUP_BIND_FLAGS_USERMODE_GPU_MAP_RESOURCES_SUPPORT)
+		flags |= NVGPU_SETUP_BIND_FLAGS_USERMODE_GPU_MAP_RESOURCES_SUPPORT;
+
 	return flags;
 }
 
@@ -1328,6 +1331,12 @@ long gk20a_channel_ioctl(struct file *filp,
 		err = nvgpu_channel_setup_bind(ch, &setup_bind_args);
 		channel_setup_bind_args->work_submit_token =
 			setup_bind_args.work_submit_token;
+		channel_setup_bind_args->gpfifo_gpu_va =
+			setup_bind_args.gpfifo_gpu_va;
+		channel_setup_bind_args->userd_gpu_va =
+			setup_bind_args.userd_gpu_va;
+		channel_setup_bind_args->usermode_mmio_gpu_va =
+			setup_bind_args.usermode_mmio_gpu_va;
 		gk20a_idle(ch->g);
 		break;
 	}

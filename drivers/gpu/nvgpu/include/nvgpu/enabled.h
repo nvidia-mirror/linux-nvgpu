@@ -235,6 +235,8 @@ struct gk20a;
 			"Multimedia engine support"),			\
 	DEFINE_FLAG(NVGPU_SUPPORT_SEMA_BASED_GPFIFO_GET,		\
 			"Semaphore based gpfifo get update support"),	\
+	DEFINE_FLAG(NVGPU_SUPPORT_GPU_MMIO,				\
+			"Support for work submit through GPUMMIO"),	\
 	DEFINE_FLAG(NVGPU_MAX_ENABLED_BITS, "Marks max number of flags"),
 
 /**

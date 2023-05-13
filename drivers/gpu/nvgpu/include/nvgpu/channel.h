@@ -63,21 +63,24 @@ struct nvgpu_runlist;
 /**
  * Enable VPR support.
  */
-#define NVGPU_SETUP_BIND_FLAGS_SUPPORT_VPR		BIT32(0)
+#define NVGPU_SETUP_BIND_FLAGS_SUPPORT_VPR				BIT32(0)
 /**
  * Channel must have deterministic (and low) submit latency.
  * This flag is only valid for kernel mode submit.
  */
-#define NVGPU_SETUP_BIND_FLAGS_SUPPORT_DETERMINISTIC	BIT32(1)
+#define NVGPU_SETUP_BIND_FLAGS_SUPPORT_DETERMINISTIC			BIT32(1)
 /**
  * Enable replayable faults.
  */
-#define NVGPU_SETUP_BIND_FLAGS_REPLAYABLE_FAULTS_ENABLE	BIT32(2)
+#define NVGPU_SETUP_BIND_FLAGS_REPLAYABLE_FAULTS_ENABLE			BIT32(2)
 /**
  * Enable usermode submit (mutually exclusive with kernel_mode submit).
  */
-#define NVGPU_SETUP_BIND_FLAGS_USERMODE_SUPPORT		BIT32(3)
-
+#define NVGPU_SETUP_BIND_FLAGS_USERMODE_SUPPORT				BIT32(3)
+/**
+ * Enable GPU MMIO support
+ */
+#define NVGPU_SETUP_BIND_FLAGS_USERMODE_GPU_MAP_RESOURCES_SUPPORT	BIT32(4)
 /**
  * Insert a wait on previous job's completion fence, before gpfifo entries.
  * See also #nvgpu_fence.
@@ -246,6 +249,9 @@ struct nvgpu_setup_bind_args {
 	u32 gpfifo_dmabuf_fd;
 	u64 gpfifo_dmabuf_offset;
 	u32 work_submit_token;
+	u64 gpfifo_gpu_va;
+	u64 userd_gpu_va;
+	u64 usermode_mmio_gpu_va;
 	u32 flags;
 };
 
@@ -581,6 +587,10 @@ struct nvgpu_channel {
 	 */
 	nvgpu_atomic_t sched_exit_wait_for_errbar_refcnt;
 #endif
+	u64 userd_va;
+	u64 gpfifo_va;
+	u64 userd_va_mapsize;
+	u64 gpfifo_va_mapsize;
 };
 
 #ifdef CONFIG_NVGPU_KERNEL_MODE_SUBMIT

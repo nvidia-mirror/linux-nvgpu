@@ -338,6 +338,23 @@ struct vm_gk20a {
 	 * Protect allocation of sync point map.
 	 */
 	struct nvgpu_mutex syncpt_ro_map_lock;
+	/**
+	 * gpuva required to submit work by mmio.
+	 */
+	u64 gpummio_va;
+	/**
+	 * Size of the gpummio mapping.
+	 */
+	u64 gpummio_va_mapsize;
+	/**
+	 * nvgpu_mem to store the physical address information.
+	 */
+	struct nvgpu_mem gpummio_mem;
+	/**
+	 * Mutex to protect the gpummio mappings.
+	 */
+	struct nvgpu_mutex gpu_mmio_va_map_lock;
+
 };
 
 /*
@@ -354,6 +371,7 @@ struct vm_gk20a {
 #define NVGPU_VM_MAP_ACCESS_READ_ONLY			1U
 #define NVGPU_VM_MAP_ACCESS_READ_WRITE			2U
 
+#define NVGPU_KIND_SMSKED_MESSAGE			0xF
 #define NVGPU_KIND_INVALID				S16(-1)
 
 /**

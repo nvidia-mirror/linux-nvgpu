@@ -494,6 +494,10 @@ void nvgpu_os_channel_free_usermode_buffers(struct nvgpu_channel *c)
 	struct gk20a *g = c->g;
 	struct device *dev = dev_from_gk20a(g);
 
+	if (nvgpu_is_enabled(g, NVGPU_SUPPORT_GPU_MMIO)) {
+		nvgpu_channel_free_mmio_gpu_vas(g, c);
+	}
+
 	if (priv->usermode.gpfifo.dmabuf != NULL) {
 		nvgpu_mm_unpin(dev, priv->usermode.gpfifo.dmabuf,
 			       priv->usermode.gpfifo.attachment,
@@ -560,7 +564,19 @@ static int nvgpu_channel_alloc_usermode_buffers(struct nvgpu_channel *c,
 		goto unmap_free_gpfifo;
 	}
 
+	if (nvgpu_is_enabled(g, NVGPU_SUPPORT_GPU_MMIO) &&
+		((args->flags & NVGPU_SETUP_BIND_FLAGS_USERMODE_GPU_MAP_RESOURCES_SUPPORT) != 0U)) {
+		err = nvgpu_channel_setup_mmio_gpu_vas(g, c, gpfifo_size);
+		if (err < 0) {
+			err = -ENOMEM;
+			goto unmap_free_gpfifo;
+		}
+	}
+
 	args->work_submit_token = g->ops.usermode.doorbell_token(c);
+	args->gpfifo_gpu_va = c->gpfifo_va;
+	args->userd_gpu_va = c->userd_va;
+	args->usermode_mmio_gpu_va = c->vm->gpummio_va;
 
 	return 0;
 unmap_free_gpfifo:

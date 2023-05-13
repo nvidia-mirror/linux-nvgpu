@@ -46,6 +46,7 @@ struct nvgpu_mem;
 struct nvgpu_sgt;
 struct nvgpu_gmmu_pd;
 struct vm_gk20a_mapping_batch;
+struct nvgpu_channel;
 
 /**
  * Small page size (4KB) index in the page size table
@@ -430,6 +431,81 @@ void nvgpu_gmmu_unmap_addr(struct vm_gk20a *vm,
  */
 void nvgpu_gmmu_unmap(struct vm_gk20a *vm, struct nvgpu_mem *mem);
 
+/**
+ * @brief Map a memory pointed by sgt to GMMU.
+ * This is required to add the translations in the GPU page table
+ * for the given channel.
+ *
+ * @param vm		[in]	Pointer to virtual memory structure.
+ * @param sgt		[in]	Structure for storing the memory information.
+ * @param size		[in]	Size to be mapped to GMMU.
+ * @param aperture	[in]	Information about the type of the given memory.
+ * @param kind		[in]	Kind to be used for mapping.
+ *
+ *
+ * GMMU map:
+ * Acquires the VM GMMU lock to avoid race.
+ * Call core map routine to map the given sgt to GMMU.
+ * Release the VM GMMU lock.
+ *
+ * @return	gpu_va.
+ */
+
+u64 nvgpu_gmmu_map_va(struct vm_gk20a *vm, struct nvgpu_sgt *sgt,
+		u64 size, enum nvgpu_aperture aperture,
+		u8 kind);
+
+/**
+ * @brief Unmap a memory mapped by nvgpu_gmmu_map_va().
+ * This is required to remove the translations from the GPU page table.
+ *
+ * @param vm		[in]	Pointer to virtual memory structure.
+ * @param gpu_va	[in]	GPU virtual address.
+ * @param size		[in]	Size to be unmapped from GMMU.
+ *
+ *
+ * GMMU Unmap:
+ * Acquires the VM GMMU lock to the avoid race.
+ * Call core unmap routine to remove the translations from GMMU.
+ * Release the VM GMMU lock.
+ *
+ * @return	None.
+ */
+void nvgpu_gmmu_unmap_va(struct vm_gk20a *vm, u64 gpu_va, u64 size);
+
+/**
+ * @brief Setup mappings on the GMMU to enable gpu work submission
+ *
+ * @param g		[in]	Pointer to the super struture G.
+ * @param c		[in]	Structure for storing the channel info.
+ * @param gpfifosize	[in]	Size to create gpu mapping for gpfifo.
+ *
+ * Create the sgt from the given userd from the channel.
+ * Call nvgpu_gmmu_map_va() to map the userd with 4k in GMMU.
+ * Create the sgt from the given gpfifo derived from the channel.
+ * Call nvgpu_gmmu_map_va() to map the gpfifo with gpfifosize
+ * in GMMU.
+ * Create the sgt from the given gpummio derived from the channel.
+ * Call nvgpu_gmmu_map_va() to map the gpummio with 64k.
+ *
+ * @return	0 for success, < 1 for failure.
+ */
+int nvgpu_channel_setup_mmio_gpu_vas(struct gk20a *g,
+				struct nvgpu_channel *c,
+				u32 gpfifosize);
+
+/**
+ * @brief Free the mappings done by nvgpu_channel_setup_mmio_gpu_vas().
+ *
+ * @param g 		[in]	Pointer to the super structure G.
+ * @param c		[in]	Structure for storing the channel information.
+ *
+ * Free the mappings done by nvgpu_channel_setup_mmio_gpu_vas().
+ *
+ * @return	None.
+ */
+void nvgpu_channel_free_mmio_gpu_vas(struct gk20a *g,
+				struct nvgpu_channel *c);
 /**
  * @brief Compute number of words in a PTE.
  *
