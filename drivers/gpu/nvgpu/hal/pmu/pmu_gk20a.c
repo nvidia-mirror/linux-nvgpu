@@ -229,7 +229,7 @@ u32 gk20a_pmu_mutex_owner(struct gk20a *g, struct pmu_mutexes *mutexes, u32 id)
 	mutex = &mutexes->mutex[id];
 
 	return pwr_pmu_mutex_value_v(
-		gk20a_readl(g, pwr_pmu_mutex_r(mutex->index)));
+		g->ops.pmu.pmu_get_mutex_reg(g, mutex->index));
 }
 
 int gk20a_pmu_mutex_acquire(struct gk20a *g, struct pmu_mutexes *mutexes,
@@ -242,12 +242,12 @@ int gk20a_pmu_mutex_acquire(struct gk20a *g, struct pmu_mutexes *mutexes,
 	mutex = &mutexes->mutex[id];
 
 	owner = pwr_pmu_mutex_value_v(
-		gk20a_readl(g, pwr_pmu_mutex_r(mutex->index)));
+		g->ops.pmu.pmu_get_mutex_reg(g, mutex->index));
 
 	max_retry = 40;
 	do {
 		data = pwr_pmu_mutex_id_value_v(
-			gk20a_readl(g, pwr_pmu_mutex_id_r()));
+			g->ops.pmu.pmu_get_mutex_id(g));
 		if (data == pwr_pmu_mutex_id_value_init_v() ||
 		    data == pwr_pmu_mutex_id_value_not_avail_v()) {
 			nvgpu_warn(g,
@@ -258,11 +258,11 @@ int gk20a_pmu_mutex_acquire(struct gk20a *g, struct pmu_mutexes *mutexes,
 		}
 
 		owner = data;
-		gk20a_writel(g, pwr_pmu_mutex_r(mutex->index),
+		g->ops.pmu.pmu_set_mutex_reg(g, mutex->index,
 			pwr_pmu_mutex_value_f(owner));
 
 		data = pwr_pmu_mutex_value_v(
-			gk20a_readl(g, pwr_pmu_mutex_r(mutex->index)));
+			g->ops.pmu.pmu_get_mutex_reg(g, mutex->index));
 
 		if (owner == data) {
 			nvgpu_log_info(g, "mutex acquired: id=%d, token=0x%x",
@@ -275,11 +275,11 @@ int gk20a_pmu_mutex_acquire(struct gk20a *g, struct pmu_mutexes *mutexes,
 		nvgpu_log_info(g, "fail to acquire mutex idx=0x%08x",
 			mutex->index);
 
-		data = gk20a_readl(g, pwr_pmu_mutex_id_release_r());
+		data = g->ops.pmu.pmu_get_mutex_id_release(g);
 		data = set_field(data,
 			pwr_pmu_mutex_id_release_value_m(),
 			pwr_pmu_mutex_id_release_value_f(owner));
-		gk20a_writel(g, pwr_pmu_mutex_id_release_r(), data);
+		g->ops.pmu.pmu_set_mutex_id_release(g, data);
 
 		nvgpu_usleep_range(20, 40);
 	} while (max_retry-- > 0U);
@@ -296,15 +296,15 @@ void gk20a_pmu_mutex_release(struct gk20a *g, struct pmu_mutexes *mutexes,
 	mutex = &mutexes->mutex[id];
 
 	owner = pwr_pmu_mutex_value_v(
-		gk20a_readl(g, pwr_pmu_mutex_r(mutex->index)));
+		g->ops.pmu.pmu_get_mutex_reg(g, mutex->index));
 
-	gk20a_writel(g, pwr_pmu_mutex_r(mutex->index),
-		pwr_pmu_mutex_value_initial_lock_f());
+	g->ops.pmu.pmu_set_mutex_reg(g, mutex->index,
+			pwr_pmu_mutex_value_initial_lock_f());
 
-	data = gk20a_readl(g, pwr_pmu_mutex_id_release_r());
+	data = g->ops.pmu.pmu_get_mutex_id_release(g);
 	data = set_field(data, pwr_pmu_mutex_id_release_value_m(),
 		pwr_pmu_mutex_id_release_value_f(owner));
-	gk20a_writel(g, pwr_pmu_mutex_id_release_r(), data);
+	g->ops.pmu.pmu_set_mutex_id_release(g, data);
 
 	nvgpu_log_info(g, "mutex released: id=%d, token=0x%x",
 		mutex->index, *token);

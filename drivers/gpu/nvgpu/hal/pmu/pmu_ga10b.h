@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,13 +28,6 @@
 #define DMA_OFFSET_START	0U
 #define DMEM_DATA_0             0x0U
 #define DMEM_DATA_1             0x1U
-#define PMU_IDLE_THRESHOLD_V    0x7FFFFFFF
-#define IDLE_COUNTER_0          0
-#define IDLE_COUNTER_1          1
-#define IDLE_COUNTER_2          2
-#define IDLE_COUNTER_3          3
-#define IDLE_COUNTER_4          4
-#define IDLE_COUNTER_6          6
 #define right_shift_8bits(v)    (v >> 8U)
 #define left_shift_8bits(v)     (v << 8U)
 

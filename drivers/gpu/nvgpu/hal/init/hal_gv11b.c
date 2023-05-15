@@ -1220,6 +1220,11 @@ static const struct gops_pmu gv11b_ops_pmu = {
 	.pmu_mutex_owner = gk20a_pmu_mutex_owner,
 	.pmu_mutex_acquire = gk20a_pmu_mutex_acquire,
 	.pmu_mutex_release = gk20a_pmu_mutex_release,
+	.pmu_get_mutex_reg = gk20a_pmu_get_mutex_reg,
+	.pmu_set_mutex_reg = gk20a_pmu_set_mutex_reg,
+	.pmu_get_mutex_id = gk20a_pmu_get_mutex_id,
+	.pmu_get_mutex_id_release = gk20a_pmu_get_mutex_id_release,
+	.pmu_set_mutex_id_release = gk20a_pmu_set_mutex_id_release,
 	/* power-gating */
 	.pmu_setup_elpg = gv11b_pmu_setup_elpg,
 	.pmu_pg_idle_counter_config = gk20a_pmu_pg_idle_counter_config,

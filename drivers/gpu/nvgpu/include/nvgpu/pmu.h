@@ -216,6 +216,14 @@ struct nvgpu_clk_pmupstate;
 
 #define NVGPU_PWRCLK_RATE 204000000UL
 
+#define IDLE_COUNTER_0          0
+#define IDLE_COUNTER_1          1
+#define IDLE_COUNTER_2          2
+#define IDLE_COUNTER_3          3
+#define IDLE_COUNTER_4          4
+#define IDLE_COUNTER_6          6
+#define PMU_IDLE_THRESHOLD_V    0x7FFFFFFF
+
 #ifdef CONFIG_NVGPU_LS_PMU
 struct rpc_handler_payload {
 	void *rpc_buff;

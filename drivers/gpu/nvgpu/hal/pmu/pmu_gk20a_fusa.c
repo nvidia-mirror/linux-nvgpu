@@ -123,6 +123,31 @@ u32 gk20a_pmu_get_pmu_debug(struct gk20a *g, u32 i)
 	return nvgpu_readl(g, pwr_pmu_debug_r(i));
 }
 
+u32 gk20a_pmu_get_mutex_reg(struct gk20a *g, u32 i)
+{
+	return nvgpu_readl(g, pwr_pmu_mutex_r(i));
+}
+
+void gk20a_pmu_set_mutex_reg(struct gk20a *g, u32 i, u32 data)
+{
+	nvgpu_writel(g, pwr_pmu_mutex_r(i), data);
+}
+
+u32 gk20a_pmu_get_mutex_id(struct gk20a *g)
+{
+	return nvgpu_readl(g, pwr_pmu_mutex_id_r());
+}
+
+u32 gk20a_pmu_get_mutex_id_release(struct gk20a *g)
+{
+	return nvgpu_readl(g, pwr_pmu_mutex_id_release_r());
+}
+
+void gk20a_pmu_set_mutex_id_release(struct gk20a *g, u32 data)
+{
+	nvgpu_writel(g, pwr_pmu_mutex_id_release_r(), data);
+}
+
 void gk20a_pmu_isr(struct gk20a *g)
 {
 	struct nvgpu_pmu *pmu = g->pmu;

@@ -51,6 +51,11 @@ u32 gk20a_pmu_get_bar0_fecs_error(struct gk20a *g);
 void gk20a_pmu_set_bar0_fecs_error(struct gk20a *g, u32 val);
 u32 gk20a_pmu_get_mailbox(struct gk20a *g, u32 i);
 u32 gk20a_pmu_get_pmu_debug(struct gk20a *g, u32 i);
+u32 gk20a_pmu_get_mutex_reg(struct gk20a *g, u32 i);
+void gk20a_pmu_set_mutex_reg(struct gk20a *g, u32 i, u32 data);
+u32 gk20a_pmu_get_mutex_id(struct gk20a *g);
+u32 gk20a_pmu_get_mutex_id_release(struct gk20a *g);
+void gk20a_pmu_set_mutex_id_release(struct gk20a *g, u32 data);
 
 #ifdef CONFIG_NVGPU_LS_PMU
 void gk20a_pmu_dump_falcon_stats(struct nvgpu_pmu *pmu);
