@@ -666,7 +666,7 @@ struct nvgpu_gr_config *nvgpu_gr_config_init(struct gk20a *g)
 	 * logical id.
 	 */
 	config->gpc_tpc_physical_id_map = nvgpu_kzalloc(g,
-			nvgpu_safe_mult_u64((size_t)config->gpc_count,
+			nvgpu_safe_mult_u32((size_t)config->gpc_count,
 				sizeof(u32 *)));
 	if (config->gpc_tpc_physical_id_map == NULL) {
 		nvgpu_err(g, "alloc gpc_tpc_physical_id_map failed");
@@ -677,7 +677,8 @@ struct nvgpu_gr_config *nvgpu_gr_config_init(struct gk20a *g)
 		gpc_phys_id = nvgpu_grmgr_get_gr_gpc_phys_id(g,
 				cur_gr_instance, (u32)gpc_index);
 		config->gpc_tpc_physical_id_map[gpc_phys_id] =
-			nvgpu_kzalloc(g, config->max_tpc_per_gpc_count);
+			nvgpu_kzalloc(g, nvgpu_safe_mult_u32(
+				config->max_tpc_per_gpc_count, sizeof(u32)));
 		if (config->gpc_tpc_physical_id_map[gpc_phys_id] == NULL) {
 			nvgpu_err(g, "alloc tpc_physical_id_map(%u) failed",
 					gpc_phys_id);
