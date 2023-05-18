@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -99,7 +99,7 @@ void tu104_pmu_setup_apertures(struct gk20a *g)
 				gk20a_readl(g, pwr_falcon_itfen_r()) |
 				pwr_falcon_itfen_ctxen_enable_f());
 	inst_block_ptr = nvgpu_inst_block_ptr(g, &mm->pmu.inst_block);
-	gk20a_writel(g, pwr_pmu_new_instblk_r(),
+	g->ops.pmu.set_pmu_new_instblk(g,
 		pwr_pmu_new_instblk_ptr_f(inst_block_ptr) |
 		pwr_pmu_new_instblk_valid_f(1) |
 		nvgpu_aperture_mask(g, &mm->pmu.inst_block,

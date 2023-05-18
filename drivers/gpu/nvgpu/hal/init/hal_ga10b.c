@@ -1435,6 +1435,10 @@ static const struct gops_pmu ga10b_ops_pmu = {
 	.set_bar0_fecs_error = gk20a_pmu_set_bar0_fecs_error,
 	.get_mailbox = gk20a_pmu_get_mailbox,
 	.get_pmu_debug = gk20a_pmu_get_pmu_debug,
+	.get_pmu_msgq_head = gk20a_pmu_get_pmu_msgq_head,
+	.set_pmu_msgq_head = gk20a_pmu_set_pmu_msgq_head,
+	.set_pmu_new_instblk = gk20a_pmu_set_new_instblk,
+
 #ifdef CONFIG_NVGPU_LS_PMU
 	.pmu_seq_cleanup = nvgpu_pmu_seq_free_release,
 	.get_inst_block_config = ga10b_pmu_get_inst_block_config,

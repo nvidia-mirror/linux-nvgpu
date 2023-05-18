@@ -341,10 +341,9 @@ int gk20a_pmu_queue_head(struct gk20a *g, u32 queue_id, u32 queue_index,
 	} else {
 		if (!set) {
 			*head = pwr_pmu_msgq_head_val_v(
-				gk20a_readl(g, pwr_pmu_msgq_head_r()));
+				g->ops.pmu.get_pmu_msgq_head(g));
 		} else {
-			gk20a_writel(g,
-				pwr_pmu_msgq_head_r(),
+			g->ops.pmu.set_pmu_msgq_head(g,
 				pwr_pmu_msgq_head_val_f(*head));
 		}
 	}
@@ -645,7 +644,7 @@ int gk20a_pmu_ns_bootstrap(struct gk20a *g, struct nvgpu_pmu *pmu,
 		pwr_falcon_itfen_ctxen_enable_f());
 	tmp_addr = nvgpu_inst_block_addr(g, &mm->pmu.inst_block) >> 12;
 	nvgpu_assert(u64_hi32(tmp_addr) == 0U);
-	gk20a_writel(g, pwr_pmu_new_instblk_r(),
+	g->ops.pmu.set_pmu_new_instblk(g,
 		pwr_pmu_new_instblk_ptr_f((u32)tmp_addr) |
 		pwr_pmu_new_instblk_valid_f(1) |
 		pwr_pmu_new_instblk_target_sys_coh_f());

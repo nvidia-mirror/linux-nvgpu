@@ -101,7 +101,7 @@ static int ga10b_pmu_ns_falcon_bootstrap(struct gk20a *g, struct nvgpu_pmu *pmu,
 		pwr_falcon_itfen_ctxen_enable_f());
 
 	inst_block_ptr = nvgpu_inst_block_ptr(g, &mm->pmu.inst_block);
-	nvgpu_writel(g, pwr_pmu_new_instblk_r(),
+	g->ops.pmu.set_pmu_new_instblk(g,
 			pwr_pmu_new_instblk_ptr_f(inst_block_ptr) |
 			pwr_pmu_new_instblk_valid_f(1) |
 				(nvgpu_is_enabled(g, NVGPU_USE_COHERENT_SYSMEM) ?

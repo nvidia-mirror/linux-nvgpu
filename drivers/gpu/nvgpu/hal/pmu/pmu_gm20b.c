@@ -207,7 +207,7 @@ void gm20b_pmu_flcn_setup_boot_config(struct gk20a *g)
 	 */
 	inst_block_ptr = nvgpu_inst_block_ptr(g, &mm->pmu.inst_block);
 
-	gk20a_writel(g, pwr_pmu_new_instblk_r(),
+	g->ops.pmu.set_pmu_new_instblk(g,
 		pwr_pmu_new_instblk_ptr_f(inst_block_ptr) |
 		pwr_pmu_new_instblk_valid_f(1U) |
 		(nvgpu_is_enabled(g, NVGPU_USE_COHERENT_SYSMEM) ?

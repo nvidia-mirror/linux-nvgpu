@@ -56,6 +56,9 @@ void gk20a_pmu_set_mutex_reg(struct gk20a *g, u32 i, u32 data);
 u32 gk20a_pmu_get_mutex_id(struct gk20a *g);
 u32 gk20a_pmu_get_mutex_id_release(struct gk20a *g);
 void gk20a_pmu_set_mutex_id_release(struct gk20a *g, u32 data);
+u32 gk20a_pmu_get_pmu_msgq_head(struct gk20a *g);
+void gk20a_pmu_set_pmu_msgq_head(struct gk20a *g, u32 data);
+void gk20a_pmu_set_new_instblk(struct gk20a *g, u32 data);
 
 #ifdef CONFIG_NVGPU_LS_PMU
 void gk20a_pmu_dump_falcon_stats(struct nvgpu_pmu *pmu);

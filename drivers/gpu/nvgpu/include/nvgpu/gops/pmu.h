@@ -498,6 +498,9 @@ struct gops_pmu {
 	u32 (*pmu_get_mutex_id)(struct gk20a *g);
 	u32 (*pmu_get_mutex_id_release)(struct gk20a *g);
 	void (*pmu_set_mutex_id_release)(struct gk20a *g, u32 data);
+	u32 (*get_pmu_msgq_head)(struct gk20a *g);
+	void (*set_pmu_msgq_head)(struct gk20a *g, u32 data);
+	void (*set_pmu_new_instblk)(struct gk20a *g, u32 data);
 
 #ifdef CONFIG_NVGPU_LS_PMU
 	u32 (*get_inst_block_config)(struct gk20a *g);
