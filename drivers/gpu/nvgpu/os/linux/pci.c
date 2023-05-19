@@ -860,6 +860,8 @@ static void nvgpu_pci_remove(struct pci_dev *pdev)
 
 	nvgpu_remove(dev);
 
+	unregister_reboot_notifier(&l->nvgpu_reboot_nb);
+
 #if defined(CONFIG_PCI_MSI)
 	if (g->msi_enabled)
 		pci_disable_msi(pdev);
