@@ -19,39 +19,39 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-#ifndef NVGPU_GOPS_NVENC_H
-#define NVGPU_GOPS_NVENC_H
+#ifndef NVGPU_GOPS_NVJPG_H
+#define NVGPU_GOPS_NVJPG_H
 
 struct nvgpu_multimedia_ctx;
 
-struct gops_nvenc {
+struct gops_nvjpg {
 
 	/**
-	 * @brief Base address of NVENC apperture.
+	 * @brief Base address of NVJPG apperture.
 	 *
-	 * This function gets the base address of NVENC aperture.
+	 * This function gets the base address of NVJPG aperture.
 	 */
 	u32 (*base_addr)(void);
 
 	/**
-	 * @brief falcon2 base address of NVENC aperture.
+	 * @brief falcon2 base address of NVJPG aperture.
 	 *
-	 * This function gets the falcon2 base address of NVENC aperture.
+	 * This function gets the falcon2 base address of NVJPG aperture.
 	 */
 	u32 (*falcon2_base_addr)(void);
 
 	/**
-	 * @brief Initialize NVENC support.
+	 * @brief Initialize NVJPG support.
 	 *
 	 * @param g [in]		Pointer to GPU driver struct.
 	 *
-	 * Initializes the private data struct for NVENC unit in the GPU driver
+	 * Initializes the private data struct for NVJPG unit in the GPU driver
 	 * according to the current chip.
 	 */
 	int (*init)(struct gk20a *g);
 
 	/**
-	 * @brief Deinitialize NVENC support.
+	 * @brief Deinitialize NVJPG support.
 	 *
 	 * @param g [in]		Pointer to GPU driver struct.
 	 *
@@ -60,16 +60,16 @@ struct gops_nvenc {
 	int (*deinit)(struct gk20a *g);
 
 	/**
-	 * @brief Reset NVENC engine.
+	 * @brief Reset NVJPG engine.
 	 *
 	 * @param g [in]		Pointer to GPU driver struct.
 	 *
-	 * This function resets the NVENC HW unit and loads the firmware again.
+	 * This function resets the NVJPG HW unit and loads the firmware again.
 	 */
 	int (*reset)(struct gk20a *g);
 
 	/**
-	 * Load and bootstrap ucode on NVENC falcon.
+	 * Load and bootstrap ucode on NVJPG falcon.
 	 *
 	 * @param g [in]		Pointer to GPU driver struct.
 	 *
@@ -107,33 +107,33 @@ struct gops_nvenc {
 	void (*set_irq_regs)(struct gk20a *g, struct nvgpu_falcon *flcn);
 
 	/**
-	 * @brief Enable interrupts for NVENC.
+	 * @brief Enable interrupts for NVJPG.
 	 *
 	 * @param g [in]		Pointer to GPU driver struct.
 	 * @param enable [in]		Parameter to enable/disable interrupt.
 	 *
-	 * This function enables/disables the interrupts for NVENC as requested.
+	 * This function enables/disables the interrupts for NVJPG as requested.
 	 */
 	void (*enable_irq)(struct gk20a *g, bool enable);
 
 	/**
-	 * @brief Enable interfaces (method or ctx switch) for NVENC.
+	 * @brief Enable interfaces (method or ctx switch) for NVJPG.
 	 *
 	 * @param g [in]		Pointer to GPU driver struct.
 	 *
-	 * This function enables method and/or ctx switch interfaces for NVENC.
+	 * This function enables method and/or ctx switch interfaces for NVJPG.
 	 */
 	void (*interface_enable)(struct gk20a *g);
 
 	/**
-	 * @brief Interrupt handler for NVENC interrupts.
+	 * @brief Interrupt handler for NVJPG interrupts.
 	 *
 	 * @param g [in]		Pointer to GPU driver struct.
 	 *
-	 * This function handles the interrupts from NVENC and takes the necessary
+	 * This function handles the interrupts from NVJPG and takes the necessary
 	 * actions.
 	 */
-	void (*nvenc_isr)(struct gk20a *g);
+	void (*nvjpg_isr)(struct gk20a *g);
 
 	/**
 	 * @brief Allocate and setup engine context for GPU channel.
@@ -165,4 +165,4 @@ struct gops_nvenc {
 			    struct nvgpu_multimedia_ctx *eng_ctx);
 };
 
-#endif /* NVGPU_GOPS_NVENC_H */
+#endif /* NVGPU_GOPS_NVJPG_H */

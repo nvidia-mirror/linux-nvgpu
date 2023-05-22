@@ -419,7 +419,9 @@ falcon:
              common/falcon/falcon_debug.h,
              include/nvgpu/gops/gsp.h,
              include/nvgpu/gops/nvdec.h,
-             include/nvgpu/gops/nvenc.h ]
+             include/nvgpu/gops/nvenc.h,
+             include/nvgpu/gops/ofa.h,
+             include/nvgpu/gops/nvjpg.h ]
   deps: [ ]
   tags:
 
@@ -1190,7 +1192,6 @@ multimedia:
       owner: santosh B S
       gpu: both
       sources: [ common/multimedia/nvenc.c,
-                 common/multimedia/nvenc_bootstrap.h,
                  include/nvgpu/nvenc.h ]
 
 ##

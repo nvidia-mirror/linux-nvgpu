@@ -887,7 +887,7 @@ static const struct gops_fb tu104_ops_fb = {
 };
 
 static const struct gops_nvdec tu104_ops_nvdec = {
-	.falcon_base_addr = tu104_nvdec_falcon_base_addr,
+	.base_addr = tu104_nvdec_falcon_base_addr,
 };
 
 static const struct gops_nvenc tu104_ops_nvenc = {

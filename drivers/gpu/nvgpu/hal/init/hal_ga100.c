@@ -988,7 +988,7 @@ static const struct gops_fb ga100_ops_fb = {
 };
 
 static const struct gops_nvdec ga100_ops_nvdec = {
-	.falcon_base_addr = ga100_nvdec_falcon_base_addr,
+	.base_addr = ga100_nvdec_falcon_base_addr,
 };
 
 static const struct gops_cg ga100_ops_cg = {

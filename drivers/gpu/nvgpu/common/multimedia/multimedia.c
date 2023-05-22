@@ -37,7 +37,6 @@
 #include <nvgpu/channel.h>
 #include <nvgpu/device.h>
 #include "multimedia_priv.h"
-#include "nvenc_bootstrap.h"
 
 /* Engine ctx buffer size. 256-byte aligned */
 #define MULTIMEDIA_CTX_BUF_SIZE		(4096U)

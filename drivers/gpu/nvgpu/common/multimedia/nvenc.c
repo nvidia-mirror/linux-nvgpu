@@ -34,7 +34,6 @@
 #include <nvgpu/multimedia.h>
 #include <nvgpu/nvgpu_err.h>
 #include "multimedia_priv.h"
-#include "nvenc_bootstrap.h"
 
 /* NVENC init */
 int nvgpu_nvenc_sw_init(struct gk20a *g)

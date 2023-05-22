@@ -26,6 +26,8 @@
 #include <nvgpu/nvgpu_mem.h>
 
 #define UCODE_DMA_ID			(0x6)
+#define MULTIMEDIA_UCODE_HEADER_SIZE		(APP_0_CODE_SIZE + 1)
+#define MULTIMEDIA_UCODE_HEADER_SIZE_BYTES	(MULTIMEDIA_UCODE_HEADER_SIZE * 4)
 
 struct nvgpu_tsg;
 struct vm_gk20a;

@@ -23,6 +23,25 @@
 #ifndef NVGPU_NVENC_H
 #define NVGPU_NVENC_H
 
+#include <nvgpu/multimedia.h>
+
+/* NVENC core descriptor */
+struct nvgpu_nvenc {
+
+	/* NVENC ucode */
+	const char *fw_name;
+
+	/* NVENC ucode header info */
+	u32 ucode_header[MULTIMEDIA_UCODE_HEADER_SIZE];
+
+	/* Falcon used to execute NVENC ucode */
+	struct nvgpu_falcon *nvenc_flcn;
+
+	/** Memory to store ucode contents locally. */
+	struct nvgpu_mem nvenc_mem_desc;
+
+};
+
 struct gk20a;
 
 int nvgpu_nvenc_falcon_boot(struct gk20a *g);

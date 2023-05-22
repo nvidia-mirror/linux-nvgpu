@@ -19,39 +19,39 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-#ifndef NVGPU_GOPS_NVENC_H
-#define NVGPU_GOPS_NVENC_H
+#ifndef NVGPU_GOPS_OFA_H
+#define NVGPU_GOPS_OFA_H
 
 struct nvgpu_multimedia_ctx;
 
-struct gops_nvenc {
+struct gops_ofa {
 
 	/**
-	 * @brief Base address of NVENC apperture.
+	 * @brief Base address of OFA apperture.
 	 *
-	 * This function gets the base address of NVENC aperture.
+	 * This function gets the base address of OFA aperture.
 	 */
 	u32 (*base_addr)(void);
 
 	/**
-	 * @brief falcon2 base address of NVENC aperture.
+	 * @brief falcon2 base address of OFA aperture.
 	 *
-	 * This function gets the falcon2 base address of NVENC aperture.
+	 * This function gets the falcon2 base address of OFA aperture.
 	 */
 	u32 (*falcon2_base_addr)(void);
 
 	/**
-	 * @brief Initialize NVENC support.
+	 * @brief Initialize OFA support.
 	 *
 	 * @param g [in]		Pointer to GPU driver struct.
 	 *
-	 * Initializes the private data struct for NVENC unit in the GPU driver
+	 * Initializes the private data struct for OFA unit in the GPU driver
 	 * according to the current chip.
 	 */
 	int (*init)(struct gk20a *g);
 
 	/**
-	 * @brief Deinitialize NVENC support.
+	 * @brief Deinitialize OFA support.
 	 *
 	 * @param g [in]		Pointer to GPU driver struct.
 	 *
@@ -60,16 +60,16 @@ struct gops_nvenc {
 	int (*deinit)(struct gk20a *g);
 
 	/**
-	 * @brief Reset NVENC engine.
+	 * @brief Reset OFA engine.
 	 *
 	 * @param g [in]		Pointer to GPU driver struct.
 	 *
-	 * This function resets the NVENC HW unit and loads the firmware again.
+	 * This function resets the OFA HW unit and loads the firmware again.
 	 */
 	int (*reset)(struct gk20a *g);
 
 	/**
-	 * Load and bootstrap ucode on NVENC falcon.
+	 * Load and bootstrap ucode on OFA falcon.
 	 *
 	 * @param g [in]		Pointer to GPU driver struct.
 	 *
@@ -107,33 +107,33 @@ struct gops_nvenc {
 	void (*set_irq_regs)(struct gk20a *g, struct nvgpu_falcon *flcn);
 
 	/**
-	 * @brief Enable interrupts for NVENC.
+	 * @brief Enable interrupts for OFA.
 	 *
 	 * @param g [in]		Pointer to GPU driver struct.
 	 * @param enable [in]		Parameter to enable/disable interrupt.
 	 *
-	 * This function enables/disables the interrupts for NVENC as requested.
+	 * This function enables/disables the interrupts for OFA as requested.
 	 */
 	void (*enable_irq)(struct gk20a *g, bool enable);
 
 	/**
-	 * @brief Enable interfaces (method or ctx switch) for NVENC.
+	 * @brief Enable interfaces (method or ctx switch) for OFA.
 	 *
 	 * @param g [in]		Pointer to GPU driver struct.
 	 *
-	 * This function enables method and/or ctx switch interfaces for NVENC.
+	 * This function enables method and/or ctx switch interfaces for OFA.
 	 */
 	void (*interface_enable)(struct gk20a *g);
 
 	/**
-	 * @brief Interrupt handler for NVENC interrupts.
+	 * @brief Interrupt handler for OFA interrupts.
 	 *
 	 * @param g [in]		Pointer to GPU driver struct.
 	 *
-	 * This function handles the interrupts from NVENC and takes the necessary
+	 * This function handles the interrupts from OFA and takes the necessary
 	 * actions.
 	 */
-	void (*nvenc_isr)(struct gk20a *g);
+	void (*ofa_isr)(struct gk20a *g);
 
 	/**
 	 * @brief Allocate and setup engine context for GPU channel.
@@ -165,4 +165,4 @@ struct gops_nvenc {
 			    struct nvgpu_multimedia_ctx *eng_ctx);
 };
 
-#endif /* NVGPU_GOPS_NVENC_H */
+#endif /* NVGPU_GOPS_OFA_H */

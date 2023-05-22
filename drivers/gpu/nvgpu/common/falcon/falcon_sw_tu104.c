@@ -79,7 +79,7 @@ void tu104_falcon_sw_init(struct nvgpu_falcon *flcn)
 		flcn->is_interrupt_enabled = true;
 		break;
 	case FALCON_ID_NVDEC:
-		flcn->flcn_base = g->ops.nvdec.falcon_base_addr();
+		flcn->flcn_base = g->ops.nvdec.base_addr();
 		flcn->is_falcon_supported = true;
 		flcn->is_interrupt_enabled = true;
 		break;

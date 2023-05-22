@@ -25,9 +25,6 @@
 
 #define TU104_NVENC_UCODE_FW "nvhost_nvenc072.fw"
 
-#define MULTIMEDIA_UCODE_HEADER_SIZE		(APP_0_CODE_SIZE + 1)
-#define MULTIMEDIA_UCODE_HEADER_SIZE_BYTES	(MULTIMEDIA_UCODE_HEADER_SIZE * 4)
-
 struct multimedia_fw_hdr {
 	/* 0x10de */
 	u32 fw_magic;
