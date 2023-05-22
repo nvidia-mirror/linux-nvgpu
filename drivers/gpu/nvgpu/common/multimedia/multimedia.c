@@ -205,7 +205,7 @@ int nvgpu_multimedia_copy_fw(struct gk20a *g, const char *fw_name, u32 *ucode_he
 	void *ucode = NULL;
 	int err = 0;
 
-	nvgpu_log(g, gpu_dbg_info, "Loading the firmware: %s", fw_name);
+	nvgpu_log(g, gpu_dbg_mme, "Loading the firmware: %s", fw_name);
 
 	multimedia_fw = nvgpu_request_firmware(g, fw_name,
 						NVGPU_REQUEST_FIRMWARE_NO_WARN);
@@ -219,19 +219,19 @@ int nvgpu_multimedia_copy_fw(struct gk20a *g, const char *fw_name, u32 *ucode_he
 			MULTIMEDIA_UCODE_HEADER_SIZE_BYTES);
 	ucode = multimedia_fw->data + fw_hdr->data_offset;
 
-	nvgpu_log(g, gpu_dbg_info, "firmware header: magic= 0x%x ver= 0x%x size= 0x%x",
+	nvgpu_log(g, gpu_dbg_mme, "firmware header: magic= 0x%x ver= 0x%x size= 0x%x",
 			fw_hdr->fw_magic,
 			fw_hdr->fw_ver,
 			fw_hdr->fw_size);
-	nvgpu_log(g, gpu_dbg_info, "firmware header: ucode header offset= 0x%x, "
+	nvgpu_log(g, gpu_dbg_mme, "firmware header: ucode header offset= 0x%x, "
 					"data (offset,size): 0x%x 0x%x",
 			fw_hdr->header_offset,
 			fw_hdr->data_offset,
 			fw_hdr->data_size);
-	nvgpu_log(g, gpu_dbg_info, "ucode header: code (offset,size): 0x%x, 0x%x",
+	nvgpu_log(g, gpu_dbg_mme, "ucode header: code (offset,size): 0x%x, 0x%x",
 			ucode_header[OS_CODE_OFFSET],
 			ucode_header[OS_CODE_SIZE]);
-	nvgpu_log(g, gpu_dbg_info, "ucode header: data (offset,size): 0x%x, 0x%x",
+	nvgpu_log(g, gpu_dbg_mme, "ucode header: data (offset,size): 0x%x, 0x%x",
 			ucode_header[OS_DATA_OFFSET],
 			ucode_header[OS_DATA_SIZE]);
 

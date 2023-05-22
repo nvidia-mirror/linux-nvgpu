@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -88,5 +88,6 @@ enum nvgpu_log_type {
 #define gpu_dbg_nvs		BIT(45) /* NvGPU's NVS logging. */
 #define gpu_dbg_nvs_internal	BIT(46) /* Internal NVS logging. */
 #endif
-#define gpu_dbg_gsp   BIT(47) /* GSP Scheduler debugging */
+#define gpu_dbg_gsp		BIT(47) /* GSP Scheduler debugging */
+#define gpu_dbg_mme		BIT(48) /* Multimedia Engines debugging */
 #endif

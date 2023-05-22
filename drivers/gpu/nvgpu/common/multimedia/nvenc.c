@@ -96,7 +96,7 @@ int nvgpu_nvenc_falcon_boot(struct gk20a *g)
 	struct nvgpu_mem *nvenc_mem_desc = &nvenc->nvenc_mem_desc;
 	u32 *ucode_header = nvenc->ucode_header;
 
-	nvgpu_log_fn(g, " ");
+	nvgpu_log(g, gpu_dbg_fn | gpu_dbg_mme, " ");
 
 	/* Reset nvenc HW unit */
 	err = nvgpu_mc_reset_units(g, NVGPU_UNIT_NVENC);
@@ -142,7 +142,8 @@ int nvgpu_nvenc_falcon_boot(struct gk20a *g)
 		err = -ETIMEDOUT;
 	}
 
-	nvgpu_log(g, gpu_dbg_info, "NVENC NS boot %s!", err ? "SUCCESS" : "FAILED");
+	nvgpu_log(g, gpu_dbg_info | gpu_dbg_mme,
+		"NVENC NS boot %s!", err ? "SUCCESS" : "FAILED");
 
 done:
 	return err;
@@ -151,6 +152,8 @@ done:
 int nvgpu_nvenc_reset(struct gk20a *g)
 {
 	int err = 0;
+
+	nvgpu_log(g, gpu_dbg_info | gpu_dbg_mme, "Resetting nvenc");
 
 	if (g->ops.nvenc.halt_engine != NULL) {
 		g->ops.nvenc.halt_engine(g);
