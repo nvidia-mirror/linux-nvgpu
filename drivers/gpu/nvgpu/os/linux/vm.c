@@ -524,7 +524,8 @@ int nvgpu_vm_mapping_modify(struct vm_gk20a *vm,
 	 * If we support compression and there's a compressible kind, use it.
 	 */
 #ifdef CONFIG_NVGPU_COMPRESSION
-	if (mapped_buffer->ctag_offset != 0) {
+	if (mapped_buffer->ctag_offset != 0 ||
+	    g->cbc_use_raw_mode) {
 		if (compr_kind == NV_KIND_INVALID) {
 			kind = incompr_kind;
 		} else {
@@ -549,13 +550,15 @@ int nvgpu_vm_mapping_modify(struct vm_gk20a *vm,
 	}
 
 #ifdef CONFIG_NVGPU_COMPRESSION
-	ctag_offset = mapped_buffer->ctag_offset;
+	if (!g->cbc_use_raw_mode) {
+		ctag_offset = mapped_buffer->ctag_offset;
 
-	compression_page_size = g->ops.fb.compression_page_size(g);
-	nvgpu_assert(compression_page_size > 0ULL);
+		compression_page_size = g->ops.fb.compression_page_size(g);
+		nvgpu_assert(compression_page_size > 0ULL);
 
-	ctag_offset += (u32)(buffer_offset >>
-			nvgpu_ilog2(compression_page_size));
+		ctag_offset += (u32)(buffer_offset >>
+				     nvgpu_ilog2(compression_page_size));
+	}
 #endif
 
 	if (g->ops.mm.gmmu.map(vm,

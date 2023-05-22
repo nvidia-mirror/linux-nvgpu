@@ -1187,6 +1187,17 @@ static int nvgpu_vm_do_map(struct vm_gk20a *vm,
 	(void)os_buf;
 	(void)flags;
 #ifdef CONFIG_NVGPU_COMPRESSION
+	if (g->cbc_use_raw_mode) {
+		if (binfo_ptr->compr_kind != NVGPU_KIND_INVALID) {
+			pte_kind = (u8)binfo_ptr->compr_kind;
+		} else if ((binfo_ptr->incompr_kind >= 0)) {
+			pte_kind = (u8)binfo_ptr->incompr_kind;
+		} else {
+			err = -EINVAL;
+			goto ret_err;
+		}
+		goto kind_done;
+	}
 	err = nvgpu_vm_compute_compression(vm, binfo_ptr);
 	if (err != 0) {
 		nvgpu_err(g, "failure setting up compression");
@@ -1305,6 +1316,7 @@ static int nvgpu_vm_do_map(struct vm_gk20a *vm,
 		goto ret_err;
 	}
 
+kind_done:
 #ifdef CONFIG_NVGPU_COMPRESSION
 	if (clear_ctags) {
 		clear_ctags = gk20a_comptags_start_clear(os_buf);

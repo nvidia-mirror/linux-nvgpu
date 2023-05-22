@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -127,19 +127,21 @@ void nvgpu_vm_remap_os_buf_put(struct vm_gk20a *vm,
 		remap_os_buf->os_priv.attachment, remap_os_buf->os_priv.sgt);
 
 #ifdef CONFIG_NVGPU_COMPRESSION
-	gk20a_get_comptags(&remap_os_buf->os_buf, &comptags);
+	if (!g->cbc_use_raw_mode) {
+		gk20a_get_comptags(&remap_os_buf->os_buf, &comptags);
 
-	/*
-	 * Flush compression bit cache before releasing the physical
-	 * memory buffer reference.
-	 */
-	if (comptags.offset != 0) {
-		g->ops.cbc.ctrl(g, nvgpu_cbc_op_clean, 0, 0);
-		err = nvgpu_pg_elpg_ms_protected_call(g,
-				g->ops.mm.cache.l2_flush(g, true));
-		if (err != 0) {
-			nvgpu_err(g, "l2 flush failed");
-			return;
+		/*
+		 * Flush compression bit cache before releasing the physical
+		 * memory buffer reference.
+		 */
+		if (comptags.offset != 0) {
+			g->ops.cbc.ctrl(g, nvgpu_cbc_op_clean, 0, 0);
+			err = nvgpu_pg_elpg_ms_protected_call(g,
+							      g->ops.mm.cache.l2_flush(g, true));
+			if (err != 0) {
+				nvgpu_err(g, "l2 flush failed");
+				return;
+			}
 		}
 	}
 #endif

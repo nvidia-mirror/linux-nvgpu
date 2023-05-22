@@ -752,6 +752,13 @@ struct gk20a {
 
 	u32 max_comptag_mem; /* max memory size (MB) for comptag */
 	struct nvgpu_cbc *cbc;
+	/*
+	 * In raw mode, L2 calculates the CBC backing storage address from
+	 * physical address of the compressible surface. The comptag lines are
+	 * not used in the calculation, so nvgpu doesn't need to allocate comptag
+	 * lines in the pagetable.
+	 */
+	bool cbc_use_raw_mode;
 #endif
 
 #ifdef CONFIG_NVGPU_NON_FUSA

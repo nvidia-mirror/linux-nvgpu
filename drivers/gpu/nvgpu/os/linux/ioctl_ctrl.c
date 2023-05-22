@@ -428,10 +428,13 @@ static long gk20a_ctrl_ioctl_gpu_characteristics(
 #ifdef CONFIG_NVGPU_COMPRESSION
 	if (nvgpu_is_enabled(g, NVGPU_SUPPORT_COMPRESSION)) {
 		gpu.compression_page_size = g->ops.fb.compression_page_size(g);
-		gpu.gr_compbit_store_base_hw = g->cbc->compbit_store.base_hw;
-		gpu.gr_gobs_per_comptagline_per_slice =
-			g->cbc->gobs_per_comptagline_per_slice;
-		gpu.cbc_comptags_per_line = g->cbc->comptags_per_cacheline;
+
+		if (!g->cbc_use_raw_mode) {
+			gpu.gr_compbit_store_base_hw = g->cbc->compbit_store.base_hw;
+			gpu.gr_gobs_per_comptagline_per_slice =
+				g->cbc->gobs_per_comptagline_per_slice;
+			gpu.cbc_comptags_per_line = g->cbc->comptags_per_cacheline;
+		}
 	}
 #endif
 
@@ -2256,16 +2259,28 @@ static int nvgpu_handle_comptags_control(struct gk20a *g,
 	os_buf.dmabuf = dmabuf;
 	os_buf.dev = dev_from_gk20a(g);
 
-	err = gk20a_alloc_comptags(g, &os_buf, &g->cbc->comp_tags);
-	if (err != 0) {
-		if (comptags_alloc_control ==
-				NVGPU_GPU_COMPTAGS_ALLOC_REQUIRED) {
-			nvgpu_err(g, "Comptags allocation (required) failed (%d)",
-				  err);
-		} else {
-			nvgpu_err(g, "Comptags allocation (requested) failed (%d)",
-				  err);
-			err = 0;
+	/*
+	 * In raw mode, comptaglines are not used to map the compressible memory
+	 * address to the CBC address, instead raw address is used by the
+	 * hardrdware to offset to the CBC address. Mark comptags as enabled and
+	 * return. In the comptagline mode, comptags will be marked as enabled
+	 * once the comptags are successfuly allocated in the
+	 * gk20a_alloc_comptags().
+	 */
+	if (g->cbc_use_raw_mode) {
+		priv->comptags.enabled = true;
+	} else {
+		err = gk20a_alloc_comptags(g, &os_buf, &g->cbc->comp_tags);
+		if (err != 0) {
+			if (comptags_alloc_control ==
+			    NVGPU_GPU_COMPTAGS_ALLOC_REQUIRED) {
+				nvgpu_err(g, "Comptags allocation (required) failed (%d)",
+					  err);
+			} else {
+				nvgpu_err(g, "Comptags allocation (requested) failed (%d)",
+					  err);
+				err = 0;
+			}
 		}
 	}
 

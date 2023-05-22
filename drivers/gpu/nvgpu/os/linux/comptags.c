@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -50,6 +50,16 @@ int gk20a_alloc_comptags(struct gk20a *g, struct nvgpu_os_buffer *buf,
 	u32 offset = 0;
 	u32 lines = 0;
 	int err;
+
+	/*
+	 * In raw mode, raw address is used by the hardware to map the
+	 * compressible memory address to CBC address, comptaglines are never
+	 * used.
+	 */
+	if (g->cbc_use_raw_mode) {
+		nvgpu_err(g, "comptags should not be allocated in raw mode\n");
+		return -EINVAL;
+	}
 
 	ctag_granularity = g->ops.fb.compression_page_size(g);
 	lines = DIV_ROUND_UP_ULL(buf->dmabuf->size, ctag_granularity);

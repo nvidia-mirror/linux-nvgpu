@@ -1186,23 +1186,25 @@ u64 nvgpu_gmmu_map_locked(struct vm_gk20a *vm,
 		.aperture  = aperture,
 	};
 #ifdef CONFIG_NVGPU_COMPRESSION
-	u64 ctag_granularity = g->ops.fb.compression_page_size(g);
+	if (!g->cbc_use_raw_mode) {
+		u64 ctag_granularity = g->ops.fb.compression_page_size(g);
 
-	attrs.ctag      = (u64)ctag_offset * ctag_granularity;
-	/*
-	 * We need to add the buffer_offset within compression_page_size so that
-	 * the programmed ctagline gets increased at compression_page_size
-	 * boundaries.
-	 */
-	if (attrs.ctag != 0ULL) {
-		nvgpu_assert(ctag_granularity >= 1ULL);
-		attrs.ctag = nvgpu_safe_add_u64(attrs.ctag,
-				buffer_offset & (ctag_granularity - U64(1)));
-	}
+		attrs.ctag      = (u64)ctag_offset * ctag_granularity;
+		/*
+		 * We need to add the buffer_offset within compression_page_size so that
+		 * the programmed ctagline gets increased at compression_page_size
+		 * boundaries.
+		 */
+		if (attrs.ctag != 0ULL) {
+			nvgpu_assert(ctag_granularity >= 1ULL);
+			attrs.ctag = nvgpu_safe_add_u64(attrs.ctag,
+							buffer_offset & (ctag_granularity - U64(1)));
+		}
 
-	attrs.cbc_comptagline_mode =
-		g->ops.fb.is_comptagline_mode_enabled != NULL ?
+		attrs.cbc_comptagline_mode =
+			g->ops.fb.is_comptagline_mode_enabled != NULL ?
 			g->ops.fb.is_comptagline_mode_enabled(g) : true;
+	}
 #endif
 
 	attrs.l3_alloc  = ((flags & NVGPU_VM_MAP_L3_ALLOC)  != 0U);

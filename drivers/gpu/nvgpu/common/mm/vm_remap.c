@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -202,6 +202,7 @@ static int nvgpu_vm_remap_validate_map(struct vm_gk20a *vm,
 			struct nvgpu_vm_remap_os_buffer *remap_os_buf)
 {
 	u64 page_size = nvgpu_vm_remap_page_size(op);
+	struct gk20a *g = gk20a_from_vm(vm);
 	u64 map_offset;
 	u64 map_size;
 	u64 os_buf_size;
@@ -216,9 +217,9 @@ static int nvgpu_vm_remap_validate_map(struct vm_gk20a *vm,
 	}
 
 #ifdef CONFIG_NVGPU_COMPRESSION
-	if (op->compr_kind != NVGPU_KIND_INVALID) {
+	if (op->compr_kind != NVGPU_KIND_INVALID &&
+	    !g->cbc_use_raw_mode) {
 
-		struct gk20a *g = gk20a_from_vm(vm);
 		struct gk20a_comptags comptags = { 0 };
 
 		/*
@@ -359,6 +360,10 @@ static u64 nvgpu_vm_remap_get_ctag_offset(struct vm_gk20a *vm,
 	u64 phys_offset = nvgpu_safe_mult_u64(op->mem_offset_in_pages,
 					page_size);
 	u64 compression_page_size;
+
+	if (g->cbc_use_raw_mode) {
+		return 0;
+	}
 
 	gk20a_get_comptags(os_buf, &comptags);
 
