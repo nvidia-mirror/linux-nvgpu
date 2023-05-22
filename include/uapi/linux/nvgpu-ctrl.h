@@ -201,6 +201,8 @@ struct nvgpu_gpu_zbc_query_table_args {
 #define NVGPU_GPU_FLAGS_MULTI_PROCESS_TSG_SHARING    (1ULL << 56)
 /* SM LRF ECC is enabled */
 #define NVGPU_GPU_FLAGS_ECC_ENABLED_SM_LRF	(1ULL << 60)
+/* Flag to indicate GPU MMIO support */
+#define NVGPU_GPU_FLAGS_SUPPORT_GPU_MMIO	(1ULL << 57)
 /* SM SHM ECC is enabled */
 #define NVGPU_GPU_FLAGS_ECC_ENABLED_SM_SHM	(1ULL << 61)
 /* TEX ECC is enabled */

@@ -1087,12 +1087,19 @@ struct nvgpu_channel_setup_bind_args {
  * SUBMIT_GPFIFO IOCTL cannot be used.
  */
 #define NVGPU_CHANNEL_SETUP_BIND_FLAGS_USERMODE_SUPPORT	(1 << 3)
+/*
+ * Map usermode resources to GPU and return GPU VAs to userspace.
+ */
+#define NVGPU_CHANNEL_SETUP_BIND_FLAGS_USERMODE_GPU_MAP_RESOURCES_SUPPORT	(1 << 4)
 	__u32 flags;
 	__s32 userd_dmabuf_fd;	/* in */
 	__s32 gpfifo_dmabuf_fd;	/* in */
 	__u32 work_submit_token; /* out */
 	__u64 userd_dmabuf_offset; /* in */
 	__u64 gpfifo_dmabuf_offset; /* in */
+	__u64 gpfifo_gpu_va; /* out */
+	__u64 userd_gpu_va; /* out */
+	__u64 usermode_mmio_gpu_va; /* out */
 	__u32 reserved[9];
 };
 
