@@ -1151,31 +1151,65 @@ static int gk20a_ctrl_vsm_mapping(struct gk20a *g,
 		struct nvgpu_gr_config *gr_config, struct nvgpu_gpu_vsms_mapping *args)
 {
 	int err = 0;
+	u32 gpc_max_count;
 	u32 no_of_sm = nvgpu_gr_config_get_no_of_sm(gr_config);
 	size_t write_size = no_of_sm *
 		sizeof(struct nvgpu_gpu_vsms_mapping_entry);
 	struct nvgpu_gpu_vsms_mapping_entry *vsms_buf;
 	u32 i;
+	u32 gpc_logical_index;
+	u32 gpc_virtual_index;
+	u32 tpc_local_logical_index;
+	u32 tpc_global_logical_index;
+	u32 tpc_migratable_index;
+	u32 sm_local_id;
+
+	gpc_max_count = nvgpu_gr_config_get_max_gpc_count(gr_config);
 
 	vsms_buf = nvgpu_kzalloc(g, write_size);
 	if (vsms_buf == NULL)
 		return -ENOMEM;
 
 	for (i = 0; i < no_of_sm; i++) {
-		struct nvgpu_sm_info *sm_info =
-			nvgpu_gr_config_get_sm_info(gr_config, i);
+		struct nvgpu_sm_info *sm_info = nvgpu_gr_config_get_sm_info(gr_config, i);
 
-		vsms_buf[i].gpc_index =
-			nvgpu_gr_config_get_sm_info_gpc_index(sm_info);
+		gpc_logical_index = nvgpu_gr_config_get_sm_info_gpc_index(sm_info);
+		gpc_virtual_index = nvgpu_gr_config_get_sm_info_virtual_gpc_index(sm_info);
 		if (g->ops.gr.init.get_nonpes_aware_tpc)
-			vsms_buf[i].tpc_index =
+			tpc_local_logical_index =
 				g->ops.gr.init.get_nonpes_aware_tpc(g,
-				nvgpu_gr_config_get_sm_info_gpc_index(sm_info),
-				nvgpu_gr_config_get_sm_info_tpc_index(sm_info),
+					gpc_logical_index,
+					nvgpu_gr_config_get_sm_info_tpc_index(sm_info),
 					gr_config);
 		else
-			vsms_buf[i].tpc_index =
-				nvgpu_gr_config_get_sm_info_tpc_index(sm_info);
+			tpc_local_logical_index = nvgpu_gr_config_get_sm_info_tpc_index(sm_info);
+		tpc_global_logical_index = nvgpu_gr_config_get_sm_info_global_tpc_index(sm_info);
+		sm_local_id = nvgpu_gr_config_get_sm_info_sm_index(sm_info);
+		if (vsms_buf[i].gpc_virtual_index < gpc_max_count)
+			tpc_migratable_index = tpc_local_logical_index;
+		else {
+			/*
+			 * The TPC migratable index is 0 for any Virtual GPC index >= the maximal number of GPCs.
+			 */
+			tpc_migratable_index = 0U;
+		}
+
+		if (gpc_logical_index > U8_MAX ||
+			gpc_virtual_index > U8_MAX ||
+			tpc_local_logical_index > U8_MAX ||
+			tpc_global_logical_index > U8_MAX ||
+			tpc_migratable_index > U8_MAX ||
+			sm_local_id > U8_MAX) {
+			nvgpu_kfree(g, vsms_buf);
+			return -EOVERFLOW;
+		}
+
+		vsms_buf[i].gpc_logical_index = (u8)gpc_logical_index;
+		vsms_buf[i].gpc_virtual_index = (u8)gpc_virtual_index;
+		vsms_buf[i].tpc_local_logical_index = (u8)tpc_local_logical_index;
+		vsms_buf[i].tpc_global_logical_index = (u8)tpc_global_logical_index;
+		vsms_buf[i].sm_local_id = (u8)sm_local_id;
+		vsms_buf[i].tpc_migratable_index = (u8)tpc_migratable_index;
 	}
 
 	err = copy_to_user((void __user *)(uintptr_t)

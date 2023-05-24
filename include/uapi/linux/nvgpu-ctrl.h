@@ -586,8 +586,23 @@ struct nvgpu_gpu_num_vsms {
 };
 
 struct nvgpu_gpu_vsms_mapping_entry {
-	__u8 gpc_index;
-	__u8 tpc_index;
+	/* Logical GPC index */
+	__u8 gpc_logical_index;
+
+	/* Virtual GPC index */
+	__u8 gpc_virtual_index;
+
+	/* Local Logical index in TPC */
+	__u8 tpc_local_logical_index;
+
+	/* Global Logical index in GPU */
+	__u8 tpc_global_logical_index;
+
+	/* Local SM index in TPC */
+	__u8 sm_local_id;
+
+	/* Migratable TPC index */
+	__u8 tpc_migratable_index;
 };
 
 struct nvgpu_gpu_vsms_mapping {
