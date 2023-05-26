@@ -1245,6 +1245,7 @@ struct gops_gr {
 	/** @cond DOXYGEN_SHOULD_SKIP_THIS */
 #ifdef CONFIG_NVGPU_DEBUGGER
 	u32 (*get_gr_status)(struct gk20a *g);
+	u32 (*get_cbm_alpha_cb_size)(void);
 	void (*set_alpha_circular_buffer_size)(struct gk20a *g,
 					       u32 data);
 	void (*set_circular_buffer_size)(struct gk20a *g, u32 data);

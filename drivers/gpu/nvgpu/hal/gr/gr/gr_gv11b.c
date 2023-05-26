@@ -1,7 +1,7 @@
 /*
  * GV11b GPU GR
  *
- * Copyright (c) 2016-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -64,6 +64,11 @@
 
 #define PRI_BROADCAST_FLAGS_SMPC  BIT32(17)
 
+u32 gv11b_gr_gpc0_ppc0_cbm_alpha_cb_size(void)
+{
+	return gr_gpc0_ppc0_cbm_alpha_cb_size_r();
+}
+
 void gr_gv11b_set_alpha_circular_buffer_size(struct gk20a *g, u32 data)
 {
 	struct nvgpu_gr *gr = nvgpu_gr_get_cur_instance_ptr(g);
@@ -81,7 +86,7 @@ void gr_gv11b_set_alpha_circular_buffer_size(struct gk20a *g, u32 data)
 		alpha_cb_size = alpha_cb_size_max;
 	}
 
-	gk20a_writel(g, gr_ds_tga_constraintlogic_alpha_r(),
+	nvgpu_writel(g, gr_ds_tga_constraintlogic_alpha_r(),
 		(gk20a_readl(g, gr_ds_tga_constraintlogic_alpha_r()) &
 		 ~gr_ds_tga_constraintlogic_alpha_cbsize_f(~U32(0U))) |
 		 gr_ds_tga_constraintlogic_alpha_cbsize_f(alpha_cb_size));
@@ -90,7 +95,7 @@ void gr_gv11b_set_alpha_circular_buffer_size(struct gk20a *g, u32 data)
 		gr_gpc0_ppc0_cbm_alpha_cb_size_v_granularity_v() /
 		gr_pd_ab_dist_cfg1_max_output_granularity_v();
 
-	gk20a_writel(g, gr_pd_ab_dist_cfg1_r(),
+	nvgpu_writel(g, gr_pd_ab_dist_cfg1_r(),
 		gr_pd_ab_dist_cfg1_max_output_f(pd_ab_max_output) |
 		gr_pd_ab_dist_cfg1_max_batches_init_f());
 
@@ -103,15 +108,26 @@ void gr_gv11b_set_alpha_circular_buffer_size(struct gk20a *g, u32 data)
 		     ppc_index < nvgpu_gr_config_get_gpc_ppc_count(gr->config, gpc_index);
 		     ppc_index++) {
 
-			val = gk20a_readl(g, gr_gpc0_ppc0_cbm_alpha_cb_size_r() +
-				stride + ppc_in_gpc_stride * ppc_index);
+			val = nvgpu_readl(g, nvgpu_safe_add_u32(
+						nvgpu_safe_add_u32(
+						g->ops.gr.get_cbm_alpha_cb_size(),
+						stride),
+						nvgpu_safe_mult_u32(
+							ppc_in_gpc_stride,
+							ppc_index)));
 
 			val = set_field(val, gr_gpc0_ppc0_cbm_alpha_cb_size_v_m(),
 					gr_gpc0_ppc0_cbm_alpha_cb_size_v_f(alpha_cb_size *
-						nvgpu_gr_config_get_pes_tpc_count(gr->config, gpc_index, ppc_index)));
+						nvgpu_gr_config_get_pes_tpc_count(gr->config,
+							gpc_index, ppc_index)));
 
-			gk20a_writel(g, gr_gpc0_ppc0_cbm_alpha_cb_size_r() +
-				stride + ppc_in_gpc_stride * ppc_index, val);
+			nvgpu_writel(g, nvgpu_safe_add_u32(
+						nvgpu_safe_add_u32(
+						g->ops.gr.get_cbm_alpha_cb_size(),
+						stride),
+						nvgpu_safe_mult_u32(
+							ppc_in_gpc_stride,
+							ppc_index)), val);
 		}
 	}
 }

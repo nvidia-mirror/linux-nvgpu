@@ -821,6 +821,7 @@ static const struct gops_gr ga100_ops_gr = {
 	.gr_suspend = nvgpu_gr_suspend,
 #ifdef CONFIG_NVGPU_DEBUGGER
 	.get_gr_status = gr_gm20b_get_gr_status,
+	.get_cbm_alpha_cb_size = gv11b_gr_gpc0_ppc0_cbm_alpha_cb_size,
 	.set_alpha_circular_buffer_size = gr_gv11b_set_alpha_circular_buffer_size,
 	.set_circular_buffer_size = gr_ga100_set_circular_buffer_size,
 	.get_sm_dsm_perf_regs = gv11b_gr_get_sm_dsm_perf_regs,

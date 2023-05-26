@@ -683,6 +683,7 @@ static const struct gops_gr gv11b_ops_gr = {
 #ifdef CONFIG_NVGPU_DEBUGGER
 	.get_gr_status = gr_gm20b_get_gr_status,
 	.set_alpha_circular_buffer_size = gr_gv11b_set_alpha_circular_buffer_size,
+	.get_cbm_alpha_cb_size = gv11b_gr_gpc0_ppc0_cbm_alpha_cb_size,
 	.set_circular_buffer_size = gr_gv11b_set_circular_buffer_size,
 	.get_sm_dsm_perf_regs = gv11b_gr_get_sm_dsm_perf_regs,
 	.get_sm_dsm_perf_ctrl_regs = gv11b_gr_get_sm_dsm_perf_ctrl_regs,

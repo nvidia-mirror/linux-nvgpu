@@ -1,7 +1,7 @@
 /*
  * GV11B GPU GR
  *
- * Copyright (c) 2016-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,6 +31,7 @@ struct gk20a;
 struct nvgpu_warpstate;
 struct nvgpu_debug_context;
 
+u32 gv11b_gr_gpc0_ppc0_cbm_alpha_cb_size(void);
 void gr_gv11b_set_alpha_circular_buffer_size(struct gk20a *g, u32 data);
 void gr_gv11b_set_circular_buffer_size(struct gk20a *g, u32 data);
 int gr_gv11b_dump_gr_status_regs(struct gk20a *g,
