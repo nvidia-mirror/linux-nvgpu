@@ -506,7 +506,7 @@ struct nvgpu_gpu_get_tpc_masks_args {
 
 struct nvgpu_gpu_get_gpc_physical_map_args {
 	/* [in] GPC logical-map-buffer size. It must be
-	 * sizeof(__u32) * fls(gpc_mask)
+	 * sizeof(__u32) * popcnt(gpc_mask)
 	 */
 	__u32 map_buf_size;
 	__u32 reserved;
@@ -519,7 +519,7 @@ struct nvgpu_gpu_get_gpc_physical_map_args {
 
 struct nvgpu_gpu_get_gpc_logical_map_args {
 	/* [in] GPC logical-map-buffer size. It must be
-	 * sizeof(__u32) * fls(gpc_mask)
+	 * sizeof(__u32) * popcnt(gpc_mask)
 	 */
 	__u32 map_buf_size;
 	__u32 reserved;
