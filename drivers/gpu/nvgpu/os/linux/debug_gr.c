@@ -17,6 +17,7 @@
 #include <nvgpu/gk20a.h>
 #include <nvgpu/gr/ctx.h>
 #include <nvgpu/nvgpu_init.h>
+#include <nvgpu/soc.h>
 
 #include "common/gr/ctx_priv.h"
 #include "common/gr/gr_priv.h"
@@ -82,6 +83,9 @@ static int cbc_status_debug_open(struct inode *inode, struct file *file)
 	struct gk20a *g = (struct gk20a *)inode->i_private;
 
 	if (!capable(CAP_SYS_ADMIN)) {
+		return -EPERM;
+	}
+	if (nvgpu_is_hypervisor_mode(g)) {
 		return -EPERM;
 	}
 	g = nvgpu_get(g);
