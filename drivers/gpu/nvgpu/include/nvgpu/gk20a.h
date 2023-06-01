@@ -516,8 +516,13 @@ struct gk20a {
 	struct nvgpu_falcon gpccs_flcn;
 	/** Struct holding the nvenc falcon software state. */
 	struct nvgpu_falcon nvenc_flcn;
-#ifdef CONFIG_NVGPU_DGPU
+	/** Struct holding the ofa falcon software state. */
+	struct nvgpu_falcon ofa_flcn;
+	/** Struct holding the nvdec falcon software state. */
 	struct nvgpu_falcon nvdec_flcn;
+	/** Struct holding the nvjpg falcon software state. */
+	struct nvgpu_falcon nvjpg_flcn;
+#ifdef CONFIG_NVGPU_DGPU
 	struct nvgpu_falcon minion_flcn;
 #endif
 #ifdef CONFIG_NVGPU_NON_FUSA

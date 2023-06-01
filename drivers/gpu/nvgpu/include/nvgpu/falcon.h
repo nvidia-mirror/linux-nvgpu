@@ -126,14 +126,18 @@
 #define FALCON_ID_GPCCS     (3U)
 /** Falcon ID for NVDEC engine */
 #define FALCON_ID_NVDEC     (4U)
-/** Falcon ID for NVDEC engine */
+/** Falcon ID for NVENC engine */
 #define FALCON_ID_NVENC     (5U)
 /** Falcon ID for SEC2 engine */
 #define FALCON_ID_SEC2      (7U)
 /** Falcon ID for MINION engine */
 #define FALCON_ID_MINION    (10U)
 #define FALCON_ID_PMU_NEXT_CORE (13U)
-#define FALCON_ID_END	    (15U)
+/** Falcon ID for OFA engine */
+#define FALCON_ID_OFA       (15U)
+/** Falcon ID for NVJPG engine */
+#define FALCON_ID_NVJPG     (16U)
+#define FALCON_ID_END	    (17U)
 #define FALCON_ID_INVALID   0xFFFFFFFFU
 
 #define FALCON_MAILBOX_0	0x0U

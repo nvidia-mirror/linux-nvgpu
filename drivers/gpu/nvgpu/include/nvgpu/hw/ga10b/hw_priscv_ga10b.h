@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -78,4 +78,6 @@
 #define priscv_priscv_bcr_dmacfg_lock_locked_f()                   (0x80000000U)
 #define priscv_riscv_irqmask_r()                                   (0x00000528U)
 #define priscv_riscv_irqdest_r()                                   (0x0000052cU)
+#define priscv_riscv_boot_vector_lo_r()                            (0x00000380U)
+#define priscv_riscv_boot_vector_hi_r()                            (0x00000384U)
 #endif

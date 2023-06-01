@@ -472,13 +472,19 @@ struct nvgpu_falcon *nvgpu_falcon_get_instance(struct gk20a *g, u32 flcn_id)
 	case FALCON_ID_GSPLITE:
 		flcn = &g->gsp_flcn;
 		break;
-#ifdef CONFIG_NVGPU_DGPU
-	case FALCON_ID_NVDEC:
-		flcn = &g->nvdec_flcn;
-		break;
 	case FALCON_ID_NVENC:
 		flcn = &g->nvenc_flcn;
 		break;
+	case FALCON_ID_OFA:
+		flcn = &g->ofa_flcn;
+		break;
+	case FALCON_ID_NVDEC:
+		flcn = &g->nvdec_flcn;
+		break;
+	case FALCON_ID_NVJPG:
+		flcn = &g->nvjpg_flcn;
+		break;
+#ifdef CONFIG_NVGPU_DGPU
 	case FALCON_ID_SEC2:
 		flcn = &g->sec2.flcn;
 		break;
@@ -869,7 +875,6 @@ void nvgpu_falcon_get_ctls(struct nvgpu_falcon *flcn, u32 *sctl, u32 *cpuctl)
 s32 nvgpu_falcon_load_ucode(struct nvgpu_falcon *flcn,
 		struct nvgpu_mem *ucode_mem_desc, u32 *ucode_header)
 {
-	s32 status = -EINVAL;
 	struct gk20a *g;
 
 	if (!is_falcon_valid(flcn)) {
@@ -880,12 +885,9 @@ s32 nvgpu_falcon_load_ucode(struct nvgpu_falcon *flcn,
 
 	if (g->ops.falcon.load_ucode == NULL) {
 		nvgpu_err(g, "hal for loading ucode not set");
-		goto exit;
+		return -EINVAL;
 	}
 
 	/* Load ucode */
-	status = g->ops.falcon.load_ucode(flcn, ucode_mem_desc, ucode_header);
-
-exit:
-	return status;
+	return g->ops.falcon.load_ucode(flcn, ucode_mem_desc, ucode_header);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,7 +31,7 @@ u32 ga10b_falcon_get_mem_size(struct nvgpu_falcon *flcn,
 		enum falcon_mem_type mem_type);
 bool ga10b_falcon_is_cpu_halted(struct nvgpu_falcon *flcn);
 void ga10b_falcon_set_bcr(struct nvgpu_falcon *flcn);
-void ga10b_falcon_bootstrap(struct nvgpu_falcon *flcn, u32 boot_vector);
+void ga10b_falcon_bootstrap(struct nvgpu_falcon *flcn, u64 boot_vector);
 void ga10b_falcon_dump_brom_stats(struct nvgpu_falcon *flcn);
 u32  ga10b_falcon_get_brom_retcode(struct nvgpu_falcon *flcn);
 bool ga10b_falcon_is_priv_lockdown(struct nvgpu_falcon *flcn);

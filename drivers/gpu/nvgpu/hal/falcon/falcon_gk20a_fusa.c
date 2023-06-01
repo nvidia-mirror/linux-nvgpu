@@ -355,15 +355,15 @@ NVGPU_COV_WHITELIST(deviate, NVGPU_MISRA(Rule, 11_3), "TID-415")
 }
 
 void gk20a_falcon_bootstrap(struct nvgpu_falcon *flcn,
-	u32 boot_vector)
+	u64 boot_vector)
 {
-	nvgpu_log_info(flcn->g, "boot vec 0x%x", boot_vector);
+	nvgpu_log_info(flcn->g, "boot vec 0x%llx", boot_vector);
 
 	nvgpu_falcon_writel(flcn, falcon_falcon_dmactl_r(),
 		falcon_falcon_dmactl_require_ctx_f(0));
 
 	nvgpu_falcon_writel(flcn, falcon_falcon_bootvec_r(),
-		falcon_falcon_bootvec_vec_f(boot_vector));
+		falcon_falcon_bootvec_vec_f(nvgpu_safe_cast_u64_to_u32(boot_vector)));
 
 	nvgpu_falcon_writel(flcn, falcon_falcon_cpuctl_r(),
 		falcon_falcon_cpuctl_startcpu_f(1));

@@ -61,7 +61,7 @@ struct gops_falcon {
 			u64 fmc_data_addr, u64 manifest_addr);
 	u32 (*imemc_blk_field)(u32 blk);
 	void (*bootstrap)(struct nvgpu_falcon *flcn,
-			 u32 boot_vector);
+			 u64 boot_vector);
 	u32 (*mailbox_read)(struct nvgpu_falcon *flcn,
 			    u32 mailbox_index);
 	void (*mailbox_write)(struct nvgpu_falcon *flcn,
@@ -86,6 +86,7 @@ struct gops_falcon {
 
 	int (*load_ucode)(struct nvgpu_falcon *flcn,
 			struct nvgpu_mem *mem_desc, u32 *ucode_header);
+	u32 (*debuginfo_offset)(void);
 
 	/** @endcond DOXYGEN_SHOULD_SKIP_THIS */
 

@@ -259,6 +259,7 @@ static int nvgpu_falcons_sw_init(struct gk20a *g)
 		nvgpu_err(g, "failed to sw init FALCON_ID_SEC2");
 		goto done_fecs;
 	}
+#endif
 
 	err = g->ops.falcon.falcon_sw_init(g, FALCON_ID_NVDEC);
 	if (err != 0) {
@@ -272,23 +273,38 @@ static int nvgpu_falcons_sw_init(struct gk20a *g)
 		goto done_nvdec;
 	}
 
-#endif
+	err = g->ops.falcon.falcon_sw_init(g, FALCON_ID_OFA);
+	if (err != 0) {
+		nvgpu_err(g, "failed to sw init FALCON_ID_OFA");
+		goto done_nvenc;
+	}
+
+	err = g->ops.falcon.falcon_sw_init(g, FALCON_ID_NVJPG);
+	if (err != 0) {
+		nvgpu_err(g, "failed to sw init FALCON_ID_NVENC");
+		goto done_ofa;
+	}
+
 	if (g->ops.gsp.is_gsp_supported != false) {
 		err = g->ops.falcon.falcon_sw_init(g, FALCON_ID_GSPLITE);
 		if (err != 0) {
 			nvgpu_err(g, "failed to sw init FALCON_ID_GSPLITE");
-			goto done_nvenc;
+			goto done_nvjpg;
 		}
 	}
 
 	return 0;
 
+done_nvjpg:
+	g->ops.falcon.falcon_sw_free(g, FALCON_ID_NVJPG);
+done_ofa:
+	g->ops.falcon.falcon_sw_free(g, FALCON_ID_OFA);
 done_nvenc:
-#ifdef CONFIG_NVGPU_DGPU
 	g->ops.falcon.falcon_sw_free(g, FALCON_ID_NVENC);
 done_nvdec:
 	g->ops.falcon.falcon_sw_free(g, FALCON_ID_NVDEC);
 done_sec2:
+#ifdef CONFIG_NVGPU_DGPU
 	g->ops.falcon.falcon_sw_free(g, FALCON_ID_SEC2);
 done_fecs:
 #endif
@@ -308,13 +324,15 @@ static void nvgpu_falcons_sw_free(struct gk20a *g)
 		g->ops.falcon.falcon_sw_free(g, FALCON_ID_PMU);
 	}
 	g->ops.falcon.falcon_sw_free(g, FALCON_ID_FECS);
+	g->ops.falcon.falcon_sw_free(g, FALCON_ID_NVENC);
+	g->ops.falcon.falcon_sw_free(g, FALCON_ID_OFA);
+	g->ops.falcon.falcon_sw_free(g, FALCON_ID_NVDEC);
+	g->ops.falcon.falcon_sw_free(g, FALCON_ID_NVJPG);
 
 #ifdef CONFIG_NVGPU_DGPU
 	if (g->ops.gsp.is_gsp_supported != false) {
 		g->ops.falcon.falcon_sw_free(g, FALCON_ID_GSPLITE);
 	}
-	g->ops.falcon.falcon_sw_free(g, FALCON_ID_NVDEC);
-	g->ops.falcon.falcon_sw_free(g, FALCON_ID_NVENC);
 	g->ops.falcon.falcon_sw_free(g, FALCON_ID_SEC2);
 #endif
 }

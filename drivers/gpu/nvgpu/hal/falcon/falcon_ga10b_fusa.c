@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -56,21 +56,28 @@ void ga10b_falcon_set_bcr(struct nvgpu_falcon *flcn)
 	nvgpu_riscv_writel(flcn, priscv_priscv_bcr_ctrl_r(), 0x11);
 }
 
-void ga10b_falcon_bootstrap(struct nvgpu_falcon *flcn, u32 boot_vector)
+void ga10b_falcon_bootstrap(struct nvgpu_falcon *flcn, u64 boot_vector)
 {
 	/* Need to check this through fuse/SW policy*/
 	if (flcn->is_falcon2_enabled) {
 		nvgpu_log_info(flcn->g, "boot riscv core");
+		if (boot_vector != 0U) {
+			nvgpu_log_info(flcn->g, "riscv boot vec 0x%llx", boot_vector);
+			nvgpu_riscv_writel(flcn, priscv_riscv_boot_vector_lo_r(),
+				u64_lo32(boot_vector));
+			nvgpu_riscv_writel(flcn, priscv_riscv_boot_vector_hi_r(),
+				u64_hi32(boot_vector));
+		}
 		nvgpu_riscv_writel(flcn, priscv_priscv_cpuctl_r(),
 			priscv_priscv_cpuctl_startcpu_true_f());
 	} else {
-		nvgpu_log_info(flcn->g, "falcon boot vec 0x%x", boot_vector);
+		nvgpu_log_info(flcn->g, "falcon boot vec 0x%llx", boot_vector);
 
 		nvgpu_falcon_writel(flcn, falcon_falcon_dmactl_r(),
 			falcon_falcon_dmactl_require_ctx_f(0));
 
 		nvgpu_falcon_writel(flcn, falcon_falcon_bootvec_r(),
-			falcon_falcon_bootvec_vec_f(boot_vector));
+			falcon_falcon_bootvec_vec_f(nvgpu_safe_cast_u64_to_u32(boot_vector)));
 
 		nvgpu_falcon_writel(flcn, falcon_falcon_cpuctl_r(),
 			falcon_falcon_cpuctl_startcpu_f(1));

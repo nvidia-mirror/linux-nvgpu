@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -116,6 +116,10 @@ static u32 ga10b_mc_unit_reset_mask(struct gk20a *g, u32 unit)
 	case NVGPU_UNIT_FIFO:
 	case NVGPU_UNIT_GRAPH:
 	case NVGPU_UNIT_BLG:
+	case NVGPU_UNIT_NVENC:
+	case NVGPU_UNIT_OFA:
+	case NVGPU_UNIT_NVDEC:
+	case NVGPU_UNIT_NVJPG:
 #ifdef CONFIG_NVGPU_HAL_NON_FUSA
 	case NVGPU_UNIT_PWR:
 #endif
