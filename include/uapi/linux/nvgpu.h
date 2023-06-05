@@ -832,7 +832,14 @@ struct nvgpu_profiler_alloc_pma_stream_args {
 #define NVGPU_PROFILER_ALLOC_PMA_STREAM_ARG_FLAG_CTXSW		(1 << 0)
 	__u32 flags;
 
-	__u32 reserved[3];
+	__u32 pma_channel_id;				/* out: PMA hardware stream id */
+
+	__u32 reserved[2];
+};
+
+struct nvgpu_profiler_free_pma_stream_args {
+	__u32 pma_channel_id;				/* in: PMA hardware stream id */
+	__u32 reserved[2];
 };
 
 struct nvgpu_profiler_pma_stream_update_get_put_args {
@@ -851,7 +858,9 @@ struct nvgpu_profiler_pma_stream_update_get_put_args {
 #define NVGPU_PROFILER_PMA_STREAM_UPDATE_GET_PUT_ARG_FLAG_OVERFLOW_TRIGGERED		(1 << 3)
 	__u32 flags;
 
-	__u32 reserved[3];
+	__u32 pma_channel_id;			/* in: PMA channel index */
+
+	__u32 reserved[2];
 };
 
 /*
@@ -955,7 +964,7 @@ struct nvgpu_profiler_vab_flush_state_args {
 #define NVGPU_PROFILER_IOCTL_ALLOC_PMA_STREAM \
 	_IOWR(NVGPU_PROFILER_IOCTL_MAGIC, 4, struct nvgpu_profiler_alloc_pma_stream_args)
 #define NVGPU_PROFILER_IOCTL_FREE_PMA_STREAM \
-	_IO(NVGPU_PROFILER_IOCTL_MAGIC, 5)
+	_IOW(NVGPU_PROFILER_IOCTL_MAGIC, 5, struct nvgpu_profiler_free_pma_stream_args)
 #define NVGPU_PROFILER_IOCTL_BIND_PM_RESOURCES \
 	_IO(NVGPU_PROFILER_IOCTL_MAGIC, 6)
 #define NVGPU_PROFILER_IOCTL_UNBIND_PM_RESOURCES \

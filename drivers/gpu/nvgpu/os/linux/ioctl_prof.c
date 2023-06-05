@@ -470,6 +470,7 @@ static int nvgpu_prof_ioctl_alloc_pma_stream(struct nvgpu_profiler_object_priv *
 		prof->pma_bytes_available_buffer_va);
 
 	args->pma_buffer_va = pma_buffer_offset;
+	args->pma_channel_id = 0u;
 
 	/* Decrement pma_dmabuf ref count as we already mapped it. */
 	dma_buf_put(pma_dmabuf);
@@ -515,7 +516,8 @@ static void nvgpu_prof_free_pma_stream_priv_data(struct nvgpu_profiler_object_pr
 	prof->pma_bytes_available_buffer_cpuva = NULL;
 }
 
-static int nvgpu_prof_ioctl_free_pma_stream(struct nvgpu_profiler_object_priv *priv)
+static int nvgpu_prof_ioctl_free_pma_stream(struct nvgpu_profiler_object_priv *priv,
+		struct nvgpu_profiler_free_pma_stream_args *args)
 {
 	struct nvgpu_profiler_object *prof = priv->prof;
 	struct gk20a *g = prof->g;
@@ -942,7 +944,8 @@ long nvgpu_prof_fops_ioctl(struct file *filp, unsigned int cmd,
 		break;
 
 	case NVGPU_PROFILER_IOCTL_FREE_PMA_STREAM:
-		err = nvgpu_prof_ioctl_free_pma_stream(prof_priv);
+		err = nvgpu_prof_ioctl_free_pma_stream(prof_priv,
+			(struct nvgpu_profiler_free_pma_stream_args *)buf);
 		break;
 
 	case NVGPU_PROFILER_IOCTL_EXEC_REG_OPS:
