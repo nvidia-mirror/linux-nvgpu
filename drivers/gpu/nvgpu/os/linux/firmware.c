@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -65,7 +65,9 @@ struct nvgpu_firmware *nvgpu_request_firmware(struct gk20a *g,
 {
 	struct device *dev = dev_from_gk20a(g);
 	struct nvgpu_firmware *fw;
-	const struct firmware *linux_fw;
+	const struct firmware *linux_fw = NULL;
+	char *prefix_path = NULL;
+	int prefix_len = 0;
 
 	/* current->fs is NULL when calling from SYS_EXIT.
 	   Add a check here to prevent crash in request_firmware */
@@ -76,7 +78,20 @@ struct nvgpu_firmware *nvgpu_request_firmware(struct gk20a *g,
 	if (!fw)
 		return NULL;
 
-	linux_fw = do_request_firmware(dev, g->name, fw_name, flags);
+	/* Search GPU firmware under /lib/firmware/nvidia */
+	prefix_len = strlen("nvidia") + strlen(g->name);
+	prefix_len += 2; /* for the path separator and zero terminator */
+	prefix_path = nvgpu_kzalloc(g, sizeof(*prefix_path) * prefix_len);
+	if (prefix_path) {
+		(void) snprintf(prefix_path, prefix_len,
+						"%s/%s", "nvidia", g->name);
+		linux_fw = do_request_firmware(dev,
+			prefix_path, fw_name, NVGPU_REQUEST_FIRMWARE_NO_WARN);
+		nvgpu_kfree(g, prefix_path);
+	}
+
+	if (!linux_fw)
+		linux_fw = do_request_firmware(dev, g->name, fw_name, flags);
 
 #ifdef CONFIG_TEGRA_GK20A
 	/* TO BE REMOVED - Support loading from legacy SOC specific path. */
