@@ -1,5 +1,7 @@
+/* SPDX-License-Identifier: MIT */
 /*
- * Copyright (c) 2020-2022, NVIDIA CORPORATION.  All rights reserved.
+ * SPDX-FileCopyrightText: Copyright (c) 2020-2023, NVIDIA CORPORATION & AFFILIATES.
+ * All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -115,6 +117,9 @@ struct gops_perf {
 	void (*reset_hs_streaming_credits)(struct gk20a *g);
 	void (*enable_pmasys_legacy_mode)(struct gk20a *g, bool enable);
 #endif
+	void (*reset_hwpm_pma_registers)(struct gk20a *g);
+	void (*reset_hwpm_pma_trigger_registers)(struct gk20a *g);
+	void (*reset_pmasys_channel_registers)(struct gk20a *g);
 };
 struct gops_perfbuf {
 	int (*perfbuf_enable)(struct gk20a *g, u64 offset, u32 size);

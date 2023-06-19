@@ -1,5 +1,6 @@
-/*
- * Copyright (c) 2020-2022, NVIDIA CORPORATION.  All rights reserved.
+// SPDX-License-Identifier: MIT
+/* SPDX-FileCopyrightText: Copyright (c) 2020-2023, NVIDIA CORPORATION & AFFILIATES.
+ * All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -432,6 +433,25 @@ static void nvgpu_profiler_disable_cau_and_smpc(struct gk20a *g)
 	}
 }
 
+static void nvgpu_profiler_init_pmasys_state(struct gk20a *g,
+					u32 gr_instance_id)
+{
+	/* Once MIG support gets added to Profiler,
+	 * gr_instance_id will get consumed
+	 */
+	(void)gr_instance_id;
+
+	nvgpu_log(g, gpu_dbg_prof, "HWPM PMA being reset");
+
+	if (g->ops.perf.reset_hwpm_pma_registers != NULL) {
+		g->ops.perf.reset_hwpm_pma_registers(g);
+	}
+
+	if (g->ops.perf.reset_hwpm_pma_trigger_registers != NULL) {
+		g->ops.perf.reset_hwpm_pma_trigger_registers(g);
+	}
+}
+
 static int nvgpu_profiler_quiesce_hwpm_streamout_resident(struct gk20a *g,
 					u32 gr_instance_id,
 					void *pma_bytes_available_buffer_cpuva,
@@ -586,6 +606,8 @@ static int nvgpu_profiler_quiesce_hwpm_streamout(struct gk20a *g,
 		void *pma_bytes_available_buffer_cpuva,
 		bool smpc_reserved)
 {
+	nvgpu_profiler_init_pmasys_state(g, gr_instance_id);
+
 	if (!is_ctxsw) {
 		return nvgpu_profiler_quiesce_hwpm_streamout_resident(g,
 						gr_instance_id,
@@ -648,6 +670,10 @@ int nvgpu_profiler_unbind_hwpm_streamout(struct gk20a *g,
 	err = g->ops.perfbuf.perfbuf_disable(g);
 	if (err) {
 		return err;
+	}
+
+	if (g->ops.perf.reset_pmasys_channel_registers != NULL) {
+		g->ops.perf.reset_pmasys_channel_registers(g);
 	}
 
 	err = nvgpu_profiler_unbind_hwpm(g, gr_instance_id, is_ctxsw, tsg);

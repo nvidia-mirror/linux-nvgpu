@@ -1,5 +1,7 @@
+// SPDX-License-Identifier: MIT
 /*
- * Copyright (c) 2020-2022, NVIDIA CORPORATION.  All rights reserved.
+ * SPDX-FileCopyrightText: Copyright (c) 2020-2023, NVIDIA CORPORATION & AFFILIATES.
+ * All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -802,4 +804,170 @@ void ga10b_perf_enable_pmasys_legacy_mode(struct gk20a *g, bool enable)
 	}
 
 	nvgpu_writel(g, perf_pmasys_controlreg_r(), val);
+}
+
+void ga10b_perf_reset_hwpm_pma_registers(struct gk20a *g)
+{
+	u32 val = 0;
+	u32 i = 0;
+
+
+	for (i = 0U; i < perf_pmasys_trigger_config_user__size_1_v(); i++) {
+		val = nvgpu_readl(g, perf_pmasys_trigger_config_user_r(i));
+
+		val = set_field(val, perf_pmasys_trigger_config_user_pma_pulse_m(),
+				perf_pmasys_trigger_config_user_pma_pulse_disable_f());
+		val = set_field(val, perf_pmasys_trigger_config_user_pma_pulse_window_m(),
+				perf_pmasys_trigger_config_user_pma_pulse_window_inside_f());
+		val = set_field(val, perf_pmasys_trigger_config_user_pma_pulse_source_m(),
+				perf_pmasys_trigger_config_user_pma_pulse_source_internal_f());
+		val = set_field(val, perf_pmasys_trigger_config_user_pma_pulse_cntr_m(),
+				perf_pmasys_trigger_config_user_pma_pulse_cntr_one_f());
+		val = set_field(val, perf_pmasys_trigger_config_user_record_stream_m(),
+				perf_pmasys_trigger_config_user_record_stream_disable_f());
+
+		nvgpu_writel(g, perf_pmasys_trigger_config_user_r(i), val);
+	}
+
+	for (i = 0U; i < perf_pmasys_config1__size_1_v(); i++) {
+		val = nvgpu_readl(g, perf_pmasys_config1_r(i));
+
+		val = set_field(val, perf_pmasys_config1_bf_20_20_m(),
+				perf_pmasys_config1_bf_20_20_disable_f());
+		val = set_field(val, perf_pmasys_config1_bf_21_21_m(),
+				perf_pmasys_config1_bf_21_21_enable_f());
+
+		nvgpu_writel(g, perf_pmasys_config1_r(i), val);
+	}
+
+	for (i = 0U; i < perf_pmasys_config2__size_1_v(); i++) {
+		val = nvgpu_readl(g, perf_pmasys_config2_r(i));
+
+		val = set_field(val, perf_pmasys_config2_bf_0_0_m(),
+			perf_pmasys_config2_bf_0_0_disable_f());
+
+		nvgpu_writel(g, perf_pmasys_config2_r(i), val);
+	}
+
+	nvgpu_writel(g, perf_pmasys_pulse_timebaseset_r(), 0x0U);
+	nvgpu_writel(g, perf_pmasys_pulse_timebasecnt_r(), 0x0U);
+	nvgpu_writel(g, perf_pmasys_record_start_triggercnt_r(), 0x0U);
+	nvgpu_writel(g, perf_pmasys_record_stop_triggercnt_r(), 0x0U);
+	nvgpu_writel(g, perf_pmasys_record_total_triggercnt_r(), 0x0U);
+	nvgpu_writel(g, perf_pmasys_trigger_global_r(), 0x0U);
+	nvgpu_writel(g, perf_pmasys_router_config0_r(), 0x0U);
+	nvgpu_writel(g, perf_pmasys_router_config1_r(), 0x0U);
+
+	val = nvgpu_readl(g, perf_pmasys_controlb_r());
+	val = set_field(val, perf_pmasys_controlb_coalesce_timeout_cycles_m(),
+		perf_pmasys_controlb_coalesce_timeout_cycles_64_f());
+	val = set_field(val, perf_pmasys_controlb_mbu_cya_smb_m(),
+		perf_pmasys_controlb_mbu_cya_smb_disable_f());
+	val = set_field(val, perf_pmasys_controlb_mbu_cya_ss_m(),
+		perf_pmasys_controlb_mbu_cya_ss_disable_f());
+	val = set_field(val, perf_pmasys_controlb_keep_latest_m(),
+		perf_pmasys_controlb_keep_latest_disable_f());
+	val = set_field(val, perf_pmasys_controlb_fault_nack_cya_m(),
+		perf_pmasys_controlb_fault_nack_cya_disable_f());
+	nvgpu_writel(g, perf_pmasys_controlb_r(), val);
+}
+
+void ga10b_perf_reset_hwpm_pma_trigger_registers(struct gk20a *g)
+{
+	nvgpu_writel(g, perf_pmasys_sys_trigger_start_mask_r(), 0x0U);
+	nvgpu_writel(g, perf_pmasys_sys_trigger_start_maskb_r(), 0x0U);
+	nvgpu_writel(g, perf_pmasys_sys_trigger_stop_mask_r(), 0x0U);
+	nvgpu_writel(g, perf_pmasys_sys_trigger_stop_maskb_r(), 0x0U);
+	nvgpu_writel(g, perf_pmasys_sys_trigger_config_tesla_mode_r(), 0x0U);
+	nvgpu_writel(g, perf_pmasys_sys_trigger_config_tesla_modeb_r(), 0x0U);
+	nvgpu_writel(g, perf_pmasys_sys_trigger_config_mixed_mode_r(), 0x0U);
+	nvgpu_writel(g, perf_pmasys_sys_trigger_config_mixed_modeb_r(), 0x0U);
+	nvgpu_writel(g, perf_pmasys_sys_trigger_start_r(), 0x0U);
+	nvgpu_writel(g, perf_pmasys_sys_trigger_startb_r(), 0x0U);
+	nvgpu_writel(g, perf_pmasys_sys_trigger_status_r(), 0x0U);
+	nvgpu_writel(g, perf_pmasys_sys_trigger_statusb_r(), 0x0U);
+
+	nvgpu_writel(g, perf_pmasys_gpc_trigger_start_mask_r(), 0x0U);
+	nvgpu_writel(g, perf_pmasys_gpc_trigger_start_maskb_r(), 0x0U);
+	nvgpu_writel(g, perf_pmasys_gpc_trigger_stop_mask_r(), 0x0U);
+	nvgpu_writel(g, perf_pmasys_gpc_trigger_stop_maskb_r(), 0x0U);
+	nvgpu_writel(g, perf_pmasys_gpc_trigger_config_tesla_mode_r(), 0x0U);
+	nvgpu_writel(g, perf_pmasys_gpc_trigger_config_tesla_modeb_r(), 0x0U);
+	nvgpu_writel(g, perf_pmasys_gpc_trigger_config_mixed_mode_r(), 0x0U);
+	nvgpu_writel(g, perf_pmasys_gpc_trigger_config_mixed_modeb_r(), 0x0U);
+	nvgpu_writel(g, perf_pmasys_gpc_trigger_start_r(), 0x0U);
+	nvgpu_writel(g, perf_pmasys_gpc_trigger_startb_r(), 0x0U);
+	nvgpu_writel(g, perf_pmasys_gpc_trigger_status_r(), 0x0U);
+	nvgpu_writel(g, perf_pmasys_gpc_trigger_statusb_r(), 0x0U);
+
+	nvgpu_writel(g, perf_pmasys_fbp_trigger_start_mask_r(), 0x0U);
+	nvgpu_writel(g, perf_pmasys_fbp_trigger_start_maskb_r(), 0x0U);
+	nvgpu_writel(g, perf_pmasys_fbp_trigger_stop_mask_r(), 0x0U);
+	nvgpu_writel(g, perf_pmasys_fbp_trigger_stop_maskb_r(), 0x0U);
+	nvgpu_writel(g, perf_pmasys_fbp_trigger_config_tesla_mode_r(), 0x0U);
+	nvgpu_writel(g, perf_pmasys_fbp_trigger_config_tesla_modeb_r(), 0x0U);
+	nvgpu_writel(g, perf_pmasys_fbp_trigger_config_mixed_mode_r(), 0x0U);
+	nvgpu_writel(g, perf_pmasys_fbp_trigger_config_mixed_modeb_r(), 0x0U);
+	nvgpu_writel(g, perf_pmasys_fbp_trigger_start_r(), 0x0U);
+	nvgpu_writel(g, perf_pmasys_fbp_trigger_startb_r(), 0x0U);
+	nvgpu_writel(g, perf_pmasys_fbp_trigger_status_r(), 0x0U);
+	nvgpu_writel(g, perf_pmasys_fbp_trigger_statusb_r(), 0x0U);
+}
+
+void ga10b_perf_reset_pmasys_channel_registers(struct gk20a *g)
+{
+	u32 i = 0U;
+	u32 val = 0U;
+
+	for (i = 0U; i < perf_pmasys_channel_config_user__size_1_v(); i++) {
+		val = nvgpu_readl(g, perf_pmasys_channel_config_user_r(i));
+		val = set_field(val, perf_pmasys_channel_config_user_keep_latest_m(),
+			perf_pmasys_channel_config_user_keep_latest_disable_f());
+		val = set_field(val, perf_pmasys_channel_config_user_coalesce_timeout_cycles_m(),
+			perf_pmasys_channel_config_user_coalesce_timeout_cycles_64_f());
+		nvgpu_writel(g, perf_pmasys_channel_config_user_r(i), val);
+	}
+
+	for (i = 0U; i < perf_pmasys_config3__size_1_v(); i++) {
+		val = nvgpu_readl(g, perf_pmasys_config3_r(i));
+		val = set_field(val, perf_pmasys_config3_bf_1_1_m(),
+			perf_pmasys_config3_bf_1_1_disable_f());
+		val = set_field(val, perf_pmasys_config3_bf_2_2_m(),
+			perf_pmasys_config3_bf_2_2_disable_f());
+		val = set_field(val, perf_pmasys_config3_bf_3_3_m(),
+			perf_pmasys_config3_bf_3_3_disable_f());
+		nvgpu_writel(g, perf_pmasys_config3_r(i), val);
+	}
+
+	for (i = 0U; i < perf_pmasys_channel_control__size_1_v(); i++) {
+		val = nvgpu_readl(g, perf_pmasys_channel_control_r(i));
+		val = set_field(val, perf_pmasys_channel_control_stream_m(),
+			perf_pmasys_channel_control_stream_disable_f());
+		val = set_field(val, perf_pmasys_channel_control_pmactxsw_mode_m(),
+			perf_pmasys_channel_control_pmactxsw_mode_enable_f());
+		val = set_field(val, perf_pmasys_channel_control_pma_record_stream_m(),
+			perf_pmasys_channel_control_pma_record_stream_disable_f());
+		val = set_field(val, perf_pmasys_channel_control_fe2all_ctxsw_freeze_enable_m(),
+			perf_pmasys_channel_control_fe2all_ctxsw_freeze_enable_true_f());
+		val = set_field(val, perf_pmasys_channel_control_pma_ctxsw_freeze_m(),
+			perf_pmasys_channel_control_pma_ctxsw_freeze_false_f());
+		nvgpu_writel(g, perf_pmasys_channel_control_r(i), val);
+	}
+
+	for (i = 0U; i < perf_pmasys_channel_control_user__size_1_v(); i++) {
+		val = nvgpu_readl(g, perf_pmasys_channel_control_user_r(i));
+		val = set_field(val, perf_pmasys_channel_control_user_stream_m(),
+			perf_pmasys_channel_control_user_stream_disable_f());
+		val = set_field(val, perf_pmasys_channel_control_user_membuf_clear_status_m(),
+			perf_pmasys_channel_control_user_membuf_clear_status_init_f());
+		val = set_field(val, perf_pmasys_channel_control_user_flush_coalesce_fifo_m(),
+			perf_pmasys_channel_control_user_flush_coalesce_fifo_init_f());
+		val = set_field(val, perf_pmasys_channel_control_user_send_bind_m(),
+			perf_pmasys_channel_control_user_send_bind_init_f());
+		val = set_field(val, perf_pmasys_channel_control_user_reset_data_fifo_m(),
+			perf_pmasys_channel_control_user_reset_data_fifo_init_f());
+		val = set_field(val, perf_pmasys_channel_control_user_update_bytes_m(),
+			perf_pmasys_channel_control_user_update_bytes_init_f());
+		nvgpu_writel(g, perf_pmasys_channel_control_user_r(i), val);
+	}
 }

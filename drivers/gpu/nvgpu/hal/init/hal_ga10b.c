@@ -1,7 +1,7 @@
-/*
+// SPDX-License-Identifier: MIT
+/* SPDX-FileCopyrightText: Copyright (c) 2020-2023, NVIDIA CORPORATION & AFFILIATES.
+ * All rights reserved.
  * GA10B Tegra HAL interface
- *
- * Copyright (c) 2020-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1623,6 +1623,9 @@ static const struct gops_perf ga10b_ops_perf = {
 	.enable_hs_streaming = ga10b_perf_enable_hs_streaming,
 	.reset_hs_streaming_credits = ga10b_perf_reset_hs_streaming_credits,
 	.enable_pmasys_legacy_mode = ga10b_perf_enable_pmasys_legacy_mode,
+	.reset_hwpm_pma_registers = ga10b_perf_reset_hwpm_pma_registers,
+	.reset_hwpm_pma_trigger_registers = ga10b_perf_reset_hwpm_pma_trigger_registers,
+	.reset_pmasys_channel_registers = ga10b_perf_reset_pmasys_channel_registers,
 };
 #endif
 

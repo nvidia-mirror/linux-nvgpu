@@ -1,5 +1,7 @@
+/* SPDX-License-Identifier: MIT */
 /*
- * Copyright (c) 2020-2022, NVIDIA CORPORATION.  All rights reserved.
+ * SPDX-FileCopyrightText: Copyright (c) 2020-2023, NVIDIA CORPORATION & AFFILIATES.
+ * All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -68,6 +70,9 @@ int ga10b_perf_update_get_put(struct gk20a *g, u64 bytes_consumed,
 void ga10b_perf_enable_hs_streaming(struct gk20a *g, bool enable);
 void ga10b_perf_reset_hs_streaming_credits(struct gk20a *g);
 void ga10b_perf_enable_pmasys_legacy_mode(struct gk20a *g, bool enable);
+void ga10b_perf_reset_hwpm_pma_registers(struct gk20a *g);
+void ga10b_perf_reset_hwpm_pma_trigger_registers(struct gk20a *g);
+void ga10b_perf_reset_pmasys_channel_registers(struct gk20a *g);
 
 #endif /* CONFIG_NVGPU_DEBUGGER */
 #endif
