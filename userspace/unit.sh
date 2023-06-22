@@ -56,7 +56,7 @@ then
 		"/gpu-firmware-private/t23x/gr/gsp/riscv/safety-scheduler.manifest.encrypt.bin.out.bin.prod"
 		"/gpu-firmware-private/t23x/gr/gsp/riscv/safety-scheduler.text.encrypt.bin.prod")
 
-	FIRMWARE_TARGET_PATH="/lib/firmware/ga10b/"
+	FIRMWARE_TARGET_PATH="/lib/firmware/nvidia/ga10b/"
 	CUR_DIR=`pwd`
 	DEST_DIR=${CUR_DIR}/firmware/ga10b/
 else
@@ -68,7 +68,7 @@ else
 		"/gpu-firmware-private/t23x/gr/pmu/acr_ucode_prod.bin"
 		"/gpu-firmware-private/t23x/gr/pmu/acr_ucode_dbg.bin")
 
-	FIRMWARE_TARGET_PATH="/lib/firmware/gv11b/"
+	FIRMWARE_TARGET_PATH="/lib/firmware/nvidia/gv11b/"
 	CUR_DIR=`pwd`
 	DEST_DIR=${CUR_DIR}/firmware/gv11b/
 fi
