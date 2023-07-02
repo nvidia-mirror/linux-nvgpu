@@ -917,7 +917,3 @@ srcs += \
 	hal/grmgr/grmgr_ga100.c
 endif
 endif
-
-srctree.nvgpu-next := $(NV_SOURCE)/kernel/nvgpu-next
-include $(srctree.nvgpu-next)/drivers/gpu/nvgpu/Makefile.sources
-srcs += $(addprefix ../../../../nvgpu-next/drivers/gpu/nvgpu/,$(srcs_next))

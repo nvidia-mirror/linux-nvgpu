@@ -44,12 +44,9 @@ ARCH_PY				:= $(NV_SOURCE)/core-private/tools/arch/arch.py
 #
 # NVGPU_NEXT_SOURCE needs to be set for the Makefile.sources file to
 # properly handle include paths.
-NVGPU_NEXT_SOURCE := $(NV_SOURCE)/kernel/nvgpu-next/drivers/gpu/nvgpu
 
 NVGPU_POSIX			:= 1
 NVGPU_ARCH			:= $(NVGPU_SOURCE)/../../../arch
-NVGPU_NEXT_ARCH			:= $(NVGPU_NEXT_SOURCE)/../../../arch
-NVGPU_ARCH_YAML                 := $(NVGPU_ARCH)/*.yaml $(NVGPU_NEXT_ARCH)/*.yaml
 
 NV_COMPONENT_OWN_INTERFACE_DIR	:= .
 NV_COMPONENT_INCLUDES		:=				\
@@ -59,10 +56,7 @@ NV_COMPONENT_INCLUDES		:=				\
 		$(NV_SOURCE)/kernel/nvgpu/nvsched		\
 		$(NV_SOURCE)/kernel/nvgpu/nvsched/include	\
 		$(NV_SOURCE)/kernel/nvgpu/nvsched/include/nvs	\
-		$(NVGPU_SOURCE)/../../../include		\
-		$(NVGPU_NEXT_SOURCE)				\
-		$(NVGPU_NEXT_SOURCE)/include			\
-		$(NVGPU_NEXT_SOURCE)/../../../include
+		$(NVGPU_SOURCE)/../../../include
 ifneq ($(NV_BUILD_CONFIGURATION_OS_IS_QNX),1)
 NV_COMPONENT_SYSTEM_SHARED_LIBRARIES += pthread rt
 NVGPU_FORCE_SAFETY_PROFILE	:= 1
@@ -92,11 +86,9 @@ endif
 
 -include $(NVGPU_SOURCE)/Makefile.sources
 -include $(NV_SOURCE)/kernel/nvgpu/nvsched/Makefile.sources
--include $(NVGPU_NEXT_SOURCE)/Makefile.sources
 
 NV_COMPONENT_SOURCES		:=				\
 		$(addprefix $(NVGPU_SOURCE)/,$(srcs))	\
-		$(addprefix $(NVGPU_NEXT_SOURCE)/,$(srcs_next)) \
 		$(addprefix $(NV_SOURCE)/kernel/nvgpu/nvsched/,$(NVS_SOURCES))
 
 # $(srcs_next) already has the NV_COMPONENT_DIR prefix so we already have the
@@ -123,8 +115,6 @@ nvgpu-arch: $(ARCH_PY)
 	$(PYTHON2) $(ARCH_PY)				\
 		--arch-file    $(NVGPU_ARCH)/nvgpu.yaml	\
 		--source       $(NVGPU_SOURCE)		\
-		--source       $(NVGPU_NEXT_SOURCE)	\
-		--include-path $(NVGPU_NEXT_ARCH)	\
 		sources --check
 
 .PHONY: nvgpu-arch
