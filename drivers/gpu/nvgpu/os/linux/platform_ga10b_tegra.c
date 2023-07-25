@@ -249,9 +249,13 @@ void ga10b_tegra_scale_init(struct device *dev)
 	if ((struct icc_path *)profile->private_data)
 		return;
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 11, 0)
+	icc_path_handle = devm_of_icc_get(dev, "write");
+#else
 	icc_path_handle = icc_get(dev, TEGRA_ICC_GPU, TEGRA_ICC_PRIMARY);
+#endif
 	if (IS_ERR_OR_NULL(icc_path_handle)) {
-		dev_err(dev, "%s unable to get icc path (err=%ld)\n",
+		dev_info(dev, "%s unable to get icc path (err=%ld)\n",
 				__func__, PTR_ERR(icc_path_handle));
 		return;
 	}
@@ -267,7 +271,9 @@ static void ga10b_tegra_scale_exit(struct device *dev)
 	struct gk20a_scale_profile *profile = platform->g->scale_profile;
 
 	if (profile && profile->private_data) {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 11, 0)
 		icc_put((struct icc_path *)profile->private_data);
+#endif
 		profile->private_data = NULL;
 	}
 #endif
