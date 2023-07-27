@@ -23,7 +23,7 @@
 #include <linux/iommu.h>
 #include <linux/hashtable.h>
 #include <linux/clk.h>
-#if defined(CONFIG_INTERCONNECT) && defined(CONFIG_TEGRA_T23X_GRHOST)
+#if defined(CONFIG_INTERCONNECT)
 #include <linux/platform/tegra/mc_utils.h>
 #include <linux/interconnect.h>
 #include <dt-bindings/interconnect/tegra_icc_id.h>
@@ -84,7 +84,7 @@ struct gk20a_platform_clk tegra_ga10b_clocks[] = {
 #define NVGPU_GPC0_DISABLE  BIT(0)
 #define NVGPU_GPC1_DISABLE  BIT(1)
 
-#if defined(CONFIG_INTERCONNECT) && defined(CONFIG_TEGRA_T23X_GRHOST)
+#if defined(CONFIG_INTERCONNECT)
 static int ga10b_tegra_set_emc_rate(struct gk20a_scale_profile *profile,
 		unsigned long gpu_rate, unsigned long emc3d_ratio)
 {
@@ -236,7 +236,7 @@ static int ga10b_tegra_get_clocks(struct device *dev)
 
 void ga10b_tegra_scale_init(struct device *dev)
 {
-#if defined(CONFIG_INTERCONNECT) && defined(CONFIG_TEGRA_T23X_GRHOST)
+#if defined(CONFIG_INTERCONNECT)
 	struct gk20a_platform *platform = gk20a_get_platform(dev);
 	struct gk20a_scale_profile *profile = platform->g->scale_profile;
 	struct icc_path *icc_path_handle;
@@ -266,7 +266,7 @@ void ga10b_tegra_scale_init(struct device *dev)
 
 static void ga10b_tegra_scale_exit(struct device *dev)
 {
-#if defined(CONFIG_INTERCONNECT) && defined(CONFIG_TEGRA_T23X_GRHOST)
+#if defined(CONFIG_INTERCONNECT)
 	struct gk20a_platform *platform = gk20a_get_platform(dev);
 	struct gk20a_scale_profile *profile = platform->g->scale_profile;
 
@@ -396,7 +396,7 @@ static bool ga10b_tegra_is_railgated(struct device *dev)
 
 static int ga10b_tegra_railgate(struct device *dev)
 {
-#if defined(CONFIG_INTERCONNECT) && defined(CONFIG_TEGRA_T23X_GRHOST)
+#if defined(CONFIG_INTERCONNECT)
 	struct gk20a_platform *platform = gk20a_get_platform(dev);
 	struct gk20a_scale_profile *profile = platform->g->scale_profile;
 	int ret = 0;
@@ -483,7 +483,7 @@ static int ga10b_tegra_bpmp_mrq_set(struct device *dev)
 static int ga10b_tegra_unrailgate(struct device *dev)
 {
 	int ret = 0;
-#if defined(CONFIG_INTERCONNECT) && defined(CONFIG_TEGRA_T23X_GRHOST)
+#if defined(CONFIG_INTERCONNECT)
 	struct gk20a_platform *platform = gk20a_get_platform(dev);
 	struct gk20a_scale_profile *profile = platform->g->scale_profile;
 	unsigned long max_rate;
@@ -517,7 +517,7 @@ static int ga10b_tegra_unrailgate(struct device *dev)
 	/* Setting clk controls */
 	gp10b_tegra_clks_control(dev, true);
 
-#if defined(CONFIG_INTERCONNECT) && defined(CONFIG_TEGRA_T23X_GRHOST)
+#if defined(CONFIG_INTERCONNECT)
 	/* to start with set emc frequency floor for max gpu sys rate*/
 	rate = clk_round_rate(platform->clk[0], (UINT_MAX - 1));
 	max_rate = (rate < 0) ? ULONG_MAX : (unsigned long)rate;
@@ -593,7 +593,7 @@ static int ga10b_tegra_set_fbp_pg_mask(struct device *dev, u32 dt_fbp_pg_mask)
 void ga10b_tegra_postscale(struct device *pdev,
 					unsigned long freq)
 {
-#if defined(CONFIG_INTERCONNECT) && defined(CONFIG_TEGRA_T23X_GRHOST)
+#if defined(CONFIG_INTERCONNECT)
 	struct gk20a_platform *platform = gk20a_get_platform(pdev);
 	struct gk20a_scale_profile *profile = platform->g->scale_profile;
 	struct gk20a *g = get_gk20a(pdev);
