@@ -54,6 +54,7 @@ endif
 
 # When compiling as OOT module, include the headers from nvidia-oot tree.
 ifeq ($(CONFIG_TEGRA_OOT_MODULE),m)
+ccflags-y += -I$(srctree.nvconftest)
 ccflags-y += -I$(srctree.nvidia)/include
 endif
 

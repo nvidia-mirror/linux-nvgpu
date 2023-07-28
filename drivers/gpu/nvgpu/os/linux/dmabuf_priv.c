@@ -14,6 +14,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#if defined(CONFIG_NVIDIA_CONFTEST)
+#include <nvidia/conftest.h>
+#endif
+
 #include <linux/version.h>
 #include <linux/device.h>
 #include <linux/dma-buf.h>
@@ -25,7 +29,7 @@
 #endif
 #include <linux/fs.h>
 #include <linux/scatterlist.h>
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 18, 0)
+#if defined(NV_LINUX_IOSYS_MAP_H_PRESENT)
 #include <linux/iosys-map.h>
 #elif LINUX_VERSION_CODE >= KERNEL_VERSION(5, 11, 0)
 #include <linux/dma-buf-map.h>
@@ -358,7 +362,7 @@ out:
 static void *__gk20a_dmabuf_vmap(struct dma_buf *dmabuf)
 {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 11, 0)
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 18, 0)
+#if defined(NV_LINUX_IOSYS_MAP_H_PRESENT)
 	struct iosys_map map = {0};
 #else
 	struct dma_buf_map map = {0};
@@ -386,7 +390,7 @@ void *gk20a_dmabuf_vmap(struct dma_buf *dmabuf)
 void gk20a_dmabuf_vunmap(struct dma_buf *dmabuf, void *addr)
 {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 11, 0)
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 18, 0)
+#if defined(NV_LINUX_IOSYS_MAP_H_PRESENT)
 	struct iosys_map map = IOSYS_MAP_INIT_VADDR(addr);
 #else
 	struct dma_buf_map map = DMA_BUF_MAP_INIT_VADDR(addr);
