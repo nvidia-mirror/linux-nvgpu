@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2021-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -174,10 +174,10 @@ int nvgpu_gsp_process_message(struct gk20a *g)
 			break;
 		}
 
-		nvgpu_info(g, "read msg hdr: ");
-		nvgpu_info(g, "unit_id = 0x%08x, size = 0x%08x",
+		nvgpu_gsp_dbg(g, "read msg hdr: ");
+		nvgpu_gsp_dbg(g, "unit_id = 0x%08x, size = 0x%08x",
 			msg.hdr.unit_id, msg.hdr.size);
-		nvgpu_info(g, "ctrl_flags = 0x%08x, seq_id = 0x%08x",
+		nvgpu_gsp_dbg(g, "ctrl_flags = 0x%08x, seq_id = 0x%08x",
 			msg.hdr.ctrl_flags, msg.hdr.seq_id);
 
 		status = gsp_response_handle(gsp_sched, &msg);

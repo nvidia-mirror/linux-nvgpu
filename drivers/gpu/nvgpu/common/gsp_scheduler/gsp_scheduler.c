@@ -54,7 +54,7 @@ void nvgpu_gsp_sched_suspend(struct gk20a *g, struct nvgpu_gsp_sched *gsp_sched)
 	nvgpu_gsp_dbg(g, " ");
 
 	if (gsp == NULL) {
-		nvgpu_info(g, "GSP not initialized");
+		nvgpu_err(g, "GSP not initialized");
 		return;
 	}
 
@@ -222,7 +222,7 @@ int nvgpu_gsp_sched_bootstrap_hs(struct gk20a *g)
 		goto de_init;
 	}
 
-	nvgpu_info(g, "gsp scheduler bootstrapped.\n");
+	nvgpu_gsp_dbg(g, "gsp scheduler bootstrapped.\n");
 	return status;
 de_init:
 	nvgpu_gsp_sched_sw_deinit(g);

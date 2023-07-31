@@ -28,6 +28,7 @@
 #include <nvgpu/bug.h>
 #include <nvgpu/nvgpu_err.h>
 #include <nvgpu/power_features/cg.h>
+#include <nvgpu/gsp.h>
 #ifdef CONFIG_NVGPU_GSP_SCHEDULER
 #include <nvgpu/gsp.h>
 #include <nvgpu/string.h>
@@ -127,10 +128,10 @@ bool ga10b_gsp_is_debug_mode_en(struct gk20a *g)
 
 	if (pgsp_falcon_hwcfg2_dbgmode_v(ctl_stat) ==
 		pgsp_falcon_hwcfg2_dbgmode_enable_v()) {
-		nvgpu_info(g, "DEBUG MODE");
+		nvgpu_gsp_dbg(g, "DEBUG MODE");
 		return true;
 	} else {
-		nvgpu_info(g, "PROD MODE");
+		nvgpu_gsp_dbg(g, "PROD MODE");
 		return false;
 	}
 }

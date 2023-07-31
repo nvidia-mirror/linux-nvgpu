@@ -162,7 +162,7 @@ int nvgpu_gsp_wait_for_mailbox_update(struct nvgpu_gsp *gsp,
 		mail_box_data = flcn->g->ops.falcon.mailbox_read(
 				flcn, mailbox_index);
 		if (mail_box_data == exp_value) {
-			nvgpu_info(flcn->g,
+			nvgpu_gsp_dbg(flcn->g,
 				"gsp mailbox-0 updated successful with 0x%x",
 				mail_box_data);
 			break;
