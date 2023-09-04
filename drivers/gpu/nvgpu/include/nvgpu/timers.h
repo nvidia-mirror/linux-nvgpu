@@ -363,6 +363,13 @@ u64 nvgpu_hr_timestamp_us(void);
  * @return High resolution time stamp value.
  */
 u64 nvgpu_hr_timestamp(void);
+
+/**
+ * @brief UNIX timestamp.
+ *
+ * @return High resolution UNIX time stamp value.
+ */
+u64 nvgpu_current_unix_time_us(void);
 #endif
 
 /**

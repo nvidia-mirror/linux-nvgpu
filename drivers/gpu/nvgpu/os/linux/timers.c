@@ -272,6 +272,17 @@ s64 nvgpu_current_time_ns(void)
 }
 
 /**
+ * nvgpu_current_unix_time_us - UNIX time in microseconds from a monotonic clock.
+ *
+ * Returns the UNIX clock in microseconds units. The start time of the clock is
+ * 1970 00:00:00.
+ */
+u64 nvgpu_current_unix_time_us(void)
+{
+	return (u64)ktime_to_us(ktime_get_real());
+}
+
+/**
  * nvgpu_hr_timestamp_us - Time in microseconds from a monotonic clock.
  *
  * Return a clock in microsecond units. The start time of the clock is

@@ -1230,12 +1230,23 @@ static int nvgpu_gpu_get_cpu_time_correlation_info(
 	struct nvgpu_gpu_get_cpu_time_correlation_info_args *args)
 {
 	struct nvgpu_cpu_time_correlation_sample *samples;
+	enum nvgpu_cpu_timestamp_source timestamp_source;
 	int err;
 	u32 i;
 
-	if (args->count > NVGPU_GPU_GET_CPU_TIME_CORRELATION_INFO_MAX_COUNT ||
-	    args->source_id != NVGPU_GPU_GET_CPU_TIME_CORRELATION_INFO_SRC_ID_TSC)
+	if (args->count > NVGPU_GPU_GET_CPU_TIME_CORRELATION_INFO_MAX_COUNT)
 		return -EINVAL;
+
+	switch(args->source_id) {
+	case NVGPU_GPU_GET_CPU_TIME_CORRELATION_INFO_SRC_ID_TSC:
+		timestamp_source = NVGPU_CPU_TIMESTAMP_SOURCE_TSC;
+		break;
+	case NVGPU_GPU_GET_CPU_TIME_CORRELATION_INFO_SRC_ID_OSTIME:
+		timestamp_source = NVGPU_CPU_TIMESTAMP_SOURCE_UNIX;
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	samples = nvgpu_kzalloc(g, args->count *
 		sizeof(struct nvgpu_cpu_time_correlation_sample));
@@ -1244,7 +1255,7 @@ static int nvgpu_gpu_get_cpu_time_correlation_info(
 	}
 
 	err = g->ops.ptimer.get_timestamps_zipper(g,
-			args->source_id, args->count, samples);
+			timestamp_source, args->count, samples);
 	if (!err) {
 		for (i = 0; i < args->count; i++) {
 			args->samples[i].cpu_timestamp = samples[i].cpu_timestamp;

@@ -144,8 +144,21 @@ struct nvgpu_cpu_time_correlation_sample {
 int nvgpu_ptimer_scale(struct gk20a *g, u32 timeout, u32 *scaled_timeout);
 
 #ifdef CONFIG_NVGPU_IOCTL_NON_FUSA
+
+/*
+
+ */
+enum nvgpu_cpu_timestamp_source {
+	/* The timestamp is selected to originate from the current core's TSC */
+	NVGPU_CPU_TIMESTAMP_SOURCE_TSC,
+
+	/* The timestamp is selected to be calculated as UNIX time in microseconds */
+	NVGPU_CPU_TIMESTAMP_SOURCE_UNIX,
+};
+
 int nvgpu_get_timestamps_zipper(struct gk20a *g,
-		u32 source_id, u32 count,
+		enum nvgpu_cpu_timestamp_source cpu_timestamp_source,
+		u32 count,
 		struct nvgpu_cpu_time_correlation_sample *samples);
 int nvgpu_ptimer_init(struct gk20a *g);
 #endif /* CONFIG_NVGPU_IOCTL_NON_FUSA */

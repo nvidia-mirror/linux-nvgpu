@@ -26,6 +26,7 @@
 #include <nvgpu/timers.h>
 #include <nvgpu/nvgpu_init.h>
 #include <nvgpu/power_features/cg.h>
+#include <nvgpu/ptimer.h>
 #endif
 
 static u32 ptimer_scalingfactor10x(u32 ptimer_src_freq)
@@ -77,13 +78,12 @@ int nvgpu_ptimer_init(struct gk20a *g)
 }
 
 int nvgpu_get_timestamps_zipper(struct gk20a *g,
-		u32 source_id, u32 count,
+		enum nvgpu_cpu_timestamp_source cpu_timestamp_source,
+		u32 count,
 		struct nvgpu_cpu_time_correlation_sample *samples)
 {
 	int err = 0;
 	unsigned int i = 0;
-
-	(void)source_id;
 
 	if (gk20a_busy(g) != 0) {
 		nvgpu_err(g, "GPU not powered on\n");
@@ -97,7 +97,12 @@ int nvgpu_get_timestamps_zipper(struct gk20a *g,
 			goto idle;
 		}
 
-		samples[i].cpu_timestamp = nvgpu_hr_timestamp();
+		/* The cpu timestamp is already validated when handling ioctl/devctls */
+		if (cpu_timestamp_source == NVGPU_CPU_TIMESTAMP_SOURCE_TSC) {
+			samples[i].cpu_timestamp = nvgpu_hr_timestamp();
+		} else if (cpu_timestamp_source == NVGPU_CPU_TIMESTAMP_SOURCE_UNIX) {
+			samples[i].cpu_timestamp = nvgpu_current_unix_time_us();
+		}
 	}
 
 idle:
