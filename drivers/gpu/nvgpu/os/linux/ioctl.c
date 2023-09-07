@@ -438,7 +438,11 @@ static struct nvgpu_class *nvgpu_create_class(struct gk20a *g, const char *class
 		return NULL;
 	}
 
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0))
 	class->class = class_create(THIS_MODULE, class_name);
+#else
+	class->class = class_create(class_name);
+#endif
 	if (IS_ERR(class->class)) {
 		nvgpu_err(g, "failed to create class");
 		nvgpu_kfree(g, class);
