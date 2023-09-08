@@ -16,6 +16,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#if defined(CONFIG_NVIDIA_CONFTEST)
+#include <nvidia/conftest.h>
+#endif
+
 #include <linux/file.h>
 #include <linux/slab.h>
 
@@ -222,10 +226,10 @@ static char *nvgpu_devnode(const char *cdev_name)
 	return kasprintf(GFP_KERNEL, "nvhost-%s-gpu", cdev_name);
 }
 
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(6, 2, 0))
-static char *nvgpu_pci_devnode(struct device *dev, umode_t *mode)
-#else
+#if defined(NV_CLASS_STRUCT_DEVNODE_HAS_CONST_DEV_ARG) /* Linux v6.2 */
 static char *nvgpu_pci_devnode(const struct device *dev, umode_t *mode)
+#else
+static char *nvgpu_pci_devnode(struct device *dev, umode_t *mode)
 #endif
 {
 	/* Special case to maintain legacy names */
@@ -238,39 +242,39 @@ static char *nvgpu_pci_devnode(const struct device *dev, umode_t *mode)
 			dev_name(dev->parent), dev_name(dev));
 }
 
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(6, 2, 0))
-static char *nvgpu_devnode_v2(struct device *dev, umode_t *mode)
-#else
+#if defined(NV_CLASS_STRUCT_DEVNODE_HAS_CONST_DEV_ARG) /* Linux v6.2 */
 static char *nvgpu_devnode_v2(const struct device *dev, umode_t *mode)
+#else
+static char *nvgpu_devnode_v2(struct device *dev, umode_t *mode)
 #endif
 {
 	return kasprintf(GFP_KERNEL, "nvgpu/igpu0/%s", dev_name(dev));
 }
 
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(6, 2, 0))
-static char *nvgpu_pci_devnode_v2(struct device *dev, umode_t *mode)
-#else
+#if defined(NV_CLASS_STRUCT_DEVNODE_HAS_CONST_DEV_ARG) /* Linux v6.2 */
 static char *nvgpu_pci_devnode_v2(const struct device *dev, umode_t *mode)
+#else
+static char *nvgpu_pci_devnode_v2(struct device *dev, umode_t *mode)
 #endif
 {
 	return kasprintf(GFP_KERNEL, "nvgpu/dgpu-%s/%s",
 			dev_name(dev->parent), dev_name(dev));
 }
 
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(6, 2, 0))
-static char *nvgpu_pci_igpu_devnode_v2(struct device *dev, umode_t *mode)
-#else
+#if defined(NV_CLASS_STRUCT_DEVNODE_HAS_CONST_DEV_ARG) /* Linux v6.2 */
 static char *nvgpu_pci_igpu_devnode_v2(const struct device *dev, umode_t *mode)
+#else
+static char *nvgpu_pci_igpu_devnode_v2(struct device *dev, umode_t *mode)
 #endif
 {
 	return kasprintf(GFP_KERNEL, "nvgpu/igpu-%s/%s",
 			dev_name(dev->parent), dev_name(dev));
 }
 
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(6, 2, 0))
-static char *nvgpu_mig_fgpu_devnode(struct device *dev, umode_t *mode)
-#else
+#if defined(NV_CLASS_STRUCT_DEVNODE_HAS_CONST_DEV_ARG) /* Linux v6.2 */
 static char *nvgpu_mig_fgpu_devnode(const struct device *dev, umode_t *mode)
+#else
+static char *nvgpu_mig_fgpu_devnode(struct device *dev, umode_t *mode)
 #endif
 {
 	struct nvgpu_cdev_class_priv_data *priv_data;
