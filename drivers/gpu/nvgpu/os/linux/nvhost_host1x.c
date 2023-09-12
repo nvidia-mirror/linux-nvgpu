@@ -21,6 +21,7 @@
 #include <linux/platform_device.h>
 #include <linux/slab.h>
 #include <linux/sync_file.h>
+#include <linux/version.h>
 
 #include <nvgpu/os_fence.h>
 #include <nvgpu/os_fence_syncpts.h>
@@ -134,7 +135,12 @@ static void nvgpu_host1x_work_func(struct work_struct *work)
 	struct nvgpu_host1x_cb *host1x_cb = container_of(work, struct nvgpu_host1x_cb, work);
 
 	host1x_cb->notifier(host1x_cb->notifier_data, 0);
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 5, 0))
+	kfree_rcu_mightsleep(host1x_cb);
+#else
 	kfree_rcu(host1x_cb);
+#endif
+
 }
 
 static void nvgpu_host1x_cb_func(struct dma_fence *f, struct dma_fence_cb *cb)
