@@ -83,34 +83,59 @@ void nvgpu_read_support_gpu_tools(struct gk20a *g)
 	}
 }
 
-void nvgpu_read_devfreq_timer(struct gk20a *g)
+void nvgpu_devfreq_init(struct gk20a *g)
 {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 9, 0)
-	struct device_node *np;
-	int ret = 0;
-	const char *timer;
+	struct device *dev = dev_from_gk20a(g);
+	struct gk20a_platform *platform = dev_get_drvdata(dev);
 
-	np = nvgpu_get_node(g);
-	ret = of_property_read_string(np, "devfreq-timer", &timer);
-	if (ret != 0) {
-		nvgpu_log_info(g, "GPU devfreq monitor uses default timer");
-	} else {
-		if (strncmp(timer, "deferrable",
-					sizeof("deferrable") - 1) == 0) {
-			g->scale_profile->devfreq_profile.timer =
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 9, 0)
+	/* specify devfreq timer with module parameter */
+
+	if (strlen(nvgpu_devfreq_timer) == 0) {
+		nvgpu_log_info(g, "GPU devfreq uses default timer");
+	} else if (strncmp(nvgpu_devfreq_timer, "deferrable",
+					strlen("deferrable")) == 0) {
+		g->scale_profile->devfreq_profile.timer =
 						DEVFREQ_TIMER_DEFERRABLE;
-		} else if (strncmp(timer, "delayed",
-					sizeof("delayed") - 1) == 0) {
-			g->scale_profile->devfreq_profile.timer =
+		nvgpu_log_info(g, "use deferrable devfreq timer");
+	} else if (strncmp(nvgpu_devfreq_timer, "delayed",
+					strlen("delayed")) == 0) {
+		g->scale_profile->devfreq_profile.timer =
 						DEVFREQ_TIMER_DELAYED;
-		} else {
-			nvgpu_err(g, "dt specified "
-				"invalid devfreq timer for GPU: %s", timer);
-		}
+		nvgpu_log_info(g, "use delayed devfreq timer");
+	} else {
+		nvgpu_err(g, "specified invalid devfreq timer: %s",
+						nvgpu_devfreq_timer);
 	}
 #else
 	nvgpu_log_info(g, "GPU devfreq monitor uses default timer");
 #endif
+
+	/* specify devfreq governor from module parameter */
+#ifdef CONFIG_DEVFREQ_GOV_SIMPLE_ONDEMAND
+	if (strncmp(nvgpu_devfreq_gov, "simple_ondemand",
+					strlen("simple_ondemand")) == 0)
+		platform->devfreq_governor = DEVFREQ_GOV_SIMPLE_ONDEMAND;
+#endif
+#ifdef CONFIG_DEVFREQ_GOV_PERFORMANCE
+	if (strncmp(nvgpu_devfreq_gov, "performance",
+					strlen("performance")) == 0)
+		platform->devfreq_governor = DEVFREQ_GOV_PERFORMANCE;
+#endif
+#ifdef CONFIG_DEVFREQ_GOV_POWERSAVE
+	if (strncmp(nvgpu_devfreq_gov, "powersave", strlen("powersave")) == 0)
+		platform->devfreq_governor = DEVFREQ_GOV_POWERSAVE;
+#endif
+#ifdef CONFIG_DEVFREQ_GOV_USERSPACE
+	if (strncmp(nvgpu_devfreq_gov, "userspace", strlen("userspace")) == 0)
+		platform->devfreq_governor = DEVFREQ_GOV_USERSPACE;
+#endif
+#ifdef CONFIG_DEVFREQ_GOV_PASSIVE
+	if (strncmp(nvgpu_devfreq_gov, "passive", strlen("passive")) == 0)
+		platform->devfreq_governor = DEVFREQ_GOV_PASSIVE;
+#endif
+	nvgpu_log_info(g, "GPU devfreq governor: %s",
+					platform->devfreq_governor);
 }
 
 static void nvgpu_init_vars(struct gk20a *g)

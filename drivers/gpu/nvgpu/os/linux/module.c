@@ -115,6 +115,16 @@
 #define CREATE_TRACE_POINTS
 #include <nvgpu/trace.h>
 
+char *nvgpu_devfreq_timer = "";
+module_param_named(devfreq_timer, nvgpu_devfreq_timer, charp, 0400);
+MODULE_PARM_DESC(devfreq_timer,
+	"Specify gpu devfreq governor with module parameter.");
+
+char *nvgpu_devfreq_gov = "";
+module_param_named(devfreq_gov, nvgpu_devfreq_gov, charp, 0400);
+MODULE_PARM_DESC(devfreq_gov,
+	"Specify gpu devfreq governor with module parameter.");
+
 int nvgpu_lpwr_enable;
 module_param_named(lpwr_enable, nvgpu_lpwr_enable, int, 0400);
 MODULE_PARM_DESC(lpwr_enable,

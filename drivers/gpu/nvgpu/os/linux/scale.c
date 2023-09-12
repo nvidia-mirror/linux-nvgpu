@@ -521,7 +521,7 @@ void gk20a_scale_init(struct device *dev)
 		int error = 0;
 
 		register_gpu_opp(dev);
-		nvgpu_read_devfreq_timer(g);
+		nvgpu_devfreq_init(g);
 
 		profile->devfreq_profile.initial_freq =
 			profile->devfreq_profile.freq_table[0];
