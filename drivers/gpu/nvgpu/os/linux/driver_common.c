@@ -45,8 +45,16 @@
 #include "sysfs.h"
 #include "ioctl.h"
 #include "scale.h"
+#include "driver_common.h"
 
 #define EMC3D_DEFAULT_RATIO 750
+#define NVGPU_BLCG_ENABLEMENT BIT(1)
+#define NVGPU_ELCG_ENABLEMENT BIT(3)
+#define NVGPU_ELPG_ENABLEMENT BIT(5)
+#define NVGPU_FLCG_ENABLEMENT BIT(7)
+#define NVGPU_SLCG_ENABLEMENT BIT(9)
+#define NVGPU_AELPG_ENABLEMENT BIT(11)
+#define NVGPU_MSCG_ENABLEMENT BIT(13)
 
 void nvgpu_kernel_restart(void *cmd)
 {
@@ -224,6 +232,35 @@ static void nvgpu_init_pm_vars(struct gk20a *g)
 {
 	struct device *dev = dev_from_gk20a(g);
 	struct gk20a_platform *platform = dev_get_drvdata(dev);
+
+	/* Consider the power setting from module parameter */
+	platform->enable_blcg = nvgpu_lpwr_enable & NVGPU_BLCG_ENABLEMENT ?
+			nvgpu_lpwr_enable & (NVGPU_BLCG_ENABLEMENT >> 1) :
+						platform->enable_blcg;
+
+	platform->enable_elcg = nvgpu_lpwr_enable & NVGPU_ELCG_ENABLEMENT ?
+			nvgpu_lpwr_enable & (NVGPU_ELCG_ENABLEMENT >> 1) :
+						platform->enable_elcg;
+
+	platform->enable_elpg = nvgpu_lpwr_enable & NVGPU_ELPG_ENABLEMENT ?
+			nvgpu_lpwr_enable & (NVGPU_ELPG_ENABLEMENT >> 1) :
+						platform->enable_elpg;
+
+	platform->enable_flcg = nvgpu_lpwr_enable & NVGPU_FLCG_ENABLEMENT ?
+			nvgpu_lpwr_enable & (NVGPU_FLCG_ENABLEMENT >> 1) :
+						platform->enable_flcg;
+
+	platform->enable_slcg = nvgpu_lpwr_enable & NVGPU_SLCG_ENABLEMENT ?
+			nvgpu_lpwr_enable & (NVGPU_SLCG_ENABLEMENT >> 1) :
+						platform->enable_slcg;
+
+	platform->enable_aelpg = nvgpu_lpwr_enable & NVGPU_AELPG_ENABLEMENT ?
+			nvgpu_lpwr_enable & (NVGPU_AELPG_ENABLEMENT >> 1) :
+						platform->enable_aelpg;
+
+	platform->enable_mscg = nvgpu_lpwr_enable & NVGPU_MSCG_ENABLEMENT ?
+			nvgpu_lpwr_enable & (NVGPU_MSCG_ENABLEMENT >> 1) :
+						platform->enable_mscg;
 
 	/*
 	 * Set up initial power settings. For non-slicon platforms, disable

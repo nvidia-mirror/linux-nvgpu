@@ -17,6 +17,8 @@
 #ifndef NVGPU_LINUX_DRIVER_COMMON
 #define NVGPU_LINUX_DRIVER_COMMON
 
+extern int nvgpu_lpwr_enable;
+
 struct gk20a;
 
 int nvgpu_probe(struct gk20a *g,

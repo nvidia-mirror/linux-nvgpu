@@ -115,6 +115,14 @@
 #define CREATE_TRACE_POINTS
 #include <nvgpu/trace.h>
 
+int nvgpu_lpwr_enable;
+module_param_named(lpwr_enable, nvgpu_lpwr_enable, int, 0400);
+MODULE_PARM_DESC(lpwr_enable,
+	"Enable/Disable nvgpu low power features with module parameter.\n"
+	"Each feature corresponds to two bits.\n"
+	"Odd bit indicates triggering the configuraion or not,\n"
+	"even bit indicates enabling/disabling a lpwr feature.");
+
 static int nvgpu_wait_for_idle(struct gk20a *g)
 {
 	int wait_length = 150; /* 3 second overall max wait. */
