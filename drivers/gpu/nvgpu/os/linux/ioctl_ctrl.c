@@ -2915,7 +2915,7 @@ static int alter_usermode_mapping(struct gk20a *g,
 	 * does it in reverse order. Trylock is a way to avoid deadlock.
 	 */
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
-	if (!mmap_write_trylock(vma->vm_mm)) {
+	if (!down_write_trylock(&vma->vm_mm->mmap_lock)) {
 #else
 	if (!down_write_trylock(&vma->vm_mm->mmap_sem)) {
 #endif
@@ -2947,7 +2947,7 @@ static int alter_usermode_mapping(struct gk20a *g,
 	}
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
-	mmap_write_unlock(vma->vm_mm);
+	up_write(&vma->vm_mm->mmap_lock);
 #else
 	up_write(&vma->vm_mm->mmap_sem);
 #endif
