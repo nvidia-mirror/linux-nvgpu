@@ -211,7 +211,7 @@ static ssize_t disable_bigpage_write(struct file *file, const char __user *user_
 	if (copy_from_user(buf, user_buf, buf_size))
 		return -EFAULT;
 
-	if (strtobool(buf, &bv) == 0) {
+	if (kstrtobool(buf, &bv) == 0) {
 		g->mm.disable_bigpage = bv;
 		err = nvgpu_init_gpu_characteristics(g);
 		if (err != 0) {
@@ -319,7 +319,7 @@ static ssize_t timeouts_enabled_write(struct file *file,
 	if (copy_from_user(buf, user_buf, buf_size))
 		return -EFAULT;
 
-	if (strtobool(buf, &timeouts_enabled) == 0) {
+	if (kstrtobool(buf, &timeouts_enabled) == 0) {
 		nvgpu_mutex_acquire(&g->dbg_sessions_lock);
 		if (timeouts_enabled == false) {
 			/* requesting to disable timeouts */
@@ -419,7 +419,7 @@ static ssize_t disable_syncpts_write(struct file *file,
 	if (!g->nvhost)
 		return -ENOSYS;
 
-	if (strtobool(buf, &disable_syncpts) == 0)
+	if (kstrtobool(buf, &disable_syncpts) == 0)
 		nvgpu_set_enabled(g, NVGPU_HAS_SYNCPOINTS, !disable_syncpts);
 
 	return count;

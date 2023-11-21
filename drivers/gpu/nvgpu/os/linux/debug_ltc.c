@@ -59,7 +59,7 @@ static ssize_t ltc_intr_illegal_compstat_write(struct file *file,
 	if (err)
 		return err;
 
-	if (strtobool(buf, &intr_illegal_compstat_enabled) == 0) {
+	if (kstrtobool(buf, &intr_illegal_compstat_enabled) == 0) {
 		g->ops.ltc.intr.en_illegal_compstat(g,
 				intr_illegal_compstat_enabled);
 		g->ltc_intr_en_illegal_compstat = intr_illegal_compstat_enabled;

@@ -344,7 +344,7 @@ static ssize_t force_preemption_gfxp_write(struct file *file,
 		return -EFAULT;
 	}
 
-	if (strtobool(buf, &val) == 0) {
+	if (kstrtobool(buf, &val) == 0) {
 		g->gr->gr_ctx_desc->force_preemption_gfxp = val;
 	}
 
@@ -396,7 +396,7 @@ static ssize_t force_preemption_cilp_write(struct file *file,
 		return -EFAULT;
 	}
 
-	if (strtobool(buf, &val) == 0) {
+	if (kstrtobool(buf, &val) == 0) {
 		g->gr->gr_ctx_desc->force_preemption_cilp = val;
 	}
 
@@ -448,7 +448,7 @@ static ssize_t dump_ctxsw_stats_on_channel_close_write(struct file *file,
 		return -EFAULT;
 	}
 
-	if (strtobool(buf, &val) == 0) {
+	if (kstrtobool(buf, &val) == 0) {
 		g->gr->gr_ctx_desc->dump_ctxsw_stats_on_channel_close = val;
 	}
 

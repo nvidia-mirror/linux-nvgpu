@@ -197,7 +197,7 @@ static ssize_t gsp_start_test_write(struct file *file,
 	if (copy_from_user(buf, user_buf, buf_size))
 		return -EFAULT;
 
-	if (strtobool(buf, &bv) == 0) {
+	if (kstrtobool(buf, &bv) == 0) {
 		if (nvgpu_is_powered_on(g) && nvgpu_gsp_get_stress_test_load(g)) {
 			err = gk20a_busy(g);
 			if (err)
@@ -258,7 +258,7 @@ static ssize_t gsp_load_test_write(struct file *file,
 	if (copy_from_user(buf, user_buf, buf_size))
 		return -EFAULT;
 
-	if (strtobool(buf, &bv) == 0) {
+	if (kstrtobool(buf, &bv) == 0) {
 		if (nvgpu_is_powered_on(g)) {
 			err = gk20a_busy(g);
 			if (err)
