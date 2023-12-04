@@ -1,18 +1,5 @@
-/*
- * Copyright (c) 2017-2023, NVIDIA Corporation.  All rights reserved.
- *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms and conditions of the GNU General Public License,
- * version 2, as published by the Free Software Foundation.
- *
- * This program is distributed in the hope it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
- * more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+// SPDX-License-Identifier: GPL-2.0-only
+// SPDX-FileCopyrightText: Copyright (c) 2017-2023 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 
 #include <nvgpu/enabled.h>
 #include <nvgpu/debug.h>
@@ -438,7 +425,7 @@ static int nvgpu_channel_copy_user_gpfifo(struct nvgpu_gpfifo_entry *dest,
 	return n == 0 ? 0 : -EFAULT;
 }
 
-int nvgpu_usermode_buf_from_dmabuf(struct gk20a *g, int dmabuf_fd,
+static int nvgpu_usermode_buf_from_dmabuf(struct gk20a *g, int dmabuf_fd,
 		struct nvgpu_mem *mem, struct nvgpu_usermode_buf_linux *buf)
 {
 	struct device *dev = dev_from_gk20a(g);
@@ -488,7 +475,7 @@ put_dmabuf:
 	return err;
 }
 
-void nvgpu_os_channel_free_usermode_buffers(struct nvgpu_channel *c)
+static void nvgpu_os_channel_free_usermode_buffers(struct nvgpu_channel *c)
 {
 	struct nvgpu_channel_linux *priv = c->os_priv;
 	struct gk20a *g = c->g;

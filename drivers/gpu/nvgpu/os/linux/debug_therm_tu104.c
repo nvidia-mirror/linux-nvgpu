@@ -1,23 +1,11 @@
-/*
- * Copyright (c) 2019-2020, NVIDIA Corporation. All rights reserved.
- *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms and conditions of the GNU General Public License,
- * version 2, as published by the Free Software Foundation.
- *
- * This program is distributed in the hope it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
- * more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+// SPDX-License-Identifier: GPL-2.0-only
+// SPDX-FileCopyrightText: Copyright (c) 2019-2023 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 
 #include <linux/debugfs.h>
 #include <nvgpu/pmu/therm.h>
 
 #include "os_linux.h"
+#include "debug_therm_tu104.h"
 
 static int therm_get_internal_sensor_curr_temp(void *data, u64 *val)
 {

@@ -7,6 +7,8 @@
 #include <nvlink/common/tegra-nvlink.h>
 #endif
 
+#include "nvlink.h"
+
 #include <nvgpu/gk20a.h>
 #include <nvgpu/nvlink.h>
 #include <nvgpu/nvlink_minion.h>

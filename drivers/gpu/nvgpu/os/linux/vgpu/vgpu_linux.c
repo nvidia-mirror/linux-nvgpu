@@ -1,19 +1,8 @@
+// SPDX-License-Identifier: GPL-2.0-only
+// SPDX-FileCopyrightText: Copyright (c) 2018-2023 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+
 /*
  * Virtualized GPU for Linux
- *
- * Copyright (c) 2018-2023, NVIDIA CORPORATION.  All rights reserved.
- *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms and conditions of the GNU General Public License,
- * version 2, as published by the Free Software Foundation.
- *
- * This program is distributed in the hope it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
- * more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <linux/pm_runtime.h>
@@ -24,6 +13,7 @@
 
 #include <nvgpu/soc.h>
 #include <nvgpu/nvgpu_init.h>
+#include <nvgpu/vgpu/os_init_hal_vgpu.h>
 
 #include "vgpu_linux.h"
 #include "common/vgpu/ivc/comm_vgpu.h"

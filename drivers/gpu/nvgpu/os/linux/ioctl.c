@@ -1,19 +1,8 @@
+// SPDX-License-Identifier: GPL-2.0-only
+// SPDX-FileCopyrightText: Copyright (c) 2011-2023 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+
 /*
  * NVGPU IOCTLs
- *
- * Copyright (c) 2011-2023, NVIDIA CORPORATION.  All rights reserved.
- *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms and conditions of the GNU General Public License,
- * version 2, as published by the Free Software Foundation.
- *
- * This program is distributed in the hope it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
- * more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #if defined(CONFIG_NVIDIA_CONFTEST)
@@ -373,7 +362,7 @@ out:
 	return err;
 }
 
-void gk20a_remove_devices_and_classes(struct gk20a *g, bool power_node)
+static void gk20a_remove_devices_and_classes(struct gk20a *g, bool power_node)
 {
 	struct nvgpu_os_linux *l = nvgpu_os_linux_from_gk20a(g);
 	struct nvgpu_cdev *cdev, *n;

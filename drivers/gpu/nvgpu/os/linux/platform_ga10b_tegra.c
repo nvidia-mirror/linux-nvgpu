@@ -1,19 +1,8 @@
+// SPDX-License-Identifier: GPL-2.0-only
+// SPDX-FileCopyrightText: Copyright (c) 2016-2023 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+
 /*
  * GA10B Tegra Platform Interface
- *
- * Copyright (c) 2016-2023, NVIDIA CORPORATION.  All rights reserved.
- *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms and conditions of the GNU General Public License,
- * version 2, as published by the Free Software Foundation.
- *
- * This program is distributed in the hope it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
- * more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <linux/of_platform.h>
@@ -234,7 +223,7 @@ static int ga10b_tegra_get_clocks(struct device *dev)
 			ARRAY_SIZE(tegra_ga10b_clocks));
 }
 
-void ga10b_tegra_scale_init(struct device *dev)
+static void ga10b_tegra_scale_init(struct device *dev)
 {
 #if defined(CONFIG_INTERCONNECT)
 	struct gk20a_platform *platform = gk20a_get_platform(dev);
@@ -355,7 +344,7 @@ static int ga10b_tegra_remove(struct device *dev)
 }
 
 #if defined(CONFIG_TEGRA_BPMP) && defined(CONFIG_NVGPU_STATIC_POWERGATE)
-int ga10b_tegra_static_pg_control(struct device *dev, struct tegra_bpmp *bpmp,
+static int ga10b_tegra_static_pg_control(struct device *dev, struct tegra_bpmp *bpmp,
 		struct mrq_strap_request *req)
 {
 	struct tegra_bpmp_message msg;
@@ -590,7 +579,7 @@ static int ga10b_tegra_set_fbp_pg_mask(struct device *dev, u32 dt_fbp_pg_mask)
 	return -EINVAL;
 }
 
-void ga10b_tegra_postscale(struct device *pdev,
+static void ga10b_tegra_postscale(struct device *pdev,
 					unsigned long freq)
 {
 #if defined(CONFIG_INTERCONNECT)
