@@ -1,18 +1,5 @@
-/*
- * Copyright (c) 2018-2022, NVIDIA CORPORATION.  All rights reserved.
- *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms and conditions of the GNU General Public License,
- * version 2, as published by the Free Software Foundation.
- *
- * This program is distributed in the hope it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
- * more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+// SPDX-License-Identifier: GPL-2.0-only
+// SPDX-FileCopyrightText: Copyright (c) 2018-2023 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 
 #include <linux/mutex.h>
 #include <linux/io.h>
@@ -35,23 +22,6 @@ int nvgpu_nvlink_enumerate(struct gk20a *g)
 		return -ENODEV;
 
 	return nvlink_enumerate(ndev);
-}
-
-int nvgpu_nvlink_train(struct gk20a *g, u32 link_id, bool from_off)
-{
-	struct nvlink_device *ndev = (struct nvlink_device *) g->nvlink.priv;
-
-	if (!ndev)
-		return -ENODEV;
-
-	/* Check if the link is connected */
-	if (!g->nvlink.links[link_id].remote_info.is_connected)
-		return -ENODEV;
-
-	if (from_off)
-		return nvlink_transition_intranode_conn_off_to_safe(ndev);
-
-	return nvlink_train_intranode_conn_safe_to_hs(ndev);
 }
 
 void nvgpu_nvlink_free_minion_used_mem(struct gk20a *g,
