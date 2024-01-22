@@ -1,18 +1,5 @@
-/*
- * Copyright (c) 2018-2020, NVIDIA CORPORATION. All rights reserved.
- *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms and conditions of the GNU General Public License,
- * version 2, as published by the Free Software Foundation.
- *
- * This program is distributed in the hope it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
- * more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+// SPDX-License-Identifier: GPL-2.0-only
+// SPDX-FileCopyrightText: Copyright (c) 2018-2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 
 #include <linux/delay.h>
 #include <linux/list.h>
@@ -74,6 +61,7 @@ int nvgpu_pci_add_pci_power(struct pci_dev *pdev)
 {
 	struct gk20a_platform *platform;
 	struct nvgpu_pci_power *pp;
+	ssize_t len;
 
 	if (!pdev)
 		return -EINVAL;
@@ -90,8 +78,10 @@ int nvgpu_pci_add_pci_power(struct pci_dev *pdev)
 
 	nvgpu_mutex_init(&pp->mutex);
 	pp->pci_dev = pdev;
-	strlcpy(pp->pci_dev_name,
+	len = strscpy(pp->pci_dev_name,
 		dev_name(&pdev->dev), PCI_DEV_NAME_MAX);
+	if (len < 0)
+		return -ENAMETOOLONG;
 
 	platform = pci_get_drvdata(pdev);
 	pp->can_pci_gc_off = platform->can_pci_gc_off;
