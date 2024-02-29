@@ -4,8 +4,8 @@ on:
   push:
     branches:
         - gh-actions
-#  schedule:
-#    - cron: '* 3 * * *'
+  schedule:
+   - cron: '30 0,6,12,18 * * *'
   workflow_dispatch:
 
 jobs:
