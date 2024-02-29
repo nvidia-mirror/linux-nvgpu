@@ -5,7 +5,7 @@ on:
     branches:
         - gh-actions
   schedule:
-   - cron: '30 0,6,12,18 * * *'
+   - cron: '30 6 * * *'
   workflow_dispatch:
 
 jobs:
