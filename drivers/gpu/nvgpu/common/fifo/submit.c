@@ -810,7 +810,8 @@ static int nvgpu_submit_channel_gpfifo(struct nvgpu_channel *c,
 	 * So, add extra entries in user request. Also, HW with fifo size N
 	 * can accept only N-1 entries.
 	 */
-	if (c->gpfifo.entry_num - 1U < num_entries + EXTRA_GPFIFO_ENTRIES) {
+	if ((c->gpfifo.entry_num < (EXTRA_GPFIFO_ENTRIES + 1U)) ||
+		((c->gpfifo.entry_num - EXTRA_GPFIFO_ENTRIES - 1U) < num_entries)) {
 		nvgpu_err(g, "not enough gpfifo space allocated");
 		return -ENOMEM;
 	}
